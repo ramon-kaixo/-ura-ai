@@ -307,9 +307,7 @@ def main() -> int:
         print(
             json.dumps(
                 {
-                    "findings": [
-                        f.to_dict() for f in sorted(all_findings, key=lambda x: (x.severity, x.filepath))
-                    ],
+                    "findings": [f.to_dict() for f in sorted(all_findings, key=lambda x: (x.severity, x.filepath))],
                     "total": len(all_findings),
                     "by_severity": {
                         "critical": sum(1 for f in all_findings if f.severity == "critical"),

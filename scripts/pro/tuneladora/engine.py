@@ -58,7 +58,12 @@ try:
     from prometheus_client import Counter as _Counter, Gauge as _Gauge, Histogram as _Histogram, start_http_server  # noqa: I001
 
     _exec_total = _Counter("tuneladora_executions_total", "Ejecuciones por plugin y estado", ["plugin", "status"])
-    _exec_duration = _Histogram("tuneladora_execution_duration_seconds", "Duracion por plugin", ["plugin"], buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0))
+    _exec_duration = _Histogram(
+        "tuneladora_execution_duration_seconds",
+        "Duracion por plugin",
+        ["plugin"],
+        buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0),
+    )
     _plugins_active = _Gauge("tuneladora_plugins_active", "Plugins en ejecucion actual")
     _disk_free = _Gauge("tuneladora_disk_free_gb", "Espacio libre en disco GB")
     _HAS_METRICS = True
@@ -319,13 +324,15 @@ class PipelineEngine:
         except Exception:
             return {"libre_gb": 0}
 
-
     def health_git(self) -> dict[str, Any]:
         """Estado del repositorio git."""
         try:
             r = subprocess.run(
                 ["git", "status", "--porcelain"],  # nosec B603 B607
-                capture_output=True, text=True, timeout=10, check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
                 cwd=str(self.config.ura_root),
             )
             if r.returncode != 0:
@@ -343,6 +350,7 @@ class PipelineEngine:
     def _parse_count(self, text: str, keyword: str) -> int:
         """Extrae numero de ocurrencias del output de pytest."""
         import re
+
         match = re.search(rf"(\d+)\s+{keyword}s?(?:\s|$|,)", text)
         return int(match.group(1)) if match else 0
 
@@ -350,6 +358,7 @@ class PipelineEngine:
         """Ejecuta pytest y reporta resultados."""
         try:
             import shlex
+
             # Expandir wildcards si los hay
             if "*" in target:
                 targets = [str(p) for p in Path(self.config.ura_root).glob(target)]
@@ -360,7 +369,10 @@ class PipelineEngine:
             cmd = [sys.executable, "-m", "pytest", *targets, "--no-cov"]
             r = subprocess.run(
                 cmd,
-                capture_output=True, text=True, timeout=120, check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
                 cwd=str(self.config.ura_root),
             )
             stdout = r.stdout
@@ -395,7 +407,10 @@ class PipelineEngine:
         try:
             r = subprocess.run(
                 [sys.executable, "-m", "bandit", "-r", "scripts/pro/tuneladora/"],  # nosec B603 B607
-                capture_output=True, text=True, timeout=120, check=False,
+                capture_output=True,
+                text=True,
+                timeout=120,
+                check=False,
                 cwd=str(self.config.ura_root),
             )
             stdout = r.stdout
@@ -410,6 +425,7 @@ class PipelineEngine:
             }
         except Exception as e:
             return {"ok": False, "low": 0, "medium": 0, "high": 0, "error": str(e)}
+
     def report(self, title: str, data: dict[str, Any]) -> None:
         """Genera informe formateado desde un diccionario."""
         lines = [f"{k}: {v}" for k, v in data.items()]

@@ -1,4 +1,5 @@
 """Shim temporal — document_quality se ha movido a motor.core.document_quality."""
+
 import sys
 
 import motor.core.document_quality

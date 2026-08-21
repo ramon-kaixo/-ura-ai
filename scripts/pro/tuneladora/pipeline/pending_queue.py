@@ -77,7 +77,18 @@ class PendingQueue:
             cur = conn.execute(
                 "INSERT INTO pending_fixes (created_ts, bloque, archivo, linea, herramienta, severidad, error_raw, sugerencia_llm, modelo_generador, estado) "
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (time.strftime("%Y-%m-%dT%H:%M:%S"), bloque, archivo, linea, herramienta, severidad, error_raw, sugerencia_llm, modelo_generador, estado),
+                (
+                    time.strftime("%Y-%m-%dT%H:%M:%S"),
+                    bloque,
+                    archivo,
+                    linea,
+                    herramienta,
+                    severidad,
+                    error_raw,
+                    sugerencia_llm,
+                    modelo_generador,
+                    estado,
+                ),
             )
             return cur.lastrowid or 0
 

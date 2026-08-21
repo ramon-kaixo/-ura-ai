@@ -36,7 +36,9 @@ _VERSION = "1.0.0"
 setup_logging(level="INFO")
 _log = logging.getLogger("ura.assistant")
 for handler in _log.handlers:
-    if isinstance(handler, logging.StreamHandler):  # pragma: no cover - setup_logging añade StreamHandler; rama defensiva
+    if isinstance(
+        handler, logging.StreamHandler
+    ):  # pragma: no cover - setup_logging añade StreamHandler; rama defensiva
         handler.setFormatter(JSONFormatter(prefix="assistant"))
         break
 

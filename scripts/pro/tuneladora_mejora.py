@@ -202,8 +202,11 @@ def main() -> int:
         try:
             r = subprocess.run(
                 [sys.executable, str(preflight_script), "audit"],
-                capture_output=True, text=True, timeout=15,
-                check=False, cwd=str(engine.config.ura_root),
+                capture_output=True,
+                text=True,
+                timeout=15,
+                check=False,
+                cwd=str(engine.config.ura_root),
             )
             if r.returncode == 0:
                 engine.log.info("  System manifest OK")

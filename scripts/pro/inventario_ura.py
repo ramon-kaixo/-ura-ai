@@ -23,12 +23,34 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent.parent
 RAICES = [
-    "core", "motor", "agents", "knowledge", "monitor",
-    "scripts/pro", "deploy", "tests", "docs", "mantenimiento",
+    "core",
+    "motor",
+    "agents",
+    "knowledge",
+    "monitor",
+    "scripts/pro",
+    "deploy",
+    "tests",
+    "docs",
+    "mantenimiento",
 ]
-EXCLUIR = {".git", "node_modules", "__pycache__", ".venv", ".tuneladora",
-           ".nervioso", "snapshots", "site-packages", "mutation-reports",
-           ".attic", "bitacora", "shared", "specs", "config", "data"}
+EXCLUIR = {
+    ".git",
+    "node_modules",
+    "__pycache__",
+    ".venv",
+    ".tuneladora",
+    ".nervioso",
+    "snapshots",
+    "site-packages",
+    "mutation-reports",
+    ".attic",
+    "bitacora",
+    "shared",
+    "specs",
+    "config",
+    "data",
+}
 
 
 def _git(cmd: list[str]) -> str:
@@ -41,18 +63,26 @@ def _git(cmd: list[str]) -> str:
 
 def _fecha_creacion(ruta: Path) -> str:
     """Fecha del primer commit que tocó el directorio."""
-    out = _git(["git", "log", "--diff-filter=A", "--follow", "--format=%ad",
-                "--date=format:%Y-%m-%d", "--", str(ruta.relative_to(REPO))])
+    out = _git(
+        [
+            "git",
+            "log",
+            "--diff-filter=A",
+            "--follow",
+            "--format=%ad",
+            "--date=format:%Y-%m-%d",
+            "--",
+            str(ruta.relative_to(REPO)),
+        ]
+    )
     if out:
         return out.splitlines()[-1] if out.splitlines() else ""
-    out = _git(["git", "log", "--format=%ad", "--date=format:%Y-%m-%d",
-                "--", str(ruta.relative_to(REPO))])
+    out = _git(["git", "log", "--format=%ad", "--date=format:%Y-%m-%d", "--", str(ruta.relative_to(REPO))])
     return out.splitlines()[-1] if out else ""
 
 
 def _fecha_mod(ruta: Path) -> str:
-    out = _git(["git", "log", "-1", "--format=%ad", "--date=format:%Y-%m-%d",
-                "--", str(ruta.relative_to(REPO))])
+    out = _git(["git", "log", "-1", "--format=%ad", "--date=format:%Y-%m-%d", "--", str(ruta.relative_to(REPO))])
     return out or ""
 
 
@@ -135,8 +165,10 @@ def main() -> int:
         if not ruta.exists():
             continue
         n_archivos = sum(
-            1 for p in ruta.rglob("*")
-            if p.is_file() and p.suffix in {".py", ".sh", ".js", ".ts", ".md", ".json"}
+            1
+            for p in ruta.rglob("*")
+            if p.is_file()
+            and p.suffix in {".py", ".sh", ".js", ".ts", ".md", ".json"}
             and not any(x in p.parts for x in EXCLUIR)
         )
         fila = {

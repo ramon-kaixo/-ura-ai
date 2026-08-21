@@ -1,4 +1,5 @@
 """NotifierPlugin — notificaciones reales (webhook + log)."""
+
 from __future__ import annotations
 
 import json
@@ -43,6 +44,7 @@ class NotifierPlugin:
             return
         try:
             import httpx
+
             httpx.post(self.webhook_url, json={"title": title, "message": message}, timeout=10)
             log.info("Webhook enviado: %s", title)
         except Exception as e:

@@ -94,17 +94,23 @@ def ejecutar_tests(tests: list[Path], timeout: int = 120) -> dict:
         try:
             r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=URA_ROOT, check=False)
             ok = r.returncode == 0
-            resultados.append({
-                "test": str(t),
-                "ok": ok,
-                "tiempo": round(time.time() - t0, 1),
-                "output": (r.stdout + r.stderr)[-800:],
-            })
+            resultados.append(
+                {
+                    "test": str(t),
+                    "ok": ok,
+                    "tiempo": round(time.time() - t0, 1),
+                    "output": (r.stdout + r.stderr)[-800:],
+                }
+            )
         except subprocess.TimeoutExpired:
-            resultados.append({
-                "test": str(t), "ok": False, "tiempo": timeout,
-                "output": "TIMEOUT",
-            })
+            resultados.append(
+                {
+                    "test": str(t),
+                    "ok": False,
+                    "tiempo": timeout,
+                    "output": "TIMEOUT",
+                }
+            )
     todos_ok = all(r["ok"] for r in resultados)
     return {
         "ok": todos_ok,
@@ -164,8 +170,7 @@ def verificar_con_tests(
     if antes is not None:
         detalle_antes = {r["test"]: r["ok"] for r in antes.get("detalle", [])}
         regresiones = [
-            r["test"] for r in despues.get("detalle", [])
-            if not r["ok"] and detalle_antes.get(r["test"], True)
+            r["test"] for r in despues.get("detalle", []) if not r["ok"] and detalle_antes.get(r["test"], True)
         ]
         if regresiones:
             return {"veredicto": "rompe", "regresiones": regresiones, "despues": despues}

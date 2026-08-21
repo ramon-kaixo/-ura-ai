@@ -86,16 +86,22 @@ class SemanticMemory:
             ).fetchone()
             if existing:
                 conn.execute(
-                    "UPDATE concepts SET weight = ?, last_seen = ?, occurrences = ? "
-                    "WHERE name = ? AND context = ?",
+                    "UPDATE concepts SET weight = ?, last_seen = ?, occurrences = ? WHERE name = ? AND context = ?",
                     (concept.weight + existing[0], now, existing[1] + 1, concept.name, concept.context),
                 )
             else:
                 conn.execute(
                     "INSERT OR IGNORE INTO concepts (name, context, weight, tags, created, last_seen, occurrences) "
                     "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (concept.name, concept.context, concept.weight,
-                     json.dumps(list(concept.tags)), concept.created, now, concept.occurrences),
+                    (
+                        concept.name,
+                        concept.context,
+                        concept.weight,
+                        json.dumps(list(concept.tags)),
+                        concept.created,
+                        now,
+                        concept.occurrences,
+                    ),
                 )
             conn.commit()
         log.debug("Concepto aprendido: %s (%.1f)", concept.name, concept.weight)
@@ -107,9 +113,17 @@ class SemanticMemory:
                 INSERT OR REPLACE INTO relations (source, target, relation_type, weight, created, metadata)
                 VALUES (?, ?, ?, ?, COALESCE((SELECT created FROM relations WHERE source=? AND target=? AND relation_type=?), ?), ?)
                 """,
-                (relation.source, relation.target, relation_type := relation.relation_type,
-                 relation.weight, relation.source, relation.target, relation_type,
-                 relation.created, json.dumps(relation.metadata)),
+                (
+                    relation.source,
+                    relation.target,
+                    relation_type := relation.relation_type,
+                    relation.weight,
+                    relation.source,
+                    relation.target,
+                    relation_type,
+                    relation.created,
+                    json.dumps(relation.metadata),
+                ),
             )
             conn.commit()
         log.debug("Relación aprendida: %s --[%s]--> %s", relation.source, relation.relation_type, relation.target)
@@ -121,8 +135,18 @@ class SemanticMemory:
                 "FROM concepts WHERE name = ? ORDER BY weight DESC",
                 (name,),
             ).fetchall()
-        return [Concept(name=r[0], context=r[1], weight=r[2], tags=tuple(json.loads(r[3])),
-                        created=r[4], last_seen=r[5], occurrences=r[6]) for r in rows]
+        return [
+            Concept(
+                name=r[0],
+                context=r[1],
+                weight=r[2],
+                tags=tuple(json.loads(r[3])),
+                created=r[4],
+                last_seen=r[5],
+                occurrences=r[6],
+            )
+            for r in rows
+        ]
 
     def get_related(self, name: str, relation_type: str | None = None) -> list[Relation]:
         params: list[Any] = [name, name]
@@ -136,8 +160,10 @@ class SemanticMemory:
                 f"SELECT source, target, relation_type, weight, created, metadata FROM relations WHERE {where} ORDER BY weight DESC",  # noqa: S608
                 params,
             ).fetchall()
-        return [Relation(source=r[0], target=r[1], relation_type=r[2],
-                         weight=r[3], created=r[4], metadata=json.loads(r[5])) for r in rows]
+        return [
+            Relation(source=r[0], target=r[1], relation_type=r[2], weight=r[3], created=r[4], metadata=json.loads(r[5]))
+            for r in rows
+        ]
 
     def search_concepts(self, query: str, limit: int = 20) -> list[Concept]:
         with self._lock, sqlite3.connect(str(self._db_path)) as conn:
@@ -147,5 +173,15 @@ class SemanticMemory:
                 "ORDER BY weight DESC LIMIT ?",
                 (f"%{query}%", f"%{query}%", limit),
             ).fetchall()
-        return [Concept(name=r[0], context=r[1], weight=r[2], tags=tuple(json.loads(r[3])),
-                        created=r[4], last_seen=r[5], occurrences=r[6]) for r in rows]
+        return [
+            Concept(
+                name=r[0],
+                context=r[1],
+                weight=r[2],
+                tags=tuple(json.loads(r[3])),
+                created=r[4],
+                last_seen=r[5],
+                occurrences=r[6],
+            )
+            for r in rows
+        ]

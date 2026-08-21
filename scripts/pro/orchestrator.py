@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Orquestador de health checks — ejecuta antes de push."""
+
 import subprocess
 import sys
 from pathlib import Path

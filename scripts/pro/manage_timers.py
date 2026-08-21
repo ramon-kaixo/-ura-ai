@@ -11,6 +11,7 @@ Uso:
     python3 scripts/pro/manage_timers.py start    # enable --now todos
     python3 scripts/pro/manage_timers.py stop     # stop todos
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -94,7 +95,9 @@ def status() -> int:
             continue
         r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             ["systemctl", "is-active", f"{name}.timer"],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         estado = r.stdout.strip() or "inactive"
         print(f"  {name}.timer: {estado}")

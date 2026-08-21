@@ -49,7 +49,9 @@ class PluginMeta:
                             if isinstance(node.value, ast.Dict):
                                 d = _ast_dict_to_dict(node.value)
                                 return cls.from_dict(d)
-                            if isinstance(node.value, ast.Constant) and isinstance(node.value.value, dict):  # pragma: no cover - dict literals siempre son ast.Dict en módulos
+                            if isinstance(node.value, ast.Constant) and isinstance(
+                                node.value.value, dict
+                            ):  # pragma: no cover - dict literals siempre son ast.Dict en módulos
                                 return cls.from_dict(node.value.value)
         except SyntaxError:
             pass
@@ -137,7 +139,7 @@ class PluginBase(ABC):
     def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
         """Ejecuta la lógica del plugin. Retorna un dict con resultados."""
 
-    def rollback(self, context: dict[str, Any] | None = None) -> None:
+    def rollback(self, context: dict[str, Any] | None = None) -> None:  # noqa: B027 - hook opcional
         """Llamado cuando un pipeline revierte tras una etapa fallida.
         Opcional — sobrescribir para limpiar recursos.
         """

@@ -14,7 +14,11 @@ class PytestTool(ToolBase):
     name = "pytest"
 
     def __init__(
-        self, ura_root: Path, timeout: int = 300, use_sandbox: bool = False, disable_socket: bool = False,
+        self,
+        ura_root: Path,
+        timeout: int = 300,
+        use_sandbox: bool = False,
+        disable_socket: bool = False,
         test_target: str = "tests/",
     ) -> None:
         self._root = ura_root

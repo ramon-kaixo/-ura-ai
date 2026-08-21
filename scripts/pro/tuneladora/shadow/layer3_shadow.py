@@ -1,4 +1,5 @@
 """Layer 3: Shadow Execution — run new code vs HEAD, compare output."""
+
 from __future__ import annotations
 
 import ast
@@ -23,8 +24,12 @@ class ShadowResult:
 def _git_show(path: str, ura_root: Path) -> str:
     try:
         r = subprocess.run(
-            ["git", "show", f"HEAD:{path}"], capture_output=True, text=True,
-            timeout=10, check=False, cwd=str(ura_root),
+            ["git", "show", f"HEAD:{path}"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+            cwd=str(ura_root),
         )
         return r.stdout if r.returncode == 0 else ""
     except Exception as exc:
@@ -45,18 +50,22 @@ def _extract_callables(source: str) -> list[dict[str, Any]]:
                 if isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                     qualname = f"{node.name}.{child.name}"
                     method_ids.add(id(child))
-                    funcs.append({
-                        "name": qualname,
-                        "lineno": child.lineno,
-                        "args": [a.arg for a in child.args.args],
-                    })
+                    funcs.append(
+                        {
+                            "name": qualname,
+                            "lineno": child.lineno,
+                            "args": [a.arg for a in child.args.args],
+                        }
+                    )
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and id(node) not in method_ids:
-                funcs.append({
+            funcs.append(
+                {
                     "name": node.name,
                     "lineno": node.lineno,
                     "args": [a.arg for a in node.args.args],
-                })
+                }
+            )
     return funcs
 
 
@@ -110,7 +119,11 @@ def run(files: list[str], ura_root: Path) -> list[ShadowResult]:
         args_changed = any("~" in ch for ch in changes)
         if removed or args_changed:
             n_msg = len(removed) + (1 if args_changed else 0)
-            results.append(ShadowResult(f, "WARN", f"API surface changed ({n_msg}): removed={len(removed)}, args_changed={args_changed}"))
+            results.append(
+                ShadowResult(
+                    f, "WARN", f"API surface changed ({n_msg}): removed={len(removed)}, args_changed={args_changed}"
+                )
+            )
         else:
             results.append(ShadowResult(f, "OK", f"{len(added)} new functions"))
 

@@ -47,7 +47,9 @@ class Configuration:
         self.nervioso: Path = self.ura_root / ".nervioso"
         venv_py = self.ura_root / ".venv" / "bin" / "python3"
         self.venv_python: str = str(venv_py) if venv_py.exists() else sys.executable
-        self.ruff: str = shutil.which("ruff") or os.environ.get("TUNEL_RUFF_PATH", str(self.ura_root / ".venv" / "bin" / "ruff"))
+        self.ruff: str = shutil.which("ruff") or os.environ.get(
+            "TUNEL_RUFF_PATH", str(self.ura_root / ".venv" / "bin" / "ruff")
+        )
         self.tuneladora_dir: Path = self.ura_root / ".tuneladora"
 
         # Ollama
@@ -96,9 +98,7 @@ class Configuration:
         self.episodic_db: Path = Path(
             os.environ.get("TUNEL_EPISODIC_DB", str(self.ura_root / "knowledge" / "episodic.db"))
         )
-        self.ltm_db: Path = Path(
-            os.environ.get("TUNEL_LTM_DB", str(self.ura_root / "knowledge" / "ltm.db"))
-        )
+        self.ltm_db: Path = Path(os.environ.get("TUNEL_LTM_DB", str(self.ura_root / "knowledge" / "ltm.db")))
 
         self._load_from_pyproject()
 
@@ -143,7 +143,6 @@ class Configuration:
     @property
     def delta_snapshot_file(self) -> Path:
         return self.nervioso / "delta_snapshots" / "ultimo_ciclo.json"
-
 
 
 # test desde mac sábado, 25 de julio de 2026, 20:38:48 CEST

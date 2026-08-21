@@ -7,6 +7,7 @@ Uso:
     detector.check_ollama()    # Alerta si Ollama no responde
     detector.check_git_status()  # Alerta si hay cambios sin commitear
 """
+
 from __future__ import annotations
 
 import logging
@@ -94,7 +95,9 @@ class ProactiveDetector:
                 used_pct = round((1 - usage.f_bavail / usage.f_blocks) * 100, 1)
 
             if libre_gb < _DISK_CRIT_GB:
-                self._alert("emergency", "DISKO KRITIKOA", f"Solo {libre_gb}GB libres de {total_gb}GB ({used_pct}% usado)")
+                self._alert(
+                    "emergency", "DISKO KRITIKOA", f"Solo {libre_gb}GB libres de {total_gb}GB ({used_pct}% usado)"
+                )
                 return DetectionResult("disk", "critical", f"{libre_gb}GB libre", libre_gb)
             if libre_gb < _DISK_WARN_GB:
                 self._alert("warning", "DISKO BAXUA", f"{libre_gb}GB libres de {total_gb}GB ({used_pct}% usado)")
@@ -156,7 +159,11 @@ class ProactiveDetector:
             repo = Path(__file__).resolve().parent.parent.parent.parent
             r = subprocess.run(
                 ["git", "status", "--porcelain"],
-                capture_output=True, text=True, timeout=10, cwd=str(repo), check=False,  # nosec B603 B607
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(repo),
+                check=False,  # nosec B603 B607
             )
             if r.returncode != 0:
                 return DetectionResult("git", "error", "No es un repo git")
@@ -187,15 +194,17 @@ class ProactiveDetector:
         """Filtra solo resultados criticos."""
         return [r for r in results if r.status == "critical"]
 
-
     # ── Auto-healing (v4.0) ─────────────────────────────
 
     def restart_ollama(self) -> dict:
         try:
             import shutil
             import subprocess  # nosec B404
+
             if shutil.which("systemctl"):
-                r = subprocess.run(["systemctl", "restart", "ollama"], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
+                r = subprocess.run(
+                    ["systemctl", "restart", "ollama"], capture_output=True, text=True, timeout=30, check=False
+                )  # nosec B603 B607
                 return {"ok": r.returncode == 0, "method": "systemctl", "output": (r.stdout or "")[:200]}
             r = subprocess.run(["docker", "restart", "ollama"], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
             return {"ok": r.returncode == 0, "method": "docker", "output": (r.stdout or "")[:200]}
@@ -205,6 +214,7 @@ class ProactiveDetector:
     def clear_zombies(self) -> dict:
         """Mata procesos zombies (estado Z) del sistema, no procesos URA."""
         import os as _os
+
         killed = 0
         try:
             for entry in Path("/proc").iterdir():
@@ -227,10 +237,13 @@ class ProactiveDetector:
     def restart_service(self, service: str = "ura-tuneladora") -> dict:
         import shutil
         import subprocess  # nosec B404
+
         if not shutil.which("systemctl"):
             return {"ok": False, "error": "systemctl no disponible"}
         try:
-            r = subprocess.run(["systemctl", "restart", service], capture_output=True, text=True, timeout=30, check=False)  # nosec B603 B607
+            r = subprocess.run(
+                ["systemctl", "restart", service], capture_output=True, text=True, timeout=30, check=False
+            )  # nosec B603 B607
             return {"ok": r.returncode == 0, "service": service, "output": (r.stdout or "")[:200]}
         except Exception as e:
             return {"ok": False, "error": str(e)}

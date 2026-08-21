@@ -78,6 +78,5 @@ class SnapshotService:
                 "mtime": node.get("posix_timestamps", {}).get("st_mtime", 0),
             }
             for rel, node in deps.items()
-            if "ESPEJO" not in node.get("pipeline_state", "")
-            and "ZOMBIE" not in node.get("pipeline_state", "")
+            if "ESPEJO" not in node.get("pipeline_state", "") and "ZOMBIE" not in node.get("pipeline_state", "")
         }

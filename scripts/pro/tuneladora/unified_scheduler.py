@@ -92,20 +92,31 @@ class UnifiedScheduler:
             duration = (time.time() - t0) * 1000
             status = "failed" if result.get("error") else "completed"
 
-            self._episodic.record(Episode(
-                episode_id=ep_id, pipeline=name, status=status,
-                started=started, finished=datetime.now(UTC).isoformat(),
-                summary=result.get("summary", ""), details=result,
-                duration_ms=duration, error=result.get("error"),
-            ))
+            self._episodic.record(
+                Episode(
+                    episode_id=ep_id,
+                    pipeline=name,
+                    status=status,
+                    started=started,
+                    finished=datetime.now(UTC).isoformat(),
+                    summary=result.get("summary", ""),
+                    details=result,
+                    duration_ms=duration,
+                    error=result.get("error"),
+                )
+            )
 
             if status == "completed":
                 pipeline.consecutive_failures = 0
                 self._trigger.set_cooldown(name, pipeline.cooldown)
-                self._ltm.store(LTMEntry(
-                    key=ep_id, value=result, source=f"pipeline:{name}",
-                    tags=pipeline.tags,
-                ))
+                self._ltm.store(
+                    LTMEntry(
+                        key=ep_id,
+                        value=result,
+                        source=f"pipeline:{name}",
+                        tags=pipeline.tags,
+                    )
+                )
             else:
                 pipeline.consecutive_failures += 1
                 self._check_circuit_breaker(name, pipeline)
@@ -118,11 +129,18 @@ class UnifiedScheduler:
         except Exception as e:
             duration = (time.time() - t0) * 1000
             pipeline.consecutive_failures += 1
-            self._episodic.record(Episode(
-                episode_id=ep_id, pipeline=name, status="failed",
-                started=started, finished=datetime.now(UTC).isoformat(),
-                summary=str(e), duration_ms=duration, error=str(e),
-            ))
+            self._episodic.record(
+                Episode(
+                    episode_id=ep_id,
+                    pipeline=name,
+                    status="failed",
+                    started=started,
+                    finished=datetime.now(UTC).isoformat(),
+                    summary=str(e),
+                    duration_ms=duration,
+                    error=str(e),
+                )
+            )
             self._check_circuit_breaker(name, pipeline)
             log.error("Pipeline %s falló: %s", name, e)
             return {"error": str(e), "_episode_id": ep_id, "_status": "failed"}

@@ -5,7 +5,10 @@
 # ============================================================
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.3
+    # v0.15.18: alineada con el ruff del venv (0.16.3 estabiliza reglas preview
+    # — PLW0603/PLR0917/PTH123/S110... — y genera 480 falsos "nuevos" repo-wide;
+    # subir de nuevo requiere TASK propia con saneado previo).
+    rev: v0.15.18
     hooks:
       - id: ruff
         args: []

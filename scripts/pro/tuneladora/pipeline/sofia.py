@@ -1,4 +1,5 @@
 """Sofía — revisora LLM determinística post-estática, pre-commit."""
+
 from __future__ import annotations
 
 import json
@@ -96,8 +97,12 @@ class Sofia:
         try:
             r = requests.post(
                 f"{self.cfg.ollama_url}/api/generate",
-                json={"model": self._model, "prompt": prompt, "stream": False,
-                       "options": {"temperature": 0, "seed": 42}},
+                json={
+                    "model": self._model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0, "seed": 42},
+                },
                 timeout=self.cfg.timeout_llm,
             )
             r.raise_for_status()
@@ -112,8 +117,12 @@ class Sofia:
         report.modelo = self._model
         report.n_criticos = sum(1 for h in report.hallazgos if h.tipo == "critico")
         report.n_advertencias = sum(1 for h in report.hallazgos if h.tipo == "advertencia")
-        log.info("Sofia: %d críticos, %d advertencias en %.0fms",
-                 report.n_criticos, report.n_advertencias, report.duracion_ms)
+        log.info(
+            "Sofia: %d críticos, %d advertencias en %.0fms",
+            report.n_criticos,
+            report.n_advertencias,
+            report.duracion_ms,
+        )
         return report
 
     def _parse_response(self, raw: str) -> SofiaReport | None:
@@ -130,13 +139,15 @@ class Sofia:
                 return None
         hallazgos = []
         for h in data.get("hallazgos", []):
-            hallazgos.append(SofiaHallazgo(
-                tipo=h.get("tipo", "info"),
-                archivo=h.get("archivo", ""),
-                linea=h.get("linea", 0),
-                mensaje=h.get("mensaje", ""),
-                sugerencia=h.get("sugerencia", ""),
-            ))
+            hallazgos.append(
+                SofiaHallazgo(
+                    tipo=h.get("tipo", "info"),
+                    archivo=h.get("archivo", ""),
+                    linea=h.get("linea", 0),
+                    mensaje=h.get("mensaje", ""),
+                    sugerencia=h.get("sugerencia", ""),
+                )
+            )
         return SofiaReport(
             hallazgos=hallazgos,
             resumen=data.get("resumen", ""),

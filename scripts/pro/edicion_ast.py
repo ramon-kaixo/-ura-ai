@@ -135,10 +135,7 @@ def diff_quirurgico(fuente_original: str, codigo_llm: str, firma_original: str) 
     except SyntaxError as e:
         return False, f"sintaxis en respuesta: {e}"
 
-    funciones_llm = [
-        n for n in tree_llm.body
-        if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-    ]
+    funciones_llm = [n for n in tree_llm.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     if not funciones_llm:
         return False, "sin funciones en la respuesta"
 

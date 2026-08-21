@@ -1,4 +1,5 @@
 """CircuitBreaker + escalado para pipelines."""
+
 from __future__ import annotations
 
 import time

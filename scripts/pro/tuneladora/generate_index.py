@@ -1,4 +1,5 @@
 """generate_index — indexa el código fuente en memoria semántica + repo_index.json."""
+
 from __future__ import annotations
 
 import ast
@@ -23,15 +24,23 @@ def extract_functions(source: Path) -> list[dict[str, Any]]:
     funcs: list[dict[str, Any]] = []
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            funcs.append({
-                "name": node.name, "type": "function", "lineno": node.lineno,
-                "source": str(source),
-            })
+            funcs.append(
+                {
+                    "name": node.name,
+                    "type": "function",
+                    "lineno": node.lineno,
+                    "source": str(source),
+                }
+            )
         elif isinstance(node, ast.ClassDef):
-            funcs.append({
-                "name": node.name, "type": "class", "lineno": node.lineno,
-                "source": str(source),
-            })
+            funcs.append(
+                {
+                    "name": node.name,
+                    "type": "class",
+                    "lineno": node.lineno,
+                    "source": str(source),
+                }
+            )
     return funcs
 
 
@@ -42,7 +51,11 @@ def extract_calls(source: Path) -> list[tuple[str, str]]:
         return []
     calls: list[tuple[str, str]] = []
     for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and isinstance(node.func.value, ast.Name)
+        ):
             calls.append((node.func.value.id, node.func.attr))
         elif isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
             calls.append(("module", node.func.id))
@@ -67,10 +80,14 @@ def build_index(cfg: Configuration, changed_files: list[Path] | None = None) -> 
         funcs = extract_functions(f)
         calls = extract_calls(f)
         for fn in funcs:
-            semantic.learn_concept(Concept(
-                name=fn["name"], context=str(rel), weight=1.0,
-                tags=(fn["type"],),
-            ))
+            semantic.learn_concept(
+                Concept(
+                    name=fn["name"],
+                    context=str(rel),
+                    weight=1.0,
+                    tags=(fn["type"],),
+                )
+            )
         for caller, callee in calls:
             semantic.learn_relation(Relation(source=caller, target=callee, relation_type="calls"))
         index["sources"][str(rel)] = {"functions": funcs, "calls": calls}
@@ -81,8 +98,13 @@ def build_index(cfg: Configuration, changed_files: list[Path] | None = None) -> 
 
     index_path = cfg.tuneladora_dir / "repo_index.json"
     index_path.write_text(json.dumps(index, indent=2, ensure_ascii=False))
-    log.info("Index guardado en %s: %d funciones, %d relaciones en %d archivos",
-             index_path, index["stats"]["functions"], index["stats"]["relations"], index["stats"]["files"])
+    log.info(
+        "Index guardado en %s: %d funciones, %d relaciones en %d archivos",
+        index_path,
+        index["stats"]["functions"],
+        index["stats"]["relations"],
+        index["stats"]["files"],
+    )
     return index
 
 
@@ -91,8 +113,12 @@ def main() -> None:
     cfg = Configuration()
     changed: list[Path] = []
     out = subprocess.run(
-        ["git", "diff", "--name-only"], capture_output=True, text=True, timeout=10,
-        check=False, cwd=str(cfg.ura_root),
+        ["git", "diff", "--name-only"],
+        capture_output=True,
+        text=True,
+        timeout=10,
+        check=False,
+        cwd=str(cfg.ura_root),
     )
     if out.returncode == 0 and out.stdout:
         changed = [cfg.ura_root / f.strip() for f in out.stdout.split("\n") if f.strip().endswith(".py")]

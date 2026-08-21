@@ -1,4 +1,5 @@
 """Fase 1: AutoTrigger — detección automática de mejora continua + integración pipeline."""
+
 from __future__ import annotations
 
 import logging
@@ -11,6 +12,7 @@ try:
     from scripts.pro.tuneladora.config import Configuration
     from scripts.pro.tuneladora.pipeline.runner import PipelineRunner
     from scripts.pro.tuneladora.pipeline.tools.base import Status
+
     _PIPELINE_AVAILABLE = True
 except ImportError:
     _PIPELINE_AVAILABLE = False
@@ -80,7 +82,10 @@ class AutoTrigger:
                 return {"status": "ok", "message": "Codigo validado y listo"}
             if result == Status.WARN:
                 return {"status": "warn", "message": "Codigo validado con advertencias"}
-            return {"status": "fail", "message": "Codigo rechazado, rollback ejecutado. Revisa pending_fixes con --pending"}
+            return {
+                "status": "fail",
+                "message": "Codigo rechazado, rollback ejecutado. Revisa pending_fixes con --pending",
+            }
         except Exception as exc:
             log.warning("Pipeline fallo, continuando sin validacion: %s", exc)
             return {"status": "skip", "message": f"Pipeline fallo, continuando sin validacion: {exc}"}
@@ -183,7 +188,10 @@ class AutoTrigger:
         log.log(
             logging.WARNING if event.severity in ("warning", "critical") else logging.INFO,
             "TriggerEvent %s: %s (value=%s, threshold=%s)",
-            event.condition, event.message, event.value, event.threshold,
+            event.condition,
+            event.message,
+            event.value,
+            event.threshold,
         )
 
     def get_events(self, limit: int = 50, severity: str | None = None) -> list[TriggerEvent]:
@@ -196,10 +204,7 @@ class AutoTrigger:
         return {
             "total_events": len(self._events),
             "last_trigger": self._last_trigger.copy(),
-            "active_cooldowns": {
-                k: self.cooldown_remaining(k)
-                for k in list(self._cooldown.keys())
-            },
+            "active_cooldowns": {k: self.cooldown_remaining(k) for k in list(self._cooldown.keys())},
         }
 
     # ── Internal checks ──────────────────────────────────────
@@ -210,14 +215,22 @@ class AutoTrigger:
 
             result = subprocess.run(
                 ["ruff", "check", "--output-format", "concise", "--statistics", "."],
-                capture_output=True, text=True, timeout=30, check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
             )
             count = self._parse_ruff_count(result.stderr or result.stdout)
             if count > 10:
-                self.record_event(TriggerEvent(
-                    condition="ruff_errors", value=count, threshold=10,
-                    severity="warning", message=f"Ruff encontró {count} errores",
-                ))
+                self.record_event(
+                    TriggerEvent(
+                        condition="ruff_errors",
+                        value=count,
+                        threshold=10,
+                        severity="warning",
+                        message=f"Ruff encontró {count} errores",
+                    )
+                )
                 return True
             return False
         except Exception as e:
@@ -226,22 +239,32 @@ class AutoTrigger:
 
     def _parse_ruff_count(self, output: str) -> int:
         import re
+
         match = re.search(r"Found (\d+) error", output)
         return int(match.group(1)) if match else 0
 
     def _check_git_dirty(self) -> bool:
         try:
             import subprocess
+
             result = subprocess.run(
                 ["git", "status", "--porcelain"],
-                capture_output=True, text=True, timeout=10, check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                check=False,
             )
             count = len([l for l in result.stdout.split("\n") if l.strip()])
             if count > 5:
-                self.record_event(TriggerEvent(
-                    condition="git_dirty", value=count, threshold=5,
-                    severity="info", message=f"Working tree sucio: {count} archivos",
-                ))
+                self.record_event(
+                    TriggerEvent(
+                        condition="git_dirty",
+                        value=count,
+                        threshold=5,
+                        severity="info",
+                        message=f"Working tree sucio: {count} archivos",
+                    )
+                )
                 return True
             return count > 0
         except Exception:

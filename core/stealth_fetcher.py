@@ -20,7 +20,7 @@ DEFAULT_TIMEOUT = 30
 
 
 def _random_ua() -> str:
-    return random.choice(USER_AGENTS)
+    return random.choice(USER_AGENTS)  # noqa: S311 - UA aleatorio, no cripto
 
 
 def _default_headers() -> dict:
@@ -35,7 +35,10 @@ def _default_headers() -> dict:
     }
 
 
-async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
+async def fetch(
+    url: str,
+    timeout: int = DEFAULT_TIMEOUT,  # noqa: ASYNC109 - API publica
+) -> str | None:
     headers = _default_headers()
     try:
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
@@ -48,7 +51,10 @@ async def fetch(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
         return None
 
 
-async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
+async def fetch_stealth(
+    url: str,
+    timeout: int = DEFAULT_TIMEOUT,  # noqa: ASYNC109 - API publica
+) -> str | None:
     try:
         from playwright.async_api import async_playwright
 
@@ -75,7 +81,9 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
                     try:
                         page = await context.new_page()
                         await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                        return await page.content()  # pragma: no cover - cubierto en aislamiento; fakes de playwright colisionan en suite
+                        return (
+                            await page.content()
+                        )  # pragma: no cover - cubierto en aislamiento; fakes de playwright colisionan en suite
                     except Exception:
                         log.warning("fallback goto also failed for %s", url)
                         return None
@@ -92,7 +100,10 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
         return None
 
 
-async def fetch_with_fallback(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
+async def fetch_with_fallback(
+    url: str,
+    timeout: int = DEFAULT_TIMEOUT,  # noqa: ASYNC109 - API publica
+) -> str | None:
     result = await fetch_stealth(url, timeout)
     if result:
         return result

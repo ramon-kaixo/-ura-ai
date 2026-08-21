@@ -56,5 +56,3 @@ class LRUCache:
 
 
 # ── Funciones auxiliares ─────────────────────────────────
-
-

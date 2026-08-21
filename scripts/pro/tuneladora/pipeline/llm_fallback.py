@@ -57,6 +57,7 @@ class LLMFallback:
         # Ajustar contexto óptimo para el LLM según tamaño del prompt
         try:
             from scripts.pro import ajustar_contexto as _ajustar_contexto
+
             tokens_prompt = _ajustar_contexto.estimar_tokens(prompt)
             num_predict = _ajustar_contexto.ajustar_contexto(tokens_prompt, max_modelo=100000, factor_colchon=1.5)
         except Exception:
@@ -66,7 +67,12 @@ class LLMFallback:
             try:
                 r = requests.post(
                     url,
-                    json={"model": self.cfg.llm_fallback_model, "prompt": prompt, "stream": False, "options": {"num_predict": num_predict}},
+                    json={
+                        "model": self.cfg.llm_fallback_model,
+                        "prompt": prompt,
+                        "stream": False,
+                        "options": {"num_predict": num_predict},
+                    },
                     timeout=self.cfg.timeout_llm,
                 )
                 r.raise_for_status()

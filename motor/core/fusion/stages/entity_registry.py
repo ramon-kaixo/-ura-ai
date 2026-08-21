@@ -295,5 +295,3 @@ _DEFAULT_REGISTRY = EntityRegistry(_DEFAULT_ENTRIES)
 
 
 # ── LRU Cache (solo entradas independientes de contexto) ─
-
-

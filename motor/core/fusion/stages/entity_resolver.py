@@ -6,7 +6,7 @@ API pública intacta (re-exports desde los submódulos):
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 from motor.core.fusion.base import BaseStage, EntityResolver
 from motor.core.fusion.engine import FusionStage
@@ -18,6 +18,7 @@ from motor.core.fusion.stages.entity_scoring import KeywordScorer, ScoringStrate
 
 if TYPE_CHECKING:
     from motor.core.fusion.models import FusionContext
+
 
 def _extract_entity_candidates(text: str, registry: EntityRegistry, max_ngram: int = 3) -> list[str]:
     """Extrae n-gramas del texto que coinciden con entidades conocidas.
@@ -49,7 +50,7 @@ class RuleBasedEntityResolver(EntityResolver):
     para producción: soporta desambiguación contextual y cache.
     """
 
-    _LEGACY: dict[str, dict[str, str | list[str]]] = {
+    _LEGACY: ClassVar[dict[str, dict[str, str | list[str]]]] = {
         "apple": {"id": "E0001", "name": "Apple", "aliases": ["apple inc.", "apple computer"]},
         "microsoft": {"id": "E0002", "name": "Microsoft", "aliases": ["microsoft corp.", "ms"]},
         "google": {"id": "E0003", "name": "Google", "aliases": ["google inc.", "alphabet"]},

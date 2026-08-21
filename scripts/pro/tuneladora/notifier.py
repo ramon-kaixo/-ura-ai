@@ -15,6 +15,7 @@ a pesar de tener entry point CLI. El runner lo invoca directamente en _finish;
 registrarlo como plugin haría que la fase "post" del registry lo ejecutara
 una segunda vez (notificación duplicada).
 """
+
 from __future__ import annotations
 
 import json
@@ -84,16 +85,18 @@ def _notificar_memoria(msg: str, reporte: dict) -> None:
     from motor.intelligence.memory.episodic import Episode, EpisodeStore
 
     store = EpisodeStore()
-    store.store(Episode(
-        session_id="tuneladora",
-        source="pipeline",
-        payload=msg,
-        tags=["pipeline_fallo", "tuneladora"],
-        metadata={
-            "verdict": reporte.get("verdict"),
-            "mode": reporte.get("mode"),
-        },
-    ))
+    store.store(
+        Episode(
+            session_id="tuneladora",
+            source="pipeline",
+            payload=msg,
+            tags=["pipeline_fallo", "tuneladora"],
+            metadata={
+                "verdict": reporte.get("verdict"),
+                "mode": reporte.get("mode"),
+            },
+        )
+    )
 
 
 def _notificar_terminal(msg: str, stream=None) -> None:

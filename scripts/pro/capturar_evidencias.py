@@ -9,6 +9,7 @@ Guarda en data/evidencias/<timestamp>.json:
 
 Uso: python3 scripts/pro/capturar_evidencias.py
 """
+
 from __future__ import annotations
 
 import json
@@ -33,7 +34,9 @@ def recoger_evidencias() -> dict:
     evidencias: dict = {}
 
     # Tests: colección
-    out = _run([sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q", "--no-header", "-p", "no:cacheprovider"])
+    out = _run(
+        [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q", "--no-header", "-p", "no:cacheprovider"]
+    )
     import re
 
     m = re.search(r"(\d+) tests collected", out)

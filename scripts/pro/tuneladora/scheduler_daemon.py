@@ -1,4 +1,5 @@
 """Scheduler daemon — punto de entrada systemd para TuneladoraScheduler."""
+
 from __future__ import annotations
 
 import asyncio

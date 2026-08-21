@@ -239,7 +239,11 @@ def gate_mutmut(modulo: str, umbral_muertos: int, dry: bool = False) -> dict:
         }
     # exit code 1 sin survived explícitos (fallo de lote) -> pendiente, no bloquea
     if "exit code" in texto and "Exit code: 1" in texto and not sobrevivientes:
-        return {"code": 2, "salida": "reporte mutmut del día con exit 1 sin sobrevivientes (pendiente de revisión)", "muertos": None}
+        return {
+            "code": 2,
+            "salida": "reporte mutmut del día con exit 1 sin sobrevivientes (pendiente de revisión)",
+            "muertos": None,
+        }
     return {"code": 0, "salida": "módulo cubierto por el reporte mutmut del día (sin sobrevivientes)", "muertos": None}
 
 
@@ -367,18 +371,18 @@ def _emitir_contratos_llm(data: dict) -> None:
     - docs/udo/coverage-reports/   : reporte markdown (ya generado)
     """
     out = Path(".nervioso")
-    alertas = {
-        m: est
-        for m, est in data.get("modulos", {}).items()
-        if est.get("estado") in ("alerta", "bloqueado")
-    }
+    alertas = {m: est for m, est in data.get("modulos", {}).items() if est.get("estado") in ("alerta", "bloqueado")}
     # regresión diaria: módulos que pasaron de verde a alerta/bloqueado vs reporte anterior
     regresion = []
     reportes = sorted((REPO / "docs" / "udo" / "coverage-reports").glob("*.md"))
     if len(reportes) >= 2:
         anterior = reportes[-2].read_text(errors="ignore")
         for m, est in data.get("modulos", {}).items():
-            if est.get("estado") in ("alerta", "bloqueado") and m in anterior and "verde" not in anterior.split(m)[1][:200]:
+            if (
+                est.get("estado") in ("alerta", "bloqueado")
+                and m in anterior
+                and "verde" not in anterior.split(m)[1][:200]
+            ):
                 regresion.append(m)
     (out / "regresion_diaria.json").write_text(
         json.dumps({"fecha": _now(), "modulos_en_regresion": regresion}, ensure_ascii=False, indent=2)
@@ -404,7 +408,9 @@ def _emitir_contratos_llm(data: dict) -> None:
         )
     )
     (out / "flaky_tests.json").write_text(json.dumps(flakies, ensure_ascii=False, indent=2))
-    print(f"Contratos LLM: {out/'llm_proposal.json'} ({len(alertas)} alertas), {out/'flaky_tests.json'} ({len(flakies)} flakies)")
+    print(
+        f"Contratos LLM: {out / 'llm_proposal.json'} ({len(alertas)} alertas), {out / 'flaky_tests.json'} ({len(flakies)} flakies)"
+    )
 
 
 def _modulos_pendientes(data: dict) -> list[str]:
@@ -437,7 +443,9 @@ def main(argv: list[str] | None = None) -> int:
     data = _load_state()
     if args.status or args.reporte:
         for m, est in sorted(data["modulos"].items()):
-            print(f"{est.get('estado','?'):10s} {m:40s} intentos={est.get('intentos',0)} antes={est.get('cobertura_antes','?')}")
+            print(
+                f"{est.get('estado', '?'):10s} {m:40s} intentos={est.get('intentos', 0)} antes={est.get('cobertura_antes', '?')}"
+            )
         if args.reporte:
             out = Path("docs/udo/coverage-reports")
             out.mkdir(parents=True, exist_ok=True)
@@ -446,7 +454,7 @@ def main(argv: list[str] | None = None) -> int:
                 "# Reporte de cobertura del pipeline\n\n"
                 "| Módulo | Estado | Intentos | Cobertura antes | Traza última |\n|---|---|---|---|---|\n"
                 + "\n".join(
-                    f"| {m} | {est.get('estado','?')} | {est.get('intentos',0)} | {est.get('cobertura_antes','-')} | {est['trazabilidad'][-1]['evento'] if est.get('trazabilidad') else '-'} |"
+                    f"| {m} | {est.get('estado', '?')} | {est.get('intentos', 0)} | {est.get('cobertura_antes', '-')} | {est['trazabilidad'][-1]['evento'] if est.get('trazabilidad') else '-'} |"
                     for m, est in sorted(data["modulos"].items())
                 )
                 + "\n"

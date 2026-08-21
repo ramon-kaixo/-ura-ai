@@ -12,6 +12,7 @@ Uso:
 
 Exit code: 0 = sin pendientes · 1 = hay pendientes (para cron/gates).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -79,9 +80,7 @@ def find_tasks_atascadas(days: int = 3) -> list[str]:
             continue
         created = datetime.strptime(m.group(1), "%Y%m%d")  # noqa: DTZ007 — legacy/estable, sin cambio de comportamiento
         if (datetime.now() - created).days >= days:  # noqa: DTZ005 — legacy/estable, sin cambio de comportamiento
-            pendientes.append(
-                f"TASK {m_estado.group(1)} atascada ({created.date()}): {f.stem}"
-            )
+            pendientes.append(f"TASK {m_estado.group(1)} atascada ({created.date()}): {f.stem}")
     return pendientes
 
 
@@ -110,6 +109,7 @@ def main() -> int:
         try:
             sys.path.insert(0, str(ROOT))
             from core.notifier import notify  # type: ignore[import-not-found]
+
             msg = "".join(f"\n- {p}" for p in pendientes)
             ok = notify(f"Orquestador: {len(pendientes)} pendiente(s):{msg}")
             print(f"Notificación enviada: {ok}")
