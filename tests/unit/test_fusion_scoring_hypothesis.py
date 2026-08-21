@@ -29,7 +29,7 @@ def test_scorer_sin_coincidencias_es_ambiguo(
     kws: list[list[str]], contexto: str
 ) -> None:
     # Garantiza que NINGUNA keyword aparezca en el contexto.
-    limpio = " ".join(ch for ch in contexto if ch not in "_")
+    limpio = " ".join(ch for ch in contexto if ch != "_")
     supuestas = {k for grupo in kws for k in grupo}
     for k in list(supuestas):
         limpio = limpio.replace(k[:1], "q")
