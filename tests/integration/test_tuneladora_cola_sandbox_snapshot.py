@@ -1,4 +1,5 @@
 """Tests para llm_fallback, pending_queue, sandbox y snapshot de la tuneladora."""
+
 from __future__ import annotations
 
 import json
@@ -133,9 +134,7 @@ class TestSandbox:
         assert m_set.call_args_list[1][0][0] == resource.RLIMIT_AS
 
     def test_preexec(self) -> None:
-        with mock.patch(
-            "scripts.pro.tuneladora.pipeline.sandbox.set_sandbox_limits"
-        ) as m_set:
+        with mock.patch("scripts.pro.tuneladora.pipeline.sandbox.set_sandbox_limits") as m_set:
             preexec_fn()
         m_set.assert_called_once()
 

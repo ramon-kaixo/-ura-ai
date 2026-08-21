@@ -5,6 +5,7 @@ NUNCA deben apuntar plugin.repo_root al repo real: backup_code() ejecuta
 `git stash push` y rollback() ejecuta `git checkout .`, que destruyen el
 working tree del desarrollador.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -116,7 +117,12 @@ class TestInstaller:
 
     def test_install_returns_dict(self, installer):
         with mock.patch.object(installer, "check_requirements") as mock_req:
-            mock_req.return_value = {"python": {"ok": True}, "pip": {"ok": True}, "git": {"ok": True}, "disk": {"ok": True}}
+            mock_req.return_value = {
+                "python": {"ok": True},
+                "pip": {"ok": True},
+                "git": {"ok": True},
+                "disk": {"ok": True},
+            }
             result = installer.install()
             assert "status" in result or "error" in result
 

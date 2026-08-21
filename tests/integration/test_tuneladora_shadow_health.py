@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/shadow/shadow_health.py."""
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -119,9 +120,7 @@ class TestRunAll:
 
     def test_fail_fast_aborta(self) -> None:
         sh = ShadowHealth(_cfg(), layers=[0, 1, 2])
-        sh.run_layer = mock.Mock(
-            side_effect=[LayerResult(0, "env", "OK"), LayerResult(1, "static", "FAIL")]
-        )
+        sh.run_layer = mock.Mock(side_effect=[LayerResult(0, "env", "OK"), LayerResult(1, "static", "FAIL")])
         results = sh.run_all()
         assert len(results) == 2  # para en layer 1
 
@@ -287,9 +286,7 @@ class TestLayersConDiffFiles:
         sh = ShadowHealth(_cfg())
         sh._diff_files = ["a.py"]
         runner = mock.Mock()
-        runner.phase_static.return_value = [
-            SimpleNamespace(status="OK"), SimpleNamespace(status="WARN")
-        ]
+        runner.phase_static.return_value = [SimpleNamespace(status="OK"), SimpleNamespace(status="WARN")]
         sh._get_or_create_runner = mock.Mock(return_value=runner)
         r = sh._layer1_static()
         assert r.status == "WARN"
@@ -316,6 +313,7 @@ class TestLayersConDiffFiles:
     def test_layer4_timeout(self) -> None:
         sh = ShadowHealth(_cfg())
         import subprocess as _sp
+
         with mock.patch(
             "scripts.pro.tuneladora.shadow.shadow_health.subprocess.run",
             mock.Mock(side_effect=_sp.TimeoutExpired(cmd="pytest", timeout=120)),

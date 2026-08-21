@@ -1,12 +1,10 @@
 """Tests para la infraestructura de hooks de git (Módulo 4)."""
+
 from __future__ import annotations
 
 import os
 import subprocess
 from pathlib import Path
-from unittest import mock
-
-import pytest
 
 
 def _project_root() -> Path:
@@ -28,10 +26,7 @@ class TestPostCommitHook:
         repo.mkdir()
         hook = repo / "post-commit"
         hook.write_text(
-            "#!/bin/sh\n"
-            "if [ -n \"$URA_TUNELADORA_POST_COMMIT\" ]; then\n"
-            "  touch triggered\n"
-            "fi\n",
+            '#!/bin/sh\nif [ -n "$URA_TUNELADORA_POST_COMMIT" ]; then\n  touch triggered\nfi\n',
         )
         os.chmod(hook, 0o755)
         r = subprocess.run([str(hook)], capture_output=True, text=True, timeout=10)
@@ -43,10 +38,7 @@ class TestPostCommitHook:
         repo.mkdir()
         hook = repo / "post-commit"
         hook.write_text(
-            "#!/bin/sh\n"
-            "if [ -n \"$URA_TUNELADORA_POST_COMMIT\" ]; then\n"
-            "  touch triggered\n"
-            "fi\n",
+            '#!/bin/sh\nif [ -n "$URA_TUNELADORA_POST_COMMIT" ]; then\n  touch triggered\nfi\n',
         )
         os.chmod(hook, 0o755)
         env = dict(os.environ, URA_TUNELADORA_POST_COMMIT="1")

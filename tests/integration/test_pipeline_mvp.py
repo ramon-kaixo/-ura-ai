@@ -22,8 +22,11 @@ from motor.plugin.registry_v2 import PluginRegistryV2
 
 
 class _SimplePlugin(PluginBase):
-    def on_load(self) -> None: pass
-    def on_unload(self) -> None: pass
+    def on_load(self) -> None:
+        pass
+
+    def on_unload(self) -> None:
+        pass
 
     def __init__(self, name: str = "simple") -> None:
         super().__init__()
@@ -40,8 +43,11 @@ class _SimplePlugin(PluginBase):
 
 
 class _FailingPlugin(PluginBase):
-    def on_load(self) -> None: pass
-    def on_unload(self) -> None: pass
+    def on_load(self) -> None:
+        pass
+
+    def on_unload(self) -> None:
+        pass
 
     def __init__(self, name: str = "failing") -> None:
         super().__init__()
@@ -55,8 +61,11 @@ class _FailingPlugin(PluginBase):
 
 
 class _CancellingPlugin(PluginBase):
-    def on_load(self) -> None: pass
-    def on_unload(self) -> None: pass
+    def on_load(self) -> None:
+        pass
+
+    def on_unload(self) -> None:
+        pass
 
     def __init__(self, name: str = "cancelling") -> None:
         super().__init__()
@@ -70,8 +79,11 @@ class _CancellingPlugin(PluginBase):
 
 
 class _ContextPlugin(PluginBase):
-    def on_load(self) -> None: pass
-    def on_unload(self) -> None: pass
+    def on_load(self) -> None:
+        pass
+
+    def on_unload(self) -> None:
+        pass
 
     def __init__(self, name: str = "context") -> None:
         super().__init__()

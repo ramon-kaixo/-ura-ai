@@ -1,4 +1,5 @@
 """Tests para logger.py y config.py de la tuneladora."""
+
 from __future__ import annotations
 
 import io
@@ -58,9 +59,7 @@ class TestConfigPyproject:
     def test_carga_valores(self, tmp_path: Path, monkeypatch) -> None:
         cfg = Configuration()
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text(
-            '[tool.tuneladora]\nllm-fallback-model = "test-model"\nunsafe-fixes = false\n'
-        )
+        pyproject.write_text('[tool.tuneladora]\nllm-fallback-model = "test-model"\nunsafe-fixes = false\n')
         monkeypatch.setattr(cfg, "ura_root", tmp_path)
         monkeypatch.setattr(cfg, "llm_fallback_model", "original")
         monkeypatch.setattr(cfg, "unsafe_fixes", True)

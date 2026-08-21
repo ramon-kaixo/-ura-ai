@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/pipeline/sofia.py."""
+
 from __future__ import annotations
 
 import json
@@ -33,8 +34,6 @@ class TestShouldReview:
         s = Sofia(_cfg())
         assert s.should_review("", "api", False, 11) is True
 
-
-
     def test_tests_modificados(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("+c", "", True, 0) is True
@@ -47,7 +46,12 @@ class TestShouldReview:
 class TestParseResponse:
     def test_json_directo(self) -> None:
         s = Sofia(_cfg())
-        raw = json.dumps({"hallazgos": [{"tipo": "critico", "archivo": "a.py", "linea": 3, "mensaje": "m", "sugerencia": "s"}], "resumen": "r"})
+        raw = json.dumps(
+            {
+                "hallazgos": [{"tipo": "critico", "archivo": "a.py", "linea": 3, "mensaje": "m", "sugerencia": "s"}],
+                "resumen": "r",
+            }
+        )
         report = s._parse_response(raw)
         assert report is not None
         assert report.hallazgos[0].tipo == "critico"
@@ -90,7 +94,14 @@ class TestReview:
         resp = SimpleNamespace(
             status_code=200,
             raise_for_status=lambda: None,
-            json=lambda: {"response": json.dumps({"hallazgos": [{"tipo": "advertencia", "archivo": "b.py", "linea": 1, "mensaje": "x"}], "resumen": "r"})},
+            json=lambda: {
+                "response": json.dumps(
+                    {
+                        "hallazgos": [{"tipo": "advertencia", "archivo": "b.py", "linea": 1, "mensaje": "x"}],
+                        "resumen": "r",
+                    }
+                )
+            },
         )
         with mock.patch("requests.post", return_value=resp) as m_post:
             report = s.review("x" * 10001, "", "", 1)

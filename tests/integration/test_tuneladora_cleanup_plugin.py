@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/plugins/cleanup.py (CleanupPlugin)."""
+
 from __future__ import annotations
 
 import shutil
@@ -112,7 +113,8 @@ class TestVacuumSqlite:
 class TestCheckDisk:
     def test_ok(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(
-            shutil, "disk_usage",
+            shutil,
+            "disk_usage",
             lambda p: SimpleNamespace(total=1000, used=500, free=500),
         )
         result = plugin.check_disk(threshold=90.0)
@@ -121,7 +123,8 @@ class TestCheckDisk:
 
     def test_warning(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(
-            shutil, "disk_usage",
+            shutil,
+            "disk_usage",
             lambda p: SimpleNamespace(total=1000, used=950, free=50),
         )
         result = plugin.check_disk(threshold=90.0)
@@ -236,7 +239,9 @@ class TestGit:
 
 class TestAuditoria:
     def test_quick_con_json(self, plugin: CleanupPlugin) -> None:
-        plugin.engine.run_script.return_value = SimpleNamespace(returncode=0, stdout='{"score": 80, "bloqueante": false}')
+        plugin.engine.run_script.return_value = SimpleNamespace(
+            returncode=0, stdout='{"score": 80, "bloqueante": false}'
+        )
         result = plugin.auditoria()
         assert result["score"] == 80
         assert result["bloqueante"] is False
@@ -252,6 +257,8 @@ class TestAuditoria:
         assert result["score"] == 0
 
     def test_bloqueante_loguea(self, plugin: CleanupPlugin) -> None:
-        plugin.engine.run_script.return_value = SimpleNamespace(returncode=0, stdout='{"score": 30, "bloqueante": true}')
+        plugin.engine.run_script.return_value = SimpleNamespace(
+            returncode=0, stdout='{"score": 30, "bloqueante": true}'
+        )
         plugin.auditoria()
         plugin.engine.log.warning.assert_called()

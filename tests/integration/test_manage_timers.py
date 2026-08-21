@@ -1,4 +1,5 @@
 """Tests para scripts/pro/manage_timers.py (Módulo 7)."""
+
 from __future__ import annotations
 
 import sys
@@ -83,7 +84,5 @@ class TestFuncionesComando:
     def test_main_generate(self) -> None:
         from manage_timers import main
 
-        with mock.patch("sys.argv", ["manage_timers.py", "generate"]), mock.patch(
-            "manage_timers.generar_unidades"
-        ):
+        with mock.patch("sys.argv", ["manage_timers.py", "generate"]), mock.patch("manage_timers.generar_unidades"):
             assert main() == 0

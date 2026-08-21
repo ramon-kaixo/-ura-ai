@@ -1,5 +1,5 @@
-"""Integration tests: Knowledge DB → RuleEvaluator (SQLite temp real).
-"""
+"""Integration tests: Knowledge DB → RuleEvaluator (SQLite temp real)."""
+
 from __future__ import annotations
 
 import json
@@ -56,7 +56,7 @@ def _create_db(
         );
     """)
 
-    for n in (nodes or []):
+    for n in nodes or []:
         conn.execute(
             "INSERT INTO kg_nodes (id, type, path, content_sha256, frontmatter, body, updated_at) "
             "VALUES (?, ?, ?, ?, ?, ?, datetime('now'))",
@@ -70,7 +70,7 @@ def _create_db(
             ),
         )
 
-    for e in (edges or []):
+    for e in edges or []:
         conn.execute(
             "INSERT INTO kg_edges (src, dst, relation) VALUES (?, ?, ?)",
             (e["src"], e["dst"], e.get("relation", "references")),
@@ -95,15 +95,17 @@ def _run_rules(db_path: Path) -> list:
     documents = []
     for r in rows:
         fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
-        documents.append({
-            "id": r["id"],
-            "path": r["path"],
-            "type": r["type"],
-            "title": fm.get("title", ""),
-            "tags": fm.get("tags", []),
-            "body": r["body"] or "",
-            "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
-        })
+        documents.append(
+            {
+                "id": r["id"],
+                "path": r["path"],
+                "type": r["type"],
+                "title": fm.get("title", ""),
+                "tags": fm.get("tags", []),
+                "body": r["body"] or "",
+                "relations": [e["dst"] for e in edges if e["src"] == r["id"]],
+            }
+        )
 
     evaluator = RuleEvaluator()
     return evaluator.evaluate(documents, all_node_ids, all_relation_targets)
@@ -178,11 +180,13 @@ class TestRulesIntegration:
         """A perfect document triggers no rules.
         Needs an incoming relation to avoid R005 (orphan)."""
         db_path = _create_db(
-            nodes=[{
-                "id": "perfect",
-                "frontmatter": {"title": "Perfect", "tags": ["clean"]},
-                "body": "This document has everything it needs.",
-            }],
+            nodes=[
+                {
+                    "id": "perfect",
+                    "frontmatter": {"title": "Perfect", "tags": ["clean"]},
+                    "body": "This document has everything it needs.",
+                }
+            ],
             edges=[{"src": "some-parent", "dst": "perfect"}],
         )
         findings = _run_rules(db_path)

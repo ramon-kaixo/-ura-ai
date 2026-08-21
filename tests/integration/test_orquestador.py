@@ -1,4 +1,5 @@
 """Tests para scripts/pro/orquestador.py (Módulo 8)."""
+
 from __future__ import annotations
 
 import json
@@ -88,8 +89,14 @@ class TestEjecutar:
 
     def test_fases_orden(self) -> None:
         assert FASES == [
-            "contexto", "planificacion", "implementacion",
-            "revision", "tests", "auditoria", "quality_gate", "commit",
+            "contexto",
+            "planificacion",
+            "implementacion",
+            "revision",
+            "tests",
+            "auditoria",
+            "quality_gate",
+            "commit",
         ]
 
 

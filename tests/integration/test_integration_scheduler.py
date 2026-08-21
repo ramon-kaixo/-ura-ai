@@ -1,4 +1,5 @@
 """Tests de integracion: Scheduler + Brain (A3)."""
+
 from __future__ import annotations
 
 from unittest import mock
@@ -27,6 +28,7 @@ class TestSchedulerIntegration:
         # Verificar que los pipelines se registran (sin iniciar asyncio)
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
             s = TuneladoraScheduler()
             s.add_pipeline("health", interval_minutes=5, auto_execute_safe=True)
             s.add_pipeline("cleanup", interval_minutes=60, auto_execute_safe=True)
@@ -43,6 +45,7 @@ class TestSchedulerIntegration:
     def test_scheduler_add_and_remove_pipeline(self, maintainer):
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
             s = TuneladoraScheduler()
             s.add_pipeline("test", interval_minutes=10)
             assert s.pipeline_count == 1
@@ -54,6 +57,7 @@ class TestSchedulerIntegration:
     def test_scheduler_pipeline_interval(self, maintainer):
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
             s = TuneladoraScheduler()
             s.add_pipeline("p1", interval_minutes=60, auto_execute_safe=False)
             s.add_pipeline("p2", interval_minutes=5, auto_execute_safe=True)
@@ -72,6 +76,7 @@ class TestSchedulerIntegration:
         """Verificar que start() requiere event loop (comportamiento esperado)."""
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
+
             s = TuneladoraScheduler()
             s.add_pipeline("test", interval_minutes=5)
             with pytest.raises(RuntimeError, match="no running event loop"):
@@ -96,6 +101,7 @@ class TestAutoFixCode:
             if "diff" in cmd_str:
                 return mock.Mock(returncode=0, stdout="", stderr="")
             return mock.Mock(returncode=0, stdout="OK", stderr="")
+
         mock_run.side_effect = side_effect
         result = maintainer.auto_fix_code("motor/brain/")
         assert result["status"] == "no_changes"
@@ -107,6 +113,7 @@ class TestAutoFixCode:
             if "diff" in cmd_str:
                 return mock.Mock(returncode=1, stdout=" M test.py", stderr="")
             return mock.Mock(returncode=0, stdout="OK", stderr="")
+
         mock_run.side_effect = side_effect
         result = maintainer.auto_fix_code("motor/brain/")
         assert result["status"] == "committed"
@@ -115,7 +122,9 @@ class TestAutoFixCode:
         from motor.brain.alerts import Alert
         from motor.brain.auto_maintain import MaintenanceProposal
 
-        alert = Alert(severity="info", title="code quality", description="", affected_subsystems=["code"], timestamp=123.0)
+        alert = Alert(
+            severity="info", title="code quality", description="", affected_subsystems=["code"], timestamp=123.0
+        )
         proposal = MaintenanceProposal(alert=alert, action="auto_fix_code", target="motor/brain/", params={})
         risk = AutoMaintainer._classify_risk(proposal)
         assert risk == "safe"

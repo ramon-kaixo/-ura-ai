@@ -1,4 +1,5 @@
 """Tests para plugins de tuneladora (scripts/pro/tuneladora/plugins/)."""
+
 from __future__ import annotations
 
 import subprocess
@@ -35,7 +36,9 @@ class TestCodeQualityPlugin:
 
     def test_ruff_check_parses_stdout(self, code_quality):
         with mock.patch("subprocess.run") as m:
-            m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="file.py:1: F821 undefined name", stderr="")
+            m.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="file.py:1: F821 undefined name", stderr=""
+            )
             result = code_quality.ruff_check()
             assert result["f821"] >= 1
 
@@ -112,7 +115,8 @@ class TestARQCheckPlugin:
         engine.promotion.record = mock.Mock()
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(
-                args=[], returncode=0,
+                args=[],
+                returncode=0,
                 stdout='{"blocks": {"test": [{"level": "WARNING"}]}}',
                 stderr="",
             )
