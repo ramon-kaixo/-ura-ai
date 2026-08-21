@@ -5,8 +5,8 @@
 # ============================================================
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    # v0.16.3: alineada con el ruff del venv; repo saneado (ruff check . limpio)
-    rev: v0.16.3
+    # v0.16.4: alineada con el ruff del venv y el pin del pyproject
+    rev: v0.16.4
     hooks:
       - id: ruff
         args: []

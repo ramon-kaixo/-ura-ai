@@ -34,6 +34,7 @@ class _FakeEmbeddingResponse:
     def json(self) -> dict[str, Any]:
         return {"embedding": self._embedding}
 
+
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -63,7 +64,8 @@ def client(app: FastAPI, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Tes
     # Mock LLM to avoid real HTTP calls to Ollama/model-router
     mock_llm = MagicMock()
     mock_llm.generate.side_effect = lambda cid, resolved, mode, intent_value="", system_prompt="": (
-        "Hasta luego, que tengas un buen día." if "adiós" in resolved.lower()
+        "Hasta luego, que tengas un buen día."
+        if "adiós" in resolved.lower()
         else "Hola, soy URA. ¿En qué puedo ayudarte?"
     )
     _EngineHolder.llm = mock_llm
@@ -139,6 +141,7 @@ class TestInputValidation:
     def test_emoji_and_unicode_surrogates(self, client: TestClient) -> None:
         payload = "🔥🚀 " + "\ud800" * 100 + " test"
         import json as _json
+
         try:
             _json.dumps({"message": payload})
             resp = client.post("/api/v1/chat", json={"message": payload})
@@ -255,6 +258,7 @@ class TestRateLimiting:
 
     def test_rapid_sequential_requests(self, client: TestClient) -> None:
         from motor.assistant.api.middleware import _rate_limiter
+
         _rate_limiter._requests.clear()
         t0 = time.monotonic()
         for _ in range(50):
