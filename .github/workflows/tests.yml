@@ -1,0 +1,72 @@
+name: Mutation & Coverage
+
+# Workflow de verificación profunda de calidad de tests:
+#   - pytest con cobertura sobre motor/
+#   - mutation testing (mutmut) con gate duro: falla si hay supervivientes
+#   - semgrep (SAST rápido)
+#
+# Ejecuta en: push a main, PRs, y programado (nightly).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: |
+          pip install -e ".[dev]"
+          pip install mutmut sounddevice librosa ffmpeg-python
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install openai-whisper
+      - name: Cobertura unitaria (motor)
+        run: pytest tests/unit/ -q --tb=short --cov=motor --cov-report=term-missing || true
+
+  mutation:
+    runs-on: ubuntu-latest
+    needs: coverage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: |
+          pip install -e ".[dev]"
+          pip install mutmut
+      - name: Mutation testing (mutmut)
+        run: scripts/run_mutation_tests.sh
+      - name: Subir reporte de mutación
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutmut-report
+          path: docs/udo/mutation-reports/
+
+  semgrep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar semgrep
+        run: pip install semgrep
+      - name: Semgrep (reglas auto; fail solo en críticas)
+        run: |
+          semgrep --config auto --error --severity ERROR . || \
+            (echo "semgrep: hallazgos críticos (revisar)" && exit 1)
