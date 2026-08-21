@@ -49,7 +49,7 @@ class Scanner:
         except Exception as e:
             log.debug("systemd-detect-virt falló: %s", e)
             try:
-                with open("/proc/cpuinfo") as f:
+                with open("/proc/cpuinfo") as f:  # noqa: PTH123
                     return "hypervisor" not in f.read()
             except Exception as e2:
                 log.debug("lectura cpuinfo falló: %s", e2)
@@ -235,7 +235,7 @@ class Scanner:
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
-                with open(archivo, "rb") as f:
+                with open(archivo, "rb") as f:  # noqa: PTH123
                     h.update(f.read())
             except OSError:
                 pass

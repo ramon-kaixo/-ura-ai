@@ -39,12 +39,12 @@ def check_health() -> bool:
     try:
         token = get_secret("URA_API_KEY") or ""
         headers = {"Authorization": f"Bearer {token}"} if token else {}
-        req = Request(
+        req = Request(  # noqa: S310
             f"{MOCHILA_URL}{HEALTH_PATH}",
             method="GET",
             headers=headers,
         )
-        with urlopen(req, timeout=5) as resp:
+        with urlopen(req, timeout=5) as resp:  # noqa: S310
             return resp.status == 200
     except (URLError, OSError, ValueError) as e:
         logger.warning("Health check fallo: %s", e)
@@ -54,7 +54,7 @@ def check_health() -> bool:
 def dump_checkpoint() -> None:
     if Path(STATE_FILE).exists():
         try:
-            with open(STATE_FILE) as f:
+            with open(STATE_FILE) as f:  # noqa: PTH123
                 cp = json.load(f)
             logger.critical(
                 "[HEARTBEAT] Checkpoint pendiente detectado antes de restart: task=%s file=%s",
@@ -129,7 +129,7 @@ def _vram_used_mb() -> int:
     res = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=False)
     total_used = 0
     for line in res.stdout.strip().split("\n"):
-        line = line.strip()
+        line = line.strip()  # noqa: PLW2901
         if line.isdigit():
             total_used += int(line)
     return total_used
@@ -154,7 +154,7 @@ def _reportar_vram(
 
 
 def check_vram_pressure() -> None:
-    global vram_critical_cycles
+    global vram_critical_cycles  # noqa: PLW0603
     try:
         total_used = _vram_used_mb()
 
@@ -217,7 +217,7 @@ def main() -> None:
 
         check_vram_pressure()
 
-        global loop_latency_history
+        global loop_latency_history  # noqa: PLW0602
         lat = check_loop_latency()
         if lat > 0:
             loop_latency_history.append(lat)
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     import signal
 
     def _handle_signal(sig, frame) -> None:
-        global _shutdown_flag
+        global _shutdown_flag  # noqa: PLW0603
         logger.info("Recibida señal %s, parando heartbeat...", sig)
         _shutdown_flag = True
 

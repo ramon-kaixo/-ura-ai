@@ -164,7 +164,7 @@ class GoalManager:
 
     def add_dependency(self, goal_id: str, depends_on: str) -> None:
         """Añade una dependencia entre objetivos."""
-        if goal_id in self._goals and depends_on in self._goals:
+        if goal_id in self._goals and depends_on in self._goals:  # noqa: SIM102
             if depends_on not in self._goals[goal_id].setdefault("dependencies", []):
                 self._goals[goal_id]["dependencies"].append(depends_on)
                 self._save_goal(self._goals[goal_id])

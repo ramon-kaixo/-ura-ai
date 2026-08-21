@@ -1,3 +1,4 @@
+# noqa: INP001 - modulo de motor sin __init__ propio (namespace intencional)
 """Pipeline de retrieval unificado con reranker configurable mediante feature flag."""
 
 from __future__ import annotations
@@ -16,14 +17,14 @@ _RERANKER_INSTANCE: Any = None
 
 
 def enable_reranker(reranker: Any) -> None:
-    global _RERANKER_ENABLED, _RERANKER_INSTANCE
+    global _RERANKER_ENABLED, _RERANKER_INSTANCE  # noqa: PLW0603
     _RERANKER_ENABLED = True
     _RERANKER_INSTANCE = reranker
     log.info("Reranker enabled: %s", type(reranker).__name__)
 
 
 def disable_reranker() -> None:
-    global _RERANKER_ENABLED, _RERANKER_INSTANCE
+    global _RERANKER_ENABLED, _RERANKER_INSTANCE  # noqa: PLW0603
     _RERANKER_ENABLED = False
     _RERANKER_INSTANCE = None
     log.info("Reranker disabled")

@@ -35,7 +35,7 @@ _READER_POOL_LOCK = threading.Lock()
 
 def _get_conn(db_path: Path) -> sqlite3.Connection:
     """Obtiene conexión del pool de lectura. Crea pool si no existe."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
     with _READER_POOL_LOCK:
         if spath not in _READER_POOL:
@@ -53,7 +53,7 @@ def _get_conn(db_path: Path) -> sqlite3.Connection:
 
 def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:
     """Devuelve conexión al pool."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     spath = str(db_path)
     with _READER_POOL_LOCK:
         if spath in _READER_POOL:
@@ -64,7 +64,7 @@ def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:
 
 def clear_all_connection_pools() -> None:
     """Cierra todas las conexiones de todos los pools."""
-    global _READER_POOL
+    global _READER_POOL  # noqa: PLW0602
     with _READER_POOL_LOCK:
         for pool in _READER_POOL.values():
             pool.close_all()

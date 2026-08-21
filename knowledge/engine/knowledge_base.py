@@ -324,7 +324,7 @@ def _escribir_docs(
 def _verificar_enlaces(by_type: dict[str, list[dict[str, Any]]], all_ids_set: set[str]) -> int:
     """Verifica enlaces internos de todo el contenido → total de enlaces rotos."""
     broken_total = 0
-    for doc_type in by_type:
+    for doc_type in by_type:  # noqa: PLC0206
         for doc in by_type[doc_type]:
             broken = _verify_links(doc["content"], all_ids_set)
             if broken:

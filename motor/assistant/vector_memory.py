@@ -96,7 +96,7 @@ class VectorMemoryStore:
                 emb = data.get("embedding")
                 if emb:
                     return np.array(emb, dtype=np.float32)
-        except Exception:  # nosec B110
+        except Exception:  # nosec B110  # noqa: S110
             pass
         return None
 

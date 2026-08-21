@@ -35,7 +35,7 @@ def _buscar_reportes_json():
 
 def _parse_reporte(path):
     """Parsea un reporte JSON, adaptandose a ambos formatos."""
-    with open(path) as f:
+    with open(path) as f:  # noqa: PTH123
         data = json.load(f)
 
     # Formato pipeline runner (data/tuneladora_reports/*.json)

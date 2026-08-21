@@ -186,7 +186,7 @@ class NDJSONAuditBackend:
         events: list[AuditEvent] = []
         with path.open() as f:
             for line in f:
-                line = line.strip()
+                line = line.strip()  # noqa: PLW2901
                 if not line:
                     continue
                 try:
@@ -204,7 +204,7 @@ class NDJSONAuditBackend:
         ingested = 0
         with processing.open() as f:
             for line in f:
-                line = line.strip()
+                line = line.strip()  # noqa: PLW2901
                 if not line:
                     continue
                 try:
@@ -243,7 +243,7 @@ class NDJSONAuditBackend:
 
         processing = self._file.with_suffix(".ndjson.processing")
         try:
-            os.rename(str(self._file), str(processing))
+            os.rename(str(self._file), str(processing))  # noqa: PTH104
         except FileNotFoundError:
             return 0
 
@@ -273,7 +273,7 @@ class NDJSONAuditBackend:
             from knowledge.engine.metrics import audit_ingest_duration_seconds
 
             audit_ingest_duration_seconds.observe(_time.monotonic() - _t0)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
         # Limpiar archivo procesado

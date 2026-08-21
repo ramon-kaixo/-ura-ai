@@ -22,13 +22,11 @@ class _SimplePlugin(PluginBase):
 class _HookablePlugin(PluginBase):
     def __init__(self):
         super().__init__()
-        self.manifest = PluginManifest(
-            name="hookable", hooks=["pre_ingest"]
-        )
-    
+        self.manifest = PluginManifest(name="hookable", hooks=["pre_ingest"])
+
     def execute(self, context=None):
         return {}
-    
+
     def on_pre_ingest(self, event):
         return event
 ```

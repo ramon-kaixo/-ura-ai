@@ -50,9 +50,11 @@ def validate(message: str) -> tuple[bool, str]:
     if not CONVENTIONAL_RE.match(first):
         return (
             False,
-            "formato: tipo(scope)?: descripción — "
-            "tipo en {feat,fix,test,docs,refactor,chore,perf,build,ci,style,revert}, "
-            "descripción >= 10 chars",
+            (
+                "formato: tipo(scope)?: descripción — "
+                "tipo en {feat,fix,test,docs,refactor,chore,perf,build,ci,style,revert}, "
+                "descripción >= 10 chars"
+            ),
         )
     prev_blank = False
     for line in lines[1:]:

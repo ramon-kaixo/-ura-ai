@@ -51,7 +51,7 @@ _SHOULD_CANCEL = False
 
 
 def _install_cancel_handler() -> None:
-    global _SHOULD_CANCEL
+    global _SHOULD_CANCEL  # noqa: PLW0603
     _SHOULD_CANCEL = False
 
     # signal.signal() solo funciona en el hilo principal del intérprete.
@@ -60,7 +60,7 @@ def _install_cancel_handler() -> None:
         return
 
     def _handler(signum: int, _frame: Any) -> None:
-        global _SHOULD_CANCEL
+        global _SHOULD_CANCEL  # noqa: PLW0603
         _SHOULD_CANCEL = True
         log.warning("Compile cancelado por señal %s", signum)
 
@@ -139,11 +139,11 @@ class NodeRepository:
             return
         placeholders = ",".join("?" for _ in doc_ids)
         conn.execute(
-            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",
+            f"DELETE FROM kg_edges WHERE src IN ({placeholders}) OR dst IN ({placeholders})",  # noqa: S608
             doc_ids + doc_ids,
         )
         conn.execute(
-            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",
+            f"DELETE FROM kg_nodes WHERE id IN ({placeholders})",  # noqa: S608
             doc_ids,
         )
 

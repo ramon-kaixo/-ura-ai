@@ -66,7 +66,7 @@ class OpenCodeGuardian:
 
         if file_path.endswith(".py"):
             try:
-                res = subprocess.run(
+                res = subprocess.run(  # noqa: PLW1510
                     ["python3", "-m", "py_compile", file_path],
                     capture_output=True,
                     timeout=5,
@@ -77,7 +77,7 @@ class OpenCodeGuardian:
 
         elif file_path.endswith(".sh"):
             if shutil.which("bash"):
-                res = subprocess.run(
+                res = subprocess.run(  # noqa: PLW1510
                     ["bash", "-n", file_path],
                     capture_output=True,
                     timeout=5,

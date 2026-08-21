@@ -38,7 +38,7 @@ class GuardianAcciones:
     """Guardián de seguridad que envuelve acciones de agentes."""
 
     # Reglas de seguridad activas (atributo de clase)
-    reglas: list[str] = [
+    reglas: list[str] = [  # noqa: RUF012
         "policía",
         "copia_previa",
         "caja_de_arena",
@@ -75,7 +75,7 @@ class GuardianAcciones:
         """Registrar acción en log de auditoría."""
         try:
             timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S")
-            with open(self.audit_log, "a", encoding="utf-8") as f:
+            with open(self.audit_log, "a", encoding="utf-8") as f:  # noqa: PTH123
                 f.write(f"[{timestamp}] Agente: {agente} | Acción: {accion} | Resultado: {resultado} | {detalles}\n")
         except Exception as e:
             logger.exception(f"Error registrando en audit.log: {e}")
@@ -374,7 +374,7 @@ _guardian_instance: GuardianAcciones | None = None
 
 def get_guardian() -> GuardianAcciones:
     """Obtener instancia global del guardián (singleton)."""
-    global _guardian_instance
+    global _guardian_instance  # noqa: PLW0603
     if _guardian_instance is None:
         _guardian_instance = GuardianAcciones()
     return _guardian_instance

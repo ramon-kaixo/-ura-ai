@@ -23,7 +23,7 @@ _PUSHOVER_TOKEN: str = ""
 
 
 def _ensure_secrets(store: ISecretStore | None = None) -> None:
-    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID, _PUSHOVER_USER, _PUSHOVER_TOKEN
+    global _TELEGRAM_TOKEN, _TELEGRAM_CHAT_ID, _PUSHOVER_USER, _PUSHOVER_TOKEN  # noqa: PLW0603
     if _TELEGRAM_TOKEN is not None:
         return
     _TELEGRAM_TOKEN = ""  # nosec B105 - inicializacion de global, no password hardcodeado
@@ -85,7 +85,7 @@ def notify(
     if channels is None:
         channels = ["telegram", "pushover"]
 
-    tag = {"info": "ℹ️", "warning": "⚠️", "critical": "🚨"}.get(level, "⚠️")
+    tag = {"info": "ℹ️", "warning": "⚠️", "critical": "🚨"}.get(level, "⚠️")  # noqa: RUF001
     formatted = f"{tag} URA [{level.upper()}]: {message}"
 
     ok = False

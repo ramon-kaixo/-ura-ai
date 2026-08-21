@@ -141,7 +141,7 @@ class DockerOrchestrator:
                 dt.get("error"),
             )
         finally:
-            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)
+            subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: ASYNC221
 
     @staticmethod
     def _df(c, n):
@@ -182,5 +182,5 @@ sys.exit(0 if r["fallidos"]==0 else 1)
     def _docker():
         try:
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
-        except:
+        except:  # noqa: E722
             return False

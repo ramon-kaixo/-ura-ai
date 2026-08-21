@@ -6,7 +6,7 @@ import logging
 import threading
 import time
 import uuid
-from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError, as_completed
+from concurrent.futures import Future, ThreadPoolExecutor, TimeoutError, as_completed  # noqa: A004
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any
 
@@ -72,7 +72,7 @@ class ParallelExecutor:
         with self._lock:
             return workflow_id in self._cancelled
 
-    def execute(
+    def execute(  # noqa: PLR0915
         self,
         tasks: list[tuple[str, AgentTask]],
         workflow_id: str | None = None,

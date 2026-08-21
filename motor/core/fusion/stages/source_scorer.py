@@ -29,7 +29,7 @@ class QualitySourceScorer(SourceScorerABC):
     (corroboration, internal_consistency, citation_quality).
     """
 
-    _TLD_WEIGHTS: dict[str, float] = {
+    _TLD_WEIGHTS: dict[str, float] = {  # noqa: RUF012
         "gov": 0.9,
         "edu": 0.8,
         "org": 0.6,

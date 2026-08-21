@@ -13,7 +13,7 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))
+sys.path.insert(0, os.path.join(Path(__file__).parent, "..", ".."))  # noqa: PTH118
 
 
 def cmd_backup(path: str) -> None:

@@ -73,14 +73,8 @@ Si el modelo asignado falla o se satura, la conexión se cuelga.
 
 ```python
 MODELO_ROUTES = {
-    "razonamiento": {
-        "modelos": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b"],
-        "fallback": "qwen2.5:7b"
-    },
-    "codigo_complejo": {
-        "modelos": ["qwen2.5-coder:32b", "qwen3:32b-q8_0"],
-        "fallback": "qwen2.5:7b"
-    },
+    "razonamiento": {"modelos": ["qwen3:32b-q8_0", "qwen3:14b", "llama3.3:70b"], "fallback": "qwen2.5:7b"},
+    "codigo_complejo": {"modelos": ["qwen2.5-coder:32b", "qwen3:32b-q8_0"], "fallback": "qwen2.5:7b"},
     # ... más rutas
 }
 ```

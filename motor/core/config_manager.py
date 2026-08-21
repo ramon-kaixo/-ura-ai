@@ -51,7 +51,7 @@ def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
 
 def _load_raw_config() -> dict[str, Any]:
     """Carga el archivo JSON de configuración."""
-    with open(_CONFIG_PATH) as f:
+    with open(_CONFIG_PATH) as f:  # noqa: PTH123
         return json.load(f)
 
 

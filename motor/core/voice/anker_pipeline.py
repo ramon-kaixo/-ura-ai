@@ -18,7 +18,7 @@ import sounddevice as sd
 import torch
 import whisper
 
-DB_PATH = Path(os.path.join(Path(__file__).resolve().parent, "..", "..", "config", "voice_corrections.db"))
+DB_PATH = Path(os.path.join(Path(__file__).resolve().parent, "..", "..", "config", "voice_corrections.db"))  # noqa: PTH118
 DEFAULT_MODEL = "small"
 SAMPLE_RATE = 16000
 BLOCK_SIZE = 480  # 30ms a 16kHz
@@ -32,7 +32,7 @@ class AnkerDeterministicPipeline:
         self.audio_queue: queue.Queue = queue.Queue()
         self.is_playing_tts: bool = False
 
-        os.makedirs(Path(self.db_path).parent, exist_ok=True)
+        os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
         self._init_db()
 
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -64,7 +64,7 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(devices):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 
@@ -74,7 +74,7 @@ class AnkerDeterministicPipeline:
             for idx, dev in enumerate(sd.query_devices()):
                 if dev["max_input_channels"] > 0:
                     return idx
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return None
 

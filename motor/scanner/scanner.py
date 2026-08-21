@@ -47,7 +47,7 @@ class Scanner:
         except Exception as e:
             log.debug("systemd-detect-virt falló: %s", e)
             try:
-                with open("/proc/cpuinfo") as f:
+                with open("/proc/cpuinfo") as f:  # noqa: PTH123
                     return "hypervisor" not in f.read()
             except Exception as e2:
                 log.debug("lectura cpuinfo falló: %s", e2)
@@ -222,7 +222,7 @@ class Scanner:
         h = hashlib.sha256()
         for archivo in RUTAS_CONFIG_OPENCODE:
             try:
-                with open(archivo, "rb") as f:
+                with open(archivo, "rb") as f:  # noqa: PTH123
                     h.update(f.read())
             except OSError:
                 pass
@@ -291,7 +291,7 @@ def _recursos_proc() -> dict:
 def _leer_meminfo() -> tuple[int, int]:
     meminfo = {}
     try:
-        with open("/proc/meminfo") as f:
+        with open("/proc/meminfo") as f:  # noqa: PTH123
             meminfo = {k: int(v.split()[0]) for k, v in (l.split(":", 1) for l in f if ":" in l)}
     except Exception as e:
         log.warning("fallo lectura /proc/meminfo: %s", e)
@@ -302,7 +302,7 @@ def _leer_meminfo() -> tuple[int, int]:
 
 def _leer_loadavg() -> float:
     try:
-        with open("/proc/loadavg") as f:
+        with open("/proc/loadavg") as f:  # noqa: PTH123
             return float(f.read().split()[0])
     except Exception as e:
         log.debug("fallo lectura /proc/loadavg: %s", e)

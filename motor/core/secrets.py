@@ -70,7 +70,7 @@ def _load_file_secrets() -> dict[str, str]:
     líneas en blanco ignoradas. Las comillas simples/dobles
     alrededor del valor se eliminan.
     """
-    global _cached_file_secrets
+    global _cached_file_secrets  # noqa: PLW0603
     if _cached_file_secrets is not None:
         return _cached_file_secrets
     result: dict[str, str] = {}
@@ -96,7 +96,7 @@ def _load_file_secrets() -> dict[str, str]:
 
 def _clear_cache() -> None:
     """Limpia la caché del backend de archivo (útil en tests)."""
-    global _cached_file_secrets
+    global _cached_file_secrets  # noqa: PLW0603
     with _lock:
         _cached_file_secrets = None
 

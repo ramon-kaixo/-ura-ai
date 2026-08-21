@@ -23,7 +23,7 @@ def cmd_api(args) -> int:
 
     if auth:
         os.environ["URA_API_KEY"] = auth
-    elif host == "0.0.0.0":
+    elif host == "0.0.0.0":  # noqa: S104
         pass
 
     sys.stdout.flush()

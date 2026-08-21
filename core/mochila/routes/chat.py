@@ -38,7 +38,7 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
         ):
             return chunk
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"provider: {e}")
+        raise HTTPException(status_code=502, detail=f"provider: {e}")  # noqa: B904
     return None
 
 
@@ -112,7 +112,7 @@ def _rutar_y_rechazar(state, body: ChatRequest) -> tuple[str, str, str]:
         ruta = state.router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
         return ruta.provider, ruta.modelo, ruta.route_reason
     except NoProviderAvailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
 
 
 def create_chat_router(state) -> APIRouter:

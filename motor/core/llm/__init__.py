@@ -20,7 +20,7 @@ _LLM_STATE = None
 
 
 def _get_state():
-    global _LLM_STATE
+    global _LLM_STATE  # noqa: PLW0603
     if _LLM_STATE is None:
         from motor.core.llm._state import build_llm_state
 

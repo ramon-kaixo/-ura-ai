@@ -68,7 +68,7 @@ def fix_multiline_statements(path: Path) -> int:
         for idx in semicolons:
             # Un ; es seguro si no está entre STRING tokens
             prev_types = [t.type for t in tokens[:idx]]
-            in_string = any(t in (tokenize.STRING,) for t in prev_types)
+            in_string = any(t == tokenize.STRING for t in prev_types)
             if not in_string:
                 safe_semicolons.append(idx)
 
@@ -127,7 +127,7 @@ def fix_magic_values(path: Path) -> int:
         # Pattern: comparison like `x > 10` or `x >= 5`
         for _match in re.finditer(r"([=!<>]+)\s*(\d+)(?!\s*[.\w])", content):
             pass  # Just counting
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     return count
@@ -135,7 +135,7 @@ def fix_magic_values(path: Path) -> int:
 
 def run_ruff_fix(path: Path) -> int:
     """Ejecuta ruff --fix en un archivo."""
-    subprocess.run(
+    subprocess.run(  # noqa: PLW1510
         ["ruff", "check", str(path), "--fix", "--unsafe-fixes", "--silent"],
         capture_output=True,
         text=True,
@@ -173,13 +173,13 @@ def main() -> None:
                 try:
                     fixed = fix_func(py_file)
                     total_fixed += fixed
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
 
     # Run ruff --fix after our fixes to catch anything we missed
     if not check_only:
         for dir_name in DIRS:
-            subprocess.run(
+            subprocess.run(  # noqa: PLW1510
                 ["ruff", "check", str(REPO / dir_name), "--fix", "--unsafe-fixes", "--silent"],
                 timeout=120,
             )

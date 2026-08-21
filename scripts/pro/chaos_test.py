@@ -42,7 +42,7 @@ OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
 
 
 def check(name: str, cond: bool, detail: str = "") -> None:
-    global PASS, FAIL
+    global PASS, FAIL  # noqa: PLW0603
     if cond:
         PASS += 1
         log.info("  ✅ %s — %s", name, detail)
@@ -52,7 +52,7 @@ def check(name: str, cond: bool, detail: str = "") -> None:
 
 
 def warn(name: str, detail: str = "") -> None:
-    global WARN
+    global WARN  # noqa: PLW0603
     WARN += 1
     log.warning("  ⚠️  %s — %s", name, detail)
 
@@ -80,7 +80,7 @@ async def test_queue_saturation(dry_run: bool = False) -> None:
 
             async with httpx.AsyncClient(timeout=3) as client:
                 await client.get(f"{QDRANT_URL}/collections", timeout=2)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
         return time.monotonic() - inicio
 
@@ -214,7 +214,7 @@ async def test_graceful_shutdown(dry_run: bool = False) -> None:
 
     signal.signal(signal.SIGTERM, _handler)
     os.kill(os.getpid(), signal.SIGTERM)
-    time.sleep(0.1)
+    time.sleep(0.1)  # noqa: ASYNC251
     signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
     check("SIGTERM manejado correctamente", shutdown_ok, "handler ejecutado")
@@ -231,10 +231,10 @@ async def test_rest_fallback(dry_run: bool = False) -> None:
     log.info("\n=== Test 6: REST fallback en find_stale_docs ===")
 
     auto_reindex = Path("core/auto_reindex.py")
-    if not auto_reindex.exists():
+    if not auto_reindex.exists():  # noqa: ASYNC240
         warn("core/auto_reindex.py no existe — omitiendo")
         return
-    with open(auto_reindex) as f:
+    with open(auto_reindex) as f:  # noqa: ASYNC230, PTH123
         code = f.read()
 
     has_rest = "_find_stale_docs_rest" in code
@@ -337,7 +337,7 @@ def test_asyncio_bridge(dry_run: bool = False) -> None:
     """
     log.info("\n=== Test 10: Bridge async-sync (ThreadPoolExecutor) ===")
 
-    with open("motor/core/qdrant_client.py") as f:
+    with open("motor/core/qdrant_client.py") as f:  # noqa: PTH123
         code = f.read()
 
     has_executor = "ThreadPoolExecutor" in code
@@ -376,7 +376,7 @@ async def main() -> int:
     }
 
     if args.list:
-        for fn in tests.values():
+        for fn in tests.values():  # noqa: B007
             pass
         return 0
 

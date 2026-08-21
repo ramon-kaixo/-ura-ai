@@ -273,14 +273,14 @@ def _registrar_audit_y_metricas(commit: str, file_count: int, compressed_size: i
             file_count=file_count,
             size_bytes=compressed_size,
         )
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     try:
         from knowledge.engine.metrics import archive_duration_seconds
 
         archive_duration_seconds.observe(_time.monotonic() - _t0)
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 

@@ -72,5 +72,5 @@ def _inc_busy_retry() -> None:
         from knowledge.engine.metrics import sqlite_busy_retries_total
 
         sqlite_busy_retries_total.inc()
-    except Exception:
+    except Exception:  # noqa: S110
         pass

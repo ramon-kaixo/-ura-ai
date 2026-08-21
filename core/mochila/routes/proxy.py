@@ -134,7 +134,7 @@ async def _proxy_stream(
     path: str,
 ):
     acc = ""
-    async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:
+    async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:  # noqa: SIM117
         async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
             async for line in resp.aiter_lines():
                 if not line.strip():

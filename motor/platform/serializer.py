@@ -276,7 +276,7 @@ def _parse_message_kind(rd: dict[str, Any]) -> MessageKind:
         return MessageKind(rd["message_kind"])
     except ValueError:
         msg = f"Unknown message_kind: {rd.get('message_kind', '')}"
-        raise ProtocolException(msg)
+        raise ProtocolException(msg)  # noqa: B904
 
 
 def _parse_security(data: dict[str, Any]) -> SecurityHeader | None:

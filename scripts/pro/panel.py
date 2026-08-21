@@ -112,10 +112,12 @@ def generar_panel(datos: dict) -> str:
             "",
             "## Modo análisis de planes",
             "",
-            "Si recibes un mensaje que empieza con `Analiza este plan/proyecto según la metodología URA:`, "  # legacy/estable, sin cambio de comportamiento
-            "estás en **MODO ANÁLISIS**. No ejecutes código. Solo lee, analiza y emite informe con "
-            "puntos buenos, puntos malos, mejoras y veredicto **GO / GO CON CAMBIOS / NO-GO**. "
-            "Registra el análisis en `docs/udo/coordination.json`.",
+            (
+                "Si recibes un mensaje que empieza con `Analiza este plan/proyecto según la metodología URA:`, "  # legacy/estable, sin cambio de comportamiento
+                "estás en **MODO ANÁLISIS**. No ejecutes código. Solo lee, analiza y emite informe con "
+                "puntos buenos, puntos malos, mejoras y veredicto **GO / GO CON CAMBIOS / NO-GO**. "
+                "Registra el análisis en `docs/udo/coordination.json`."
+            ),
         ]
     )
 

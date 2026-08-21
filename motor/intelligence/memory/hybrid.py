@@ -22,7 +22,7 @@ import threading
 import uuid
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from motor.intelligence.memory.record import MemoryRecord, MemoryType
 
@@ -87,7 +87,7 @@ class HybridMemory:
         except Exception:
             log.exception("error clearing hybrid memory")
 
-    def __enter__(self) -> HybridMemory:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *args: object) -> None:

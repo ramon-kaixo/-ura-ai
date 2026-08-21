@@ -93,7 +93,7 @@ async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
 
 
 async def web_search(query: str, max_results: int = 5) -> dict:
-    global _last_search
+    global _last_search  # noqa: PLW0603
     async with _rate_limit_lock:
         ahora = time.time()
         if ahora - _last_search < WEBSEARCH_INTERVAL:

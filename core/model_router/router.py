@@ -51,7 +51,7 @@ _URLS: dict | None = None
 
 
 def get_urls() -> dict:
-    global _URLS
+    global _URLS  # noqa: PLW0603
     if _URLS is None:
         _URLS = get_ollama_urls()
     return _URLS
@@ -64,9 +64,9 @@ def _resolve_ollama_url() -> str:
         log.info("OLLAMA_URL forzada por env: %s", env_url)
         return env_url
     try:
-        req = urllib.request.Request(f"{urls['primary']}/api/tags")
+        req = urllib.request.Request(f"{urls['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:
+        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", urls["primary"])
             return urls["primary"]
     except Exception as e:
@@ -78,7 +78,7 @@ _OLLAMA_URL: str | None = None
 
 
 def get_ollama_url() -> str:
-    global _OLLAMA_URL
+    global _OLLAMA_URL  # noqa: PLW0603
     if _OLLAMA_URL is None:
         _OLLAMA_URL = _resolve_ollama_url()
     return _OLLAMA_URL

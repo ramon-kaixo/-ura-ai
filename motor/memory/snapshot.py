@@ -58,7 +58,7 @@ def save_snapshot(timeline: MemoryTimeline, path: str, version: str = "", encryp
         f.write(data_to_write)
         f.flush()
         os.fsync(f.fileno())
-    os.replace(tmp_path, path)
+    os.replace(tmp_path, path)  # noqa: PTH105
     # fsync del directorio para garantizar que el rename es persistente
     dir_fd = os.open(Path(path).parent or ".", os.O_RDONLY)
     try:
@@ -80,7 +80,7 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
         msg = f"Snapshot not found: {path}"
         raise FileNotFoundError(msg)
 
-    with open(path, "rb") as f:
+    with open(path, "rb") as f:  # noqa: PTH123
         raw = f.read()
 
     if encryption_key:
@@ -92,7 +92,7 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
         except (UnicodeDecodeError, json.JSONDecodeError):
             # Intentar descifrar sin clave (snapshot legacy)
             msg = "Snapshot is encrypted or corrupted. Provide encryption_key or use unencrypted snapshot."
-            raise ValueError(msg)
+            raise ValueError(msg)  # noqa: B904
 
     header = data.get("header", {})
     entries = data.get("entries", {})

@@ -46,7 +46,7 @@ _HAS_HTTPX = _check_import("httpx", "httpx")
 _HAS_BS4 = _check_import("bs4", "beautifulsoup4")
 
 _ALLOWED_SCHEMES = {"http", "https"}
-_BLOCKED_HOSTS = {"localhost", "localhost.localdomain", "127.0.0.1", "::1", "0.0.0.0"}
+_BLOCKED_HOSTS = {"localhost", "localhost.localdomain", "127.0.0.1", "::1", "0.0.0.0"}  # noqa: S104
 _BLOCKED_NETWORKS = [
     ipaddress.ip_network("127.0.0.0/8"),
     ipaddress.ip_network("::1/128"),

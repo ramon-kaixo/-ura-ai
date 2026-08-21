@@ -36,7 +36,7 @@ _qdrant: QdrantClient | None = None
 
 
 def _get_qdrant() -> QdrantClient:
-    global _qdrant
+    global _qdrant  # noqa: PLW0603
     if _qdrant is None:
         _qdrant = QdrantClient.instancia(UraConfig.load())
     return _qdrant
@@ -44,7 +44,7 @@ def _get_qdrant() -> QdrantClient:
 
 def _sha256(filepath: Path) -> str:
     h = hashlib.sha256()
-    with open(filepath, "rb") as f:
+    with open(filepath, "rb") as f:  # noqa: PTH123
         for chunk in iter(lambda: f.read(8192), b""):
             h.update(chunk)
     return h.hexdigest()

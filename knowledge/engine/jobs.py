@@ -174,7 +174,7 @@ def _inc_job_retry(job_type: str, reason: str, count: int = 1) -> None:
 
         for _ in range(count):
             job_retry_total.labels(job_type=job_type, reason=reason).inc()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
 

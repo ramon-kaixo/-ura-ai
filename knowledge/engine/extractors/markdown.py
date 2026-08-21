@@ -136,7 +136,7 @@ class MarkdownExtractor:
 
 
 def _load_file(path: str) -> bytes:
-    with open(path, "rb") as f:
+    with open(path, "rb") as f:  # noqa: PTH123
         return f.read()
 
 

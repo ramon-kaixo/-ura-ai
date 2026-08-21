@@ -110,7 +110,7 @@ class FileExporter(_SpanEventSink):
         while Path(f"{base}.{self._file_index}.jsonl").exists():
             self._file_index += 1
         path = f"{base}.{self._file_index}.jsonl"
-        self._file = Path(path).open("a")
+        self._file = Path(path).open("a")  # noqa: SIM115
         self._event_count = 0
 
     def emit(self, event: SpanEvent) -> None:
@@ -227,7 +227,7 @@ class TraceExporter(_SpanEventSink):
         with self._lock:
             if self._file is None:
                 path = self._next_path()
-                self._file = Path(path).open("w")
+                self._file = Path(path).open("w")  # noqa: SIM115
                 self._event_count = 0
             for event in events:
                 try:

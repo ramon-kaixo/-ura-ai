@@ -123,7 +123,7 @@ def _compute_score(query: str, asset: KnowledgeAsset | None = None, memory: Any 
             if days_ago < max_days:
                 recency = 1.0 - (days_ago / max_days)
                 score += _RANKING_WEIGHTS["recency"] * recency
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     # Quality

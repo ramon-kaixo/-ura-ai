@@ -59,7 +59,7 @@ if _API_KEY:
     log.info("API authentication enabled (URA_API_KEY set)")
     _security_scheme = HTTPBearer(auto_error=False)
 
-    async def _verify_api_key(credentials: HTTPAuthorizationCredentials | None = Security(_security_scheme)) -> None:
+    async def _verify_api_key(credentials: HTTPAuthorizationCredentials | None = Security(_security_scheme)) -> None:  # noqa: B008
         """Verifica el Bearer token contra la API Key configurada."""
         if credentials is None:
             raise HTTPException(status_code=401, detail="Authentication required (Bearer token)")
@@ -226,7 +226,7 @@ def _validate_doc_id(doc_id: str) -> None:
     try:
         _fb_validate(doc_id)
     except InvalidDocIdError as exc:
-        raise AppError(422, "Invalid document ID", str(exc))
+        raise AppError(422, "Invalid document ID", str(exc))  # noqa: B904
 
 
 # ── Endpoints ─────────────────────────────────────────────────────────────
@@ -261,7 +261,7 @@ async def status():
             "graph_version": dict(version) if version else None,
         }
     except Exception as exc:
-        raise AppError(500, "Status check failed", str(exc))
+        raise AppError(500, "Status check failed", str(exc))  # noqa: B904
 
 
 @app.post("/compile", status_code=202, response_model=CompileResponse)
@@ -299,11 +299,11 @@ async def compile_endpoint(incremental: bool = False):
             raise AppError(409, "Compile already running", "Another compile is in progress (flock held)")
         return CompileResponse(success=True, message="compile started")
     except TimeoutError:
-        raise AppError(504, "Compile timed out", "Compile exceeded 300s timeout")
+        raise AppError(504, "Compile timed out", "Compile exceeded 300s timeout")  # noqa: B904
     except AppError:
         raise
     except Exception as exc:
-        raise AppError(500, "Compile failed", str(exc))
+        raise AppError(500, "Compile failed", str(exc))  # noqa: B904
 
 
 @app.post("/compile/sync", response_model=CompileResponse)
@@ -319,7 +319,7 @@ async def compile_sync():
     except AppError:
         raise
     except Exception as exc:
-        raise AppError(500, "Compile failed", str(exc))
+        raise AppError(500, "Compile failed", str(exc))  # noqa: B904
 
 
 @app.post("/search")
@@ -351,7 +351,7 @@ async def search_endpoint(req: SearchRequest):
             "total": len(results),
         }
     except Exception as exc:
-        raise AppError(500, "Search failed", str(exc))
+        raise AppError(500, "Search failed", str(exc))  # noqa: B904
 
 
 @app.get("/documents/{doc_id}")
@@ -373,7 +373,7 @@ async def get_document(doc_id: str):
     except AppError:
         raise
     except Exception as exc:
-        raise AppError(500, "Failed to get document", str(exc))
+        raise AppError(500, "Failed to get document", str(exc))  # noqa: B904
 
 
 @app.get("/rules")
@@ -421,7 +421,7 @@ async def evaluate_rules():
             "total": len(findings),
         }
     except Exception as exc:
-        raise AppError(500, "Rule evaluation failed", str(exc))
+        raise AppError(500, "Rule evaluation failed", str(exc))  # noqa: B904
 
 
 @app.post("/archive")
@@ -438,9 +438,9 @@ async def create_archive():
             "sha256": manifest.content_sha256[:16],
         }
     except ValueError as exc:
-        raise AppError(422, "Archive failed", str(exc))
+        raise AppError(422, "Archive failed", str(exc))  # noqa: B904
     except Exception as exc:
-        raise AppError(500, "Archive failed", str(exc))
+        raise AppError(500, "Archive failed", str(exc))  # noqa: B904
 
 
 @app.post("/feedback/{doc_id}")

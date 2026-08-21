@@ -129,7 +129,7 @@ def test_velocidad_internet() -> dict:
         t1 = time.monotonic()
         result["latencia_ms"] = round((t1 - t0) * 1000, 1)
         result["download_ok"] = r.stdout.startswith("200")
-    except Exception:
+    except Exception:  # noqa: S110
         pass
     return result
 
@@ -161,12 +161,12 @@ def auditoria_completa(target: str = "hetzner-escudo") -> dict:
                 reporte["nat_varia"] = "true" in line.lower()
             if "UDP:" in line:
                 reporte["udp_disponible"] = "true" in line.lower()
-    except Exception:
+    except Exception:  # noqa: S110
         pass
 
     # 4. Test puertos
     try:
-        with open(URA / "config" / "dispositivos.json") as f:
+        with open(URA / "config" / "dispositivos.json") as f:  # noqa: PTH123
             cfg = json.load(f)
         mac = cfg.get("dispositivos", {}).get("mac-mini-de-ramon", {})
         test_ip = mac.get("ip_cable", "10.164.1.26")
@@ -218,7 +218,7 @@ def main() -> None:
             "✅" if p["abierto"] else "❌"
 
         if reporte["accion"] == "ABRIR_PUERTOS":
-            for p in PUERTOS_TAILSCALE:
+            for p in PUERTOS_TAILSCALE:  # noqa: B007
                 pass
 
 
