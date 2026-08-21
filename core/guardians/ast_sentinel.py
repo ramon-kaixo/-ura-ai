@@ -132,6 +132,14 @@ class ASTSentinel:
             if (
                 isinstance(n, ast.Constant)
                 and isinstance(n.value, (int, float))
-                and n.value not in (0, 1, -1, 2, True, False)
+                and n.value
+                not in (
+                    0,
+                    1,
+                    -1,
+                    2,
+                    True,
+                    False,
+                )  # gremlin: pardon[equivalent] True==1 y False==0 ya cubiertos por 0 y 1 en la tupla
             ):
                 w.append(f"L{n.lineno}: magic {n.value}")

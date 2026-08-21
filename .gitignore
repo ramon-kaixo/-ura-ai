@@ -100,3 +100,6 @@ docs/udo/coordination.lock
 # Informes OpenClaw/revisor automático (fuera de trazabilidad git; contexto opencode)
 /revisiones/
 /investigaciones/
+coverage.json
+.coverage.*
+coverage/
