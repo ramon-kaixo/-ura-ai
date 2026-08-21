@@ -1,8 +1,11 @@
-name: Mutation & Coverage
+name: Mutation & Quality
 
-# Workflow de verificación profunda de calidad de tests:
+# Workflow de verificación profunda de calidad:
 #   - pytest con cobertura sobre motor/
-#   - mutation testing (mutmut) con gate duro: falla si hay supervivientes
+#   - mypy (gate de tipos, nivel básico verificado)
+#   - mutation testing (pytest-gremlins) con umbral dinámico 90→95→100
+#     (mutmut retirado 2026-08-21: TASK-20260821-002; gate mutmut legacy en
+#      scripts/run_mutation_tests.sh se conserva como referencia)
 #   - semgrep (SAST rápido)
 #
 # Ejecuta en: push a main, PRs, y programado (nightly).
@@ -30,15 +33,27 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -e ".[dev]"
-          pip install mutmut sounddevice librosa ffmpeg-python
+          pip install pytest-gremlins sounddevice librosa ffmpeg-python
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install openai-whisper
       - name: Cobertura unitaria (motor)
         run: pytest tests/unit/ -q --tb=short --cov=motor --cov-report=term-missing || true
 
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar dependencias
+        run: pip install -e ".[dev]" mypy
+      - name: Gate de tipos (mypy.ini — falla si hay errores)
+        run: mypy --no-incremental motor/core/fusion motor/core/llm/base.py motor/assistant
+
   mutation:
     runs-on: ubuntu-latest
-    needs: coverage
+    needs: [coverage, mypy]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -47,15 +62,19 @@ jobs:
       - name: Instalar dependencias
         run: |
           pip install -e ".[dev]"
-          pip install mutmut
-      - name: Mutation testing (mutmut)
-        run: scripts/run_mutation_tests.sh
+          pip install pytest-gremlins pytest-rerunfailures pytest-timeout pytest-instafail
+      - name: Mutation testing (pytest-gremlins, umbral dinámico)
+        env:
+          PYTEST_GREMLINS_MAP_TIMEOUT: "3600"
+        run: scripts/run_mutation_tests_gremlins.sh
       - name: Subir reporte de mutación
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mutmut-report
-          path: docs/udo/mutation-reports/
+          name: gremlins-report
+          path: |
+            docs/udo/mutation-survivors/
+            docs/udo/mutation_dashboard.md
 
   semgrep:
     runs-on: ubuntu-latest
