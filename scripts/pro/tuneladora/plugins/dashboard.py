@@ -1,4 +1,5 @@
 """DashboardPlugin — web de estado de la tuneladora."""
+
 from __future__ import annotations
 
 import json

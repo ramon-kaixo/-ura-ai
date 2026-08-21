@@ -36,7 +36,9 @@ SIGNIFICANT_PATTERNS = [
 def get_last_commit() -> dict:
     r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         ["git", "log", "-1", "--format=%H%n%h%n%an%n%ad%n%s%n%b"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     parts = r.stdout.strip().split("\n", 5)
     return {
@@ -52,7 +54,9 @@ def get_last_commit() -> dict:
 def get_changed_files() -> list[str]:
     r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
         ["git", "diff", "--name-only", "HEAD~1..HEAD"],
-        capture_output=True, text=True, timeout=10,
+        capture_output=True,
+        text=True,
+        timeout=10,
     )
     return [f.strip() for f in r.stdout.split("\n") if f.strip()]
 
@@ -82,11 +86,11 @@ def generate_adr(commit: dict, files: list[str], reason: str, category: str) -> 
 
 **Fecha:** {now}
 **Categoría:** {category}
-**Autor:** {commit['author']}
-**Commit:** {commit['short']}
+**Autor:** {commit["author"]}
+**Commit:** {commit["short"]}
 
 ## Contexto
-{commit['body'] or 'Cambio significativo detectado automáticamente.'}
+{commit["body"] or "Cambio significativo detectado automáticamente."}
 
 ## Decisión
 {reason}
@@ -132,7 +136,11 @@ def main() -> int:
             return 0
 
     if "--force" in sys.argv:
-        reason = sys.argv[sys.argv.index("--force") + 1] if len(sys.argv) > sys.argv.index("--force") + 1 else "Cambio significativo"
+        reason = (
+            sys.argv[sys.argv.index("--force") + 1]
+            if len(sys.argv) > sys.argv.index("--force") + 1
+            else "Cambio significativo"
+        )
         category = "General"
         adr_path = generate_adr(commit, files, reason, category)
         if adr_path:

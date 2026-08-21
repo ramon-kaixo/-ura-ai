@@ -86,4 +86,3 @@ class KeywordScorer(ScoringStrategy):
 
 
 # ── Registro por defecto ─────────────────────────────────
-

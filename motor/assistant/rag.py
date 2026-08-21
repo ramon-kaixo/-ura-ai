@@ -37,7 +37,7 @@ class RAGContext:
             return ""
         try:
             return self.retrieve_sync(query, max_results)
-        except Exception:
+        except Exception:  # pragma: no cover - retrieve_sync captura todo internamente (defensa)
             return ""
 
     def retrieve_sync(self, query: str, max_results: int = 3) -> str:

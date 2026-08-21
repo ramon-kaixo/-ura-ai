@@ -1,4 +1,5 @@
 """BackupPlugin — backup y rollback del sistema."""
+
 from __future__ import annotations
 
 import shutil
@@ -30,13 +31,21 @@ class BackupPlugin:
             # Stash cambios no commiteados
             stash = subprocess.run(  # nosec
                 ["git", "stash", "push", "-m", f"backup_{ts}"],
-                capture_output=True, text=True, timeout=30, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.repo_root),
+                check=False,
             )
             stashed = stash.returncode == 0
             # Tag
             tag_result = subprocess.run(  # nosec
                 ["git", "tag", tag],
-                capture_output=True, text=True, timeout=10, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=10,
+                cwd=str(self.repo_root),
+                check=False,
             )
             tagged = tag_result.returncode == 0
             self.engine.log.info("Backup code: tag={tag} stashed={stashed}")
@@ -48,7 +57,11 @@ class BackupPlugin:
         """True si el repo tiene cambios sin commitear (porcelain no vacio)."""
         r = subprocess.run(  # nosec
             ["git", "status", "--porcelain"],
-            capture_output=True, text=True, timeout=15, cwd=str(self.repo_root), check=False,
+            capture_output=True,
+            text=True,
+            timeout=15,
+            cwd=str(self.repo_root),
+            check=False,
         )
         return r.returncode == 0 and bool(r.stdout.strip())
 
@@ -66,14 +79,19 @@ class BackupPlugin:
             except Exception:
                 self.engine.log.warning("Backup DB fallo {db.name}: {e}")
         return {"copied": copied, "backup_dir": str(self.backup_dir)}
-  # nosec
+
+    # nosec
     def rollback(self) -> dict[str, Any]:
         """Deshace cambios locales. git stash pop o restore."""
         try:
             # Intentar stash pop primero
             r = subprocess.run(  # nosec
                 ["git", "stash", "pop"],
-                capture_output=True, text=True, timeout=30, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.repo_root),
+                check=False,
             )
             if r.returncode == 0:
                 self.engine.log.info("Rollback: stash pop OK")
@@ -81,7 +99,11 @@ class BackupPlugin:
             # Si no hay stash, hacer checkout
             r2 = subprocess.run(  # nosec
                 ["git", "checkout", "."],
-                capture_output=True, text=True, timeout=30, cwd=str(self.repo_root), check=False,
+                capture_output=True,
+                text=True,
+                timeout=30,
+                cwd=str(self.repo_root),
+                check=False,
             )
             self.engine.log.info("Rollback: checkout OK")
             return {"method": "checkout", "ok": r2.returncode == 0}

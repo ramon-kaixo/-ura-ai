@@ -63,5 +63,3 @@ class CachePolicy(StrEnum):
 
 
 # ── Registro de entidades (inyectable) ───────────────────
-
-

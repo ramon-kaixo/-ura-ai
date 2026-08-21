@@ -270,9 +270,7 @@ def _ejecutar_mutmut(lote: list[str], dry: bool) -> int:
 
 
 def _reporte_mutmut() -> str:
-    res = subprocess.run(
-        [str(MUTMUT), "results"], capture_output=True, text=True, cwd=str(REPO), check=False
-    )
+    res = subprocess.run([str(MUTMUT), "results"], capture_output=True, text=True, cwd=str(REPO), check=False)
     return res.stdout if res.returncode == 0 else f"(mutmut results falló: {res.stderr})"
 
 
@@ -285,18 +283,22 @@ def _crear_task_udo(reporte_path: Path, lote: list[str], exit_code: int, dry: bo
         return "TASK-dry-run"
     cmd = [str(REPO / "scripts" / "pro" / "ura-udo"), "create", desc]
     out = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO), check=False).stdout
-    task_id = next(
-        (tok for tok in out.split() if tok.startswith("TASK-")), "TASK-?"
-    )
+    task_id = next((tok for tok in out.split() if tok.startswith("TASK-")), "TASK-?")
     # Registra el estado inicial (BLOCKED si el lote falló) con nota del reporte
     subprocess.run(
         [
             str(REPO / "scripts" / "pro" / "ura-udo"),
-            "update", task_id,
-            "--estado", estado,
-            "--nota", f"Reporte mutmut: {reporte_path.name} (exit={exit_code})",
+            "update",
+            task_id,
+            "--estado",
+            estado,
+            "--nota",
+            f"Reporte mutmut: {reporte_path.name} (exit={exit_code})",
         ],
-        capture_output=True, text=True, cwd=str(REPO), check=False,
+        capture_output=True,
+        text=True,
+        cwd=str(REPO),
+        check=False,
     )
     return task_id
 

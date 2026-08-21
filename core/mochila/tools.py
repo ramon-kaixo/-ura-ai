@@ -6,15 +6,6 @@ from typing import Any
 import httpx
 
 from motor.core.web_search import (
-    DEFAULT_ENGINE,
-    DUCKDUCKGO_URL,
-    SEARXNG_TIMEOUT,
-    SEARXNG_URL,
-    WEBSEARCH_INTERVAL,
-    _buscar_ddg,
-    _buscar_searxng,
-    _last_search,
-    _rate_limit_lock,
     web_search,
 )
 
@@ -154,7 +145,7 @@ async def file_read(path: str, max_lines: int = 200) -> dict:
     if not ruta.is_file():
         return {"error": f"No es un archivo: {ruta}", "path": path}
     try:
-        with open(ruta, encoding="utf-8", errors="replace") as f:
+        with Path(ruta).open(encoding="utf-8", errors="replace") as f:  # noqa: ASYNC230 - lectura acotada
             lineas = []
             for i, linea in enumerate(f):
                 if i >= max_lines:

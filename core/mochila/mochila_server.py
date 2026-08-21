@@ -217,7 +217,7 @@ class VRAMAwareScheduler:
                 async with self._lock:
                     self._active.pop(req_id, None)
 
-        asyncio.create_task(_release())  # tarea no referenciada: intencional (liberacion async)
+        asyncio.create_task(_release())  # noqa: RUF006 - liberacion async intencional
         return True
 
     async def release(self, req_id: str) -> None:
@@ -312,7 +312,9 @@ def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> 
         )
 
 
-async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:  # firma publica estable
+async def _chat_no_stream(
+    provider, modelo, mensajes, herramientas, max_tokens, temperature
+) -> dict | None:  # firma publica estable
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -324,7 +326,7 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
         ):
             return chunk
     except ProviderError as e:
-        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}")
+        raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}") from e
     return None
 
 
@@ -353,11 +355,16 @@ async def _abortaje_guardian_sse(
     abortar, accumulated_text, penalty = _evaluar_guardian(guardian, chunk, accumulated_text, modelo)
     if not abortar:
         return False, accumulated_text, b""
-    return True, accumulated_text, _error_sse(
-        "STREAM_ABORTED_BY_GUARDIAN",
-        "vagancy_error",
-        penalty=penalty,
-    ) + b"data: [DONE]\n\n"
+    return (
+        True,
+        accumulated_text,
+        _error_sse(
+            "STREAM_ABORTED_BY_GUARDIAN",
+            "vagancy_error",
+            penalty=penalty,
+        )
+        + b"data: [DONE]\n\n",
+    )
 
 
 async def _stream_from_provider(  # firma publica estable
@@ -393,9 +400,7 @@ async def _stream_from_provider(  # firma publica estable
                 _procesar_usage(chunk, provider_name, modelo)
                 return
             if is_opencode and guardian:
-                abortar, accumulated_text, sse = await _abortaje_guardian_sse(
-                    guardian, chunk, accumulated_text, modelo
-                )
+                abortar, accumulated_text, sse = await _abortaje_guardian_sse(guardian, chunk, accumulated_text, modelo)
                 if abortar:
                     yield sse
                     return
@@ -423,9 +428,7 @@ async def _stream_from_provider(  # firma publica estable
 
 def _chunk_es_fin(chunk: dict) -> bool:
     return bool(
-        chunk.get("choices")
-        and chunk["choices"][0].get("delta", {}) == {}
-        and chunk["choices"][0].get("finish_reason")
+        chunk.get("choices") and chunk["choices"][0].get("delta", {}) == {} and chunk["choices"][0].get("finish_reason")
     )
 
 
@@ -498,7 +501,7 @@ async def health():
 
 @app.get("/v1/models")
 async def v1_models():
-    global CACHE_MODELS, CACHE_MODELS_TS  # cache TTL global de modelos
+    global CACHE_MODELS, CACHE_MODELS_TS  # noqa: PLW0603 - cache TTL global intencional
     if CACHE_MODELS and time.time() - CACHE_MODELS_TS < 60:
         return {"object": "list", "data": CACHE_MODELS}
     models = []
@@ -566,7 +569,7 @@ def _resolver_ruta(body: ChatRequest) -> tuple[str, str, str]:
         ruta = router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
         return ruta.provider, ruta.modelo, ruta.route_reason
     except NoProviderAvailable as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
 
 
 def _resolver_herramientas(body: ChatRequest) -> list | None:
@@ -725,7 +728,7 @@ async def memoria_ingestar_video(body: VideoIngestRequest):
     from pathlib import Path
 
     ruta = Path(body.path)
-    if not ruta.exists():  # sync en runtime limitado (no async-hot-path)
+    if not ruta.exists():  # noqa: ASYNC240 - runtime limitado, no hot-path
         raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
     return {"status": "stub", "detail": "pipeline_video no implementado"}
 

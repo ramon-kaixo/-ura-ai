@@ -192,7 +192,9 @@ def auto_detectar_tests(objetivo: str) -> list[str]:
     # fallback 1b: módulos profundos (>=3 partes) — aceptar el test cuyo nombre
     # contiene el stem y el mayor número de partes del módulo (evita falsos positivos)
     if len(partes) >= 3:
-        partes_limpio = [p.lstrip("_").removesuffix(".py") for p in partes if p not in ("core", "llm", "web", "scanner", "motor")]
+        partes_limpio = [
+            p.lstrip("_").removesuffix(".py") for p in partes if p not in ("core", "llm", "web", "scanner", "motor")
+        ]
         for t in sorted(tests_dir.glob("test_*.py")):
             tstem = t.name.removeprefix("test_").removesuffix(".py")
             coincidencias = sum(1 for p in partes_limpio if p in tstem)
@@ -263,7 +265,9 @@ def main(argv: list[str] | None = None) -> int:
         if not tests_obj:
             tests_obj = auto_detectar_tests(objetivo)
             if tests_obj:
-                print(f"AVISO: sin --tests para {objetivo}; auto-detectados: {', '.join(Path(t).name for t in tests_obj)}")
+                print(
+                    f"AVISO: sin --tests para {objetivo}; auto-detectados: {', '.join(Path(t).name for t in tests_obj)}"
+                )
         if not tests_obj:
             sin_tests.append(objetivo)
             continue

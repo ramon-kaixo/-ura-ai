@@ -1,4 +1,5 @@
 """PipelineRunner — orquesta fases del pipeline de validación."""
+
 from __future__ import annotations
 
 import ast
@@ -226,8 +227,11 @@ class PipelineRunner:
         self.tools: dict[str, ToolBase] = {
             "ruff": RuffTool(self.cfg.ruff, self.cfg.ura_root, self.cfg.timeout_ruff),
             "pytest": PytestTool(
-                self.cfg.ura_root, timeout=self.cfg.timeout_worker, use_sandbox=self.mode == "gate",
-                disable_socket=self.mode == "gate", test_target=self.cfg.test_target,
+                self.cfg.ura_root,
+                timeout=self.cfg.timeout_worker,
+                use_sandbox=self.mode == "gate",
+                disable_socket=self.mode == "gate",
+                test_target=self.cfg.test_target,
             ),
             "bandit": BanditTool(self.cfg.ura_root),
             "mypy": MypyTool(self.cfg.ura_root),
@@ -305,8 +309,11 @@ class PipelineRunner:
             try:
                 r = subprocess.run(
                     [sys.executable, str(preflight_script), "audit"],
-                    capture_output=True, text=True, timeout=15,
-                    check=False, cwd=str(self.cfg.ura_root),
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 )
                 if r.returncode == 0:
                     log.info("[PRE-FLIGHT] system manifest ✓")
@@ -338,7 +345,11 @@ class PipelineRunner:
             try:
                 r = subprocess.run(
                     ["git", "diff", "--name-only"],
-                    capture_output=True, text=True, timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 )
                 if r.returncode == 0 and r.stdout:
                     files_to_snapshot = [Path(f.strip()) for f in r.stdout.split("\n") if f.strip().endswith(".py")]
@@ -394,22 +405,34 @@ class PipelineRunner:
             if not targets:
                 ok = compileall.compile_dir(
                     str(self.cfg.ura_root / "scripts" / "pro" / "tuneladora"),
-                    force=False, quiet=1, rx=Path("__pycache__"),
+                    force=False,
+                    quiet=1,
+                    rx=Path("__pycache__"),
                 )
                 if not ok:
                     return ToolResult(name="py_compile", status=Status.FAIL, summary="compileall errors")
-                return ToolResult(name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK")
+                return ToolResult(
+                    name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK"
+                )
             for t in targets:
                 r = subprocess.run(
-                    [sys.executable, "-m", "py_compile", t], capture_output=True, text=True,
-                    timeout=self.cfg.timeout_script, check=False,
+                    [sys.executable, "-m", "py_compile", t],
+                    capture_output=True,
+                    text=True,
+                    timeout=self.cfg.timeout_script,
+                    check=False,
                 )
                 if r.returncode != 0:
                     return ToolResult(
-                        name="py_compile", status=Status.FAIL, seconds=time.monotonic() - t0,
-                        summary=f"Syntax error in {t}", detail=r.stderr[:1000],
+                        name="py_compile",
+                        status=Status.FAIL,
+                        seconds=time.monotonic() - t0,
+                        summary=f"Syntax error in {t}",
+                        detail=r.stderr[:1000],
                     )
-            return ToolResult(name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK")
+            return ToolResult(
+                name="py_compile", status=Status.OK, seconds=time.monotonic() - t0, summary="All syntax OK"
+            )
         except Exception as e:
             return ToolResult(name="py_compile", status=Status.FAIL, summary=str(e))
 
@@ -436,9 +459,13 @@ class PipelineRunner:
                 archivo_ref = ", ".join(focused)
                 sugerencia = self.llm_fallback.analyze(r.detail, archivo_ref, "pytest")
                 self.pending_queue.add(
-                    archivo=archivo_ref, herramienta="pytest", severidad="high",
-                    error_raw=r.detail, bloque="dynamic_focused",
-                    sugerencia_llm=sugerencia or "", modelo_generador=self.cfg.llm_fallback_model,
+                    archivo=archivo_ref,
+                    herramienta="pytest",
+                    severidad="high",
+                    error_raw=r.detail,
+                    bloque="dynamic_focused",
+                    sugerencia_llm=sugerencia or "",
+                    modelo_generador=self.cfg.llm_fallback_model,
                 )
                 return results
             log.info("Focused tests passed — skipping full suite")
@@ -449,8 +476,12 @@ class PipelineRunner:
         if r.status == Status.FAIL:
             sugerencia = self.llm_fallback.analyze(r.detail, ".", "pytest")
             self.pending_queue.add(
-                archivo=".", herramienta="pytest", severidad="high", error_raw=r.detail,
-                bloque="dynamic_full", sugerencia_llm=sugerencia or "",
+                archivo=".",
+                herramienta="pytest",
+                severidad="high",
+                error_raw=r.detail,
+                bloque="dynamic_full",
+                sugerencia_llm=sugerencia or "",
                 modelo_generador=self.cfg.llm_fallback_model,
             )
         return results
@@ -464,8 +495,12 @@ class PipelineRunner:
         if not changed_files:
             try:
                 r = subprocess.run(
-                    ["git", "diff", "--name-only"], capture_output=True, text=True,
-                    timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                    ["git", "diff", "--name-only"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 )
                 if r.returncode == 0 and r.stdout:
                     changed_files = [f.strip() for f in r.stdout.split("\n") if f.strip().endswith(".py")]
@@ -486,25 +521,51 @@ class PipelineRunner:
                 continue
             for node in ast.walk(tree):
                 if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    self.semantic.learn_concept(Concept(
-                        name=node.name, context=str(f), weight=1.0, tags=("function",),
-                    ))
+                    self.semantic.learn_concept(
+                        Concept(
+                            name=node.name,
+                            context=str(f),
+                            weight=1.0,
+                            tags=("function",),
+                        )
+                    )
                     n_concepts += 1
                 elif isinstance(node, ast.ClassDef):
-                    self.semantic.learn_concept(Concept(
-                        name=node.name, context=str(f), weight=1.0, tags=("class",),
-                    ))
+                    self.semantic.learn_concept(
+                        Concept(
+                            name=node.name,
+                            context=str(f),
+                            weight=1.0,
+                            tags=("class",),
+                        )
+                    )
                     n_concepts += 1
-                if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name):
-                    self.semantic.learn_relation(Relation(
-                        source=node.func.value.id, target=node.func.attr, relation_type="calls",
-                    ))
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                ):
+                    self.semantic.learn_relation(
+                        Relation(
+                            source=node.func.value.id,
+                            target=node.func.attr,
+                            relation_type="calls",
+                        )
+                    )
                     n_relations += 1
 
         log.info("Index: %d conceptos, %d relaciones en %d archivos", n_concepts, n_relations, len(changed_files))
-        return [PhaseResult("index", Status.OK, [
-            ToolResult(name="index", status=Status.OK, summary=f"{n_concepts} concepts, {n_relations} relations"),
-        ])]
+        return [
+            PhaseResult(
+                "index",
+                Status.OK,
+                [
+                    ToolResult(
+                        name="index", status=Status.OK, summary=f"{n_concepts} concepts, {n_relations} relations"
+                    ),
+                ],
+            )
+        ]
 
     # ── Fase 4: API diff ──────────────────────────────────────
 
@@ -527,8 +588,12 @@ class PipelineRunner:
             old_content = ""
             try:
                 r = subprocess.run(
-                    ["git", "show", f"HEAD:{f}"], capture_output=True, text=True,
-                    timeout=10, check=False, cwd=str(self.cfg.ura_root),
+                    ["git", "show", f"HEAD:{f}"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 )
                 if r.returncode == 0:
                     old_content = r.stdout
@@ -546,12 +611,24 @@ class PipelineRunner:
 
         if changes:
             log.info("API changes:\n%s", "\n".join(changes))
-            return [PhaseResult("api_diff", Status.WARN, [
-                ToolResult(name="api_diff", status=Status.WARN, summary=f"{len(changes)} API changes"),
-            ])]
-        return [PhaseResult("api_diff", Status.OK, [
-            ToolResult(name="api_diff", status=Status.OK, summary="No API changes"),
-        ])]
+            return [
+                PhaseResult(
+                    "api_diff",
+                    Status.WARN,
+                    [
+                        ToolResult(name="api_diff", status=Status.WARN, summary=f"{len(changes)} API changes"),
+                    ],
+                )
+            ]
+        return [
+            PhaseResult(
+                "api_diff",
+                Status.OK,
+                [
+                    ToolResult(name="api_diff", status=Status.OK, summary="No API changes"),
+                ],
+            )
+        ]
 
     # ── Fase 5: Integridad ───────────────────────────────────
 
@@ -564,8 +641,12 @@ class PipelineRunner:
 
         try:
             r = subprocess.run(
-                ["git", "diff", "--name-only"], capture_output=True, text=True,
-                timeout=self.cfg.timeout_script, check=False, cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--name-only"],
+                capture_output=True,
+                text=True,
+                timeout=self.cfg.timeout_script,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0 and r.stdout:
                 changed_files = [f for f in r.stdout.strip().split("\n") if f]
@@ -574,8 +655,12 @@ class PipelineRunner:
 
         try:
             r = subprocess.run(
-                ["git", "diff", "--numstat"], capture_output=True, text=True,
-                timeout=self.cfg.timeout_script, check=False, cwd=str(self.cfg.ura_root),
+                ["git", "diff", "--numstat"],
+                capture_output=True,
+                text=True,
+                timeout=self.cfg.timeout_script,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0 and r.stdout:
                 for line in r.stdout.strip().split("\n"):
@@ -589,13 +674,33 @@ class PipelineRunner:
         max_files = 50
         max_lines = 5000
         if len(changed_files) > max_files:
-            results.append(PhaseResult("blast_radius", Status.FAIL, [
-                ToolResult(name="blast_radius", status=Status.FAIL, summary=f"{len(changed_files)} files exceeds {max_files}"),
-            ]))
+            results.append(
+                PhaseResult(
+                    "blast_radius",
+                    Status.FAIL,
+                    [
+                        ToolResult(
+                            name="blast_radius",
+                            status=Status.FAIL,
+                            summary=f"{len(changed_files)} files exceeds {max_files}",
+                        ),
+                    ],
+                )
+            )
         elif changed_lines > max_lines:
-            results.append(PhaseResult("blast_radius", Status.FAIL, [
-                ToolResult(name="blast_radius", status=Status.FAIL, summary=f"{changed_lines} lines exceeds {max_lines}"),
-            ]))
+            results.append(
+                PhaseResult(
+                    "blast_radius",
+                    Status.FAIL,
+                    [
+                        ToolResult(
+                            name="blast_radius",
+                            status=Status.FAIL,
+                            summary=f"{changed_lines} lines exceeds {max_lines}",
+                        ),
+                    ],
+                )
+            )
         else:
             results.append(PhaseResult("blast_radius", Status.OK))
 
@@ -605,9 +710,15 @@ class PipelineRunner:
         if test_files and src_files:
             msg = f"Tests modificados junto al código: {len(test_files)} tests, {len(src_files)} fuentes"
             log.warning("INTEGRITY: %s", msg)
-            results.append(PhaseResult("test_manipulation", Status.WARN, [
-                ToolResult(name="test_manipulation", status=Status.WARN, summary=msg),
-            ]))
+            results.append(
+                PhaseResult(
+                    "test_manipulation",
+                    Status.WARN,
+                    [
+                        ToolResult(name="test_manipulation", status=Status.WARN, summary=msg),
+                    ],
+                )
+            )
 
         free_gb: float | None = None
         try:
@@ -615,22 +726,42 @@ class PipelineRunner:
             if free_gb is None:
                 results.append(PhaseResult("disk", Status.WARN))
             elif free_gb < 1:
-                results.append(PhaseResult("disk", Status.FAIL, [
-                    ToolResult(name="disk", status=Status.FAIL, summary=f"Only {free_gb:.1f} GB free"),
-                ]))
+                results.append(
+                    PhaseResult(
+                        "disk",
+                        Status.FAIL,
+                        [
+                            ToolResult(name="disk", status=Status.FAIL, summary=f"Only {free_gb:.1f} GB free"),
+                        ],
+                    )
+                )
             else:
-                results.append(PhaseResult("disk", Status.OK, [
-                    ToolResult(name="disk", status=Status.OK, summary=f"{free_gb:.1f} GB free"),
-                ]))
+                results.append(
+                    PhaseResult(
+                        "disk",
+                        Status.OK,
+                        [
+                            ToolResult(name="disk", status=Status.OK, summary=f"{free_gb:.1f} GB free"),
+                        ],
+                    )
+                )
         except Exception:
             results.append(PhaseResult("disk", Status.WARN))
 
-        self.ltm.store(LTMEntry(
-            key=f"integrity_{self.mode}_{int(time.time())}",
-            value={"files": len(changed_files), "lines": changed_lines, "disk_gb": free_gb or 0,
-                   "test_files": len(test_files), "src_files": len(src_files)},
-            source="runner.phase_integrity", tags=("integrity", "blast"),
-        ))
+        self.ltm.store(
+            LTMEntry(
+                key=f"integrity_{self.mode}_{int(time.time())}",
+                value={
+                    "files": len(changed_files),
+                    "lines": changed_lines,
+                    "disk_gb": free_gb or 0,
+                    "test_files": len(test_files),
+                    "src_files": len(src_files),
+                },
+                source="runner.phase_integrity",
+                tags=("integrity", "blast"),
+            )
+        )
         return results
 
     # ── Fase 6: Veredicto ────────────────────────────────────
@@ -670,16 +801,38 @@ class PipelineRunner:
         try:
             msg = f"tuneladora: auto-fix {self.mode} - {len(self.files)} file(s)"
             r = subprocess.run(
-                ["git", "add", "-u"], capture_output=True, text=True, timeout=30,
-                check=False, cwd=str(self.cfg.ura_root),
+                ["git", "add", "-u"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
             if r.returncode != 0:
-                return [PhaseResult("commit", Status.FAIL, [
-                    type("ToolResult", (), {"name": "commit", "status": Status.FAIL, "summary": f"git add failed: {r.stderr[:500]}"})(),
-                ])]
+                return [
+                    PhaseResult(
+                        "commit",
+                        Status.FAIL,
+                        [
+                            type(
+                                "ToolResult",
+                                (),
+                                {
+                                    "name": "commit",
+                                    "status": Status.FAIL,
+                                    "summary": f"git add failed: {r.stderr[:500]}",
+                                },
+                            )(),
+                        ],
+                    )
+                ]
             r = subprocess.run(
-                ["git", "commit", "-m", msg, "--no-verify"], capture_output=True, text=True, timeout=30,
-                check=False, cwd=str(self.cfg.ura_root),
+                ["git", "commit", "-m", msg, "--no-verify"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+                check=False,
+                cwd=str(self.cfg.ura_root),
             )
             if r.returncode == 0:
                 log.info("Committed: %s", r.stdout.strip()[:100])
@@ -688,9 +841,15 @@ class PipelineRunner:
                 return [PhaseResult("commit", Status.OK)]
             return [PhaseResult("commit", Status.WARN)]
         except Exception as e:
-            return [PhaseResult("commit", Status.WARN, [
-                type("ToolResult", (), {"name": "commit", "status": Status.WARN, "summary": str(e)})(),
-            ])]
+            return [
+                PhaseResult(
+                    "commit",
+                    Status.WARN,
+                    [
+                        type("ToolResult", (), {"name": "commit", "status": Status.WARN, "summary": str(e)})(),
+                    ],
+                )
+            ]
 
     # ── Retry helper ─────────────────────────────────────────
 
@@ -715,8 +874,10 @@ class PipelineRunner:
                         args, capture_output=True, text=True, timeout=tool._timeout, check=False, cwd=str(tool._root)
                     )
                     result = ToolResult(
-                        name=tool.name, status=Status.OK if r.returncode == 0 else Status.FAIL,
-                        seconds=time.monotonic() - t0, detail=r.stdout[:2000],
+                        name=tool.name,
+                        status=Status.OK if r.returncode == 0 else Status.FAIL,
+                        seconds=time.monotonic() - t0,
+                        detail=r.stdout[:2000],
                     )
             if result.status == Status.FAIL:
                 archivo_ref = ", ".join(files) if files else "."
@@ -730,7 +891,7 @@ class PipelineRunner:
 
     # ── Run all ──────────────────────────────────────────────
 
-    def run(self) -> Status:
+    def run(self) -> Status:  # noqa: PLR0915 - orquestador de fase, refactor fuera de scope
         t_start = time.monotonic()
         episode_id = f"tuneladora_{int(t_start)}_{self.mode}"
         all_phase_results: list[list[PhaseResult]] = []
@@ -773,12 +934,18 @@ class PipelineRunner:
             # Sofía review (between static and dynamic)
             if self.mode in ("gate", "fix"):
                 diff = subprocess.run(
-                    ["git", "diff"], capture_output=True, text=True, timeout=10,
-                    check=False, cwd=str(self.cfg.ura_root),
+                    ["git", "diff"],
+                    capture_output=True,
+                    text=True,
+                    timeout=10,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 ).stdout[:8000]
                 self._sofia_report = self.sofia.review(
-                    diff=diff, n_files=len(self.files),
-                    tests_modified="", api_diff="",
+                    diff=diff,
+                    n_files=len(self.files),
+                    tests_modified="",
+                    api_diff="",
                 )
                 self._telemetry["sofia_criticos"] = self._sofia_report.n_criticos
                 self._telemetry["sofia_advertencias"] = self._sofia_report.n_advertencias
@@ -805,7 +972,9 @@ class PipelineRunner:
             # Plugin registry: fase "post" (solo gate/fix)
             if self.mode in ("gate", "fix"):
                 try:
-                    post_result = _plugin_registry.run_phase("post", {"mode": self.mode, "files": self.files, "verdict": verdict.name})
+                    post_result = _plugin_registry.run_phase(
+                        "post", {"mode": self.mode, "files": self.files, "verdict": verdict.name}
+                    )
                     log.info("[PLUGIN] post: %s", post_result.get("status"))
                 except Exception as e:
                     log.warning("[PLUGIN] post falló: %s", e)
@@ -835,24 +1004,39 @@ class PipelineRunner:
             head = ""
             with contextlib.suppress(Exception):
                 head = subprocess.run(
-                    ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
-                    timeout=5, check=False, cwd=str(self.cfg.ura_root),
+                    ["git", "rev-parse", "--short", "HEAD"],
+                    capture_output=True,
+                    text=True,
+                    timeout=5,
+                    check=False,
+                    cwd=str(self.cfg.ura_root),
                 ).stdout.strip()
 
             self._telemetry["duration_s"] = time.monotonic() - t_start
             self._telemetry["verdict"] = verdict.name
-            _conciencia.escribir_proceso("tuneladora", verdict.name, {"duration_s": self._telemetry["duration_s"], "msg": msg})
+            _conciencia.escribir_proceso(
+                "tuneladora", verdict.name, {"duration_s": self._telemetry["duration_s"], "msg": msg}
+            )
             self._telemetry["n_files"] = len(self.files)
             self._telemetry["head"] = head
 
             self.pending_queue.record_run(
-                mode=self.mode, verdict=verdict.value, seconds=time.monotonic() - t_start,
-                n_files=len(self.files), head=head, failures=msg if verdict != Status.OK else "",
+                mode=self.mode,
+                verdict=verdict.value,
+                seconds=time.monotonic() - t_start,
+                n_files=len(self.files),
+                head=head,
+                failures=msg if verdict != Status.OK else "",
             )
 
-            log.info("Pipeline %s: %s (%.1fs) [sofia: %d/%d]",
-                     self.mode, msg, time.monotonic() - t_start,
-                     self._sofia_report.n_criticos, self._sofia_report.n_advertencias)
+            log.info(
+                "Pipeline %s: %s (%.1fs) [sofia: %d/%d]",
+                self.mode,
+                msg,
+                time.monotonic() - t_start,
+                self._sofia_report.n_criticos,
+                self._sofia_report.n_advertencias,
+            )
             return self._finish(episode_id, verdict, msg, t_start)
         finally:
             self._release_lock()
@@ -864,8 +1048,11 @@ class PipelineRunner:
 
             qg_reporte = _build_json_report(
                 episode_id=f"tuneladora_{int(t_start)}_{self.mode}",
-                verdict=verdict, msg=msg, duration_ms=0.0,
-                mode=self.mode, files=self.files,
+                verdict=verdict,
+                msg=msg,
+                duration_ms=0.0,
+                mode=self.mode,
+                files=self.files,
                 telemetry=self._telemetry,
                 sofia_n_criticos=self._sofia_report.n_criticos,
                 sofia_n_advertencias=self._sofia_report.n_advertencias,
@@ -890,7 +1077,7 @@ class PipelineRunner:
                 return
             import xml.etree.ElementTree as ET
 
-            tree = ET.parse(str(cov_xml))
+            tree = ET.parse(str(cov_xml))  # noqa: S314 - XML generado por coverage local
             root = tree.getroot()
             rate = float(root.attrib.get("line-rate", 0))
             self._telemetry["coverage_global"] = round(rate * 100, 1)
@@ -907,13 +1094,19 @@ class PipelineRunner:
             "sofia_advertencias": self._sofia_report.n_advertencias,
             "telemetry": self._telemetry,
         }
-        self.episodic.record(Episode(
-            episode_id=episode_id, pipeline="tuneladora", status=verdict.name,
-            started=time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(t_start)),
-            finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
-            summary=msg, details=details,
-            duration_ms=duration_ms, error=msg if verdict == Status.FAIL else None,
-        ))
+        self.episodic.record(
+            Episode(
+                episode_id=episode_id,
+                pipeline="tuneladora",
+                status=verdict.name,
+                started=time.strftime("%Y-%m-%dT%H:%M:%S", time.localtime(t_start)),
+                finished=time.strftime("%Y-%m-%dT%H:%M:%S"),
+                summary=msg,
+                details=details,
+                duration_ms=duration_ms,
+                error=msg if verdict == Status.FAIL else None,
+            )
+        )
         self._recolectar_coverage()
         report = self._write_json_report(episode_id, verdict, msg, duration_ms)
         if verdict == Status.FAIL:
@@ -931,11 +1124,14 @@ class PipelineRunner:
             except Exception as e:
                 log.warning("quality_gate no pudo ejecutarse: %s", e)
         if verdict == Status.OK:
-            self.ltm.store(LTMEntry(
-                key=f"ok_{episode_id}",
-                value={"mode": self.mode, "files": self.files, "duration_ms": duration_ms, "msg": msg},
-                source="runner.run", tags=("pipeline", "ok"),
-            ))
+            self.ltm.store(
+                LTMEntry(
+                    key=f"ok_{episode_id}",
+                    value={"mode": self.mode, "files": self.files, "duration_ms": duration_ms, "msg": msg},
+                    source="runner.run",
+                    tags=("pipeline", "ok"),
+                )
+            )
 
         # Registrar en change_log (unified change log)
         try:

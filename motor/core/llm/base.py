@@ -51,7 +51,9 @@ class BaseLLMProvider(ABC):
         return bool(value)
 
     @abstractmethod
-    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str: ...  # pragma: no cover
+    def generate(
+        self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None
+    ) -> str: ...  # pragma: no cover
 
     def generate_stream(
         self,
@@ -90,7 +92,9 @@ class BaseLLMProvider(ABC):
     def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]: ...  # pragma: no cover
 
     @abstractmethod
-    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]: ...  # pragma: no cover
+    async def embed_async(
+        self, texts: list[str], model: str | None = None
+    ) -> list[list[float]]: ...  # pragma: no cover
 
     @abstractmethod
     def health(self) -> dict[str, Any]: ...  # pragma: no cover

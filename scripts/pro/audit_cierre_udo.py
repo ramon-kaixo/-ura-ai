@@ -9,6 +9,7 @@ de ura-udo, como ocurrió con TASK-20260817-031 el 2026-08-17).
 Read-only: no modifica nada. Salida: lista de cierres sin gate.
 Exit code: 0 = todo OK; 1 = hay cierres sin gate.
 """
+
 from __future__ import annotations
 
 import json

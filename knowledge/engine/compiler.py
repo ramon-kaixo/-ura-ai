@@ -109,19 +109,28 @@ def _etapa_scan(
     previous_snapshot: Snapshot | None,
     source_dir: Path,
     compiler_version: str,
-) -> tuple[list[SourceObject], Snapshot, list[CompileError], list[CompileError], list[SourceObject], CompileResult | None]:
+) -> tuple[
+    list[SourceObject], Snapshot, list[CompileError], list[CompileError], list[SourceObject], CompileResult | None
+]:
     # ── Stage 1: DISCOVERING ─────────────────────────────────────────────
     changed, snapshot, scanner_skipped, deleted = scan_incremental(previous_snapshot, source_dir)
 
     if previous_snapshot and not changed and not deleted:
-        return [], snapshot, [], [], [], CompileResult(
-            success=True,
-            graph_version=0,
-            source_commit=meta.source_commit,
-            compiler_version=compiler_version,
-            documents_total=0,
-            documents_changed=0,
-            stage=CompileStage.DONE.value,
+        return (
+            [],
+            snapshot,
+            [],
+            [],
+            [],
+            CompileResult(
+                success=True,
+                graph_version=0,
+                source_commit=meta.source_commit,
+                compiler_version=compiler_version,
+                documents_total=0,
+                documents_changed=0,
+                stage=CompileStage.DONE.value,
+            ),
         )
 
     all_errors: list[CompileError] = list(scanner_skipped)
@@ -317,7 +326,7 @@ def _auditar(result: CompileResult, correlation_id: str, duration: float) -> Non
             errors=len(result.errors) if hasattr(result, "errors") else 0,
             duration_ms=round(duration * 1000),
         )
-    except Exception:
+    except Exception:  # noqa: S110 - snapshot best-effort al cerrar ciclo
         pass
 
 

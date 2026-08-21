@@ -6,6 +6,7 @@ Uso:
     python3 scripts/health_check_brain.py --json     # JSON output
     python3 scripts/health_check_brain.py --ci       # exit code 1 on failure
 """
+
 from __future__ import annotations
 
 import importlib
@@ -129,7 +130,11 @@ def check_hooks() -> dict[str, str]:
         try:
             import os as _os
 
-            env = dict((k, v) for k, v in [("TMPDIR", "/tmp"), ("PRE_COMMIT_HOME", "/tmp/pre-commit-home"), ("PATH", f"{_REPO_ROOT}/.venv/bin:{_os.environ.get('PATH', '')}")])  # noqa: C402 — legacy/estable, sin cambio de comportamiento
+            env = {
+                "TMPDIR": "/tmp",
+                "PRE_COMMIT_HOME": "/tmp/pre-commit-home",
+                "PATH": f"{_REPO_ROOT}/.venv/bin:{_os.environ.get('PATH', '')}",
+            }
             proc = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
                 [sys.executable, "-m", "pre_commit", "run", hook, "--files", "motor/brain/"],
                 capture_output=True,

@@ -210,8 +210,10 @@ class ExecutionLedger:
 
 # ── Persistencia SQLite (v4.0) ─────────────────────────
 
+
 def _init_sqlite(nervioso):
     import sqlite3
+
     db_path = nervioso / "tuneladora.db"
     with sqlite3.connect(str(db_path)) as conn:
         conn.execute(
@@ -238,6 +240,7 @@ def _init_sqlite(nervioso):
 
 def save_execution(entry, nervioso):
     import sqlite3
+
     try:
         _init_sqlite(nervioso)
         db_path = nervioso / "tuneladora.db"
@@ -261,6 +264,7 @@ def save_execution(entry, nervioso):
 
 def get_history(nervioso, pipeline=None, limit=100):
     import sqlite3
+
     try:
         _init_sqlite(nervioso)
         db_path = nervioso / "tuneladora.db"
@@ -272,9 +276,7 @@ def get_history(nervioso, pipeline=None, limit=100):
                     (pipeline, limit),
                 ).fetchall()
             else:
-                rows = conn.execute(
-                    "SELECT * FROM executions ORDER BY created_at DESC LIMIT ?", (limit,)
-                ).fetchall()
+                rows = conn.execute("SELECT * FROM executions ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
             return [dict(r) for r in rows]
     except Exception:
         return []
@@ -282,6 +284,7 @@ def get_history(nervioso, pipeline=None, limit=100):
 
 def cleanup_history(nervioso, days=90):
     import sqlite3
+
     try:
         _init_sqlite(nervioso)
         db_path = nervioso / "tuneladora.db"

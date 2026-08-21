@@ -66,7 +66,11 @@ class ConcurrentVRAMGuard:
                 self._waiting -= 1
         if not adquirido:
             self._total_timeout += 1
-            log.warning("[VRAM] Petición descartada — TTL expirado (esperó %.1fs > %ds)", time.time() - tiempo_entrada, self._ttl)
+            log.warning(
+                "[VRAM] Petición descartada — TTL expirado (esperó %.1fs > %ds)",
+                time.time() - tiempo_entrada,
+                self._ttl,
+            )
             return {"error": "Timeout en cola de espera", "status_code": 504}
         try:
             espera = time.time() - tiempo_entrada

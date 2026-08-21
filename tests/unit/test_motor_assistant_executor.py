@@ -44,34 +44,49 @@ class TestToolResult:
         assert r.to_dict()["error"] == "boom"
 
 
+def _repo_root() -> Path:
+    """Repo git real: sube desde __file__ hasta encontrar .git (robusto bajo mutmut cwd=mutants/)."""
+    f = Path(__file__).resolve()
+    for cand in [f.parent, *f.parents]:
+        if (cand / ".git").exists():
+            return cand
+    return Path.cwd()
+
+
 class TestGitTool:
     def test_status(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="M file.py"))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().status()
         assert r.success and r.output == "M file.py"
 
     def test_status_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("no git")))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().status()
         assert not r.success and r.error == "no git"
 
     def test_log(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="abc123 feat"))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().log(3)
         assert r.success and r.output == "abc123 feat"
 
     def test_log_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=TimeoutError("lento")))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().log()
         assert not r.success and r.error == "lento"
 
     def test_diff(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="2 files"))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().diff()
         assert r.success and r.output == "2 files"
 
     def test_diff_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("x")))
+        monkeypatch.chdir(_repo_root())
         r = GitTool().diff()
         assert not r.success
 
@@ -79,6 +94,7 @@ class TestGitTool:
 class TestGitBranchTool:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="* main"))
+        monkeypatch.chdir(_repo_root())
         r = GitBranchTool().execute("")
         assert r.success and r.output == "* main"
 
@@ -97,16 +113,19 @@ class TestGitBranchTool:
 class TestGitCommitTool:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(0, "committed", "err"))
+        monkeypatch.chdir(_repo_root())
         r = GitCommitTool().execute("msg")
         assert r.success and r.output == "committed"
 
     def test_falla_returncode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(1, "", "nada que commitear"))
+        monkeypatch.chdir(_repo_root())
         r = GitCommitTool().execute("msg")
         assert not r.success and r.output == "nada que commitear"
 
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("boom")))
+        monkeypatch.chdir(_repo_root())
         r = GitCommitTool().execute("msg")
         assert not r.success and r.error == "boom"
 
@@ -384,7 +403,12 @@ class TestNewsTool:
 
 class TestManager:
     @pytest.fixture
-    def mgr(self) -> ConversationalToolManager:
+    def _git_cwd(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """cwd con .git antes de crear el manager (GitTool captura cwd en __init__)."""
+        monkeypatch.chdir(_repo_root())
+
+    @pytest.fixture
+    def mgr(self, _git_cwd: None) -> ConversationalToolManager:
         return ConversationalToolManager()
 
     async def _run(self, mgr: ConversationalToolManager, name: str, params: dict | None = None) -> ToolResult:
@@ -452,9 +476,7 @@ class TestManager:
         async def go() -> ToolResult:
             with mock.patch(
                 "motor.assistant.executor.httpx.get",
-                mock.Mock(
-                    return_value=SimpleNamespace(status_code=200, text="<title>A</title>")
-                ),
+                mock.Mock(return_value=SimpleNamespace(status_code=200, text="<title>A</title>")),
             ):
                 return await mgr.execute("news")
 
@@ -511,9 +533,7 @@ class TestManager:
     def test_web_search_error(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             with mock.patch("motor.assistant.executor.httpx.AsyncClient") as m_client:
-                m_client.return_value.__aenter__.return_value.get = mock.AsyncMock(
-                    side_effect=OSError("red caida")
-                )
+                m_client.return_value.__aenter__.return_value.get = mock.AsyncMock(side_effect=OSError("red caida"))
                 return await mgr.execute("web_search", {"query": "ura"})
 
         r = asyncio.run(go())

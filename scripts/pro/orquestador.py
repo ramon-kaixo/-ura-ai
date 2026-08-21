@@ -15,6 +15,7 @@ Si una fase falla: para, reporta, guarda log en data/orquestador_logs/.
 Uso:
     python3 scripts/pro/orquestador.py data/tasks/TAREA.json
 """
+
 from __future__ import annotations
 
 import json
@@ -83,8 +84,15 @@ def fase_revision(tarea: dict) -> dict:
 
 def fase_tests(tarea: dict) -> dict:
     """5. Tests: make test-fast (o pytest directo si es rápido)."""
-    r = _run(["python3", "-m", "pytest", "tests/unit", "-q", "--no-header", "-p", "no:cacheprovider", "--tb=line"], timeout=900)
-    return {"fase": "tests", "ok": "failed" not in r.stdout and r.returncode == 0, "detail": r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""}
+    r = _run(
+        ["python3", "-m", "pytest", "tests/unit", "-q", "--no-header", "-p", "no:cacheprovider", "--tb=line"],
+        timeout=900,
+    )
+    return {
+        "fase": "tests",
+        "ok": "failed" not in r.stdout and r.returncode == 0,
+        "detail": r.stdout.strip().splitlines()[-1] if r.stdout.strip() else "",
+    }
 
 
 def fase_auditoria(tarea: dict) -> dict:

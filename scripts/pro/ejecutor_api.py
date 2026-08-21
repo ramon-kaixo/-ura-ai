@@ -30,6 +30,7 @@ from motor.core.qdrant_client import QdrantClient
 _qdrant = None
 _ollama_url = os.environ.get("OLLAMA_URL", "http://localhost:11434")
 
+
 def _get_qdrant():
     global _qdrant  # noqa: PLW0603 — legacy/estable, sin cambio de comportamiento
     if _qdrant is None:
@@ -39,6 +40,7 @@ def _get_qdrant():
 
 def log_evento(evento, datos=None) -> None:
     import urllib.request
+
     payload = {"evento": evento, "timestamp": datetime.utcnow().isoformat(), "data": datos or {}}  # noqa: DTZ003 — legacy/estable, sin cambio de comportamiento
     try:
         req = urllib.request.Request(  # noqa: S310 — legacy/estable, sin cambio de comportamiento
@@ -101,9 +103,11 @@ def ejecutar_tarea(task_desc, target_files):
 
 # === Handler /v2/interact ===
 
+
 def _distancia_coseno(a: list[float], b: list[float]) -> float:
     """Distancia coseno entre dos vectores. 0 = idénticos, 1 = ortogonales."""
     import math
+
     dot = sum(x * y for x, y in zip(a, b, strict=False))
     na = math.sqrt(sum(x * x for x in a))
     nb = math.sqrt(sum(x * x for x in b))

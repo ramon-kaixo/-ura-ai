@@ -24,7 +24,6 @@ import argparse
 import collections.abc as collections_abc
 import inspect
 import sys
-from dataclasses import MISSING as dataclasses_MISSING
 from dataclasses import is_dataclass
 from datetime import datetime
 from pathlib import Path
@@ -109,7 +108,11 @@ def _dataclasses(mod: Any) -> list[type]:
             if isinstance(ftype, str) and not ftype.isidentifier():
                 ok = False
                 break
-            if isinstance(ftype, type) and ftype.__name__ not in mod_names and ftype not in (str, int, float, bool, bytes):
+            if (
+                isinstance(ftype, type)
+                and ftype.__name__ not in mod_names
+                and ftype not in (str, int, float, bool, bytes)
+            ):
                 ok = False
                 break
         if ok:
@@ -172,7 +175,14 @@ def _strategy_for(tipo: Any, param_name: str) -> str:
         if any(ch in t for ch in "[.]"):
             return "st.text()"  # tipos anotados complejos (dict[str, Any], threading.Lock...): sin strategy
         if t in ("int", "float", "str", "bool", "bytes", "None"):
-            return {"int": "st.integers()", "float": "st.floats(allow_nan=False, allow_infinity=False)", "str": "st.text()", "bool": "st.booleans()", "bytes": "st.binary()", "None": "st.none()"}[t]
+            return {
+                "int": "st.integers()",
+                "float": "st.floats(allow_nan=False, allow_infinity=False)",
+                "str": "st.text()",
+                "bool": "st.booleans()",
+                "bytes": "st.binary()",
+                "None": "st.none()",
+            }[t]
         return f"st.builds({t}) if isinstance({t}, type) and __import__('dataclasses').is_dataclass({t}) else st.text()"
     return "st.text()"
 

@@ -112,9 +112,7 @@ def main() -> int:  # noqa: PLR0915
             exhausted = True
             break
     if exhausted:
-        engine.log.warning(
-            "  Reuse Detector: presupuesto de comparaciones agotado (250K) — análisis parcial"
-        )
+        engine.log.warning("  Reuse Detector: presupuesto de comparaciones agotado (250K) — análisis parcial")
         engine.log.info("  (Nivel de duplicación completo requiere ejecución por lotes)")
 
     # ── 5. Conocimiento: olvido ──
@@ -125,9 +123,7 @@ def main() -> int:  # noqa: PLR0915
     archived = kb.forget(max_age_days=90, min_confidence=0.3)
     engine.log.info(f"  Conocimiento archivado: {len(archived)} entradas")
     stats = kb.stats()
-    engine.log.info(
-        f"  Activo: {stats['active']}, Archivado: {stats['archived']}, Deprecado: {stats['deprecated']}"
-    )
+    engine.log.info(f"  Activo: {stats['active']}, Archivado: {stats['archived']}, Deprecado: {stats['deprecated']}")
 
     # ── 6. Learning: analizar ──
     engine.log.info("── 6. Aprendizaje ──")
@@ -152,9 +148,7 @@ def main() -> int:  # noqa: PLR0915
 
     # Regla: si hay más deprecated que activo, algo va mal
     if vstats["deprecated"] > vstats["active"] and vstats["active"] > 0:
-        engine.log.warning(
-            f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})"
-        )
+        engine.log.warning(f"  Más conocimiento deprecated ({vstats['deprecated']}) que activo ({vstats['active']})")
 
     # Verificar que las políticas aprendidas sigan siendo válidas
     from scripts.pro.autonomy.learning.pattern_analyzer import PatternAnalyzer

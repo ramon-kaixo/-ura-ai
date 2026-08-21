@@ -69,9 +69,15 @@ class EpisodicMemory:
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
-                    episode.episode_id, episode.pipeline, episode.status,
-                    episode.started, episode.finished, episode.summary,
-                    json.dumps(episode.details), episode.duration_ms, episode.error,
+                    episode.episode_id,
+                    episode.pipeline,
+                    episode.status,
+                    episode.started,
+                    episode.finished,
+                    episode.summary,
+                    json.dumps(episode.details),
+                    episode.duration_ms,
+                    episode.error,
                 ),
             )
             conn.commit()
@@ -87,9 +93,15 @@ class EpisodicMemory:
         if row is None:
             return None
         return Episode(
-            episode_id=row[0], pipeline=row[1], status=row[2], started=row[3],
-            finished=row[4], summary=row[5], details=json.loads(row[6]),
-            duration_ms=row[7], error=row[8],
+            episode_id=row[0],
+            pipeline=row[1],
+            status=row[2],
+            started=row[3],
+            finished=row[4],
+            summary=row[5],
+            details=json.loads(row[6]),
+            duration_ms=row[7],
+            error=row[8],
         )
 
     def list_recent(self, pipeline: str | None = None, limit: int = 20) -> list[Episode]:
@@ -123,6 +135,7 @@ class EpisodicMemory:
 
     def count_failures(self, pipeline: str | None = None, since_hours: int = 24) -> int:
         import time
+
         since = datetime.fromtimestamp(time.time() - since_hours * 3600, tz=UTC).isoformat()
         clauses = ["status = 'failed'", "started >= ?"]
         params: list[Any] = [since]
@@ -132,7 +145,8 @@ class EpisodicMemory:
         where = " AND ".join(clauses)
         with self._lock, sqlite3.connect(str(self._db_path)) as conn:
             return conn.execute(
-                f"SELECT COUNT(*) FROM episodes WHERE {where}", params,  # noqa: S608
+                f"SELECT COUNT(*) FROM episodes WHERE {where}",  # noqa: S608 - filtros internos fijos
+                params,
             ).fetchone()[0]
 
     def delete_old(self, before: str) -> int:
@@ -148,7 +162,13 @@ class EpisodicMemory:
     @staticmethod
     def _row_to_episode(row: Any) -> Episode:
         return Episode(
-            episode_id=row[0], pipeline=row[1], status=row[2], started=row[3],
-            finished=row[4], summary=row[5], details=json.loads(row[6]),
-            duration_ms=row[7], error=row[8],
+            episode_id=row[0],
+            pipeline=row[1],
+            status=row[2],
+            started=row[3],
+            finished=row[4],
+            summary=row[5],
+            details=json.loads(row[6]),
+            duration_ms=row[7],
+            error=row[8],
         )

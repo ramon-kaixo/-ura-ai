@@ -60,7 +60,11 @@ class SnapshotManager:
         restored = 0
         for f in meta.get("files", []):
             original = Path(f)
-            src = snapshot_dir / original.relative_to(original.anchor) if original.is_absolute() else snapshot_dir / original
+            src = (
+                snapshot_dir / original.relative_to(original.anchor)
+                if original.is_absolute()
+                else snapshot_dir / original
+            )
             if src.exists():
                 dest = Path(f)
                 dest.parent.mkdir(parents=True, exist_ok=True)
@@ -72,7 +76,9 @@ class SnapshotManager:
             if target.exists():
                 target.unlink()
                 deleted += 1
-        self._log(f"Restored {restored}/{meta.get('count', 0)} files, deleted {deleted} created files from {snapshot_dir.name}")
+        self._log(
+            f"Restored {restored}/{meta.get('count', 0)} files, deleted {deleted} created files from {snapshot_dir.name}"
+        )
         return True
 
     def latest(self) -> Path | None:

@@ -16,6 +16,7 @@ Los checks (Módulo 6 del Plan Día 2):
   9. Secretos hardcodeados
   10. Rendimiento (tiempos de import)
 """
+
 from __future__ import annotations
 
 import json
@@ -81,7 +82,10 @@ def check_tests_consistencia() -> dict:
     try:
         r = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
             [sys.executable, "-m", "pytest", "tests/", "--collect-only", "-q", "--no-header"],
-            capture_output=True, text=True, timeout=120, cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=120,
+            cwd=str(ROOT),
         )
         tail = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else ""
         ok = "error" not in tail.lower() and r.returncode == 0
@@ -96,7 +100,11 @@ def check_huerfanos() -> dict:
     conectados = {Path(m).stem for m in __import__("re").findall(r"scripts/pro/(\w+)\.py", makefile)}
     # Refs de paradoja: systemd units de deploy/, CI (.github/workflows) y cron.
     for patron in (r"scripts/pro/(\w+)\.py", r"scripts/pro/(\w+)"):
-        for fuente in ((ROOT / "deploy").rglob("*.service"), (ROOT / ".github").rglob("*.yml"), (ROOT / ".github").rglob("*.yaml")):
+        for fuente in (
+            (ROOT / "deploy").rglob("*.service"),
+            (ROOT / ".github").rglob("*.yml"),
+            (ROOT / ".github").rglob("*.yaml"),
+        ):
             for fichero in fuente:
                 if fichero.is_file():
                     try:
@@ -111,15 +119,26 @@ def check_huerfanos() -> dict:
         if stem in conectados:
             continue
         refs = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
-            ["grep", "-rl", f"scripts.pro.{stem}", "--include=*.py",
-             str(ROOT / "core"), str(ROOT / "motor"), str(ROOT / "knowledge"),
-             str(ROOT / "scripts"), str(ROOT / "tests"), str(ROOT / ".github")],
-            capture_output=True, text=True, timeout=30,
+            [
+                "grep",
+                "-rl",
+                f"scripts.pro.{stem}",
+                "--include=*.py",
+                str(ROOT / "core"),
+                str(ROOT / "motor"),
+                str(ROOT / "knowledge"),
+                str(ROOT / "scripts"),
+                str(ROOT / "tests"),
+                str(ROOT / ".github"),
+            ],
+            capture_output=True,
+            text=True,
+            timeout=30,
         ).stdout.splitlines()
         refs = [r for r in refs if not r.endswith(f"/{f.name}")]
         if not refs:
             huerfanos.append(stem)
-    return _check("huerfanos", len(huerfanos) <= 20, f"{len(huerfanos)}: {", ".join(huerfanos[:5])}")
+    return _check("huerfanos", len(huerfanos) <= 20, f"{len(huerfanos)}: {', '.join(huerfanos[:5])}")
 
 
 def check_duplicados() -> dict:

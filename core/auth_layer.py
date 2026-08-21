@@ -23,9 +23,7 @@ def _get_api_key(store: ISecretStore | None = None) -> str:
     key = _get_secret("URA_API_KEY")
     if key is not None:
         return key
-    raise RuntimeError(
-        "URA_API_KEY not configured. Set URA_API_KEY env var or configure in /etc/ura/secrets.env"
-    )
+    raise RuntimeError("URA_API_KEY not configured. Set URA_API_KEY env var or configure in /etc/ura/secrets.env")
 
 
 def validate(api_key: str | None, store: ISecretStore | None = None) -> bool:
