@@ -9,7 +9,6 @@ test veredicto 02:27:49
 #### A MEDIAS (IN_PROGRESS)
 
 #### PENDIENTES DE REVISOR
-| TASK-20260816-008 | pendiente revisor | 2026-08-22 | PENDIENTE | |
 | TASK-20260816-009 | pendiente revisor | 2026-08-22 | PENDIENTE | |
 | TASK-20260816-010 | pendiente revisor | 2026-08-22 | PENDIENTE | |
 | TASK-20260818-020 | pendiente revisor | 2026-08-22 | PENDIENTE | |
