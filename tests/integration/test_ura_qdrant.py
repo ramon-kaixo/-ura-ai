@@ -2,6 +2,7 @@
 
 Mock de red (httpx) SÍ permitido. Mock de lógica interna NO.
 """
+
 from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -37,9 +38,7 @@ def _http_resp(status: int = 200, json_data: dict | None = None) -> AsyncMock:
     mr.status_code = status
     mr.json.return_value = data
     if status >= 400:
-        mr.raise_for_status.side_effect = httpx.HTTPStatusError(
-            f"HTTP {status}", request=MagicMock(), response=mr
-        )
+        mr.raise_for_status.side_effect = httpx.HTTPStatusError(f"HTTP {status}", request=MagicMock(), response=mr)
     else:
         mr.raise_for_status = MagicMock()
     return mr
@@ -48,6 +47,7 @@ def _http_resp(status: int = 200, json_data: dict | None = None) -> AsyncMock:
 # ===================================================================
 # URAQdrantClient
 # ===================================================================
+
 
 class TestURAQdrantClient:
     def test_init_defaults(self) -> None:
@@ -185,6 +185,7 @@ class TestURAQdrantClient:
 # QdrantClient — REST methods (httpx raw, modo_rest=True)
 # ===================================================================
 
+
 def _rest_client() -> QdrantClient:
     config = MagicMock(spec=UraConfig)
     config.qdrant_host = "localhost"
@@ -243,9 +244,7 @@ class TestQdrantClientREST:
     @patch("motor.core.qdrant_client.httpx.post")
     def test_buscar_similitud_rest_success(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {
-            "result": [{"id": 1, "payload": {"texto": "hi"}, "score": 0.9}]
-        }
+        mock_post.return_value.json.return_value = {"result": [{"id": 1, "payload": {"texto": "hi"}, "score": 0.9}]}
         client = _rest_client()
         results = client.buscar_por_similitud([0.1, 0.2], "docs", 5)
         assert len(results) == 1
@@ -325,9 +324,7 @@ class TestQdrantClientREST:
     @patch("motor.core.qdrant_client.httpx.post")
     def test_buscar_incidentes_rest_success(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {
-            "result": {"points": [{"payload": {"tipo": "CRASH"}}]}
-        }
+        mock_post.return_value.json.return_value = {"result": {"points": [{"payload": {"tipo": "CRASH"}}]}}
         client = _rest_client()
         results = client.buscar_incidentes(limit=5)
         assert len(results) == 1
@@ -355,9 +352,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
-    def test_guardar_documentos_batch_http_exception(
-        self, mock_embed: MagicMock, mock_put: MagicMock
-    ) -> None:
+    def test_guardar_documentos_batch_http_exception(self, mock_embed: MagicMock, mock_put: MagicMock) -> None:
         mock_embed.return_value = [[0.1]]
         mock_put.side_effect = httpx.RequestError("net err", request=MagicMock())
         client = _rest_client()

@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/preflight_system.py."""
+
 from __future__ import annotations
 
 from types import SimpleNamespace
@@ -48,14 +49,14 @@ class TestCheckPort:
         assert pf.check_port(9999) == {"in_use": False, "process": None}
 
     def test_en_uso_con_proceso(self, monkeypatch) -> None:
-        ss = "LISTEN 0 4096 0.0.0.0:6333 users:((\"qdrant\",pid=123,fd=7))\n"
+        ss = 'LISTEN 0 4096 0.0.0.0:6333 users:(("qdrant",pid=123,fd=7))\n'
         monkeypatch.setattr(pf, "_run", lambda cmd: _cp(ss))
         result = pf.check_port(6333)
         assert result["in_use"] is True
         assert "qdrant" in result["process"]
 
     def test_otro_puerto(self, monkeypatch) -> None:
-        ss = "LISTEN 0 4096 0.0.0.0:6333 users:((\"qdrant\",pid=123,fd=7))\n"
+        ss = 'LISTEN 0 4096 0.0.0.0:6333 users:(("qdrant",pid=123,fd=7))\n'
         monkeypatch.setattr(pf, "_run", lambda cmd: _cp(ss))
         assert pf.check_port(8000)["in_use"] is False
 
@@ -96,7 +97,11 @@ class TestManifest:
 
 class TestPreflight:
     def test_duplicado_en_manifiesto(self, monkeypatch, capsys) -> None:
-        monkeypatch.setattr(pf, "load_manifest", lambda: {"services": {"system": {"svc": {"description": "d", "port": "80"}}, "user": {}}})
+        monkeypatch.setattr(
+            pf,
+            "load_manifest",
+            lambda: {"services": {"system": {"svc": {"description": "d", "port": "80"}}, "user": {}}},
+        )
         monkeypatch.setattr(pf, "check_systemd_service", lambda n: {"exists": False, "active": False, "scopes": []})
         monkeypatch.setattr(pf, "check_port", lambda p: {"in_use": False, "process": None})
         monkeypatch.setattr(pf, "check_screen_exists", lambda n: False)
@@ -105,11 +110,15 @@ class TestPreflight:
 
     def test_servicio_systemd_existe(self, monkeypatch) -> None:
         monkeypatch.setattr(pf, "load_manifest", lambda: {"services": {"system": {}, "user": {}}})
-        monkeypatch.setattr(pf, "check_systemd_service", lambda n: {"exists": True, "active": True, "scopes": ["system"]})
+        monkeypatch.setattr(
+            pf, "check_systemd_service", lambda n: {"exists": True, "active": True, "scopes": ["system"]}
+        )
         assert pf.preflight("svc") is False
 
     def test_puerto_ocupado(self, monkeypatch) -> None:
-        monkeypatch.setattr(pf, "load_manifest", lambda: {"services": {"system": {}, "user": {}}, "ports": {"8080": "web"}})
+        monkeypatch.setattr(
+            pf, "load_manifest", lambda: {"services": {"system": {}, "user": {}}, "ports": {"8080": "web"}}
+        )
         monkeypatch.setattr(pf, "check_systemd_service", lambda n: {"exists": False, "active": False, "scopes": []})
         monkeypatch.setattr(pf, "check_port", lambda p: {"in_use": True, "process": "web"})
         assert pf.preflight("svc", port=8080) is False

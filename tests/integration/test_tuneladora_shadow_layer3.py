@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/shadow/layer3_shadow.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -83,7 +84,9 @@ class TestRun:
     def test_funcion_eliminada_warn(self, tmp_path: Path) -> None:
         f = tmp_path / "cambio.py"
         f.write_text("def nuevo():\n    pass\n")
-        with mock.patch("scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def viejo():\n    pass\n"):
+        with mock.patch(
+            "scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def viejo():\n    pass\n"
+        ):
             results = run(["cambio.py"], tmp_path)
         assert results[0].status == "WARN"
         assert "removed" in results[0].detail
@@ -91,7 +94,9 @@ class TestRun:
     def test_funcion_nueva_ok(self, tmp_path: Path) -> None:
         f = tmp_path / "agrega.py"
         f.write_text("def existente():\n    pass\ndef nueva():\n    pass\n")
-        with mock.patch("scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def existente():\n    pass\n"):
+        with mock.patch(
+            "scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def existente():\n    pass\n"
+        ):
             results = run(["agrega.py"], tmp_path)
         assert results[0].status == "OK"
         assert "1 new functions" in results[0].detail
@@ -99,7 +104,9 @@ class TestRun:
     def test_args_cambiados_warn(self, tmp_path: Path) -> None:
         f = tmp_path / "firma.py"
         f.write_text("def foo(a, b, c):\n    pass\n")
-        with mock.patch("scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def foo(a):\n    pass\n"):
+        with mock.patch(
+            "scripts.pro.tuneladora.shadow.layer3_shadow._git_show", return_value="def foo(a):\n    pass\n"
+        ):
             results = run(["firma.py"], tmp_path)
         assert results[0].status == "WARN"
         assert "args_changed" in results[0].detail

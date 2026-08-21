@@ -176,11 +176,11 @@ class TestSQLInjection:
         payloads = [
             "' OR '1'='1",
             "' DROP TABLE messages --",
-            "c1\\\' DELETE FROM messages --",
+            "c1\\' DELETE FROM messages --",
             "<script>alert('xss')</script>",
             "../../etc/passwd",
             '" OR "1"="1',
-"1\nSELECT * FROM messages",
+            "1\nSELECT * FROM messages",
         ]
         for cid in payloads:
             msg = _make_msg("safe")

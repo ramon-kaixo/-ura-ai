@@ -1,4 +1,5 @@
 """Tests for LongTermMemory (scripts/pro/tuneladora/memory/long_term.py)."""
+
 from __future__ import annotations
 
 from pathlib import Path

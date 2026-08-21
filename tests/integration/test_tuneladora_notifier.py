@@ -1,13 +1,11 @@
 """Tests para scripts/pro/tuneladora/notifier.py (Gap #3)."""
+
 from __future__ import annotations
 
 import io
+import time
 from pathlib import Path
 from unittest import mock
-
-import pytest
-
-import time
 
 from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.notifier import (
@@ -71,13 +69,13 @@ class TestNotificarMemoria:
         assert episode.metadata["verdict"] == "FAIL"
 
     def test_falla_silencioso(self) -> None:
-        with mock.patch(
-            "motor.intelligence.memory.episodic.EpisodeStore",
-            mock.Mock(side_effect=RuntimeError("boom")),
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_log"
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_terminal"
+        with (
+            mock.patch(
+                "motor.intelligence.memory.episodic.EpisodeStore",
+                mock.Mock(side_effect=RuntimeError("boom")),
+            ),
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_log"),
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_terminal"),
         ):
             notificar_fallo(_reporte_fail(), report_dir=Path("/tmp/ura_no_dir"))  # no debe lanzar
 
@@ -110,13 +108,11 @@ class TestNotificarSystemd:
 
 class TestNotificarFallo:
     def test_notifica_todos_los_canales(self, tmp_path: Path) -> None:
-        with mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_systemd"
-        ) as m_sys, mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_memoria"
-        ) as m_mem, mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_terminal"
-        ) as m_term:
+        with (
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_systemd") as m_sys,
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_memoria") as m_mem,
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_terminal") as m_term,
+        ):
             ok = notificar_fallo(_reporte_fail(), report_dir=tmp_path)
         assert ok is True
         m_sys.assert_called_once()
@@ -125,13 +121,17 @@ class TestNotificarFallo:
         assert (tmp_path / "FAILURES.log").exists()
 
     def test_canales_no_bloquean(self, tmp_path: Path) -> None:
-        with mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_log",
-            side_effect=OSError("ro"),
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier._notificar_memoria",
-            side_effect=RuntimeError("boom"),
-        ), mock.patch("scripts.pro.tuneladora.notifier._notificar_terminal"):
+        with (
+            mock.patch(
+                "scripts.pro.tuneladora.notifier._notificar_log",
+                side_effect=OSError("ro"),
+            ),
+            mock.patch(
+                "scripts.pro.tuneladora.notifier._notificar_memoria",
+                side_effect=RuntimeError("boom"),
+            ),
+            mock.patch("scripts.pro.tuneladora.notifier._notificar_terminal"),
+        ):
             ok = notificar_fallo(_reporte_fail(), report_dir=tmp_path)
         assert ok is False  # log y memoria fallaron; terminal no cuenta
 
@@ -150,13 +150,13 @@ class TestIntegracionRunner:
         runner._sofia_report.n_criticos = 0
         runner._sofia_report.n_advertencias = 0
         runner._telemetry = {"head": "abc"}
-        with mock.patch.object(runner, "episodic"), mock.patch.object(
-            runner, "ltm"
-        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier.notificar_fallo"
-        ) as m_notificar:
+        with (
+            mock.patch.object(runner, "episodic"),
+            mock.patch.object(runner, "ltm"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua"),
+            mock.patch("scripts.pro.tuneladora.notifier.notificar_fallo") as m_notificar,
+        ):
             runner._finish("ep-1", Status.FAIL, "boom", time.monotonic() - 0.5)
         reportes = list((tmp_path / "data" / "tuneladora_reports").glob("ep-1.json"))
         assert len(reportes) == 1
@@ -171,13 +171,13 @@ class TestIntegracionRunner:
         runner._sofia_report.n_criticos = 0
         runner._sofia_report.n_advertencias = 0
         runner._telemetry = {"head": "abc"}
-        with mock.patch.object(runner, "episodic"), mock.patch.object(
-            runner, "ltm"
-        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier.notificar_fallo"
-        ) as m_notificar:
+        with (
+            mock.patch.object(runner, "episodic"),
+            mock.patch.object(runner, "ltm"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua"),
+            mock.patch("scripts.pro.tuneladora.notifier.notificar_fallo") as m_notificar,
+        ):
             runner._finish("ep-2", Status.OK, "ok", time.monotonic() - 0.5)
         m_notificar.assert_not_called()
 
@@ -191,16 +191,17 @@ class TestQualityGateIntegracion:
         runner._sofia_report.n_criticos = 0
         runner._sofia_report.n_advertencias = 0
         runner._telemetry = {"head": "abc"}
-        with mock.patch.object(runner, "episodic"), mock.patch.object(
-            runner, "ltm"
-        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
-        ), mock.patch(
-            "scripts.pro.tuneladora.notifier.notificar_fallo"
-        ), mock.patch(
-            "scripts.pro.quality_gate.evaluar",
-            return_value=("REJECTED", ["PIPELINE FALLADO"]),
-        ) as m_qg:
+        with (
+            mock.patch.object(runner, "episodic"),
+            mock.patch.object(runner, "ltm"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua"),
+            mock.patch("scripts.pro.tuneladora.notifier.notificar_fallo"),
+            mock.patch(
+                "scripts.pro.quality_gate.evaluar",
+                return_value=("REJECTED", ["PIPELINE FALLADO"]),
+            ) as m_qg,
+        ):
             runner._finish("ep-qg", Status.FAIL, "boom", time.monotonic() - 0.5)
         m_qg.assert_called_once()
         assert m_qg.call_args[0][0]["verdict"] == "FAIL"
@@ -213,12 +214,12 @@ class TestQualityGateIntegracion:
         runner._sofia_report.n_criticos = 0
         runner._sofia_report.n_advertencias = 0
         runner._telemetry = {"head": "abc"}
-        with mock.patch.object(runner, "episodic"), mock.patch.object(
-            runner, "ltm"
-        ), mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._auditoria_continua"
-        ), mock.patch(
-            "scripts.pro.quality_gate.evaluar"
-        ) as m_qg:
+        with (
+            mock.patch.object(runner, "episodic"),
+            mock.patch.object(runner, "ltm"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._change_log"),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua"),
+            mock.patch("scripts.pro.quality_gate.evaluar") as m_qg,
+        ):
             runner._finish("ep-ok", Status.OK, "ok", time.monotonic() - 0.5)
         m_qg.assert_not_called()

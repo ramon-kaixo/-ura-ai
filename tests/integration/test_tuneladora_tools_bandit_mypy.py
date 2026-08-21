@@ -1,4 +1,5 @@
 """Tests para tools/bandit_tool.py y tools/mypy_tool.py."""
+
 from __future__ import annotations
 
 from pathlib import Path

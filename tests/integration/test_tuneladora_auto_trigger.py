@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/auto_trigger.py (AutoTrigger)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -74,9 +75,12 @@ class TestPipelineIntegration:
 
     def test_validate_pipeline_error(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
-        with mock.patch("scripts.pro.tuneladora.auto_trigger.Configuration"), mock.patch(
-            "scripts.pro.tuneladora.auto_trigger.PipelineRunner",
-            mock.Mock(side_effect=RuntimeError("boom")),
+        with (
+            mock.patch("scripts.pro.tuneladora.auto_trigger.Configuration"),
+            mock.patch(
+                "scripts.pro.tuneladora.auto_trigger.PipelineRunner",
+                mock.Mock(side_effect=RuntimeError("boom")),
+            ),
         ):
             result = trigger.validate_with_pipeline([Path("a.py")])
         assert result["status"] == "skip"
@@ -105,8 +109,9 @@ class TestShouldRun:
             assert trigger.should_run_maintenance() is False
 
     def test_maintenance_sin_cooldown(self, trigger: AutoTrigger) -> None:
-        with mock.patch.object(trigger, "_check_ruff_errors", return_value=True), mock.patch.object(
-            trigger, "_check_git_dirty", return_value=False
+        with (
+            mock.patch.object(trigger, "_check_ruff_errors", return_value=True),
+            mock.patch.object(trigger, "_check_git_dirty", return_value=False),
         ):
             assert trigger.should_run_maintenance() is True
 
@@ -271,7 +276,8 @@ class TestGaps:
     def test_trigger_validation_fail_strict(self, trigger: AutoTrigger) -> None:
         trigger.strict = True
         with mock.patch.object(
-            trigger, "validate_with_pipeline",
+            trigger,
+            "validate_with_pipeline",
             return_value={"status": "fail", "message": "rechazado"},
         ):
             result = trigger.trigger_validation([Path("a.py")])
@@ -280,7 +286,8 @@ class TestGaps:
     def test_trigger_validation_fail_non_strict(self, trigger: AutoTrigger) -> None:
         trigger.strict = False
         with mock.patch.object(
-            trigger, "validate_with_pipeline",
+            trigger,
+            "validate_with_pipeline",
             return_value={"status": "fail", "message": "rechazado"},
         ):
             result = trigger.trigger_validation([Path("a.py")])

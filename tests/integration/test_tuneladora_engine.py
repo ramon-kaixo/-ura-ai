@@ -1,4 +1,5 @@
 """Tests para tuneladora PipelineEngine (scripts/pro/tuneladora/engine.py)."""
+
 from __future__ import annotations
 
 import subprocess
@@ -126,6 +127,7 @@ class TestHealth:
 
     def test_health_disk_returns_dict(self, engine):
         with mock.patch("os.statvfs") as m:
+
             class FakeStat:
                 f_frsize = 4096
                 f_bavail = 1000000
@@ -248,6 +250,7 @@ class TestHealthExtra:
 
     def test_health_disk_critico_notifica(self, engine):
         with mock.patch("os.statvfs") as m, mock.patch.object(engine, "notify") as m_notify:
+
             class FakeStat:
                 f_frsize = 4096
                 f_bavail = 1000
@@ -309,14 +312,18 @@ class TestHealthExtra:
 
     def test_health_ruff_ok(self, engine):
         with mock.patch.object(engine, "run_ruff") as m_ruff:
-            m_ruff.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="All checks passed!", stderr="")
+            m_ruff.return_value = subprocess.CompletedProcess(
+                args=[], returncode=0, stdout="All checks passed!", stderr=""
+            )
             result = engine.health_ruff()
         assert result["ok"] is True
         assert result["errors"] == 0
 
     def test_health_ruff_con_errores(self, engine):
         with mock.patch.object(engine, "run_ruff") as m_ruff:
-            m_ruff.return_value = subprocess.CompletedProcess(args=[], returncode=1, stdout="a.py:1:1 X\nb.py:2:2 Y\n", stderr="")
+            m_ruff.return_value = subprocess.CompletedProcess(
+                args=[], returncode=1, stdout="a.py:1:1 X\nb.py:2:2 Y\n", stderr=""
+            )
             result = engine.health_ruff()
         assert result["ok"] is False
         assert result["errors"] == 2

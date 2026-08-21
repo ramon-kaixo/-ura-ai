@@ -1,4 +1,5 @@
 """Tests for EpisodicMemory (scripts/pro/tuneladora/memory/episodic.py)."""
+
 from __future__ import annotations
 
 from datetime import UTC, datetime
@@ -17,8 +18,13 @@ def ep_mem(tmp_path: Path) -> EpisodicMemory:
 def make_ep(ep_id: str, pipeline: str = "test", status: str = "completed") -> Episode:
     now = datetime.now(UTC).isoformat()
     return Episode(
-        episode_id=ep_id, pipeline=pipeline, status=status,
-        started=now, finished=now, summary="ok", duration_ms=100,
+        episode_id=ep_id,
+        pipeline=pipeline,
+        status=status,
+        started=now,
+        finished=now,
+        summary="ok",
+        duration_ms=100,
     )
 
 
@@ -65,8 +71,11 @@ class TestList:
 class TestCleanup:
     def test_delete_old(self, ep_mem: EpisodicMemory) -> None:
         old_early = Episode(
-            episode_id="old", pipeline="p", status="completed",
-            started="2020-01-01T00:00:00", finished="2020-01-01T00:00:01",
+            episode_id="old",
+            pipeline="p",
+            status="completed",
+            started="2020-01-01T00:00:00",
+            finished="2020-01-01T00:00:01",
             duration_ms=0,
         )
         ep_mem.record(old_early)

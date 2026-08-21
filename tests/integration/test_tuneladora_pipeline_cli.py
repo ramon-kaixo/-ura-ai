@@ -1,4 +1,5 @@
 """Tests for the tuneladora CLI entry point (scripts/pro/tuneladora/tuneladora_pipeline.py)."""
+
 from __future__ import annotations
 
 from unittest import mock
@@ -40,22 +41,28 @@ class TestCmdStats:
 
 class TestMainEntry:
     def test_pending_flag(self):
-        with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_pending") as m, \
-             mock.patch("sys.argv", ["prog", "--pending"]), \
-             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"):
+        with (
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_pending") as m,
+            mock.patch("sys.argv", ["prog", "--pending"]),
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"),
+        ):
             main()
             m.assert_called_once()
 
     def test_stats_flag(self):
-        with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_stats") as m, \
-             mock.patch("sys.argv", ["prog", "--stats"]), \
-             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"):
+        with (
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_stats") as m,
+            mock.patch("sys.argv", ["prog", "--stats"]),
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"),
+        ):
             main()
             m.assert_called_once()
 
     def test_rollback_flag(self):
-        with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_rollback") as m, \
-             mock.patch("sys.argv", ["prog", "--rollback"]), \
-             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"):
+        with (
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_rollback") as m,
+            mock.patch("sys.argv", ["prog", "--rollback"]),
+            mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.Configuration"),
+        ):
             main()
             m.assert_called_once()

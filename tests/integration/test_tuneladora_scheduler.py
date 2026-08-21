@@ -1,4 +1,5 @@
 """Tests para TuneladoraScheduler (scripts/pro/tuneladora/scheduler.py)."""
+
 from __future__ import annotations
 
 import asyncio
@@ -87,7 +88,15 @@ class TestStatus:
     def test_status_contains_fields(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5)
         status = scheduler.get_status()[0]
-        for key in ("name", "interval_minutes", "auto_execute_safe", "last_run", "next_run", "run_count", "failure_count"):
+        for key in (
+            "name",
+            "interval_minutes",
+            "auto_execute_safe",
+            "last_run",
+            "next_run",
+            "run_count",
+            "failure_count",
+        ):
             assert key in status
 
     def test_overdue_flag(self, scheduler):
@@ -150,7 +159,9 @@ class TestExecutePipeline:
     @pytest.mark.asyncio
     async def test_exito(self, scheduler):
         pipeline = ScheduledPipeline(
-            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            name="health",
+            interval=timedelta(minutes=5),
+            auto_execute_safe=True,
             next_run=datetime.now(UTC) + timedelta(seconds=5),
         )
         engine = mock.Mock()
@@ -158,8 +169,10 @@ class TestExecutePipeline:
         engine.config = mock.Mock()
         engine.config.nervioso = mock.Mock()
         engine.health_disk.return_value = {"libre_gb": 100}
-        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
-             mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save:
+        with (
+            mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine),
+            mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save,
+        ):
             await scheduler._execute_pipeline(pipeline)
         engine.ledger.set_result.assert_called_with("completed")
         m_save.assert_called_once()
@@ -167,7 +180,9 @@ class TestExecutePipeline:
     @pytest.mark.asyncio
     async def test_error(self, scheduler):
         pipeline = ScheduledPipeline(
-            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            name="health",
+            interval=timedelta(minutes=5),
+            auto_execute_safe=True,
             next_run=datetime.now(UTC) + timedelta(seconds=5),
         )
         engine = mock.Mock()
@@ -176,8 +191,10 @@ class TestExecutePipeline:
         engine.config.nervioso = mock.Mock()
         scheduler._circuit = mock.Mock()
         scheduler._circuit.call.side_effect = RuntimeError("boom")
-        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
-             mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save:
+        with (
+            mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine),
+            mock.patch("scripts.pro.tuneladora.ledger.save_execution") as m_save,
+        ):
             await scheduler._execute_pipeline(pipeline)
         engine.ledger.set_result.assert_called_with("failed")
         m_save.assert_called_once()
@@ -185,7 +202,9 @@ class TestExecutePipeline:
     @pytest.mark.asyncio
     async def test_circuit_open(self, scheduler):
         pipeline = ScheduledPipeline(
-            name="health", interval=timedelta(minutes=5), auto_execute_safe=True,
+            name="health",
+            interval=timedelta(minutes=5),
+            auto_execute_safe=True,
             next_run=datetime.now(UTC) + timedelta(seconds=5),
         )
         engine = mock.Mock()
@@ -194,7 +213,9 @@ class TestExecutePipeline:
         engine.config.nervioso = mock.Mock()
         scheduler._circuit = mock.Mock()
         scheduler._circuit.call.side_effect = RuntimeError("Circuit OPEN")
-        with mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine), \
-             mock.patch("scripts.pro.tuneladora.ledger.save_execution"):
+        with (
+            mock.patch("scripts.pro.tuneladora.scheduler.PipelineEngine", return_value=engine),
+            mock.patch("scripts.pro.tuneladora.ledger.save_execution"),
+        ):
             await scheduler._execute_pipeline(pipeline)
         engine.notify.assert_called_once()

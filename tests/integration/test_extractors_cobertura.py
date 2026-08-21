@@ -30,6 +30,7 @@ _HAS_FITZ = _check_import("fitz")
 _HAS_NETWORK = False
 try:
     import socket
+
     socket.create_connection(("8.8.8.8", 53), timeout=2)
     _HAS_NETWORK = True
 except OSError:
@@ -330,6 +331,7 @@ class TestImageCobertura:
     @pytest.fixture(autouse=True)
     def _pil_fake(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import PIL.Image  # noqa: F401 — asegura que PIL.Image existe antes de monkeypatch
+
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "_HAS_PILLOW", True)
         monkeypatch.setattr(mod, "_HAS_TESSERACT", False)

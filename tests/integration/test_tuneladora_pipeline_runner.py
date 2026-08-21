@@ -1,4 +1,5 @@
 """Tests for PipelineRunner (scripts/pro/tuneladora/pipeline/runner.py)."""
+
 from __future__ import annotations
 
 import time
@@ -50,7 +51,11 @@ class TestPipelineRunnerPhases:
         assert isinstance(results, list)
 
     def test_phase_dynamic(self, runner: PipelineRunner):
-        with mock.patch.object(runner.tools["pytest"], "run_check", return_value=mock.Mock(status=Status.OK, seconds=1.0, summary="1 passed")):
+        with mock.patch.object(
+            runner.tools["pytest"],
+            "run_check",
+            return_value=mock.Mock(status=Status.OK, seconds=1.0, summary="1 passed"),
+        ):
             results = runner.phase_dynamic()
             assert isinstance(results, list)
 
@@ -100,9 +105,15 @@ class TestFreeDiskGB:
 class TestJsonReport:
     def test_build_report_dict(self):
         report = _build_json_report(
-            episode_id="ep-1", verdict=Status.OK, msg="todo bien",
-            duration_ms=1234.5, mode="check", files=["a.py", "b.py"],
-            telemetry={"n_files": 2}, sofia_n_criticos=0, sofia_n_advertencias=1,
+            episode_id="ep-1",
+            verdict=Status.OK,
+            msg="todo bien",
+            duration_ms=1234.5,
+            mode="check",
+            files=["a.py", "b.py"],
+            telemetry={"n_files": 2},
+            sofia_n_criticos=0,
+            sofia_n_advertencias=1,
         )
         assert report["episode_id"] == "ep-1"
         assert report["verdict"] == "OK"
@@ -115,9 +126,15 @@ class TestJsonReport:
 
     def test_build_report_fail_verdict(self):
         report = _build_json_report(
-            episode_id="ep-2", verdict=Status.FAIL, msg="fallo",
-            duration_ms=10.0, mode="gate", files=[], telemetry={},
-            sofia_n_criticos=2, sofia_n_advertencias=0,
+            episode_id="ep-2",
+            verdict=Status.FAIL,
+            msg="fallo",
+            duration_ms=10.0,
+            mode="gate",
+            files=[],
+            telemetry={},
+            sofia_n_criticos=2,
+            sofia_n_advertencias=0,
         )
         assert report["verdict"] == "FAIL"
         assert report["summary"] == "fallo"
@@ -201,9 +218,15 @@ class TestPhaseVerdict:
 class TestBuildJsonReportExtra:
     def test_fail_verdict(self) -> None:
         report = _build_json_report(
-            episode_id="e", verdict=Status.FAIL, msg="boom",
-            duration_ms=1.0, mode="gate", files=["a.py"],
-            telemetry={}, sofia_n_criticos=2, sofia_n_advertencias=0,
+            episode_id="e",
+            verdict=Status.FAIL,
+            msg="boom",
+            duration_ms=1.0,
+            mode="gate",
+            files=["a.py"],
+            telemetry={},
+            sofia_n_criticos=2,
+            sofia_n_advertencias=0,
         )
         assert report["verdict"] == "FAIL"
         assert report["sofia"]["criticos"] == 2
@@ -365,10 +388,15 @@ class TestLockPidMuerto:
 class TestCoverageReporte:
     def test_reporte_incluye_coverage(self) -> None:
         report = _build_json_report(
-            episode_id="e", verdict=Status.OK, msg="ok", duration_ms=1.0,
-            mode="check", files=["a.py"],
+            episode_id="e",
+            verdict=Status.OK,
+            msg="ok",
+            duration_ms=1.0,
+            mode="check",
+            files=["a.py"],
             telemetry={"coverage_global": 78.5, "tests_failed": 2},
-            sofia_n_criticos=0, sofia_n_advertencias=0,
+            sofia_n_criticos=0,
+            sofia_n_advertencias=0,
         )
         assert report["coverage"]["global"] == 78.5
         assert report["coverage"]["tests_failed"] == 2
@@ -376,9 +404,15 @@ class TestCoverageReporte:
 
     def test_reporte_coverage_default_cero(self) -> None:
         report = _build_json_report(
-            episode_id="e", verdict=Status.OK, msg="ok", duration_ms=1.0,
-            mode="check", files=[], telemetry={},
-            sofia_n_criticos=0, sofia_n_advertencias=0,
+            episode_id="e",
+            verdict=Status.OK,
+            msg="ok",
+            duration_ms=1.0,
+            mode="check",
+            files=[],
+            telemetry={},
+            sofia_n_criticos=0,
+            sofia_n_advertencias=0,
         )
         assert report["coverage"]["global"] == 0
 
@@ -459,23 +493,25 @@ class TestQualityGateCambiaVerdict:
         runner._sofia_report.n_advertencias = 0
         runner._telemetry = {"coverage_global": 40.0}
         runner._last_snapshot = None
-        with mock.patch(
-            "scripts.pro.quality_gate.evaluar",
-            return_value=("REJECTED", ["COBERTURA: 40% < 70%"]),
-        ), mock.patch.object(runner, "_acquire_lock", return_value=True), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._conciencia"
-        ), mock.patch.object(runner, "_finish", return_value=Status.FAIL), mock.patch.object(
-            runner, "preflight", return_value=[]
-        ), mock.patch.object(runner, "phase_verdict", return_value=(Status.OK, "ok")), mock.patch(
-            "scripts.pro.tuneladora.pipeline.runner._plugin_registry"
-        ), mock.patch.object(runner, "phase_snapshot", return_value=[]), mock.patch.object(
-            runner, "phase_static", return_value=[]
-        ), mock.patch.object(runner, "phase_dynamic", return_value=[]), mock.patch.object(
-            runner, "phase_api_diff", return_value=[]
-        ), mock.patch.object(runner, "phase_index", return_value=[]), mock.patch.object(
-            runner, "phase_integrity", return_value=[]
-        ), mock.patch.object(runner, "phase_commit", return_value=[]), mock.patch.object(
-            runner, "pending_queue"
+        with (
+            mock.patch(
+                "scripts.pro.quality_gate.evaluar",
+                return_value=("REJECTED", ["COBERTURA: 40% < 70%"]),
+            ),
+            mock.patch.object(runner, "_acquire_lock", return_value=True),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._conciencia"),
+            mock.patch.object(runner, "_finish", return_value=Status.FAIL),
+            mock.patch.object(runner, "preflight", return_value=[]),
+            mock.patch.object(runner, "phase_verdict", return_value=(Status.OK, "ok")),
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry"),
+            mock.patch.object(runner, "phase_snapshot", return_value=[]),
+            mock.patch.object(runner, "phase_static", return_value=[]),
+            mock.patch.object(runner, "phase_dynamic", return_value=[]),
+            mock.patch.object(runner, "phase_api_diff", return_value=[]),
+            mock.patch.object(runner, "phase_index", return_value=[]),
+            mock.patch.object(runner, "phase_integrity", return_value=[]),
+            mock.patch.object(runner, "phase_commit", return_value=[]),
+            mock.patch.object(runner, "pending_queue"),
         ):
             result = runner.run()
         assert result == Status.FAIL

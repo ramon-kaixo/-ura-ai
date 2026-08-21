@@ -1,4 +1,5 @@
 """Negative integration tests: pipeline falla correctamente cuando debe fallar."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -47,8 +48,11 @@ class TestNegativeSyntaxError:
         bad.write_text("def foo(\n")
         runner = PipelineRunner(cfg, mode="gate", files=[str(bad)])
         with mock.patch.multiple(
-            runner, phase_snapshot=mock.DEFAULT, phase_dynamic=mock.DEFAULT,
-            phase_index=mock.DEFAULT, phase_integrity=mock.DEFAULT,
+            runner,
+            phase_snapshot=mock.DEFAULT,
+            phase_dynamic=mock.DEFAULT,
+            phase_index=mock.DEFAULT,
+            phase_integrity=mock.DEFAULT,
             phase_commit=mock.DEFAULT,
         ):
             runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
@@ -131,8 +135,10 @@ class TestNegativeBlastRadius:
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(51)])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="\n".join(f"f{i}.py" for i in range(51)),
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="\n".join(f"f{i}.py" for i in range(51)),
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert any(r.name == "blast_radius" and r.status == Status.FAIL for r in results)
@@ -141,8 +147,10 @@ class TestNegativeBlastRadius:
         runner = PipelineRunner(cfg, mode="check", files=["a.py", "b.py"])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="a.py\nb.py",
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="a.py\nb.py",
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         blast = [r for r in results if r.name == "blast_radius"]
@@ -152,8 +160,10 @@ class TestNegativeBlastRadius:
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(50)])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="\n".join(f"f{i}.py" for i in range(50)),
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="\n".join(f"f{i}.py" for i in range(50)),
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert any(r.name == "blast_radius" and r.status == Status.OK for r in results)
@@ -225,9 +235,13 @@ class TestNegativeRollback:
         src.write_text("x = 1\n")
         runner = PipelineRunner(cfg, mode="gate", files=[str(src)])
         with mock.patch.multiple(
-            runner, phase_snapshot=mock.DEFAULT, phase_static=mock.DEFAULT,
-            phase_dynamic=mock.DEFAULT, phase_index=mock.DEFAULT,
-            phase_integrity=mock.DEFAULT, phase_commit=mock.DEFAULT,
+            runner,
+            phase_snapshot=mock.DEFAULT,
+            phase_static=mock.DEFAULT,
+            phase_dynamic=mock.DEFAULT,
+            phase_index=mock.DEFAULT,
+            phase_integrity=mock.DEFAULT,
+            phase_commit=mock.DEFAULT,
         ):
             runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
             runner.phase_static.return_value = [mock.Mock(name="static", status=Status.OK)]
@@ -249,7 +263,7 @@ class TestNegativeLLMFallback:
         bad = Path("/tmp/test_neg_llm_fallback.py")
         bad.write_text("import os\n\nx = 1\n")
         runner = PipelineRunner(cfg, mode="gate", files=[str(bad)])
-        with mock.patch.object(runner.llm_fallback, 'analyze', return_value=""):
+        with mock.patch.object(runner.llm_fallback, "analyze", return_value=""):
             pre_count = len(runner.pending_queue.list_pending())
             results = runner.phase_static()
         bad.unlink(missing_ok=True)

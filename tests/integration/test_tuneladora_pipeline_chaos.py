@@ -1,4 +1,5 @@
 """Chaos tests: validación de escenarios extremos del pipeline."""
+
 from __future__ import annotations
 
 import os
@@ -33,8 +34,10 @@ class TestChaosBlastRadius:
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(51)])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="\n".join(f"f{i}.py" for i in range(51)),
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="\n".join(f"f{i}.py" for i in range(51)),
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert any(r.name == "blast_radius" and r.status == Status.FAIL for r in results)
@@ -45,6 +48,7 @@ class TestChaosRollbackCreated:
         snap_dir = tmp_path / ".tuneladora_chaos"
         snap_dir.mkdir()
         from scripts.pro.tuneladora.pipeline.snapshot_manager import SnapshotManager
+
         sm = SnapshotManager(snap_dir)
 
         existing = tmp_path / "existing.py"
@@ -55,6 +59,7 @@ class TestChaosRollbackCreated:
         # The snapshot didn't capture the new file (it didn't exist at take time)
         # Simulate rollback: new file was added to meta as "created_file"
         import json
+
         meta = json.loads((snap_path / "meta.json").read_text())
         meta["created_files"] = [str(tmp_path / "ia_created.py")]
         (snap_path / "meta.json").write_text(json.dumps(meta))
@@ -72,6 +77,7 @@ class TestChaosRollbackCreated:
         snap_dir = tmp_path / ".tuneladora_chaos2"
         snap_dir.mkdir()
         from scripts.pro.tuneladora.pipeline.snapshot_manager import SnapshotManager
+
         sm = SnapshotManager(snap_dir)
 
         existing = tmp_path / "keep.py"
@@ -89,8 +95,10 @@ class TestChaosTestManipulation:
         runner = PipelineRunner(cfg, mode="check", files=["src.py", "test_src.py"])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="src.py\ntest_src.py",
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="src.py\ntest_src.py",
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert any(r.name == "test_manipulation" and r.status == Status.WARN for r in results)
@@ -99,8 +107,10 @@ class TestChaosTestManipulation:
         runner = PipelineRunner(cfg, mode="check", files=["src.py"])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="src.py",
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="src.py",
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert not any(r.name == "test_manipulation" for r in results)
@@ -109,8 +119,10 @@ class TestChaosTestManipulation:
         runner = PipelineRunner(cfg, mode="check", files=["test_src.py"])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=0, stdout="test_src.py",
-                stderr="", spec=["returncode", "stdout", "stderr"],
+                returncode=0,
+                stdout="test_src.py",
+                stderr="",
+                spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_integrity()
         assert not any(r.name == "test_manipulation" for r in results)
@@ -119,6 +131,7 @@ class TestChaosTestManipulation:
 class TestChaosLock:
     def test_lock_prevents_concurrent(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
+
         c = Cfg()
         c.tuneladora_dir = tmp_path / ".tuneladora"
         c.tuneladora_dir.mkdir()
@@ -132,6 +145,7 @@ class TestChaosLock:
 
     def test_lock_cleanup(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
+
         c = Cfg()
         c.tuneladora_dir = tmp_path / ".tuneladora"
         c.tuneladora_dir.mkdir()
@@ -144,11 +158,13 @@ class TestChaosLock:
 
     def test_stale_lock_overwritten(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
+
         c = Cfg()
         c.tuneladora_dir = tmp_path / ".tuneladora"
         c.tuneladora_dir.mkdir()
         lock_path = c.tuneladora_dir / "pipeline.lock"
         import json as _json
+
         lock_path.write_text(_json.dumps({"pid": 0, "start": 0}))
         os.utime(str(lock_path), (time.time() - 3600, time.time() - 3600))
         runner = PipelineRunner(c, mode="check")
@@ -163,18 +179,28 @@ class TestChaosCleanCommit:
         runner = PipelineRunner(cfg, mode="gate", files=[str(src)])
         runner.sofia = mock.Mock()
         runner.sofia.review.return_value = mock.Mock(
-            hallazgos=[], n_criticos=0, n_advertencias=0,
+            hallazgos=[],
+            n_criticos=0,
+            n_advertencias=0,
         )
-        with mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry") as mock_plugin, \
-             mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua") as mock_audit:
+        with (
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._plugin_registry") as mock_plugin,
+            mock.patch("scripts.pro.tuneladora.pipeline.runner._auditoria_continua") as mock_audit,
+        ):
             mock_plugin.run_phase.return_value = {"status": "ok"}
             mock_audit.run_all.return_value = {"score": 100.0, "results": {}}
             with mock.patch.multiple(
-                runner, preflight=mock.DEFAULT, phase_snapshot=mock.DEFAULT,
-                phase_static=mock.DEFAULT, phase_dynamic=mock.DEFAULT,
-                phase_api_diff=mock.DEFAULT, phase_index=mock.DEFAULT,
-                phase_integrity=mock.DEFAULT, phase_verdict=mock.DEFAULT,
-                _acquire_lock=mock.DEFAULT, _release_lock=mock.DEFAULT,
+                runner,
+                preflight=mock.DEFAULT,
+                phase_snapshot=mock.DEFAULT,
+                phase_static=mock.DEFAULT,
+                phase_dynamic=mock.DEFAULT,
+                phase_api_diff=mock.DEFAULT,
+                phase_index=mock.DEFAULT,
+                phase_integrity=mock.DEFAULT,
+                phase_verdict=mock.DEFAULT,
+                _acquire_lock=mock.DEFAULT,
+                _release_lock=mock.DEFAULT,
             ):
                 runner.preflight.return_value = [mock.Mock(name="pre", status=Status.OK)]
                 runner.phase_snapshot.return_value = [mock.Mock(name="snap", status=Status.OK)]
@@ -196,7 +222,9 @@ class TestChaosAPIDiff:
         runner = PipelineRunner(cfg, mode="check", files=[str(src)])
         with mock.patch("subprocess.run") as mock_run:
             mock_run.return_value = mock.Mock(
-                returncode=128, stdout="", stderr="fatal: path not found",
+                returncode=128,
+                stdout="",
+                stderr="fatal: path not found",
                 spec=["returncode", "stdout", "stderr"],
             )
             results = runner.phase_api_diff()

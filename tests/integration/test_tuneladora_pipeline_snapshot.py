@@ -1,4 +1,5 @@
 """Tests for SnapshotManager (scripts/pro/tuneladora/pipeline/snapshot_manager.py)."""
+
 from __future__ import annotations
 
 import json

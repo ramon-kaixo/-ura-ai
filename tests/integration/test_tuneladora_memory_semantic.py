@@ -1,4 +1,5 @@
 """Tests for SemanticMemory (scripts/pro/tuneladora/memory/semantic.py)."""
+
 from __future__ import annotations
 
 from pathlib import Path

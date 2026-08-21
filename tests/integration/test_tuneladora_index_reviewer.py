@@ -1,4 +1,5 @@
 """Tests para generate_index.py y block_reviewer.py."""
+
 from __future__ import annotations
 
 import json
@@ -104,12 +105,15 @@ class TestBlockReviewer:
             raise_for_status=lambda: None,
             json=lambda: {"response": "# hallazgos"},
         )
-        with mock.patch(
-            "scripts.pro.tuneladora.pipeline.block_reviewer.requests.post",
-            return_value=resp,
-        ) as m_post, mock.patch(
-            "scripts.pro.tuneladora.pipeline.block_reviewer._get_diff",
-            return_value="+diff",
+        with (
+            mock.patch(
+                "scripts.pro.tuneladora.pipeline.block_reviewer.requests.post",
+                return_value=resp,
+            ) as m_post,
+            mock.patch(
+                "scripts.pro.tuneladora.pipeline.block_reviewer._get_diff",
+                return_value="+diff",
+            ),
         ):
             _do_review(cfg, "b1", "head1", ["t1"], "api")
         files = list((cfg.tuneladora_dir / "reviews").glob("block_b1_*.md"))
@@ -121,12 +125,15 @@ class TestBlockReviewer:
 
     def test_do_review_llm_falla(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
-        with mock.patch(
-            "scripts.pro.tuneladora.pipeline.block_reviewer.requests.post",
-            side_effect=RuntimeError("conn"),
-        ), mock.patch(
-            "scripts.pro.tuneladora.pipeline.block_reviewer._get_diff",
-            return_value="",
+        with (
+            mock.patch(
+                "scripts.pro.tuneladora.pipeline.block_reviewer.requests.post",
+                side_effect=RuntimeError("conn"),
+            ),
+            mock.patch(
+                "scripts.pro.tuneladora.pipeline.block_reviewer._get_diff",
+                return_value="",
+            ),
         ):
             _do_review(cfg, "b2", "", [], "")
         files = list((cfg.tuneladora_dir / "reviews").glob("block_b2_*.md"))

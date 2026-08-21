@@ -1,4 +1,5 @@
 """Tests para scripts/pro/auditoria_paralela.py (10 checks)."""
+
 from __future__ import annotations
 
 import sys
@@ -75,9 +76,13 @@ class TestChecks:
     def test_main_retorna_codigo(self) -> None:
         import auditoria_paralela as ap
 
-        with mock.patch("sys.argv", ["auditoria_paralela.py", "--json"]), mock.patch.object(
-            ap, "run_all",
-            return_value={"ok": 10, "total": 10, "results": [{"check": "x", "ok": True, "detail": ""}] * 10},
+        with (
+            mock.patch("sys.argv", ["auditoria_paralela.py", "--json"]),
+            mock.patch.object(
+                ap,
+                "run_all",
+                return_value={"ok": 10, "total": 10, "results": [{"check": "x", "ok": True, "detail": ""}] * 10},
+            ),
         ):
             code = ap.main()
         assert code == 0

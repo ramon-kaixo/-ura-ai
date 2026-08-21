@@ -1,4 +1,5 @@
 """Tests para CheckpointManager (scripts/pro/tuneladora/checkpoint.py)."""
+
 from __future__ import annotations
 
 from pathlib import Path

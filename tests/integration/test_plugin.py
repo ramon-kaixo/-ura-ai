@@ -77,8 +77,12 @@ class TestPluginBase:
 
     def test_concrete_plugin_has_default_meta(self) -> None:
         class _Concrete(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -91,8 +95,12 @@ class TestPluginBase:
 
     def test_repr_includes_name(self) -> None:
         class _Named(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -100,8 +108,12 @@ class TestPluginBase:
 
     def test_rollback_default_is_noop(self) -> None:
         class _NoRollback(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {}
 
@@ -109,8 +121,12 @@ class TestPluginBase:
 
     def test_rollback_can_be_overridden(self) -> None:
         class _WithRollback(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def __init__(self) -> None:
                 super().__init__()
                 self.rolled_back = False
@@ -127,8 +143,12 @@ class TestPluginBase:
 
     def test_execute_returns_dict(self) -> None:
         class _Returning(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"result": 42, "items": [1, 2, 3]}
 
@@ -136,8 +156,12 @@ class TestPluginBase:
 
     def test_execute_receives_context(self) -> None:
         class _CtxAware(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"received": context.get("key") if context else None}
 
@@ -146,8 +170,12 @@ class TestPluginBase:
 
     def test_execute_with_none_context(self) -> None:
         class _NoneCtx(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def execute(self, context: dict[str, Any] | None = None) -> dict[str, Any]:
                 return {"got_none": context is None}
 
@@ -155,8 +183,12 @@ class TestPluginBase:
 
     def test_meta_from_init(self) -> None:
         class _CustomMeta(PluginBase):
-            def on_load(self) -> None: pass
-            def on_unload(self) -> None: pass
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
             def __init__(self) -> None:
                 super().__init__()
                 self.meta = PluginMeta(name="custom", phase="pre", timeout=10)

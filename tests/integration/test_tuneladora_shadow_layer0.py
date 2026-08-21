@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/shadow/layer0_env.py."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -119,7 +120,9 @@ class TestDiskIo:
 class TestRun:
     def test_todo_ok(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: 50.0)
-        monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 50, "available_mb": 8000})
+        monkeypatch.setattr(
+            "scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 50, "available_mb": 8000}
+        )
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._ollama_check", lambda u: (True, 5))
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_cpu_count", lambda: 8)
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._git_available", lambda p: True)
@@ -132,7 +135,9 @@ class TestRun:
 
     def test_disk_fail_y_ram_warn(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: 0.5)
-        monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 90, "available_mb": 100})
+        monkeypatch.setattr(
+            "scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 90, "available_mb": 100}
+        )
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._ollama_check", lambda u: (False, 0))
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_cpu_count", lambda: 2)
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._git_available", lambda p: False)
@@ -148,7 +153,9 @@ class TestRun:
 
     def test_disk_indeterminado(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: None)
-        monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 50, "available_mb": 8000})
+        monkeypatch.setattr(
+            "scripts.pro.tuneladora.shadow.layer0_env._get_ram_info", lambda: {"percent": 50, "available_mb": 8000}
+        )
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._ollama_check", lambda u: (True, 1))
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._get_cpu_count", lambda: 4)
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._git_available", lambda p: True)

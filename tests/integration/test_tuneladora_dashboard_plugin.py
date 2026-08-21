@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/plugins/dashboard.py."""
+
 from __future__ import annotations
 
 import io
@@ -62,9 +63,7 @@ class TestDashboardPlugin:
         engine = mock.Mock()
         plugin = DashboardPlugin(engine, port=0)
         server = mock.Mock()
-        with mock.patch(
-            "scripts.pro.tuneladora.plugins.dashboard.HTTPServer", return_value=server
-        ) as m_http:
+        with mock.patch("scripts.pro.tuneladora.plugins.dashboard.HTTPServer", return_value=server) as m_http:
             plugin.start()
         m_http.assert_called_once()
         server.serve_forever.assert_called_once()

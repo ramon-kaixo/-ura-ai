@@ -1,4 +1,5 @@
 """Tests para scripts/pro/tuneladora/detector.py (ProactiveDetector)."""
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -55,9 +56,7 @@ class TestCheckDisk:
             return _Stat(bavail=3_000_000, blocks=10_000_000)
 
         monkeypatch.setattr("os.statvfs", fake_statvfs)
-        with mock.patch(
-            "scripts.pro.tuneladora.plugins.cleanup.CleanupPlugin"
-        ) as m_cleanup:
+        with mock.patch("scripts.pro.tuneladora.plugins.cleanup.CleanupPlugin") as m_cleanup:
             r = detector.check_disk()
         assert r.status == "warning"
         m_cleanup.return_value.cleanup_logs.assert_called_with(days=7)

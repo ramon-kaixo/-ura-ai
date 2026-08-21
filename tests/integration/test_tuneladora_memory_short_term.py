@@ -1,4 +1,5 @@
 """Tests for ShortTermMemory (scripts/pro/tuneladora/memory/short_term.py)."""
+
 from __future__ import annotations
 
 import time
