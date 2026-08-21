@@ -559,7 +559,7 @@ def test_file_read_oserror(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> N
     def _roto(*args: object, **kwargs: object) -> object:
         raise OSError("permiso denegado")
 
-    monkeypatch.setattr("builtins.open", _roto)
+    monkeypatch.setattr(Path, "open", _roto)
     res = _sync_file_read(str(archivo))
     assert res["error"] == "permiso denegado"
 
@@ -590,6 +590,20 @@ async def test_ejecutar_tool_conocida(monkeypatch: pytest.MonkeyPatch) -> None:
 async def test_ejecutar_tool_crawl_web_registrada() -> None:
     assert "crawl_web" in TOOL_HANDLERS
     assert callable(TOOL_HANDLERS["crawl_web"])
+
+
+async def test_ejecutar_tool_devuelve_resultado_del_handler() -> None:
+    """Mata el mutante 'return value to None' en ejecutar_tool (L175)."""
+
+    async def _fake_handler(**kwargs: object) -> dict:
+        return {"ok": True, "kwargs": kwargs}
+
+    tools_mod.TOOL_HANDLERS["_fake_test"] = _fake_handler
+    try:
+        res = await ejecutar_tool("_fake_test", {"a": 1})
+        assert res == {"ok": True, "kwargs": {"a": 1}}
+    finally:
+        del tools_mod.TOOL_HANDLERS["_fake_test"]
 
 
 # ---------------------------------------------------------------------------

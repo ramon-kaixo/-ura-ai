@@ -162,6 +162,7 @@ targets = [
     "core/mochila/status_endpoint.py",
     "core/mochila/vram_scheduler.py",
     "core/mochila/providers/base.py",
+    "core/mochila/tools.py",
 ]
 tests = [
     "tests/unit/test_ast_sentinel.py",
@@ -178,6 +179,7 @@ tests = [
     "tests/unit/test_mochila_vram_scheduler.py",
     "tests/unit/test_path_setup.py",
     "tests/unit/test_stealth_fetcher.py",
+    "tests/unit/test_mochila_tools_cobertura.py",
 ]
 executor = "subprocess"
 map_timeout_env = "PYTEST_GREMLINS_MAP_TIMEOUT"
