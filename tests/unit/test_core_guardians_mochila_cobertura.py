@@ -1089,16 +1089,13 @@ def test_vram_detect_max_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
 
-def test_vram_detect_max_na() -> None:
+def test_vram_detect_max_na(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
         stdout = "N/A\n"
 
-    vram_mod.subprocess.run = lambda *a, **k: _R()
-    try:
-        assert VRAMAwareScheduler._detect_max_vram(100) == 100
-    finally:
-        vram_mod.subprocess.run = __import__('subprocess').run
+    monkeypatch.setattr(vram_mod.subprocess, "run", lambda *a, **k: _R())
+    assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
 
 def test_vram_available_mb() -> None:
