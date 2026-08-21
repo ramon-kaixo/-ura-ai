@@ -73,8 +73,12 @@ class VRAMAwareScheduler:
         base = base_weights.get(model, 512)
         prompt = body.get("prompt", "") or str(body.get("messages", ""))
         kv_cache_overhead = int(
-            (len(prompt) // 4) * 0.002
-        )  # gremlin: pardon[equivalent] int() trunca: // y / coinciden para toda longitud real (verificado 0..2M)
+            (
+                # gremlin: pardon[equivalent] int() trunca: // y / coinciden para toda longitud real (verificado 0..2M)
+                len(prompt) // 4
+            )
+            * 0.002
+        )
         return base + kv_cache_overhead
 
     async def sync_vram(self) -> None:

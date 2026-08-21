@@ -138,8 +138,8 @@ class ASTSentinel:
                     1,
                     -1,
                     2,
-                    True,
-                    False,
-                )  # gremlin: pardon[equivalent] True==1 y False==0 ya cubiertos por 0 y 1 en la tupla
+                    True,  # gremlin: pardon[equivalent] True==1 ya cubierto por 1 en la tupla
+                    False,  # gremlin: pardon[equivalent] False==0 ya cubierto por 0 en la tupla
+                )
             ):
                 w.append(f"L{n.lineno}: magic {n.value}")
