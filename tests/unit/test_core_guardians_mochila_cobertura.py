@@ -1349,6 +1349,7 @@ def test_vram_acquire_boot_flujo_real(monkeypatch: pytest.MonkeyPatch) -> None:
         s._queue = []
         s._active = {}
         s._lock = asyncio.Lock()
+        s._release_tasks = set()
 
         task = asyncio.create_task(s.acquire_boot_vram(500))
         await original_sleep(0.02)
@@ -1610,7 +1611,7 @@ def test_vram_acquire_boot_timeout() -> None:
         s._queue = []
         s._active = {}
         s._lock = asyncio.Lock()
-        assert await s.acquire_boot_vram(500) is False
+        assert await s.acquire_boot_vram(500, timeout=0.1) is False
 
     asyncio.run(_main())
 

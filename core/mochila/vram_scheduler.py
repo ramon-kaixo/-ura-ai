@@ -148,12 +148,16 @@ class VRAMAwareScheduler:
         except TimeoutError:
             return None
 
-    async def acquire_boot_vram(self, mb: int) -> bool:
+    async def acquire_boot_vram(
+        self,
+        mb: int,
+        timeout: float = 90.0,  # noqa: ASYNC109 - API interna con timeout explicito
+    ) -> bool:
         async with self._lock:
             future = asyncio.get_running_loop().create_future()
             self._queue.append((future, mb, time.time() + 120.0, {"model": "static_boot_service"}))
         try:
-            req_id = await asyncio.wait_for(future, timeout=90.0)
+            req_id = await asyncio.wait_for(future, timeout=timeout)
         except TimeoutError:
             return False
 
