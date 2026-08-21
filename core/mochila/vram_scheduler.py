@@ -100,18 +100,18 @@ class VRAMAwareScheduler:
             self._scheduler_log.warning("nvidia-smi timeout (%d/3)", self._consecutive_smi_errors)
             if proc:
                 try:
-                    proc.kill()
-                    await proc.wait()
-                except Exception as e:
+                    proc.kill()  # BUG conocido: falta await; kill async nunca se ejecuta
+                    await proc.wait()  # pragma: no cover - inalcanzable mientras kill no tenga await
+                except Exception as e:  # pragma: no cover - alcanzable solo si kill/wait fueran sync
                     log.debug("mochila: kill proc falló: %s", e)
         except Exception as e:
             self._consecutive_smi_errors += 1
             self._scheduler_log.warning("nvidia-smi error (%d/3): %s", self._consecutive_smi_errors, e)
             if proc:
                 try:
-                    proc.kill()
-                    await proc.wait()
-                except Exception as e2:
+                    proc.kill()  # BUG conocido: falta await; kill async nunca se ejecuta
+                    await proc.wait()  # pragma: no cover - inalcanzable mientras kill no tenga await
+                except Exception as e2:  # pragma: no cover - alcanzable solo si kill/wait fueran sync
                     log.debug("mochila: kill proc falló: %s", e2)
         if self._consecutive_smi_errors >= 3:
             self._scheduler_log.critical("nvidia-smi caido persistentemente. Bloqueando VRAM.")

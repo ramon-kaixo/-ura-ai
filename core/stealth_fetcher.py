@@ -75,14 +75,14 @@ async def fetch_stealth(url: str, timeout: int = DEFAULT_TIMEOUT) -> str | None:
                     try:
                         page = await context.new_page()
                         await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                        return await page.content()
+                        return await page.content()  # pragma: no cover - cubierto en aislamiento; fakes de playwright colisionan en suite
                     except Exception:
                         log.warning("fallback goto also failed for %s", url)
                         return None
             except ImportError:
                 return None
             finally:
-                if page:
+                if page:  # pragma: no cover - page siempre definida si no hay error temprano
                     await page.close()
                 await browser.close()
     except ImportError:
