@@ -1,1 +1,1 @@
-docs/audit_externa_20260728_1216.md
+audit_externa_20260728_1216.md

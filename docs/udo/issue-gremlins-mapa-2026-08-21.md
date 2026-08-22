@@ -13,7 +13,7 @@ async def ejecutar_tool(name: str, arguments: dict) -> dict:
     handler = TOOL_HANDLERS.get(name)
     if not handler:
         return {"error": f"Tool desconocida: {name}"}
-    return await handler(**arguments)   # <-- mutante 'return value to None' en esta línea
+    return await handler(**arguments)  # <-- mutante 'return value to None' en esta línea
 ```
 
 Test que mata el mutante (verificado manualmente: con `return None` el assert falla):
@@ -22,6 +22,7 @@ Test que mata el mutante (verificado manualmente: con `return None` el assert fa
 async def test_ejecutar_tool_devuelve_resultado_del_handler() -> None:
     async def _fake_handler(**kwargs):
         return {"ok": True, "kwargs": kwargs}
+
     TOOL_HANDLERS["_fake_test"] = _fake_handler
     try:
         res = await ejecutar_tool("_fake_test", {"a": 1})

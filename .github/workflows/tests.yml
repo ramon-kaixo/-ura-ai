@@ -100,7 +100,7 @@ jobs:
           python-version: "3.12"
       - name: Instalar semgrep
         run: pip install semgrep
-      - name: Semgrep (reglas auto; fail solo en críticas)
+      - name: Semgrep (reglas locales .semgrep.yml; fail solo en críticas)
         run: |
-          semgrep --config auto --error --severity ERROR . || \
+          semgrep --config .semgrep.yml --error --severity ERROR . || \
             (echo "semgrep: hallazgos críticos (revisar)" && exit 1)
