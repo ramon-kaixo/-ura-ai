@@ -62,7 +62,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Instalar dependencias
-        run: pip install -e ".[dev]" mypy
+        run: pip install -e ".[dev]" "mypy>=2.3"
       - name: Gate de tipos (mypy.ini — falla si hay errores)
         run: mypy --no-incremental motor/core/fusion motor/core/llm/base.py motor/assistant
 
