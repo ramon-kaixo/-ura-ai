@@ -38,7 +38,7 @@ def test_setup_path_y_get_root() -> None:
     ps._PROJECT_ROOT = None
     ps.setup_path()
     root = ps.get_project_root()
-    assert root.name == "ura_ia_1972"
+    assert root.name == Path(__file__).resolve().parents[2].name
     assert str(root) in sys.path
 
 
@@ -55,7 +55,7 @@ def test_get_project_root_sin_init(monkeypatch: pytest.MonkeyPatch) -> None:
     ps._PROJECT_ROOT = None
     root = ps.get_project_root()
     assert root is not None
-    assert root.name == "ura_ia_1972"
+    assert root.name == Path(__file__).resolve().parents[2].name
 
 
 def test_setup_path_idempotente() -> None:
@@ -87,6 +87,7 @@ def test_cargar_config_corrupto(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     f = Path(str(tmp_path)) / "guardian_config.json"
     f.write_text("{roto")
     monkeypatch.setattr(gd, "CONFIG_PATH", f)
+    monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
     cfg = cargar_config()
     assert cfg["hash_truncar"] == 64  # default tras error
 
@@ -128,6 +129,8 @@ def test_comparar() -> None:
 
 def test_verificar_escritura_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
+    monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
+    monkeypatch.setattr(gd, "CONFIG_PATH", Path(str(tmp_path)) / ".nervioso" / "guardian_config.json")
     f = Path(str(tmp_path)) / "a.py"
     f.write_text("x")
     h = calcular_hash(f)
@@ -141,6 +144,8 @@ def test_verificar_escritura_no_existe(tmp_path: object, monkeypatch: pytest.Mon
 
 def test_verificar_escritura_hash_distinto(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
+    monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
+    monkeypatch.setattr(gd, "CONFIG_PATH", Path(str(tmp_path)) / ".nervioso" / "guardian_config.json")
     f = Path(str(tmp_path)) / "a.py"
     f.write_text("x")
     assert verificar_escritura("a.py", "0" * 64) is False
@@ -206,7 +211,9 @@ def test_guardian_main_verify(monkeypatch: pytest.MonkeyPatch, tmp_path: object)
     f = Path(str(tmp_path)) / "a.py"
     f.write_text("x")
     h = calcular_hash(f)
-    monkeypatch.setattr(gd, "_parse_args", lambda: type("A", (), {"verify": ["a.py", h], "init": False, "scan": False})())
+    monkeypatch.setattr(
+        gd, "_parse_args", lambda: type("A", (), {"verify": ["a.py", h], "init": False, "scan": False})()
+    )
     monkeypatch.setattr(gd, "cargar_config", lambda: DEFAULT_CONFIG)
     monkeypatch.setattr(gd, "_cmd_verify", lambda a, hh, c: None)
     gd.main()  # no lanza
@@ -514,7 +521,11 @@ def test_fetch_stealth_playwright_ok(monkeypatch: pytest.MonkeyPatch) -> None:
 
         @property
         def chromium(self):
-            return type("C", (), {"launch": lambda **k: _get_browser(self)})() if False else type("C", (), {"launch": self._launch})()
+            return (
+                type("C", (), {"launch": lambda **k: _get_browser(self)})()
+                if False
+                else type("C", (), {"launch": self._launch})()
+            )
 
         async def _launch(self, headless: bool = True):
             return self._browser
@@ -681,7 +692,7 @@ def test_sentinel_sintaxis_error() -> None:
 
 def test_sentinel_ok() -> None:
     s = ASTSentinel()
-    codigo = "def f(x: int) -> int:\n    \"\"\"doc\"\"\"\n    return x\n"
+    codigo = 'def f(x: int) -> int:\n    """doc"""\n    return x\n'
     v = s.analizar(codigo)
     assert v.ok is True
 
@@ -739,7 +750,7 @@ def test_sentinel_import_from_prohibido() -> None:
 
 def test_sentinel_todo_fine() -> None:
     s = ASTSentinel()
-    codigo = "def f(x: int) -> int:\n    \"\"\"doc\"\"\"\n    return x\n"
+    codigo = 'def f(x: int) -> int:\n    """doc"""\n    return x\n'
     v = s.analizar(codigo, prod=True)
     assert v.ok is True
     assert v.m["nf"] == 1
@@ -1112,7 +1123,9 @@ def test_vram_estimar_overhead() -> None:
 
 def test_vram_estimar() -> None:
     assert VRAMAwareScheduler.estimar_vram({"_vram_mb": "5000"}) == 5000
-    assert VRAMAwareScheduler.estimar_vram({"model": "qwen2.5-coder:14b", "prompt": "x" * 400}) == 9000  # overhead int(0.2)=0
+    assert (
+        VRAMAwareScheduler.estimar_vram({"model": "qwen2.5-coder:14b", "prompt": "x" * 400}) == 9000
+    )  # overhead int(0.2)=0
     assert VRAMAwareScheduler.estimar_vram({"model": "otro", "messages": "m" * 400}) == 512  # overhead 0
 
 
@@ -1400,6 +1413,7 @@ def test_vram_sync_communicate_error_kill_roto(monkeypatch: pytest.MonkeyPatch) 
     s._ollama_client = _Client()
     asyncio.run(s.sync_vram())  # RuntimeError del communicate → except Exception → kill sync lanza → except e2
     assert s._consecutive_smi_errors == 1
+
     async def _exec(*a, **k):
         msg = "roto"
         raise RuntimeError(msg)
@@ -1428,7 +1442,9 @@ def test_vram_loop_once(monkeypatch: pytest.MonkeyPatch) -> None:
     s._active = {}
     s._queue = []
     s._lock = asyncio.Lock()
-    s._ollama_client = type("C", (), {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()})()
+    s._ollama_client = type(
+        "C", (), {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()}
+    )()
 
     class _Proc:
         returncode = 0
@@ -1463,7 +1479,11 @@ def test_vram_loop_once_procesa_cola(monkeypatch: pytest.MonkeyPatch) -> None:
         s._active = {}
         s._lock = asyncio.Lock()
         s._hot_models = set()
-        s._ollama_client = type("C", (), {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()})()
+        s._ollama_client = type(
+            "C",
+            (),
+            {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()},
+        )()
 
         fut = asyncio.get_running_loop().create_future()
         s._queue = [(fut, 500, time.time() + 100, {"model": "m"})]
@@ -1711,7 +1731,11 @@ def test_vram_loop_once_con_fut_done(monkeypatch: pytest.MonkeyPatch) -> None:
         s._active = {}
         s._lock = asyncio.Lock()
         s._hot_models = set()
-        s._ollama_client = type("C", (), {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()})()
+        s._ollama_client = type(
+            "C",
+            (),
+            {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()},
+        )()
 
         fut = asyncio.get_running_loop().create_future()
         fut.set_result("ya")
@@ -1737,10 +1761,15 @@ def test_vram_loop_once_error(monkeypatch: pytest.MonkeyPatch) -> None:
         s._active = {}
         s._lock = asyncio.Lock()
         s._hot_models = set()
-        s._ollama_client = type("C", (), {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()})()
+        s._ollama_client = type(
+            "C",
+            (),
+            {"get": lambda self, url: type("R", (), {"status_code": 200, "json": lambda self: {"models": []}})()},
+        )()
         await s._scheduler_loop_once()  # error → log.error, no lanza
 
     asyncio.run(_main())
+
 
 def test_vram_sync_error_tres(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _exec(*a, **k):
