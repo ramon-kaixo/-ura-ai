@@ -13,7 +13,11 @@
 set -u
 cd "$(dirname "$0")/.."
 RAIZ="$(pwd)"
-PY=".venv/bin/python"
+if [ -x ".venv/bin/python" ]; then
+    PY=".venv/bin/python"   # local (ASUS): venv completo con plugins
+else
+    PY="python3"            # CI (runners): paquetes instalados con pip
+fi
 
 
 TARGETS=$($PY -c "

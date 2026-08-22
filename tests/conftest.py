@@ -66,6 +66,24 @@ def reset_provider_singletons() -> Generator[None, None, None]:
 
 
 @pytest.fixture(autouse=True)
+def aislar_torch_cuda() -> Generator[None, None, None]:
+    """Aisla torch.cuda.is_available entre tests (CIERRE-20260822).
+
+    Algunos tests reemplazan el atributo sin restaurarlo; si el test de
+    anker_pipeline (que espera RuntimeError cuando CUDA no está) corre
+    después, recibe un valor contaminado y falla solo en suite completa.
+    """
+    try:
+        import torch
+
+        original = torch.cuda.is_available
+        yield
+        torch.cuda.is_available = original
+    except ImportError:  # pragma: no cover - torch opcional
+        yield
+
+
+@pytest.fixture(autouse=True)
 def reset_engine_holder() -> Generator[None, None, None]:
     """Resetea _EngineHolder global entre tests.
 

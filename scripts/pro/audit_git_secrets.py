@@ -102,6 +102,9 @@ def escanear(max_commits: int | None = None, rango: str | None = None) -> list[d
                 continue
             if archivo_actual.endswith("SECRETS.md"):
                 continue
+            # Falsos positivos: ejemplos intencionales de redacción/secretos en tests
+            if archivo_actual.startswith("tests/") or "/tests/" in archivo_actual:
+                continue
             num_linea = i + 1
             for nombre, patron in PATRONES:
                 if patron.search(linea):
