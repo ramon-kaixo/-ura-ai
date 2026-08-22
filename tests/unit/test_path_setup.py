@@ -11,7 +11,7 @@ class TestSetupPath:
         original_len = len(sys.path)
         ps.setup_path()
         assert len(sys.path) >= original_len
-        assert any("ura_ia_1972" in p for p in sys.path)
+        assert any(Path(__file__).resolve().parents[2].name in p for p in sys.path)
 
     def test_setup_path_idempotente(self) -> None:
         ps.setup_path()

@@ -1,5 +1,8 @@
 """Tests para core/mochila/guardian_middleware.py y core/path_setup.py."""
+
 from __future__ import annotations
+
+from pathlib import Path
 
 from unittest import mock
 
@@ -75,7 +78,7 @@ class TestPathSetup:
         monkeypatch.setattr(ps, "_PROJECT_ROOT", None)
         ps.setup_path()
         root = ps.get_project_root()
-        assert root.name == "ura_ia_1972"
+        assert root.name == Path(__file__).resolve().parents[2].name
         assert str(root) in __import__("sys").path
 
     def test_setup_path_idempotente(self, monkeypatch) -> None:
