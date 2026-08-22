@@ -530,8 +530,11 @@ class TestContextRetriever:
         assert "sem=0.50" in cr.explanation
 
     def test_weights_y_explanation(self) -> None:
+        from datetime import UTC, datetime
+
         st = EpisodeStore()
-        ep = _episode(payload="x", ts="2026-08-10T00:00:00+00:00", importance=0.9, confidence=0.9)
+        ahora = datetime.now(UTC).isoformat()
+        ep = _episode(payload="x", ts=ahora, importance=0.9, confidence=0.9)
         ep.embedding = [0.1, 0.2]  # type: ignore[attr-defined]
         st.store(ep)
         ep2 = _episode(payload="v", ts="2026-01-01T00:00:00+00:00", importance=0.1, confidence=0.1)
