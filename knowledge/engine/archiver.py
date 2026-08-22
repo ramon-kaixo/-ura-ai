@@ -86,7 +86,7 @@ def _ensure_dir(path: Path) -> Path:
     return path
 
 
-def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess:
+def _git_cmd(*args: str, cwd: Path) -> subprocess.CompletedProcess[str]:
     git_path = shutil.which("git") or "/usr/bin/git"
     return subprocess.run(
         [git_path, *args],

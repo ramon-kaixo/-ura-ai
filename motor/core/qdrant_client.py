@@ -18,7 +18,7 @@ from motor.core.state import DegradedMode
 log = logging.getLogger("ura.qdrant")
 
 
-def generar_sparse_vector(texto: str, max_tokens: int = 512) -> dict:
+def generar_sparse_vector(texto: str, max_tokens: int = 512) -> dict[str, Any]:
     """Genera sparse vector (indices + valores TF) para búsqueda híbrida Qdrant."""
     tokens = re.findall(r"\w+", texto.lower())[:max_tokens]
     freqs = Counter(tokens)
@@ -210,7 +210,7 @@ class QdrantClient:
         self,
         doc_id: str,
         texto: str,
-        metadata: dict | None = None,
+        metadata: dict[str, Any] | None = None,
         collection: str = COLECCION_DOCUMENTOS,
     ) -> bool:
         """Genera embedding y guarda un documento en Qdrant."""
@@ -218,7 +218,7 @@ class QdrantClient:
 
     def guardar_documentos_batch(
         self,
-        docs: list[tuple[str, str, dict]],
+        docs: list[tuple[str, str, dict[str, Any]]],
         collection: str = COLECCION_DOCUMENTOS,
     ) -> int:
         """Guarda múltiples documentos en batch (más eficiente).
@@ -233,7 +233,9 @@ class QdrantClient:
         """
         return self._guardar_documentos(docs, collection)
 
-    def _guardar_documentos(self, docs: list[tuple[str, str, dict]], collection: str = COLECCION_DOCUMENTOS) -> int:
+    def _guardar_documentos(
+        self, docs: list[tuple[str, str, dict[str, Any]]], collection: str = COLECCION_DOCUMENTOS
+    ) -> int:
         """Implementación compartida para guardar uno o varios documentos."""
         if not self.disponible or not docs:
             return 0
@@ -262,7 +264,7 @@ class QdrantClient:
             log.exception("error guardar documentos batch: %s", e)
             return 0
 
-    def _guardar_documentos_rest(self, puntos: list[dict], collection: str = COLECCION_DOCUMENTOS) -> int:
+    def _guardar_documentos_rest(self, puntos: list[dict[str, Any]], collection: str = COLECCION_DOCUMENTOS) -> int:
         try:
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points"
             r = httpx.put(url, json={"points": puntos}, timeout=10)
@@ -271,7 +273,9 @@ class QdrantClient:
             log.exception("error guardar documentos batch (REST): %s", e)
             return 0
 
-    def buscar_por_similitud(self, query_vector: list, collection: str = COLECCION_DOCUMENTOS, limit: int = 10) -> list:
+    def buscar_por_similitud(
+        self, query_vector: list[float], collection: str = COLECCION_DOCUMENTOS, limit: int = 10
+    ) -> list[dict[str, Any]]:
         """Busca puntos por similitud coseno en la colección especificada."""
         if not self.disponible:
             return []
@@ -290,7 +294,7 @@ class QdrantClient:
             log.exception("error buscar por similitud: %s", e)
             return []
 
-    def _buscar_similitud_rest(self, query_vector: list, collection: str, limit: int) -> list:
+    def _buscar_similitud_rest(self, query_vector: list[float], collection: str, limit: int) -> list[dict[str, Any]]:
         try:
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/search"
             r = httpx.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
@@ -302,12 +306,12 @@ class QdrantClient:
             log.warning("buscar_similitud_rest falló: %s", e)
         return []
 
-    def buscar_documentos(self, query_texto: str, limit: int = 10) -> list:
+    def buscar_documentos(self, query_texto: str, limit: int = 10) -> list[dict[str, Any]]:
         """Conveniencia: genera embedding de la consulta y busca documentos similares."""
         vector = self.generar_embedding(query_texto)
         return self.buscar_por_similitud(vector, COLECCION_DOCUMENTOS, limit)
 
-    def eliminar_por_filtro(self, filtro: dict, collection: str = COLECCION_DOCUMENTOS) -> bool:
+    def eliminar_por_filtro(self, filtro: dict[str, Any], collection: str = COLECCION_DOCUMENTOS) -> bool:
         """Elimina puntos que coinciden con un filtro (ej: {"source": "path/to/file"})."""
         if not self.disponible:
             return False
@@ -333,7 +337,7 @@ class QdrantClient:
             log.exception("error eliminar por filtro: %s", e)
             return False
 
-    def _eliminar_por_filtro_rest(self, filtro: dict, collection: str) -> bool:
+    def _eliminar_por_filtro_rest(self, filtro: dict[str, Any], collection: str) -> bool:
         try:
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{collection}/points/delete"
             must = [{"key": k, "match": {"value": v}} for k, v in filtro.items()]
@@ -365,7 +369,7 @@ class QdrantClient:
             dm.mark_degraded("qdrant")
             return False
 
-    def guardar_incidente(self, incidente: dict) -> bool:
+    def guardar_incidente(self, incidente: dict[str, Any]) -> bool:
         """Guarda un incidente en Qdrant."""
         if not self.disponible:
             return False
@@ -392,7 +396,7 @@ class QdrantClient:
             log.exception("error guardar incidente: %s", e)
             return False
 
-    def _build_payload(self, incidente: dict) -> dict:
+    def _build_payload(self, incidente: dict[str, Any]) -> dict[str, Any]:
         """Construye el payload estructurado para Qdrant (schema v3.1)."""
         return {
             "timestamp_inicio": incidente.get("ts", datetime.now(UTC).isoformat()),
@@ -416,7 +420,7 @@ class QdrantClient:
             "segfault": incidente.get("segfault", False),
         }
 
-    def _guardar_rest(self, incidente: dict) -> bool:
+    def _guardar_rest(self, incidente: dict[str, Any]) -> bool:
         """Guarda incidente vía REST (fallback)."""
         try:
             payload = self._build_payload(incidente)
@@ -434,7 +438,7 @@ class QdrantClient:
             log.exception("error guardar incidente (REST): %s", e)
             return False
 
-    def buscar_incidentes(self, vector: list | None = None, limit: int = 10) -> list:
+    def buscar_incidentes(self, vector: list[float] | None = None, limit: int = 10) -> list[dict[str, Any]]:
         """Busca incidentes almacenados en Qdrant."""
         if not self.disponible:
             return []
@@ -450,7 +454,7 @@ class QdrantClient:
             log.exception("error buscar incidentes: %s", e)
             return []
 
-    def _buscar_rest(self, limit: int = 5) -> list:
+    def _buscar_rest(self, limit: int = 5) -> list[dict[str, Any]]:
         """Busca incidentes vía REST (fallback)."""
         try:
             url = f"http://{self.config.qdrant_host}:{self.config.qdrant_port}/collections/{COLECCION_INCIDENTES}/points/scroll"
@@ -497,9 +501,9 @@ class URAQdrantClient:
     async def buscar_vectores(
         self,
         coleccion: str,
-        vector: list,
+        vector: list[float],
         limite: int = 5,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Búsqueda vectorial asíncrona sin bloquear el event-loop."""
         client = await self._get_client()
         payload = {"vector": vector, "limit": limite, "with_payload": True}
@@ -509,7 +513,7 @@ class URAQdrantClient:
                 json=payload,
             )
             response.raise_for_status()
-            return response.json()
+            return response.json() if isinstance(response.json(), dict) else {}
         except httpx.HTTPStatusError as e:
             log.exception("Error HTTP en Qdrant (%s): %s", e.response.status_code, e.response.text)
             return {"result": []}
@@ -520,7 +524,7 @@ class URAQdrantClient:
     async def upsert_puntos(
         self,
         coleccion: str,
-        puntos: list[dict],
+        puntos: list[dict[str, Any]],
     ) -> int:
         """Inserta o actualiza puntos en Qdrant."""
         client = await self._get_client()
@@ -566,9 +570,9 @@ class URAQdrantClient:
         self,
         coleccion: str,
         texto_query: str,
-        vector_denso: list,
+        vector_denso: list[float],
         limite: int = 10,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         """Búsqueda híbrida dense+sparse con RRF."""
         client = await self._get_client()
         sparse = generar_sparse_vector(texto_query)
@@ -590,8 +594,10 @@ class URAQdrantClient:
         try:
             resp = await client.post(f"/collections/{coleccion}/points/search", json=payload)
             resp.raise_for_status()
-            return resp.json().get("result", [])
+            resultado: object = resp.json().get("result", [])
+            return resultado if isinstance(resultado, list) else []
         except Exception as e:
             log.warning("Búsqueda híbrida falló, fallback a densa: %s", e)
             fallback = await self.buscar_vectores(coleccion, vector_denso, limite)
-            return fallback.get("result", [])
+            fallback_res: object = fallback.get("result", [])
+            return fallback_res if isinstance(fallback_res, list) else []

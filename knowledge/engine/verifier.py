@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 from knowledge.engine.knowledge_verifier import (
@@ -35,7 +36,9 @@ def _get_conn(db_path: Path) -> sqlite3.Connection:
     return open_db(db_path)
 
 
-def _safe_check(severity: str, check_name: str, check_fn, *args) -> list[tuple[str, str, str]]:
+def _safe_check(
+    severity: str, check_name: str, check_fn: Callable[..., list[str]], *args: object
+) -> list[tuple[str, str, str]]:
     """Ejecuta un check y captura OperationalError para no crashear en DB corrupta."""
     try:
         return [(severity, check_name, m) for m in check_fn(*args)]

@@ -71,9 +71,9 @@ class BaseLLMProvider(ABC):
 
     def chat_generate(
         self,
-        mensajes: list,
+        mensajes: list[dict[str, str]],
         model: str | None = None,
-        tools: list | None = None,
+        tools: list[dict[str, object]] | None = None,
         options: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Chat con mensajes y tools opcionales (aditivo, no abstracto).
@@ -154,7 +154,11 @@ def _validar_heredero(provider_cls: type, errors: list[str]) -> bool:
 
 def _validar_instanciable(provider_cls: type, errors: list[str]) -> BaseLLMProvider | None:
     try:
-        return provider_cls()
+        instance = provider_cls()
+        if not isinstance(instance, BaseLLMProvider):
+            errors.append("No devuelve una instancia de BaseLLMProvider")
+            return None
+        return instance
     except Exception as e:
         errors.append(f"No se puede instanciar: {e}")
         return None
@@ -162,7 +166,7 @@ def _validar_instanciable(provider_cls: type, errors: list[str]) -> BaseLLMProvi
 
 def _validar_provider_name(instance: BaseLLMProvider, errors: list[str]) -> str:
     pn = getattr(instance, "_provider_name", None)
-    if not pn:
+    if not isinstance(pn, str) or not pn:
         errors.append("Falta _provider_name o está vacío")
         return ""
     return pn

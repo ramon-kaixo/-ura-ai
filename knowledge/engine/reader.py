@@ -48,7 +48,8 @@ def _get_conn(db_path: Path) -> sqlite3.Connection:
                 oldest_pool.close_all()
 
             _READER_POOL[spath] = ReadConnectionPool(db_path, max_connections=5)
-        return _READER_POOL[spath].acquire()
+        conn: sqlite3.Connection = _READER_POOL[spath].acquire()
+        return conn
 
 
 def _release_conn(conn: sqlite3.Connection, db_path: Path) -> None:

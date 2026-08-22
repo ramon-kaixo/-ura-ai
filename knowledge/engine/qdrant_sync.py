@@ -11,6 +11,7 @@ Si attempts >= MAX_SYNC_ATTEMPTS (10) → dead_letter (no reintentar más).
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -64,7 +65,7 @@ def _chunk_version(doc: Document) -> str:
 
 
 @contextmanager
-def _track_conn(db_path: Path):
+def _track_conn(db_path: Path) -> Iterator[sqlite3.Connection]:
     """Context manager: una sola conexión SQLite para todo el batch sync."""
     conn = open_db(db_path)
     try:

@@ -10,7 +10,7 @@ Ninguna implementación concreta todavía — solo contratos.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.core.fusion.models import StageProvenance
 
@@ -116,7 +116,7 @@ class EntityResolver(ABC):
     def resolve(
         self,
         text: str,
-        context: dict | None = None,
+        context: dict[str, Any] | None = None,
     ) -> ResolvedEntity:
         """Retorna entidad resuelta con metadatos.
 
@@ -128,7 +128,7 @@ class EntityResolver(ABC):
     def resolve_many(
         self,
         texts: list[str],
-        context: dict | None = None,
+        context: dict[str, Any] | None = None,
     ) -> list[ResolvedEntity]:
         """Resuelve múltiples textos a ResolvedEntity."""
         ...

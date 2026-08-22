@@ -20,7 +20,7 @@ class StreamEvent:
 
 
 class StreamManager:
-    def __init__(self):
+    def __init__(self) -> None:
         self._active_streams: dict[str, bool] = {}
 
     def start_stream(self, stream_id: str) -> None:

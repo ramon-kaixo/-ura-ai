@@ -168,7 +168,7 @@ class CitationEngine:
     def _register_sentence_origin(
         self,
         sent_idx: int,
-        origin: dict,
+        origin: dict[str, Any],
         summary: Summary,
         documents: list[WebDocument],
         doc_map: dict[str, WebDocument],

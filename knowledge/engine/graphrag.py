@@ -177,28 +177,28 @@ class SQLiteGraphRetriever:
         self._lineage_store: Any = None
         self._governance_store: Any = None
 
-    def _get_asset_store(self):
+    def _get_asset_store(self) -> Any:
         if self._asset_store is None:
             from knowledge.engine.asset_store import SQLiteAssetStore
 
             self._asset_store = SQLiteAssetStore(self._db_path)
         return self._asset_store
 
-    def _get_memory_store(self):
+    def _get_memory_store(self) -> Any:
         if self._memory_store is None:
             from knowledge.engine.memory_store import SQLiteMemoryStore
 
             self._memory_store = SQLiteMemoryStore(self._db_path)
         return self._memory_store
 
-    def _get_lineage_store(self):
+    def _get_lineage_store(self) -> Any:
         if self._lineage_store is None:
             from knowledge.engine.lineage_store import SQLiteLineageStore
 
             self._lineage_store = SQLiteLineageStore(self._db_path)
         return self._lineage_store
 
-    def _get_governance_store(self):
+    def _get_governance_store(self) -> Any:
         if self._governance_store is None:
             from knowledge.engine.governance_store import SQLiteGovernanceStore
 
@@ -286,7 +286,7 @@ class SQLiteGraphRetriever:
         """
         store = self._get_lineage_store()
         visited: set[str] = {asset_id}
-        queue: deque = deque([(asset_id, 0)])
+        queue: deque[tuple[str, int]] = deque([(asset_id, 0)])
         neighbors: list[dict[str, Any]] = []
 
         while queue and len(neighbors) < max_nodes:
@@ -368,7 +368,7 @@ class SQLiteGraphRetriever:
         include_lineage: bool,
         include_governance: bool,
         neighbor_depth: int,
-    ) -> tuple[list, list, list]:
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
         lineage = []
         governance = []
         neighbors = []
@@ -389,14 +389,14 @@ class SQLiteGraphRetriever:
         return lineage, governance, neighbors
 
 
-def _serializar_assets(assets: list[Any]) -> list[dict]:
+def _serializar_assets(assets: list[Any]) -> list[dict[str, Any]]:
     return [
         {"asset_id": a.asset_id, "score": a.score, "title": a.title, "kind": a.kind, "snippet": a.snippet}
         for a in assets
     ]
 
 
-def _serializar_memorias(memories: list[Any]) -> list[dict]:
+def _serializar_memorias(memories: list[Any]) -> list[dict[str, Any]]:
     return [
         {
             "memory_id": m.asset_id,

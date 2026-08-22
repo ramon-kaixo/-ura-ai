@@ -49,10 +49,10 @@ class GroqProvider(OpenAIProvider):
         self._temperature = float(get_secret("GROQ_TEMPERATURE", "0.3"))
         self._max_tokens = int(get_secret("GROQ_MAX_TOKENS", "4096"))
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         log.warning("Groq no soporta embeddings nativos")
         return [[0.0] * 768 for _ in texts]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         log.warning("Groq no soporta embeddings nativos")
         return [[0.0] * 768 for _ in texts]

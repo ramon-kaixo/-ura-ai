@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import sqlite3
 from pathlib import Path
 
 from knowledge.engine.connection import begin_immediate, open_db
@@ -64,8 +65,8 @@ def enqueue_archive_job(
 
 
 def _ejecutar_archive_job(
-    conn,
-    job,
+    conn: sqlite3.Connection,
+    job: sqlite3.Row,
     db_path: Path,
     correlation_id: str,
 ) -> None:
@@ -150,7 +151,7 @@ def process_archive_jobs(
         log.warning("Error procesando archive jobs: %s", exc)
 
 
-def _recover_stale_jobs(conn) -> None:
+def _recover_stale_jobs(conn: sqlite3.Connection) -> None:
     """Recupera jobs 'running' atascados (crash sin finalizar).
 
     Los resetea a 'pending' para que sean reprocesados.

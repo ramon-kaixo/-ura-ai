@@ -22,11 +22,16 @@ import json
 import logging
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from knowledge.engine.compiler import compile_source
 from knowledge.engine.eventbus import CompileCompleted, get_bus
 from knowledge.engine.jobs import compile_worker as jobs_compile_worker
 from knowledge.engine.jobs import enqueue_archive_job, process_archive_jobs
+from knowledge.engine.models import CompileResult
+
+if TYPE_CHECKING:
+    from motor.core.fusion.models import KnowledgeClaim
 from knowledge.engine.lock import LockAcquisitionError, compile_lock
 from knowledge.engine.logging_config import set_correlation_id
 from knowledge.engine.metrics import record_compile
@@ -37,7 +42,7 @@ log = logging.getLogger("ura.knowledge.orchestrator")
 _DEDUP_WINDOW_S = 30
 
 
-def _default_dedup_key(payload: dict | None) -> str:
+def _default_dedup_key(payload: dict[str, Any] | None) -> str:
     """Clave de deduplicación por defecto: sha256 del payload."""
     raw = json.dumps(payload or {}, sort_keys=True)
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
@@ -46,7 +51,7 @@ def _default_dedup_key(payload: dict | None) -> str:
 def request_compile(
     reason: str,
     *,
-    payload: dict | None = None,
+    payload: dict[str, Any] | None = None,
     dedup_key: str | None = None,
     db_path: Path | None = None,
     source_dir: Path | None = None,
@@ -63,7 +68,7 @@ def request_compile(
 
 
 def _finalizar_compile(
-    result,
+    result: CompileResult,
     reason: str,
     correlation_id: str,
     source_dir: Path,
@@ -141,7 +146,7 @@ def _execute_compile(
         return 0
 
 
-def compile_result_to_claims(db_path: Path) -> list:
+def compile_result_to_claims(db_path: Path) -> list[KnowledgeClaim]:
     """Convierte documentos compilados en KnowledgeClaims para fusión.
 
     Lee kg_nodes de la BD y genera un KnowledgeClaim por documento
@@ -155,7 +160,7 @@ def compile_result_to_claims(db_path: Path) -> list:
 
     from motor.core.fusion.models import KnowledgeClaim, make_claim_id
 
-    claims: list = []
+    claims: list[KnowledgeClaim] = []
     for r in rows:
         fm = json.loads(r["frontmatter"]) if r["frontmatter"] else {}
         title = fm.get("title", r["id"])

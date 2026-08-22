@@ -394,10 +394,10 @@ class ArchiveManifest:
     retention_days: int = 90
 
     @classmethod
-    def from_dict(cls, data: dict) -> ArchiveManifest:
+    def from_dict(cls, data: dict[str, Any]) -> ArchiveManifest:
         return cls(**{k: v for k, v in data.items() if k in cls.__dataclass_fields__})
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {k: getattr(self, k) for k in self.__dataclass_fields__}
 
 

@@ -6,7 +6,7 @@ a FactVersion debe pasar por FactHistory.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.core.fusion.models import FactVersion, VersionState
 
@@ -235,7 +235,7 @@ class FactHistory:
 
     # ── Serialización (para pruebas) ─────────────────
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Serialización canónica.
 
         Orden determinado: versiones ordenadas por created_at,
@@ -277,7 +277,7 @@ class FactHistory:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> FactHistory:
+    def from_dict(cls, data: dict[str, Any]) -> FactHistory:
         from motor.core.fusion.models import Fact
 
         versions = cls._parse_versions(data)
@@ -312,7 +312,7 @@ class FactHistory:
         return history
 
     @classmethod
-    def _parse_versions(cls, data: dict) -> dict:
+    def _parse_versions(cls, data: dict[str, Any]) -> dict[str, FactVersion]:
         from motor.core.fusion.models import FactVersion, VersionState
 
         raw_versions = data.get("versions", {})
@@ -346,7 +346,7 @@ class FactHistory:
         }
 
     @classmethod
-    def _parse_tombstones(cls, data: dict) -> dict:
+    def _parse_tombstones(cls, data: dict[str, Any]) -> dict[str, FactTombstone]:
         from motor.core.fusion.models import FactTombstone
 
         raw_tombstones = data.get("tombstones", {})

@@ -186,7 +186,7 @@ class SQLiteMemoryStore:
                     JOIN op_memory_fts fts ON m.rowid = fts.rowid
                     WHERE op_memory_fts MATCH ?
                 """
-                params: list = [safe]
+                params: list[object] = [safe]
                 if kind:
                     sql += " AND m.kind = ?"
                     params.append(kind)
@@ -262,8 +262,8 @@ class SQLiteMemoryStore:
         except Exception:
             return 0
 
-    def _row_to_record(self, row) -> MemoryRecord:
-        def _safe_json(val, default=None):
+    def _row_to_record(self, row: Any) -> MemoryRecord:
+        def _safe_json(val: Any, default: Any = None) -> Any:
             if val is None:
                 return default if default is not None else ([] if isinstance(default, list) else {})
             try:

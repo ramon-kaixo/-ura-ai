@@ -11,7 +11,7 @@ from motor.assistant.conversation import ConversationEngine
 from motor.assistant.executor import ConversationalToolManager
 from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.llm_bridge import LLMBridge
-from motor.assistant.models import ConversationMode, UserIntent
+from motor.assistant.models import Conversation, ConversationMode, UserIntent
 from motor.assistant.moderation import ContentModerator
 from motor.assistant.style import StyleEngine
 
@@ -106,7 +106,7 @@ def _get_conversation_summary(conv: Any) -> str:
     return ""
 
 
-def _add_context_sections(system_prompt: str, analysis: dict, lang_code: str) -> str:
+def _add_context_sections(system_prompt: str, analysis: dict[str, Any], lang_code: str) -> str:
     if analysis.get("sentiment_action"):
         if lang_code == "en":
             system_prompt += f" The user seems {analysis['sentiment']}. {analysis['sentiment_action']}."
@@ -124,7 +124,7 @@ def _add_context_sections(system_prompt: str, analysis: dict, lang_code: str) ->
     return system_prompt
 
 
-def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str:
+def _build_system_prompt(mode_value: str, analysis: dict[str, Any], lang_code: str) -> str:
     mode_prompts = _SYSTEM_PROMPTS.get(mode_value, _SYSTEM_PROMPTS["conversacion"])
     system_prompt = mode_prompts.get(lang_code, mode_prompts["es"])
 
@@ -180,7 +180,7 @@ def _build_system_prompt(mode_value: str, analysis: dict, lang_code: str) -> str
 
 def _process(
     engine: ConversationEngine, llm: LLMBridge, cid: str, message: str, mode_str: str, user_id: str = ""
-) -> tuple:
+) -> tuple[UserIntent, ConversationMode, str, str, Conversation, str, dict[str, Any]]:
     conv = engine.get_or_create(cid)
     if mode_str:
         state = conv.state
@@ -190,7 +190,7 @@ def _process(
             except ValueError:
                 raise HTTPException(status_code=400, detail=f"Invalid mode: {mode_str}") from None
 
-    analysis = engine.process_user_message(cid, message)
+    analysis: dict[str, Any] = engine.process_user_message(cid, message)
     intent = analysis["intent"]
     mode = cast("ConversationMode", analysis["mode"])
     resolved = str(analysis["resolved_message"])
@@ -247,7 +247,7 @@ def _detect_tool_name(user_message: str) -> str | None:
     return None
 
 
-async def _execute_command(user_message: str, analysis: dict) -> str:
+async def _execute_command(user_message: str, analysis: dict[str, Any]) -> str:
     tool = _detect_tool_name(user_message)
     if not tool:
         return ""
@@ -284,7 +284,9 @@ def _format_git_status(raw: str) -> str:
     return "\n".join(parts) if parts else raw
 
 
-async def _enrich_prompt(system_prompt: str, analysis: dict, engine: ConversationEngine, resolved: str) -> str:
+async def _enrich_prompt(
+    system_prompt: str, analysis: dict[str, Any], engine: ConversationEngine, resolved: str
+) -> str:
     prompt = system_prompt
     if analysis.get("needs_web_search"):
         try:

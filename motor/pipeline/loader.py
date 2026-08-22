@@ -21,7 +21,7 @@ class PipelineLoader:
         source = path.read_text(encoding="utf-8")
 
         if path.suffix in (".yaml", ".yml"):
-            import yaml  # type: ignore[import-untyped]
+            import yaml
 
             data = yaml.safe_load(source)
         elif path.suffix == ".json":

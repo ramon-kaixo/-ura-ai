@@ -4,12 +4,16 @@ from __future__ import annotations
 
 import time
 import uuid
+from collections.abc import AsyncIterator
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    from fastapi.responses import PlainTextResponse
 
 from motor.assistant.api.handlers import (
     _FALLBACK_REPLIES,
@@ -27,7 +31,8 @@ from motor.assistant.health import get_assistant_health
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 from motor.assistant.models import UserIntent
 from motor.assistant.streaming import StreamEvent
-from motor.observability.tracing_platform import CorrelationId, TraceContext
+from motor.observability.tracing_platform import TraceContext
+from motor.platform.models import CorrelationId
 
 _MAX_MESSAGE_LENGTH = 100000
 
@@ -158,7 +163,7 @@ async def _preparar_respuesta(engine: Any, llm: Any, cid: str, request: ChatRequ
 
 
 def _responder_streaming(llm: Any, engine: Any, plan: Any) -> StreamingResponse:
-    async def event_stream():
+    async def event_stream() -> AsyncIterator[str]:
         full_reply = ""
         try:
             async for token in llm.generate_stream(
@@ -194,7 +199,7 @@ def _responder_streaming(llm: Any, engine: Any, plan: Any) -> StreamingResponse:
 def _generar_respuesta_sync(llm: Any, plan: Any, trace: TraceContext, correlation_id: str) -> str:
     try:
         with trace.span(message_type="llm.generate", tags={"correlation_id": correlation_id, "mode": plan.mode.value}):
-            reply = llm.generate(
+            reply: str = llm.generate(
                 plan.cid,
                 plan.resolved,
                 plan.mode,
@@ -248,7 +253,7 @@ async def delete_conversation(conversation_id: str) -> dict[str, bool]:
 
 
 @router.get("/metrics")
-async def metrics():
+async def metrics() -> PlainTextResponse:
     from fastapi.responses import PlainTextResponse
 
     from motor.observability.prometheus_exporter import export_metrics

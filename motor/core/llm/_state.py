@@ -39,10 +39,10 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
 class LLMState:
     registry: Any
     default_provider: Any
-    generate: Callable
-    embed: Callable
-    embed_async: Callable
-    health: Callable
+    generate: Callable[..., Any]
+    embed: Callable[..., Any]
+    embed_async: Callable[..., Any]
+    health: Callable[..., Any]
 
 
 _PROVIDER_MODULES: dict[str, tuple[str, str]] = {
@@ -78,7 +78,7 @@ def _seleccionar_provider(provider_name: str, registry: Any, OllamaProvider: typ
     return _default
 
 
-def build_llm_state(config=None) -> LLMState:
+def build_llm_state(config: Any = None) -> LLMState:
     from motor.core.config import UraConfig
     from motor.core.llm.ollama import OllamaProvider
     from motor.core.llm.registry import registry

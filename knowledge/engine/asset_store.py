@@ -225,7 +225,7 @@ class SQLiteAssetStore:
                     JOIN op_assets_fts fts ON a.rowid = fts.rowid
                     WHERE op_assets_fts MATCH ?
                 """
-                params: list = [safe]
+                params: list[str | int] = [safe]
                 if asset_type:
                     sql += " AND a.asset_type = ?"
                     params.append(asset_type.value)
@@ -264,7 +264,7 @@ class SQLiteAssetStore:
         conn.close()
         return [self._row_to_asset(r) for r in rows]
 
-    def _row_to_asset(self, row) -> KnowledgeAsset:
+    def _row_to_asset(self, row: sqlite3.Row) -> KnowledgeAsset:
         metadata = json.loads(row["metadata"]) if row["metadata"] else {}
         source_data = json.loads(row["source"]) if row["source"] else {}
         rels_raw = row["relationships"] or "[]"

@@ -185,7 +185,7 @@ class FactIndex:
         return entry.subject, entry.predicate, entry.evidence_ids
 
     @staticmethod
-    def _add_to_ordered_set(index: dict, key: object, fact_id: str) -> None:
+    def _add_to_ordered_set(index: dict[Any, dict[str, None]], key: Any, fact_id: str) -> None:
         inner = index.get(key)
         if inner is None:
             inner = {}
@@ -193,7 +193,7 @@ class FactIndex:
         inner[fact_id] = None
 
     @staticmethod
-    def _remove_from_ordered_set(index: dict, key: object, fact_id: str) -> None:
+    def _remove_from_ordered_set(index: dict[Any, dict[str, None]], key: Any, fact_id: str) -> None:
         inner = index.get(key)
         if inner is not None:
             inner.pop(fact_id, None)

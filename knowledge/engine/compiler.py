@@ -248,7 +248,7 @@ def _ctx_stage(  # legacy/estable, sin cambio de comportamiento
     )
 
 
-def _warnings_deletados(deleted: list) -> list[CompileError]:
+def _warnings_deletados(deleted: list[SourceObject]) -> list[CompileError]:
     warnings: list[CompileError] = []
     for d in deleted:
         warnings.append(
@@ -263,7 +263,7 @@ def _warnings_deletados(deleted: list) -> list[CompileError]:
     return warnings
 
 
-def _etapa_parsing(changed: list, all_errors: list[CompileError]) -> list[KnowledgeObject]:
+def _etapa_parsing(changed: list[SourceObject], all_errors: list[CompileError]) -> list[KnowledgeObject]:
     objects: list[KnowledgeObject] = []
     for so in changed:
         result = parse_source(so)
@@ -283,7 +283,7 @@ def _etapa_validacion(
 def _sync_semantica(  # legacy/estable, sin cambio de comportamiento
     db_path: Path,
     valid_objects: list[KnowledgeObject],
-    deleted_ids: list,
+    deleted_ids: list[str],
     result: CompileResult,
     snapshot: Snapshot,
     source_dir: Path,

@@ -14,6 +14,7 @@ import fcntl
 import json
 import logging
 import os
+import sqlite3
 import threading
 import time as _time
 from pathlib import Path
@@ -199,7 +200,7 @@ class NDJSONAuditBackend:
 
     # ── Ingesta atómica (rename → process → unlink) ──────────────────────
 
-    def _ingest_events(self, conn, processing) -> int:
+    def _ingest_events(self, conn: sqlite3.Connection, processing: Path) -> int:
         """Ingestar líneas del archivo .processing en op_audit (transacción abierta)."""
         ingested = 0
         with processing.open() as f:

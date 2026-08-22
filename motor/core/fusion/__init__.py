@@ -61,7 +61,7 @@ from motor.core.fusion.models import (
 from motor.core.fusion.registry import FusionRegistry
 
 
-def run_fusion_on_claims(claims: list, semantic_db: str = "", correlation_id: str = "") -> int:
+def run_fusion_on_claims(claims: list[KnowledgeClaim], semantic_db: str = "", correlation_id: str = "") -> int:
     """Ejecuta fusión sobre KnowledgeClaims y persiste en memoria semántica + F26.
 
     Etapas: entity resolution → merge → bridge a SemanticFact →
@@ -93,7 +93,7 @@ def run_fusion_on_claims(claims: list, semantic_db: str = "", correlation_id: st
     return len(facts)
 
 
-def _persist_fusion_facts(facts: list, semantic_db: str, correlation_id: str) -> None:
+def _persist_fusion_facts(facts: list[KnowledgeFact], semantic_db: str, correlation_id: str) -> None:
     import time as _time
 
     from motor.core.fusion.bridge import knowledge_fact_to_semantic_fact
@@ -101,7 +101,7 @@ def _persist_fusion_facts(facts: list, semantic_db: str, correlation_id: str) ->
     from motor.memory import FactRef, Memory, MemoryEntry, MemoryEventType, MemoryMetadata, make_entry_id
 
     store = SemanticMemoryStore(persist_path=semantic_db or None)
-    fact_refs: list[tuple] = []
+    fact_refs: list[tuple[str, int, str, str, str]] = []
     for kf in facts:
         d = knowledge_fact_to_semantic_fact(kf)
         sf = SemanticFact(**d)

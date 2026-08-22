@@ -19,10 +19,14 @@ Variables de entorno:
 from __future__ import annotations
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+if TYPE_CHECKING:
+    from fastapi.responses import PlainTextResponse
 
 from motor.assistant.api import router as chat_router
 from motor.assistant.auth import AuthMiddleware
@@ -66,7 +70,7 @@ app.include_router(chat_router)
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict[str, Any]:
     snapshot = get_assistant_health().snapshot()
     return {
         "status": "ok",
@@ -77,7 +81,7 @@ async def health():
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics() -> PlainTextResponse:
     from fastapi.responses import PlainTextResponse
 
     from motor.observability.prometheus_exporter import export_metrics
@@ -86,7 +90,7 @@ async def metrics():
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, str]:
     return {"name": "URA Assistant", "docs": "/docs", "health": "/health", "metrics": "/metrics"}
 
 

@@ -344,7 +344,7 @@ class Pipeline:
         results: list[StageResult] = []
         t0 = time.monotonic()
 
-        runners: dict[Stage, Callable] = {
+        runners: dict[Stage, Callable[[], StageResult]] = {
             Stage.SNAPSHOT: lambda: _run_snapshot(self._source_dir),
             Stage.COMPILE: lambda: _run_compile(self._source_dir, self._db_path, cid),
             Stage.VERIFY: lambda: _run_verify(self._db_path),

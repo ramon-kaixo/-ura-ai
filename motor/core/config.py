@@ -45,28 +45,42 @@ def _apply_config_overrides(c: "UraConfig") -> None:
     _cfg = _load_config_dict()
     if not _cfg:
         return
-    if "paths" in _cfg and "data" in _cfg["paths"]:
-        c.data_dir = _cfg["paths"]["data"]
-    if "log_level" in _cfg:
-        c.log_level = _cfg["log_level"]
-    ollama = _cfg.get("ollama", {}) if isinstance(_cfg, dict) else {}
-    if ollama.get("host"):
-        c.ollama_host = ollama["host"]
-    if ollama.get("port"):
-        c.ollama_port = int(ollama["port"])
-    llm = _cfg.get("llm", {}) if isinstance(_cfg, dict) else {}
-    if llm.get("model"):
-        c.ollama_model = llm["model"]
-    if llm.get("embedding_model"):
-        c.ollama_embedding_model = llm["embedding_model"]
-    if llm.get("timeout"):
-        c.ollama_timeout = int(llm["timeout"])
-    if llm.get("temperature"):
-        c.ollama_temperature = float(llm["temperature"])
-    if llm.get("max_tokens"):
-        c.ollama_max_tokens = int(llm["max_tokens"])
-    if llm.get("provider"):
-        c.llm_provider = llm["provider"]
+    paths = _cfg.get("paths")
+    if isinstance(paths, dict):
+        data = paths.get("data")
+        if isinstance(data, str):
+            c.data_dir = data
+    log_level = _cfg.get("log_level")
+    if isinstance(log_level, str):
+        c.log_level = log_level
+    ollama = _cfg.get("ollama")
+    if isinstance(ollama, dict):
+        host = ollama.get("host")
+        if isinstance(host, str) and host:
+            c.ollama_host = host
+        port = ollama.get("port")
+        if port:
+            c.ollama_port = int(port)
+    llm = _cfg.get("llm")
+    if isinstance(llm, dict):
+        modelo = llm.get("model")
+        if isinstance(modelo, str):
+            c.ollama_model = modelo
+        emb = llm.get("embedding_model")
+        if isinstance(emb, str):
+            c.ollama_embedding_model = emb
+        timeout = llm.get("timeout")
+        if timeout:
+            c.ollama_timeout = int(timeout)
+        temperatura = llm.get("temperature")
+        if temperatura:
+            c.ollama_temperature = float(temperatura)
+        max_tokens = llm.get("max_tokens")
+        if max_tokens:
+            c.ollama_max_tokens = int(max_tokens)
+        provider = llm.get("provider")
+        if isinstance(provider, str):
+            c.llm_provider = provider
 
 
 def _apply_env_overrides(c: "UraConfig") -> None:
@@ -89,7 +103,7 @@ def _apply_env_overrides(c: "UraConfig") -> None:
     c.llm_provider = os.environ.get("URA_LLM_PROVIDER", c.llm_provider)
 
 
-def _load_config_dict() -> dict | None:
+def _load_config_dict() -> dict[str, object] | None:
     """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
     try:
         from motor.core.config_manager import CONFIG
@@ -144,7 +158,7 @@ class UraConfig:
     auto_verify: bool = False
     schema_version: int = 301  # v3.1
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Completa rutas relativas al directorio base del proyecto."""
         base = Path(__file__).parent.parent
         if not self.data_dir:

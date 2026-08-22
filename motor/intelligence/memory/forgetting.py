@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
+from motor.intelligence.memory.compression import SummaryRecord
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
 
@@ -62,7 +63,7 @@ class ForgettingResult:
 class ForgettingContext:
     episode_store: EpisodeStore
     semantic_store: SemanticMemoryStore
-    summaries: list  # list[SummaryRecord]
+    summaries: list[SummaryRecord]
     protected_ids: set[str]
     pinned_ids: set[str]
 
@@ -216,7 +217,7 @@ class ForgettingEngine:
         self,
         episode_store: EpisodeStore,
         semantic_store: SemanticMemoryStore | None = None,
-        summaries: list | None = None,
+        summaries: list[SummaryRecord] | None = None,
         policies: list[ForgettingPolicy] | None = None,
         protection: ProtectionRules | None = None,
         batch_size: int = 1000,

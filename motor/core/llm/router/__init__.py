@@ -113,7 +113,8 @@ class LLMRouter:
         cb = self._circuit_breakers.get(provider_name)
         if cb is None:
             return "no_circuit"
-        return cb.state.value
+        estado = cb.state.value
+        return estado if isinstance(estado, str) else str(estado)
 
     def reset_circuit(self, provider_name: str) -> None:
         cb = self._circuit_breakers.get(provider_name)
@@ -124,7 +125,7 @@ class LLMRouter:
         self,
         prompt: str,
         model: str | None = None,
-        options: dict | None = None,
+        options: dict[str, object] | None = None,
         *,
         provider: str | None = None,
     ) -> str:
@@ -151,7 +152,7 @@ class LLMRouter:
             baseline=self._baseline,
             monitor=self._monitor,
         )
-        return result
+        return result if isinstance(result, str) else str(result)
 
     def embed(
         self,
@@ -182,7 +183,7 @@ class LLMRouter:
             baseline=self._baseline,
             monitor=self._monitor,
         )
-        return result
+        return result if isinstance(result, list) else []
 
     async def embed_async(
         self,
@@ -192,7 +193,8 @@ class LLMRouter:
         provider: str | None = None,
     ) -> list[list[float]]:
         prov = resolve("embed", provider, self._registry, self._routes)
-        return await prov.embed_async(texts, model=model)
+        resultado = await prov.embed_async(texts, model=model)
+        return resultado if isinstance(resultado, list) else []
 
     def invalidate_health_cache(self, provider_name: str | None = None) -> None:
         with self._health_lock:
@@ -229,7 +231,7 @@ class LLMRouter:
             metrics.record(name, "health", latency_ms, success=True)
             result["latency_ms"] = latency_ms
             health_store_cache(name, result, self._health_cache, self._health_lock)
-            return result
+            return result if isinstance(result, dict) else {}
         except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error_str = _classify_error(e)
@@ -252,7 +254,7 @@ class LLMRouter:
         prompt: str,
         capability: str = "chat",
         model: str | None = None,
-        options: dict | None = None,
+        options: dict[str, object] | None = None,
     ) -> str:
         provider_name = self.select_provider_by_capability(capability)
         return self.generate(prompt, model=model, options=options, provider=provider_name)

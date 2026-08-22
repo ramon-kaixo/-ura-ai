@@ -9,6 +9,7 @@ from __future__ import annotations
 import fcntl
 import logging
 import os
+from collections.abc import Generator
 from contextlib import contextmanager, suppress
 from pathlib import Path
 
@@ -23,7 +24,7 @@ class LockAcquisitionError(Exception):
 
 
 @contextmanager
-def compile_lock(lock_path: Path = _DEFAULT_LOCK_FILE):
+def compile_lock(lock_path: Path = _DEFAULT_LOCK_FILE) -> Generator[None, None, None]:
     """Context manager: adquiere flock, libera al salir.
 
     Raises LockAcquisitionError si otro proceso tiene el lock.

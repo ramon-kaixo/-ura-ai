@@ -103,7 +103,8 @@ MIGRATIONS: dict[int, Migration] = {
 
 
 def get_schema_version(conn: sqlite3.Connection) -> int:
-    return conn.execute("PRAGMA user_version").fetchone()[0]
+    row = conn.execute("PRAGMA user_version").fetchone()
+    return int(row[0]) if row else 0
 
 
 def _set_schema_version(conn: sqlite3.Connection, version: int) -> None:

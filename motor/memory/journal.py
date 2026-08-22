@@ -61,11 +61,11 @@ class Journal:
             os.fsync(self._file.fileno())
             self._count += 1
 
-    def read_all(self) -> list[dict]:
+    def read_all(self) -> list[dict[str, Any]]:
         """Lee todas las líneas del journal, omitiendo las corruptas."""
         if not self._path or not Path(self._path).exists():
             return []
-        result: list[dict] = []
+        result: list[dict[str, Any]] = []
         with open(self._path, "rb") as f:  # noqa: PTH123
             raw = f.read()
         if not raw:
@@ -131,7 +131,7 @@ class Journal:
     # ── Helpers ──────────────────────────────────────
 
     @staticmethod
-    def _entry_to_dict(entry: MemoryEntry) -> dict:
+    def _entry_to_dict(entry: MemoryEntry) -> dict[str, Any]:
         return {
             "schema_version": 1,
             "entry_version": entry.metadata.created_by

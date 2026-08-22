@@ -83,7 +83,7 @@ class MemoryTimeline:
         """Retorna un entry por su ID."""
         return self._entries.get(entry_id)
 
-    def diff(self, entry_a_id: str, entry_b_id: str) -> dict:
+    def diff(self, entry_a_id: str, entry_b_id: str) -> dict[str, object]:
         """Compara dos entries y retorna las diferencias."""
         a = self._entries.get(entry_a_id)
         b = self._entries.get(entry_b_id)
