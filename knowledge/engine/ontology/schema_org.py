@@ -20,8 +20,8 @@ def software_version(
     version: str,
     release_date: str,
     description: str = "",
-    bugs: list[dict] | None = None,
-) -> dict:
+    bugs: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """Schema.org SoftwareVersion template."""
     entity: dict[str, Any] = {
         "@context": "https://schema.org",
@@ -51,7 +51,7 @@ def bug_report(
     status: str = "OPEN",
     severity: str = "medium",
     affected_versions: list[str] | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Schema.org BugReport template."""
     entity: dict[str, Any] = {
         "@context": "https://schema.org",
@@ -65,7 +65,7 @@ def bug_report(
     return entity
 
 
-def person(name: str, email: str = "", url: str = "") -> dict:
+def person(name: str, email: str = "", url: str = "") -> dict[str, Any]:
     """Schema.org Person template."""
     p: dict[str, Any] = {"@context": "https://schema.org", "@type": "Person", "name": name}
     if email:
@@ -75,7 +75,7 @@ def person(name: str, email: str = "", url: str = "") -> dict:
     return p
 
 
-def organization(name: str, url: str = "") -> dict:
+def organization(name: str, url: str = "") -> dict[str, Any]:
     """Schema.org Organization template."""
     o: dict[str, Any] = {"@context": "https://schema.org", "@type": "Organization", "name": name}
     if url:
@@ -90,7 +90,7 @@ def dcat_dataset(
     access_url: str = "",
     creator: str = "",
     issued: str = "",
-) -> dict:
+) -> dict[str, Any]:
     """DCAT Dataset template."""
     d: dict[str, Any] = {
         "@context": "https://www.w3.org/ns/dcat",

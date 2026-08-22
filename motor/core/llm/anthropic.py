@@ -61,7 +61,7 @@ class AnthropicProvider(BaseLLMProvider):
             "Content-Type": "application/json",
         }
 
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
         opts.setdefault("max_tokens", self._max_tokens)

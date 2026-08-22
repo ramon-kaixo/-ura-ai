@@ -275,7 +275,7 @@ class CalculatorTool:
 
 
 class NoteTool:
-    def __init__(self):
+    def __init__(self) -> None:
         import sqlite3
 
         from motor.assistant.config import config
@@ -421,7 +421,8 @@ class ConversationalToolManager:
             return await self._news.execute()
         plugin = self._plugins.get(tool_name)
         if plugin:
-            return await plugin.execute(params)
+            result: ToolResult = await plugin.execute(params)
+            return result
         return ToolResult(False, error=f"Tool '{tool_name}' not found")
 
     async def _web_search(self, query: str) -> ToolResult:

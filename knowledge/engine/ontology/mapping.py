@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from knowledge.engine.ontology.internal import KnowledgeAsset
@@ -22,7 +22,7 @@ def to_schema_jsonld(asset: KnowledgeAsset) -> str:
     return asset_to_jsonld(asset)
 
 
-def to_dcat(asset: KnowledgeAsset) -> dict:
+def to_dcat(asset: KnowledgeAsset) -> dict[str, Any]:
     """KnowledgeAsset → DCAT Dataset."""
     return {
         "@context": "https://www.w3.org/ns/dcat",
@@ -34,7 +34,7 @@ def to_dcat(asset: KnowledgeAsset) -> dict:
     }
 
 
-def to_prov(asset: KnowledgeAsset) -> dict:
+def to_prov(asset: KnowledgeAsset) -> dict[str, Any]:
     """KnowledgeAsset → W3C Prov Entity."""
     return {
         "@context": "https://www.w3.org/ns/prov",
@@ -44,7 +44,7 @@ def to_prov(asset: KnowledgeAsset) -> dict:
     }
 
 
-def to_openlineage(asset: KnowledgeAsset, job_name: str = "metadata_extract", run_id: str = "") -> dict:
+def to_openlineage(asset: KnowledgeAsset, job_name: str = "metadata_extract", run_id: str = "") -> dict[str, Any]:
     """KnowledgeAsset → OpenLineage event (formato reducido).
 
     Para eventos completos, usar LineageStore con el schema completo OpenLineage.

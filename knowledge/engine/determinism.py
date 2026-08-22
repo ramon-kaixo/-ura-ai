@@ -101,7 +101,7 @@ def get_determinism_algorithm(db_path: Path) -> str:
         row = conn.execute("SELECT determinism_algorithm FROM kg_active_version WHERE singleton = 1").fetchone()
         conn.close()
         if row and row[0]:
-            return row[0]
+            return str(row[0])
         return "sha256-v1"  # pre-v12 o vacío
     except Exception:
         # Columna no existe (pre-v10) o error → asumir v1

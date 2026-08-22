@@ -50,7 +50,7 @@ def call_with_retry(
     detector: Any = None,
     baseline: Any = None,
     monitor: Any = None,
-    **kwargs,
+    **kwargs: object,
 ) -> Any:
     from motor.core.llm.circuit_breaker import CircuitBreakerOpenError
 
@@ -226,11 +226,11 @@ def call_with_fallback(
     circuit_breakers: dict[str, Any],
     fallback_enabled: bool = True,
     fallback_max_providers: int = 3,
-    *args,
-    **kwargs,
+    *args: object,
+    **kwargs: object,
 ) -> tuple[Any, str | None]:
-    retry_kw = {k: kwargs.pop(k) for k in _RETRY_KWARGS if k in kwargs}
-    prompt_arg: str = args[0] if args else ""
+    retry_kw: dict[str, Any] = {k: kwargs.pop(k) for k in _RETRY_KWARGS if k in kwargs}
+    prompt_arg: str = args[0] if args and isinstance(args[0], str) else ""
     result = call_with_retry(
         prov_obj,
         method,

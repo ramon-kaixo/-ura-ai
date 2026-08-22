@@ -12,6 +12,7 @@ import os
 import signal
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any
 
@@ -79,7 +80,7 @@ def _restore_cancel_handlers(
 
 
 @contextmanager
-def _cancel_guard():
+def _cancel_guard() -> Iterator[None]:
     """Context manager: instala handlers de cancelación y restaura al salir.
 
     Si el compile se cancela via SIGINT/SIGTERM, la transacción
@@ -220,7 +221,7 @@ class CompilerRunRepository:
                 details,
             ),
         )
-        run_id = conn.execute("SELECT last_insert_rowid() as rid").fetchone()["rid"]
+        run_id = int(conn.execute("SELECT last_insert_rowid() as rid").fetchone()["rid"])
         CompilerRunRepository._insert_errors(conn, run_id, errors, warnings)
         return run_id
 

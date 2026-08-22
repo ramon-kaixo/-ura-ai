@@ -7,7 +7,7 @@ Punto de entrada único para toda operación de memoria.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 logger = logging.getLogger("ura.memory")
 
@@ -137,7 +137,7 @@ class Memory:
 
     # ── Health / Readiness / Liveness ──────────────────
 
-    def health(self) -> dict:
+    def health(self) -> dict[str, Any]:
         """Health check. Retorna estado del subsistema."""
         return {
             "service": "memory",
@@ -148,7 +148,7 @@ class Memory:
             "encryption": bool(self._journal._encryption_key),
         }
 
-    def readiness(self) -> dict:
+    def readiness(self) -> dict[str, Any]:
         """Readiness check. True si puede aceptar lecturas/escrituras."""
         journal_ok = not self._journal.path or Path(self._journal.path).exists()
         return {
@@ -156,7 +156,7 @@ class Memory:
             "ready": journal_ok and not self._shutdown,
         }
 
-    def liveness(self) -> dict:
+    def liveness(self) -> dict[str, Any]:
         """Liveness check. True si el hilo principal responde."""
         return {
             "service": "memory",
@@ -185,7 +185,7 @@ class Memory:
     def subscribe(self, callback: Callable[[MemoryEntry], None]) -> None:
         """Registra un callback que se invoca en cada append."""
         if not hasattr(self, "_subscribers"):
-            self._subscribers: list[Callable] = []
+            self._subscribers: list[Callable[[MemoryEntry], None]] = []
         self._subscribers.append(callback)
 
     def _notify_subscribers(self, entry: MemoryEntry) -> None:
@@ -203,7 +203,7 @@ class Memory:
 
     def _recover(self) -> None:
         """Recupera estado desde snapshot + journal."""
-        entries_dict: dict = {}
+        entries_dict: dict[str, dict[str, Any]] = {}
         try:
             _, entries_dict = _load_snapshot(self._snapshot_path)
         except (FileNotFoundError, ValueError):
@@ -222,7 +222,7 @@ class Memory:
             with contextlib.suppress(KeyError):
                 self._timeline.append(self._entry_from_data(entry_data))
 
-    def _entry_from_data(self, entry_data: dict) -> MemoryEntry:
+    def _entry_from_data(self, entry_data: dict[str, Any]) -> MemoryEntry:
         from motor.memory.models import FactRef, MemoryEntry, MemoryEventType, MemoryMetadata
 
         fact_refs = tuple(

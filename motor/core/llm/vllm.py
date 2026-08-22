@@ -57,7 +57,7 @@ class VLLMProvider(BaseLLMProvider):
     def _headers(self) -> dict[str, str]:
         return {"Content-Type": "application/json"}
 
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
         opts.setdefault("max_tokens", self._max_tokens)
@@ -86,7 +86,7 @@ class VLLMProvider(BaseLLMProvider):
                 prompt_tokens=usage.get("prompt_tokens"),
                 completion_tokens=usage.get("completion_tokens"),
             )
-            return respuesta
+            return respuesta if isinstance(respuesta, str) else str(respuesta)
         except httpx.TimeoutException:
             latency_ms = (time.monotonic() - t0) * 1000
             log_call(self._provider_name, model_name, latency_ms, "timeout")

@@ -23,6 +23,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from knowledge.engine.reader import KnowledgeReader
+
 log = logging.getLogger("ura.knowledge.agent")
 
 
@@ -102,7 +104,7 @@ class KnowledgeGraphAgent(Agent):
 
         return findings
 
-    def _audit_coverage(self, reader) -> list[AgentFinding]:
+    def _audit_coverage(self, reader: KnowledgeReader) -> list[AgentFinding]:
         """Audita tipos de documentos y cobertura."""
         findings: list[AgentFinding] = []
         conn = reader._db_path if hasattr(reader, "_db_path") else None
@@ -140,7 +142,7 @@ class KnowledgeGraphAgent(Agent):
 
         return findings
 
-    def _check_coverage(self, reader, doc_type: str) -> list[AgentFinding]:
+    def _check_coverage(self, reader: KnowledgeReader, doc_type: str) -> list[AgentFinding]:
         """Verifica cobertura de un tipo específico."""
         findings: list[AgentFinding] = []
         from knowledge.engine.connection import open_db
@@ -173,7 +175,7 @@ class KnowledgeGraphAgent(Agent):
             )
         return findings
 
-    def _check_consistency(self, reader) -> list[AgentFinding]:
+    def _check_consistency(self, reader: KnowledgeReader) -> list[AgentFinding]:
         """Verifica consistencia del grafo (edges rotos, huérfanos)."""
         from knowledge.engine.connection import open_db
         from knowledge.engine.deduction import StateDeductor
@@ -220,7 +222,7 @@ def list_agents() -> list[str]:
     return list(_AGENT_REGISTRY.keys())
 
 
-def get_agent(agent_id: str, **kwargs) -> Agent | None:
+def get_agent(agent_id: str, **kwargs: Any) -> Agent | None:
     """Instancia un agente por ID."""
     cls = _AGENT_REGISTRY.get(agent_id)
     if cls is None:

@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.fusion.fact_index import FactIndex
-    from motor.core.fusion.models import VersionState
+    from motor.core.fusion.models import Fact, FactVersion, KnowledgeFact, VersionState
 
 _DEFAULT_MAX_FACTS = 50
 
@@ -60,7 +60,9 @@ class ContextBuilder:
 
     # ── helpers ──────────────────────────────────────
 
-    def _collect_facts(self, query: str, include_entities: list[str] | None) -> list:
+    def _collect_facts(
+        self, query: str, include_entities: list[str] | None
+    ) -> list[KnowledgeFact | tuple[Fact, FactVersion]]:
         """Recolecta facts vigentes desde el índice por entidad o consulta.
 
         Solo incluye Facts de la versión vigente. Versiones obsoletas
@@ -73,7 +75,7 @@ class ContextBuilder:
         from motor.core.fusion.models import VersionState
 
         seen: set[str] = set()
-        result: list = []
+        result: list[KnowledgeFact | tuple[Fact, FactVersion]] = []
 
         entities = include_entities or []
 
@@ -106,13 +108,13 @@ class ContextBuilder:
         return True
 
     @staticmethod
-    def _entry_id(entry) -> str:
+    def _entry_id(entry: KnowledgeFact | tuple[Fact, FactVersion]) -> str:
         if isinstance(entry, tuple):
             return entry[0].fact_id
         return entry.id
 
     @staticmethod
-    def _format_fact(entry) -> str:
+    def _format_fact(entry: KnowledgeFact | tuple[Fact, FactVersion]) -> str:
         if isinstance(entry, tuple):
             fact, version = entry
             return f"- {fact.subject} | {fact.predicate} | {fact.object} (confianza: {version.confidence:.2f})"

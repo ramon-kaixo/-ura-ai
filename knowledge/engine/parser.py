@@ -11,6 +11,7 @@ Solo transforma.
 from __future__ import annotations
 
 import re
+from typing import Any
 
 import yaml
 
@@ -30,7 +31,7 @@ _WIKI_PATTERN = re.compile(r"\[\[([^\]|]+)(?:\|([^\]]+))?\]\]")
 _ID_ALLOWED = re.compile(r"^[a-zA-Z0-9_\-/\.]+$")
 
 
-def _extract_frontmatter(raw: str) -> tuple[dict | None, str, str | None]:
+def _extract_frontmatter(raw: str) -> tuple[dict[str, Any] | None, str, str | None]:
     """Extrae frontmatter YAML y body de un string Markdown.
 
     Retorna (frontmatter_dict, body, error_code) donde error_code es

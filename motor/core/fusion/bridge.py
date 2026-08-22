@@ -17,7 +17,7 @@ El bridge es una proyección unidireccional.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.fusion.models import Fact, FactVersion, KnowledgeFact
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 # Estos campos no tienen equivalente en el modelo de memoria episódica.
 
 
-def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
+def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict[str, Any]:
     """Proyecta un KnowledgeFact a un dict compatible con SemanticFact.
 
     Restricciones:
@@ -57,7 +57,7 @@ def knowledge_fact_to_semantic_fact(kf: KnowledgeFact) -> dict:
     }
 
 
-def fact_version_to_semantic_fact(fact: Fact, version: FactVersion) -> dict:
+def fact_version_to_semantic_fact(fact: Fact, version: FactVersion) -> dict[str, Any]:
     """Proyecta un par (Fact, FactVersion) a dict compatible con SemanticFact.
 
     Restricciones:

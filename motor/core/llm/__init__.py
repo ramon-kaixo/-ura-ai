@@ -16,10 +16,12 @@ import logging
 
 log = logging.getLogger(__name__)
 
-_LLM_STATE = None
+from typing import Any
+
+_LLM_STATE: Any = None
 
 
-def _get_state():
+def _get_state() -> Any:
     global _LLM_STATE  # noqa: PLW0603
     if _LLM_STATE is None:
         from motor.core.llm._state import build_llm_state
@@ -28,20 +30,28 @@ def _get_state():
     return _LLM_STATE
 
 
-def generate(prompt: str, model: str | None = None, options: dict | None = None) -> str:
-    return _get_state().generate(prompt, model, options)
+def generate(prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
+    estado = _get_state()
+    resultado = estado.generate(prompt, model, options)
+    return resultado if isinstance(resultado, str) else str(resultado)
 
 
 def embed(texts: list[str], model: str | None = None) -> list[list[float]]:
-    return _get_state().embed(texts, model)
+    estado = _get_state()
+    resultado = estado.embed(texts, model)
+    return resultado if isinstance(resultado, list) else []
 
 
 async def embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
-    return await _get_state().embed_async(texts, model)
+    estado = _get_state()
+    resultado = await estado.embed_async(texts, model)
+    return resultado if isinstance(resultado, list) else []
 
 
-def health() -> dict:
-    return _get_state().health()
+def health() -> dict[str, Any]:
+    estado = _get_state()
+    resultado = estado.health()
+    return resultado if isinstance(resultado, dict) else {}
 
 
 __all__ = ["embed", "embed_async", "generate", "health"]

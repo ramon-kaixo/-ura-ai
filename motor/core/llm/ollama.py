@@ -56,7 +56,7 @@ class OllamaProvider(BaseLLMProvider):
         self._temperature: float = cfg.ollama_temperature
         self._max_tokens: int = cfg.ollama_max_tokens
 
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
         opts.setdefault("num_predict", self._max_tokens)
@@ -106,7 +106,7 @@ class OllamaProvider(BaseLLMProvider):
         self,
         prompt: str,
         model: str | None = None,
-        options: dict | None = None,
+        options: dict[str, object] | None = None,
     ) -> Iterator[str]:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
@@ -135,10 +135,10 @@ class OllamaProvider(BaseLLMProvider):
 
     def chat_generate(
         self,
-        mensajes: list,
+        mensajes: list[dict[str, str]],
         model: str | None = None,
-        tools: list | None = None,
-        options: dict | None = None,
+        tools: list[dict[str, object]] | None = None,
+        options: dict[str, object] | None = None,
     ) -> dict[str, Any]:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
@@ -175,17 +175,17 @@ class OllamaProvider(BaseLLMProvider):
         }
 
     @staticmethod
-    def _normalizar_tool_calls(tool_calls: list) -> list:
+    def _normalizar_tool_calls(tool_calls: list[dict[str, object]]) -> list[dict[str, object]]:
         """Normaliza tool_calls al formato OpenAI preservando arguments como dict.
 
         Ollama nativo devuelve arguments como dict y lo exige dict en el round-trip
         (messages con tool_calls de vuelta). El formato OpenAI espera string, pero
         mochila_server re-serializa con json.dumps antes de ejecutar la tool.
         """
-        normalizados = []
+        normalizados: list[dict[str, object]] = []
         for i, tc in enumerate(tool_calls):
             fn = tc.get("function", {})
-            args = fn.get("arguments", {})
+            args: object = fn.get("arguments", {}) if isinstance(fn, dict) else {}
             if isinstance(args, str):
                 try:
                     args = json.loads(args)
@@ -195,7 +195,7 @@ class OllamaProvider(BaseLLMProvider):
                 {
                     "id": tc.get("id", f"call_{i}"),
                     "type": "function",
-                    "function": {"name": fn.get("name", ""), "arguments": args},
+                    "function": {"name": fn.get("name", "") if isinstance(fn, dict) else "", "arguments": args},
                 }
             )
         return normalizados
@@ -211,7 +211,8 @@ class OllamaProvider(BaseLLMProvider):
             )
             if r.status_code == 200:
                 latency_ms = (time.monotonic() - t0) * 1000
-                result = r.json()["embeddings"]
+                resultado_json: object = r.json().get("embeddings")
+                result: list[list[float]] = resultado_json if isinstance(resultado_json, list) else []
                 log_call(self._provider_name, model_name, latency_ms, batch_size=len(texts), vectors=len(result))
                 return result
         except httpx.RequestError:
@@ -249,7 +250,8 @@ class OllamaProvider(BaseLLMProvider):
                 )
                 if r.status_code == 200:
                     latency_ms = (time.monotonic() - t0) * 1000
-                    result = r.json()["embeddings"]
+                    resultado_json: object = r.json().get("embeddings")
+                    result: list[list[float]] = resultado_json if isinstance(resultado_json, list) else []
                     log_call(
                         self._provider_name,
                         model_name,

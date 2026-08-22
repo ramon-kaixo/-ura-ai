@@ -108,10 +108,10 @@ class ImplicitFeedback:
         ).fetchall()
         if not rows:
             return 0.0
-        return sum(r[0] for r in rows)
+        return float(sum(r[0] for r in rows))
 
     def get_overall_score(self) -> float:
         rows = self._conn.execute("SELECT score FROM feedback_signals").fetchall()
         if not rows:
             return 0.0
-        return sum(r[0] for r in rows) / len(rows)
+        return float(sum(r[0] for r in rows)) / len(rows)

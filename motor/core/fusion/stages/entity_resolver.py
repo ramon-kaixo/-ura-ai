@@ -6,7 +6,7 @@ API pública intacta (re-exports desde los submódulos):
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from motor.core.fusion.base import BaseStage, EntityResolver
 from motor.core.fusion.engine import FusionStage
@@ -18,6 +18,18 @@ from motor.core.fusion.stages.entity_scoring import KeywordScorer, ScoringStrate
 
 if TYPE_CHECKING:
     from motor.core.fusion.models import FusionContext
+
+__all__ = [
+    "CachePolicy",
+    "ContextualEntityResolver",
+    "EntityDef",
+    "EntityRegistry",
+    "EntityResolutionStage",
+    "KeywordScorer",
+    "LRUCache",
+    "RuleBasedEntityResolver",
+    "ScoringStrategy",
+]
 
 
 def _extract_entity_candidates(text: str, registry: EntityRegistry, max_ngram: int = 3) -> list[str]:
@@ -65,7 +77,7 @@ class RuleBasedEntityResolver(EntityResolver):
     def version(self) -> str:
         return "1.0.0"
 
-    def resolve(self, text: str, context: dict | None = None) -> ResolvedEntity:
+    def resolve(self, text: str, context: dict[str, Any] | None = None) -> ResolvedEntity:
         key = text.strip().lower()
         info = self._LEGACY.get(key)
         if info is not None:
@@ -74,7 +86,7 @@ class RuleBasedEntityResolver(EntityResolver):
                 canonical_name=info["name"],  # type: ignore[arg-type]
                 confidence=0.95,
                 status=ResolutionStatus.RESOLVED,
-                aliases=tuple(info["aliases"]),  # type: ignore[arg-type]
+                aliases=tuple(info["aliases"]),
                 resolver_name="RuleBasedEntityResolver",
                 resolver_version=self.version,
             )
@@ -87,7 +99,7 @@ class RuleBasedEntityResolver(EntityResolver):
             resolver_version=self.version,
         )
 
-    def resolve_many(self, texts: list[str], context: dict | None = None) -> list[ResolvedEntity]:
+    def resolve_many(self, texts: list[str], context: dict[str, Any] | None = None) -> list[ResolvedEntity]:
         return [self.resolve(t) for t in texts]
 
     def normalize(self, text: str) -> str:
@@ -148,7 +160,7 @@ class ContextualEntityResolver(EntityResolver):
     def version(self) -> str:
         return "3.1.0"
 
-    def resolve(self, text: str, context: dict | None = None) -> ResolvedEntity:
+    def resolve(self, text: str, context: dict[str, Any] | None = None) -> ResolvedEntity:
         key = text.strip().lower()
         if not key:
             return self._resolve_unknown(text)
@@ -199,7 +211,7 @@ class ContextualEntityResolver(EntityResolver):
     def resolve_many(
         self,
         texts: list[str],
-        context: dict | None = None,
+        context: dict[str, Any] | None = None,
     ) -> list[ResolvedEntity]:
         return [self.resolve(t, context=context) for t in texts]
 

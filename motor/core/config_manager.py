@@ -52,7 +52,8 @@ def _expand_paths(config: dict[str, Any]) -> dict[str, Any]:
 def _load_raw_config() -> dict[str, Any]:
     """Carga el archivo JSON de configuración."""
     with open(_CONFIG_PATH) as f:  # noqa: PTH123
-        return json.load(f)
+        raw: dict[str, Any] = json.load(f)
+        return raw
 
 
 def load_config() -> dict[str, Any]:
@@ -106,15 +107,17 @@ def get_ollama_urls() -> dict[str, str]:
 
 def get_role() -> str:
     """Devuelve el rol de este nodo: 'client' o 'server'."""
-    return CONFIG.get("role", "unknown")
+    rol: object = CONFIG.get("role", "unknown")
+    return rol if isinstance(rol, str) else "unknown"
 
 
 def get_hostname() -> str:
     """Devuelve el hostname lógico de este nodo según el perfil."""
-    return CONFIG.get("hostname", "unknown")
+    host: object = CONFIG.get("hostname", "unknown")
+    return host if isinstance(host, str) else "unknown"
 
 
-def validate_config() -> list:
+def validate_config() -> list[str]:
     """Valida que los directorios declarados en config existan y tengan permisos.
     Retorna lista de warnings.
     """
@@ -151,7 +154,7 @@ _REQUIRED_KEYS = {
 }
 
 
-def validate_schema() -> list:
+def validate_schema() -> list[str]:
     """Valida la estructura de CONFIG contra el esquema esperado.
     Retorna lista de errores (vacia = OK).
     """
@@ -177,7 +180,7 @@ def validate_schema() -> list:
     return errors
 
 
-def validate_schema_json() -> list:
+def validate_schema_json() -> list[str]:
     """Valida system_config.json contra el JSON Schema declarativo (config/schema.json).
     Requiere jsonschema instalado. Si no está, retorna lista vacía (no bloquea).
     """

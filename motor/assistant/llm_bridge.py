@@ -7,6 +7,7 @@ import concurrent.futures
 import json
 import logging
 import os
+from collections.abc import AsyncIterator
 from typing import TYPE_CHECKING, Any
 
 _log = logging.getLogger("ura.assistant.llm_bridge")
@@ -108,7 +109,7 @@ class LLMBridge:
         mode: ConversationMode,
         intent_value: str = "",
         system_prompt: str = "",
-    ):
+    ) -> AsyncIterator[str]:
         import httpx
 
         model_key = self.select_model(mode, intent_value)

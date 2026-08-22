@@ -211,7 +211,7 @@ _CONSTANT_WHITELIST = {
 def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
     """Evalúa un AST directamente sin usar eval()/compile()."""
     handler = _NODE_HANDLERS.get(type(node))
-    if handler:
+    if handler is not None:
         return handler(node, env, _operator)
     if isinstance(node, ast.ListComp):
         return list(_eval_comprehension(node, env))
@@ -220,17 +220,17 @@ def _eval_ast(node: ast.AST, env: dict[str, Any]) -> Any:
     raise UnsafeExpressionError(f"Nodo no soportado: {type(node).__name__}")
 
 
-def _eval_constant(node, env, _op):
+def _eval_constant(node: ast.Constant, env: dict[str, Any], _op: Any) -> Any:
     return node.value
 
 
-def _eval_name(node, env, _op):
+def _eval_name(node: ast.Name, env: dict[str, Any], _op: Any) -> Any:
     if node.id in env:
         return env[node.id]
     raise UnsafeExpressionError(f"Nombre no definido: {node.id}")
 
 
-def _eval_unaryop(node, env, _op):
+def _eval_unaryop(node: ast.UnaryOp, env: dict[str, Any], _op: Any) -> Any:
     operand = _eval_ast(node.operand, env)
     if isinstance(node.op, ast.UAdd):
         return +operand
@@ -241,7 +241,7 @@ def _eval_unaryop(node, env, _op):
     raise UnsafeExpressionError(f"Operador unario no permitido: {type(node.op).__name__}")
 
 
-def _eval_binop(node, env, _op):
+def _eval_binop(node: ast.BinOp, env: dict[str, Any], _op: Any) -> Any:
     left = _eval_ast(node.left, env)
     right = _eval_ast(node.right, env)
     ops = {
@@ -264,7 +264,7 @@ def _eval_binop(node, env, _op):
     raise UnsafeExpressionError(f"Operador binario no permitido: {type(node.op).__name__}")
 
 
-def _eval_boolop(node, env, _op):
+def _eval_boolop(node: ast.BoolOp, env: dict[str, Any], _op: Any) -> Any:
     values = [_eval_ast(v, env) for v in node.values]
     if isinstance(node.op, ast.Or):
         result = False
@@ -277,7 +277,7 @@ def _eval_boolop(node, env, _op):
     return result
 
 
-def _eval_compare(node, env, _op):
+def _eval_compare(node: ast.Compare, env: dict[str, Any], _op: Any) -> Any:
     left = _eval_ast(node.left, env)
     cmp_ops = {
         ast.Eq: _op.eq,
@@ -302,12 +302,12 @@ def _eval_compare(node, env, _op):
     return True
 
 
-def _eval_ifexp(node, env, _op):
+def _eval_ifexp(node: ast.IfExp, env: dict[str, Any], _op: Any) -> Any:
     test = _eval_ast(node.test, env)
     return _eval_ast(node.body if test else node.orelse, env)
 
 
-def _eval_container(node, env, _op):
+def _eval_container(node: ast.List | ast.Tuple | ast.Set, env: dict[str, Any], _op: Any) -> Any:
     if isinstance(node, ast.List):
         return [_eval_ast(el, env) for el in node.elts]
     if isinstance(node, ast.Tuple):
@@ -315,11 +315,11 @@ def _eval_container(node, env, _op):
     return {_eval_ast(el, env) for el in node.elts}
 
 
-def _eval_dict(node, env, _op):
-    return {_eval_ast(k, env): _eval_ast(v, env) for k, v in zip(node.keys, node.values, strict=False)}
+def _eval_dict(node: ast.Dict, env: dict[str, Any], _op: Any) -> Any:
+    return {_eval_ast(k, env): _eval_ast(v, env) for k, v in zip(node.keys, node.values, strict=False) if k is not None}
 
 
-def _eval_subscript(node, env, _op):
+def _eval_subscript(node: ast.Subscript, env: dict[str, Any], _op: Any) -> Any:
     value = _eval_ast(node.value, env)
     if isinstance(node.slice, ast.Slice):
         lower = _eval_ast(node.slice.lower, env) if node.slice.lower else None
@@ -329,7 +329,7 @@ def _eval_subscript(node, env, _op):
     return value[_eval_ast(node.slice, env)]
 
 
-def _eval_call(node, env, _op):
+def _eval_call(node: ast.Call, env: dict[str, Any], _op: Any) -> Any:
     if isinstance(node.func, ast.Attribute):
         return _eval_method_call(node, env, _op)
     if not isinstance(node.func, ast.Name):
@@ -342,7 +342,7 @@ def _eval_call(node, env, _op):
     return env[func_name](*args, **kwargs)
 
 
-_NODE_HANDLERS = {
+_NODE_HANDLERS: dict[type, Any] = {
     ast.Constant: _eval_constant,
     ast.Name: _eval_name,
     ast.UnaryOp: _eval_unaryop,
@@ -362,7 +362,7 @@ _NODE_HANDLERS = {
 def _eval_comprehension(node: ast.ListComp | ast.GeneratorExp, env: dict[str, Any]) -> list[Any]:
     """Evalúa una list comprehension o generator expression."""
 
-    def _process(generators, idx, current_env):
+    def _process(generators: list[ast.comprehension], idx: int, current_env: dict[str, Any]) -> Any:
         if idx >= len(generators):
             yield _eval_ast(node.elt, current_env)
             return

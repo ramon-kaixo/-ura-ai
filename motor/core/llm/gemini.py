@@ -60,7 +60,7 @@ class GeminiProvider(BaseLLMProvider):
             "x-goog-api-key": self._api_key or "",
         }
 
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
         opts.setdefault("maxOutputTokens", self._max_tokens)

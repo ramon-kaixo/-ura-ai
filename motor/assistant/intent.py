@@ -118,7 +118,7 @@ _ENTITY_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 
 
 class IntentEngine:
-    def __init__(self):
+    def __init__(self) -> None:
         self._intent_patterns = _INTENT_PATTERNS
         self._entity_patterns = _ENTITY_PATTERNS
 

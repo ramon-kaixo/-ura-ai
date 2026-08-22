@@ -11,7 +11,7 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.memory.crypto import decrypt as _decrypt
 from motor.memory.crypto import encrypt as _encrypt
@@ -69,7 +69,7 @@ def save_snapshot(timeline: MemoryTimeline, path: str, version: str = "", encryp
     return checksum[:16]
 
 
-def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, dict]]:
+def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict[str, Any], dict[str, dict[str, Any]]]:
     """Carga un snapshot desde archivo.
 
     Retorna (header, entries_dict).
@@ -103,7 +103,7 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
         data_copy["header"] = dict(header)
         data_copy["header"]["checksum"] = ""
         raw_canonical: str = json.dumps(data_copy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
-        computed = hashlib.sha256(raw_canonical.encode("utf-8")).hexdigest()[:16]  # type: ignore[attr-defined]
+        computed = hashlib.sha256(raw_canonical.encode("utf-8")).hexdigest()[:16]
         if computed != stored_checksum:
             msg = f"Snapshot checksum mismatch: stored={stored_checksum}, computed={computed}"
             raise ValueError(msg)
@@ -111,7 +111,7 @@ def load_snapshot(path: str, encryption_key: str = "") -> tuple[dict, dict[str, 
     return header, entries
 
 
-def _entry_to_dict(entry: MemoryEntry) -> dict:
+def _entry_to_dict(entry: MemoryEntry) -> dict[str, Any]:
     return {
         "entry_id": entry.entry_id,
         "timestamp": entry.timestamp,

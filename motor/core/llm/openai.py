@@ -66,7 +66,7 @@ class OpenAIProvider(BaseLLMProvider):
             "Content-Type": "application/json",
         }
 
-    def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, object] | None = None) -> str:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
         opts.setdefault("max_tokens", self._max_tokens)
@@ -95,7 +95,7 @@ class OpenAIProvider(BaseLLMProvider):
                 prompt_tokens=usage.get("prompt_tokens"),
                 completion_tokens=usage.get("completion_tokens"),
             )
-            return respuesta
+            return respuesta if isinstance(respuesta, str) else str(respuesta)
         except httpx.TimeoutException:
             latency_ms = (time.monotonic() - t0) * 1000
             log_call(self._provider_name, model_name, latency_ms, "timeout")
@@ -119,7 +119,7 @@ class OpenAIProvider(BaseLLMProvider):
         self,
         prompt: str,
         model: str | None = None,
-        options: dict | None = None,
+        options: dict[str, object] | None = None,
     ) -> Iterator[str]:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
@@ -159,10 +159,10 @@ class OpenAIProvider(BaseLLMProvider):
 
     def chat_generate(
         self,
-        mensajes: list,
+        mensajes: list[dict[str, str]],
         model: str | None = None,
-        tools: list | None = None,
-        options: dict | None = None,
+        tools: list[dict[str, object]] | None = None,
+        options: dict[str, object] | None = None,
     ) -> dict[str, Any]:
         opts = dict(options or {})
         opts.setdefault("temperature", self._temperature)
@@ -233,7 +233,8 @@ class OpenAIProvider(BaseLLMProvider):
                         timeout=self._timeout,
                     )
                     r.raise_for_status()
-                    resultados.append(r.json()["data"][0]["embedding"])
+                    emb: object = r.json()["data"][0]["embedding"]
+                    resultados.append(emb if isinstance(emb, list) else [0.0] * 1536)
                 except Exception:
                     log.warning("error generando embedding individual, continuando")
                     resultados.append([0.0] * 1536)
@@ -276,7 +277,8 @@ class OpenAIProvider(BaseLLMProvider):
                             json={"model": model_name, "input": t},
                         )
                         r.raise_for_status()
-                        resultados.append(r.json()["data"][0]["embedding"])
+                        emb: object = r.json()["data"][0]["embedding"]
+                        resultados.append(emb if isinstance(emb, list) else [0.0] * 1536)
                 except Exception:
                     log.warning("error generando embedding async individual, continuando")
                     resultados.append([0.0] * 1536)

@@ -48,7 +48,7 @@ class RAGContext:
             if not results:
                 return ""
             parts: list[str] = []
-            for r in results:  # type: ignore[attr-defined]
+            for r in results:
                 content = getattr(r, "content", "") or getattr(r, "text", "") or str(r)
                 parts.append(content[:300])
             return "\n---\n".join(parts)

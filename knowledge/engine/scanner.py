@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import datetime
 import hashlib
+from collections.abc import Iterator
 from typing import TYPE_CHECKING
 
 from knowledge.engine.models import MAX_PARSE_SIZE, CompileError, Snapshot, SourceObject
@@ -72,7 +73,7 @@ def scan_source(source_dir: Path) -> tuple[list[SourceObject], list[CompileError
     return sources, skipped
 
 
-def scan_source_stream(source_dir: Path):
+def scan_source_stream(source_dir: Path) -> Iterator[SourceObject | CompileError]:
     """Generador: descubre SourceObjects sin acumularlos en RAM.
 
     yield SourceObject individualmente.

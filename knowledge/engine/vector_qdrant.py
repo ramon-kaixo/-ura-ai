@@ -153,7 +153,7 @@ class QdrantVectorStore:
             resp.raise_for_status()
             data = resp.json()
             result = data.get("result", {})
-            return result.get("count", 0)
+            return int(result.get("count", 0))
         except httpx.HTTPError as exc:
             log.warning("Qdrant count failed: %s", exc)
             self._degraded = True

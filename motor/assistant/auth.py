@@ -10,11 +10,14 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from motor.assistant.config import config
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
     from fastapi import Request
+    from starlette.responses import Response
 
 
 class AuthMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         if not config.auth_enabled:
             return await call_next(request)
 

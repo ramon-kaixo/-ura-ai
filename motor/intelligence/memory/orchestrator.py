@@ -47,7 +47,7 @@ class MemoryOrchestrator:
         result = self._compressor.compress()
         if result.summaries_created:
             log.info("Compressed %d episodes into %d summaries", result.episodes_compressed, result.summaries_created)
-        return result.summaries_created
+        return int(result.summaries_created)
 
     def forget(self, dry_run: bool = False) -> dict[str, Any]:
         if self._forgetting is None:
