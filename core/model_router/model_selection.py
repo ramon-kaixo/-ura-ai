@@ -13,21 +13,16 @@ from typing import TypedDict
 log = logging.getLogger(__name__)
 
 DEFAULT_TIPO = "respuesta_rapida"
-FALLBACK_MODEL = "qwen2.5:3b"
+FALLBACK_MODEL = "llama3:latest"
 
 MODEL_CONFIG = {
-    "deepseek-coder:6.7b": {"temperature": 0.2, "top_p": 0.95, "num_predict": 8192},
-    "qwen2.5-coder:14b": {"temperature": 0.0, "top_p": 0.9, "num_predict": 8192},
-    "qwen2.5-coder:14b-instruct-q8_0": {"temperature": 0.0, "top_p": 0.9, "num_predict": 8192},
-    "qwen2.5-coder:32b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
-    "qwen2.5:3b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 4096},
-    "qwen3:14b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
-    "qwen3:32b-q8_0": {"temperature": 0.1, "top_p": 0.9, "num_predict": 16384},
-    "llama3.2:3b": {"temperature": 0.3, "top_p": 0.9, "num_predict": 2048},
+    "qwen3-coder:30b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
+    "qwen3.6:27b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
     "llama3:latest": {"temperature": 0.2, "top_p": 0.9, "num_predict": 4096},
-    "llama3.2-vision:11b": {"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
-    "llava:latest": {"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
-    "codestral:22b": {"temperature": 0.1, "top_p": 0.95, "num_predict": 8192},
+    "llama3.3:70b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 16384},
+    "qwen2-vl-7b": {"temperature": 0.2, "top_p": 0.9, "num_predict": 2048},
+    "nomic-embed-text:latest": {"temperature": 0.0, "top_p": 1.0, "num_predict": 0},
+    "gemma4:26b-a4b": {"temperature": 0.1, "top_p": 0.9, "num_predict": 8192},
 }
 
 success_rates: dict[str, dict[str, dict[str, int]]] = defaultdict(lambda: defaultdict(lambda: {"ok": 0, "total": 0}))
@@ -44,32 +39,32 @@ class _RutaModelo(TypedDict):
 MODELO_ROUTES: dict[str, _RutaModelo] = {
     "razonamiento": {
         "descripcion": "Razonamiento profundo y planificacion",
-        "modelos": ["qwen3:32b-q8_0", "qwen3:14b", "deepseek-coder:6.7b", "llama3:latest"],
-        "fallback": "qwen2.5:3b",
+        "modelos": ["qwen3.6:27b", "llama3.3:70b", "gemma4:26b-a4b"],
+        "fallback": "llama3:latest",
     },
     "codigo_complejo": {
         "descripcion": "Codigo complejo, refactoring, arquitectura",
-        "modelos": ["qwen2.5-coder:32b", "qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b", "qwen3:32b-q8_0"],
-        "fallback": "qwen2.5:3b",
+        "modelos": ["qwen3-coder:30b", "qwen3.6:27b", "gemma4:26b-a4b"],
+        "fallback": "llama3:latest",
     },
     "codigo_rapido": {
         "descripcion": "Codigo rapido, scripts, fixes",
-        "modelos": ["qwen2.5-coder:14b-instruct-q8_0", "llama3.2:3b", "deepseek-coder:6.7b", "qwen2.5:3b"],
-        "fallback": "llama3.2:3b",
+        "modelos": ["qwen3-coder:30b", "qwen3.6:27b", "llama3:latest"],
+        "fallback": "llama3:latest",
     },
     "respuesta_rapida": {
         "descripcion": "Respuestas rapidas, clasificacion, resumenes",
-        "modelos": ["qwen2.5:3b", "llama3.2:3b"],
-        "fallback": "llama3.2:3b",
+        "modelos": ["llama3:latest", "qwen3.6:27b"],
+        "fallback": "llama3:latest",
     },
     "vision": {
         "descripcion": "Analisis de imagenes y vision",
-        "modelos": ["llama3.2-vision:11b", "llava:latest"],
-        "fallback": "llava:latest",
+        "modelos": ["qwen2-vl-7b"],
+        "fallback": "qwen2-vl-7b",
     },
     "embeddings": {
         "descripcion": "Generacion de embeddings",
-        "modelos": ["nomic-embed-text:latest", "mxbai-embed-large"],
+        "modelos": ["nomic-embed-text:latest"],
         "fallback": "nomic-embed-text:latest",
     },
 }

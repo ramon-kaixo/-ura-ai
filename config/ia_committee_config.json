@@ -13,8 +13,8 @@
   ],
   "consensus_threshold": 0.7,
   "available_locally": [
-    "qwen/qwen-2.5-coder-32b",
-    "deepseek/deepseek-coder-6.7b"
+    "qwen/qwen3-coder-30b",
+    "qwen/qwen3.6-27b"
   ],
   "available_via_groq": [
     "meta-llama/llama-3-70b",
