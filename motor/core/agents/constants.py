@@ -10,11 +10,11 @@ from shared.paths import URA_ROOT
 MAX_CICLO_S = 300
 
 MODELOS: dict[str, str] = {
-    "orquestador": "qwen2.5-coder:14b",
-    "ejecutor": "deepseek-coder:6.7b",
-    "reparador_rapido": "deepseek-coder:6.7b",
-    "reparador_potente": "qwen3:32b-q8_0",
-    "revisor": "qwen2.5-coder:14b-instruct-q8_0",
+    "orquestador": "qwen3.6:27b",
+    "ejecutor": "qwen3-coder:30b",
+    "reparador_rapido": "qwen3-coder:30b",
+    "reparador_potente": "qwen3.6:27b",
+    "revisor": "qwen3.6:27b",
 }
 
 NERVIOSO = URA_ROOT / ".nervioso"

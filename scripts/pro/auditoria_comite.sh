@@ -41,7 +41,7 @@ votos=0
 total=0
 
 # Modelos locales (Qwen + DeepSeek)
-for modelo in "qwen2.5-coder:32b" "deepseek-coder:6.7b"; do
+for modelo in "qwen3-coder:30b" "qwen3.6:27b"; do
     for archivo in core/memory_engine.py core/auth_layer.py; do
         if [ -f "$archivo" ]; then
             CODIGO=$(python3 -c "import json; d=json.load(open('/tmp/audit_codigo.json')); print(d.get('$archivo','')[:1000])")

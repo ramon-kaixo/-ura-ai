@@ -13,8 +13,12 @@ log = logging.getLogger(__name__)
 
 _OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
 _OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
+# Vision usa servidor llama.cpp dedicado en 11436 (qwen2-vl-7b)
+_VISION_HOST = os.environ.get("URA_VISION_HOST", "localhost")
+_VISION_PORT = os.environ.get("URA_VISION_PORT", "11436")
 OLLAMA = f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/chat"
-VISION_MODEL = "llama3.2-vision:11b"
+VISION_OLLAMA = f"http://{_VISION_HOST}:{_VISION_PORT}/api/chat"
+VISION_MODEL = "qwen2-vl-7b"
 
 
 def _exif_pillow(ruta: Path) -> dict:
@@ -120,7 +124,7 @@ def _describir_imagen(ruta: Path) -> dict:
 
         img_b64 = base64.b64encode(ruta.read_bytes()).decode()
         resp = httpx.post(
-            OLLAMA,
+            VISION_OLLAMA,
             json={
                 "model": VISION_MODEL,
                 "messages": [

@@ -190,7 +190,7 @@ def step_poda() -> None:
     run([VENV_PYTHON, "scripts/pro/poda_mecanica.py", "--json"], timeout=30)
 
 
-def step_refactor(workers=1, model="deepseek-coder:6.7b", fallback="qwen2.5-coder:14b"):
+def step_refactor(workers=1, model="qwen3-coder:30b", fallback="qwen3.6:27b"):
     log(f"  Refactor ({workers} workers, {model})...")
     env = os.environ.copy()
     env["REFACTOR_WORKER_TOTAL"] = str(workers)

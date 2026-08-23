@@ -40,18 +40,18 @@ rsync -avz --partial --delete "$R/" root@${HETZNER_IP}:${HETZNER_REPO}/ \
     --exclude='code-wiki' --exclude='*.log' --exclude='.coverage' 2>&1 | tail -3
 log "  ✅ Sincronizado a Hetzner"
 
-# 3. Ejecutar auditoría en Hetzner con deepseek-coder:6.7b
+# 3. Ejecutar auditoría en Hetzner con qwen3-coder:30b
 log "[3/5] Ejecutando auditoria en Hetzner..."
 ssh root@${HETZNER_IP} "
     cd ${HETZNER_REPO}
     echo '=== Auditoria remota Hetzner ==='
-    echo 'Modelo: deepseek-coder:6.7b'
+    echo 'Modelo: qwen3-coder:30b'
     echo ''
     for mod in core/memory_engine.py core/auth_layer.py; do
-        if [ -f \"\$mod\" ]; then
-            CONTENIDO=\$(head -200 \"\$mod\")
-            echo \"Analizando \$mod...\"
-            curl -s http://localhost:11434/api/generate -d '{\"model\":\"deepseek-coder:6.7b\",\"prompt\":\"Revisa este codigo: '\$CONTENIDO'\",\"stream\":false}' 2>/dev/null | python3 -c \"import sys,json;print(json.load(sys.stdin).get('response',''))\" 2>/dev/null || true
+        if [ -f "\$mod" ]; then
+            CONTENIDO=\$(head -200 "\$mod")
+            echo "Analizando \$mod..."
+            curl -s http://localhost:11434/api/generate -d '{"model":"qwen3-coder:30b","prompt":"Revisa este codigo: '\$CONTENIDO'","stream":false}' 2>/dev/null | python3 -c "import sys,json;print(json.load(sys.stdin).get('response',''))" 2>/dev/null || true
         fi
     done
 " > "/tmp/auditoria_hetzner_raw_${FECHA}.log" 2>&1
@@ -60,7 +60,7 @@ log "  ✅ Auditoria remota completada"
 # 4. Traer reporte de vuelta a GX10
 log "[4/5] Recuperando reporte..."
 # Parsear resultado y guardar en reports/
-echo "{\"fecha\":\"$(date -I)\",\"origen\":\"Hetzner\",\"modelo\":\"deepseek-coder:6.7b\",\"estado\":\"completado\"}" > "$R/$REPORTE"
+echo "{\"fecha\":\"$(date -I)\",\"origen\":\"Hetzner\",\"modelo\":\"qwen3-coder:30b\",\"estado\":\"completado\"}" > "$R/$REPORTE"
 log "  ✅ Reporte local: $REPORTE"
 
 # 5. Enviar al Mac también

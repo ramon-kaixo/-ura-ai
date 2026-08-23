@@ -15,16 +15,18 @@
   "$schema": "https://opencode.ai/config.json",
 
   // Modelo: Ollama del GX10 vía túnel local (localhost:11436)
-  "model": "ollama/qwen2.5-coder:14b",
+  "model": "ollama/qwen3.6:27b",
   "provider": {
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama GX10 (tunnel)",
       "options": { "baseURL": "http://localhost:11436/v1" },
       "models": {
-        "qwen2.5-coder:14b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
         "qwen3-coder:30b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
-        "deepseek-r1:14b": { "tools": true, "limit": { "context": 65536, "output": 8192 } }
+        "qwen3.6:27b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
+        "gemma4:26b-a4b": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
+        "llama3:latest": { "tools": true, "limit": { "context": 65536, "output": 8192 } },
+        "nomic-embed-text:latest": { "tools": false, "limit": { "context": 2048, "output": 0 } }
       }
     }
   },

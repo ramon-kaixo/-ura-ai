@@ -154,7 +154,7 @@ class TestV1Models:
     def test_incluye_rutas(self, client, ms):
         resp = client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
         ids = [m["id"] for m in resp.json()["data"]]
-        assert any(mid in ids for mid in ("ollama/deepseek-coder:6.7b", "openrouter/anthropic/claude-sonnet-4"))
+        assert any(mid in ids for mid in ("ollama/qwen3-coder:30b", "openrouter/anthropic/claude-sonnet-4"))
 
     def test_cache(self, client, ms):
         client.get("/v1/models", headers={"Authorization": "Bearer test-key"})

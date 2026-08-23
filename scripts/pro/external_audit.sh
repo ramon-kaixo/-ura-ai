@@ -15,7 +15,7 @@ mkdir -p "$OUTDIR" "$REPO/docs/external_audits"
 
 # ── Config ──────────────────────────────────────────────
 OPENROUTER_MODEL="anthropic/claude-3.5-sonnet"
-OLLAMA_MODEL="qwen2.5-coder:14b"
+OLLAMA_MODEL="qwen3-coder:30b"
 HISTORIAL="$REPO/docs/pro/reports/historial_sesiones.md"
 TIMER_NAME="ura-external-audit.timer"
 SERVICE_NAME="ura-external-audit.service"

@@ -162,7 +162,7 @@ class TestDescribirImagen:
         with mock.patch.object(ie.httpx, "post", return_value=resp):
             out = ie._describir_imagen(ruta)
         assert out["descripcion"] == "una foto"
-        assert out["modelo"] == "llama3.2-vision:11b"
+        assert out["modelo"] == "qwen2-vl-7b"
 
     def test_error_http(self, ie, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"

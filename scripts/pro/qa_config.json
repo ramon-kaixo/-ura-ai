@@ -6,6 +6,6 @@
   "reintentos_max_por_fase": 3,
   "excluir": [".venv", "build", "dist", "tests", "scripts/pro", ".tuneladora", ".attic", "mutants"],
   "modelo_generador": "ollama/qwen3-coder:30b",
-  "modelo_fallback": "ollama/qwen2.5-coder:14b",
-  "modelo_revisor": "ollama/qwen3:32b-q8_0"
+  "modelo_fallback": "ollama/qwen3.6:27b",
+  "modelo_revisor": "ollama/qwen3.6:27b"
 }

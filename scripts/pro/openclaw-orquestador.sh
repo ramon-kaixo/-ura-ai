@@ -12,7 +12,7 @@
 #   openclaw-orquestador.sh agent --local --timeout 120 --agent main -m "..."
 #   openclaw-orquestador.sh exec-policy show
 #
-# Perfil: gateway.port=18791, gateway.bind=loopback, modelo ollama/deepseek-r1:14b
+# Perfil: gateway.port=18791, gateway.bind=loopback, modelo ollama/qwen3.6:27b
 # Seguridad: exec-policy deny-all + allowlist read-only (git log/cat/grep/...)
 # El gateway NO se instala como servicio (sin systemd): usar embedded --local
 # o decidir instalación explícita con: openclaw-orquestador.sh gateway install

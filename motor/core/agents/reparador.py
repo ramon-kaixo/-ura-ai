@@ -43,7 +43,7 @@ class AgenteReparador:
         if reparado:
             return True, 1, "Reparado por auto_reglas (determinista)"
 
-        reparado = self._nivel_2(ruta, "deepseek-coder:6.7b")
+        reparado = self._nivel_2(ruta, "qwen3-coder:30b")
         if reparado:
             return True, 2, "Reparado por DeepSeek 6.7B (LLM rápido)"
 
@@ -116,7 +116,7 @@ class AgenteReparador:
 
             payload = json.dumps(
                 {
-                    "model": "ollama/qwen3:32b-q8_0",
+                    "model": "ollama/qwen3.6:27b",
                     "messages": [
                         {
                             "role": "system",
