@@ -38,7 +38,7 @@ class TestStrongKeys:
 
 class TestGenericKeys:
     def test_generica_con_var_sensible_detectada(self):
-        assert "hardcoded_secret" in _tipos('PASSWORD = "***REDACTED***"')
+        assert "hardcoded_secret" in _tipos('PASSWORD = "dummy_valor_para_test_no_es_real"')
 
     def test_generica_sin_var_sensible_no(self):
         assert _tipos('x = "abcdefghijklmnopqrstuvwxyz0123456789"') == []
