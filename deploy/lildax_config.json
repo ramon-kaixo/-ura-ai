@@ -1,11 +1,11 @@
 {
   "workspace": "/Users/ramonesnaola/URA/ura_ia_1972",
   "server": {
-    "url": "http://10.164.1.99:8081",
+    "url": "http://100.72.103.12:8081",
     "password": "***REDACTED***"
   },
   "model": {
     "provider": "ollama",
-    "baseURL": "http://10.164.1.99:11434/v1"
+    "baseURL": "http://100.72.103.12:11434/v1"
   }
 }
