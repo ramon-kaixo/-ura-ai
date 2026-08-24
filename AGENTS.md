@@ -17,6 +17,13 @@
 
 ## REGLA DE REPORTE FINAL OBLIGATORIO (proactividad, petición RAMON 2026-08-15)
 
+**Regla de cierre con acciones humanas (petición RAMON 2026-08-25)**: mientras quede
+cualquier paso que requiera acción del humano (sudo, ritual chattr, decisión), el trabajo
+NO se considera terminado. Flujo obligatorio: (1) enviar al humano los comandos exactos,
+indicando MÁQUINA y en un solo bloque pegable; (2) esperar su confirmación ("te lo remito");
+(3) verificar remotamente la evidencia; (4) solo entonces emitir el informe final de 3 bloques.
+Nunca dar por cerrada una fase con pasos humanos pendientes.
+
 Al terminar **cualquier** trabajo (tarea, plan, revisión, corrección, sesión), el agente
 cierra siempre con un reporte final en 3 bloques, aunque el usuario no lo pida:
 
