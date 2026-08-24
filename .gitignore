@@ -111,3 +111,6 @@ scripts/pro/ura-doble.backup.*
 # Artefactos runtime opencode
 .opencode/opencode.db-shm
 .opencode/opencode.db-wal
+
+# Datos locales regenerables (nunca en git) - FASE 1 master plan 2026-08-25
+core/modules/data/
