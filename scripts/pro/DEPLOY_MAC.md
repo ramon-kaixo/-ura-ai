@@ -59,3 +59,15 @@ launchctl kickstart -k gui/$(id -u)/com.ura.voice
 # Ver logs
 tail -f /Users/ramonesnaola/URA/ura_ia_1972/logs/mac_voice_{out,err}.log
 ```
+
+## Entorno Python para pre-commit (2026-08-25)
+
+Los hooks de pre-commit (semgrep, pytest) requieren un venv en la raíz del repo.
+Sin él, los commits fallan con `.venv/bin/semgrep: No such file or directory`.
+
+```bash
+cd ~/URA/ura_ia_1972
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e '.[test]' semgrep pre_commit pytest-rerunfailures pytest-instafail pytest-cov
+pre-commit run --all-files   # primera vez: instala entornos (tarda minutos)
+```
