@@ -15,7 +15,7 @@
 
 set -euo pipefail
 
-ASUS_HOST="${ASUS_HOST:-gx10}"   # alias SSH del Mac → ramon@10.164.1.99 (clave id_ed25519)
+ASUS_HOST="${ASUS_HOST:-gx10}"   # alias SSH del Mac → ramon@100.72.103.12 (clave id_ed25519)
 ASUS_USER="ramon"
 ASUS_REPO="/home/ramon/URA/ura_ia_1972"
 MAC_REPO="$HOME/URA/ura_ia_1972"
@@ -80,7 +80,7 @@ _revisar() {
 _quien() {
     echo "========== VENTANA 1 — OpenCode Web (ASUS) =========="
     echo "  Máquina:  $(ssh -o ConnectTimeout=5 gx10 hostname 2>/dev/null)"
-    echo "  Proyecto: $(curl -s -u "ramon:***REDACTED***" http://10.164.1.99:8081/project/current 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('worktree','?'))" 2>/dev/null)"
+    echo "  Proyecto: $(curl -s -u "ramon:${OPENCODE_WEB_PASS:-}" http://gx10:8081/project/current 2>/dev/null | python3 -c "import sys,json; print(json.load(sys.stdin).get('worktree','?'))" 2>/dev/null)"
     echo "  Cerebro:  deepseek-v4-flash (esta conversación)"
     echo ""
     echo "========== VENTANA 2 — OpenCode Escritorio (Mac) =========="
