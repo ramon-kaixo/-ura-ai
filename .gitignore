@@ -103,3 +103,7 @@ docs/udo/coordination.lock
 coverage.json
 .coverage.*
 coverage/
+
+# Backups locales de mantenimiento (2026-08-24)
+deploy/lildax_config.json.backup.*
+scripts/pro/ura-doble.backup.*
