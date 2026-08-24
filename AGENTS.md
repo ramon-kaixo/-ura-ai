@@ -6,8 +6,8 @@
 
 - **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
 - **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
-- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@10.164.1.99`
-- Para trabajar directamente en ASUS: usar `ssh ramon@10.164.1.99 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
+- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@100.72.103.12`
+- Para trabajar directamente en ASUS: usar `ssh ramon@100.72.103.12 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
 
 ### Flujo de Trabajo Obligatorio
 1. **Desarrollar** en Mac (edithores, tests locales)
@@ -217,7 +217,7 @@ Organizados por función en las siguientes categorías:
 - **Hardware**: NVIDIA GB10 Grace Blackwell, 20 núcleos ARM, GPU Blackwell FP4/FP8, 128 GB memoria unificada.
 - **Servicios críticos**: ollama (11434), ura-api (8000), ura-audit-api (8080), ura-mochila, ura-metrics (8888), ura-watcher, ura-detector (YOLOv8), ura-voice, ura-contraste (8002), model-router (11435). Detalles y estados en la referencia.
 - **Rootfs**: puede estar montado RO (ver REFERENCIA_GX10.md y `ura-engineering-check --env`).
-- **Red**: GX10 Ethernet 10.164.1.99 / WiFi 10.164.1.247 / Tailscale 100.72.103.12.
+- **Red**: GX10 Ethernet 10.164.1.99 (sin carrier desde 2026-08-24; usar WiFi o Tailscale) / WiFi 10.164.1.247 / Tailscale 100.72.103.12.
 - **Model Router**: `motor/` + Ollama; rutas razonamiento/codigo/vision/embeddings (detalle en referencia).
 
 ## Core Modification Rule (ADR-007)

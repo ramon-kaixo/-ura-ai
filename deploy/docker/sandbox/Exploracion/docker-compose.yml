@@ -20,7 +20,7 @@ services:
     environment:
       - http_proxy=http://squid-proxy:3128
       - https_proxy=http://squid-proxy:3128
-      - OLLAMA_HOST=http://10.164.1.99:11434
+      - OLLAMA_HOST=http://100.72.103.12:11434
     cap_drop:
       - ALL
     security_opt:

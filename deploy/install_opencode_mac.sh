@@ -63,5 +63,5 @@ log "✅ Servicio verificado"
 
 log "=== INSTALACIÓN COMPLETADA ==="
 log "Interfaz web: http://127.0.0.1:4096"
-log "Servidor remoto: http://${ASUS_HOST:-10.164.1.99}:8081"
+log "Servidor remoto: http://${ASUS_HOST:-100.72.103.12}:8081"
 log "Workspace local: $URA_DIR"

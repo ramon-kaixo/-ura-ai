@@ -30,7 +30,7 @@
       "hostname": "gx10",
       "ollama": {
         "host": "localhost",
-        "remote_host": "10.164.1.99",
+        "remote_host": "100.72.103.12",
         "port": 11434
       },
       "router": {
@@ -75,8 +75,8 @@
       "power_mode": "TURBO",
       "hostname": "mac",
       "ollama": {
-        "host": "10.164.1.99",
-        "remote_host": "10.164.1.99",
+        "host": "100.72.103.12",
+        "remote_host": "100.72.103.12",
         "port": 11434
       },
       "router": {

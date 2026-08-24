@@ -25,8 +25,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 URA_ROOT = Path(os.environ.get("URA_ROOT", "/home/ramon/URA/ura_ia_1972"))
-OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://10.164.1.99:11434")
-MODEL_ROUTER = "http://10.164.1.99:11435"
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://100.72.103.12:11434")
+MODEL_ROUTER = "http://100.72.103.12:11435"
 RUFF = str(URA_ROOT / ".venv/bin/ruff")
 VENV_PYTHON = str(URA_ROOT / ".venv/bin/python3")
 LOG_DIR = Path("/opt/ura/logs/tuneladora_mantenimiento")

@@ -2,7 +2,7 @@
 # ============================================================
 # bootstrap_recovery.sh — Recovery + Blindaje para ASUS GX10
 # Ejecutar DESPUÉS de restaurar SSH en ASUS.
-# Uso: ssh ramon@10.164.1.99 'bash -s' < deploy/bootstrap_recovery.sh
+# Uso: ssh ramon@100.72.103.12 'bash -s' < deploy/bootstrap_recovery.sh
 # ============================================================
 set -euo pipefail
 REPO="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"

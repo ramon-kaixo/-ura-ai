@@ -12,7 +12,7 @@ from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
 
 ROOT = Path(__file__).resolve().parent.parent.parent
-TARGET = "10.164.1.99"
+TARGET = "100.72.103.12"
 OLLAMA_PORT = 11434
 MAINTENANCE_SCRIPT = ROOT / "scripts" / "pro" / "tuneladora_mantenimiento.py"
 _executor = SubprocessExecutor()

@@ -52,7 +52,7 @@ Ramón ──► TASK-ID ──► Web (programador) + Terminal (consultor/revis
 ## Cómo identificar con quién se habla (TERM vs WEB)
 
 - **TERM (OpenCode Terminal)**: TUI oscura en terminal; commits `[TERM]`; `ura-udo status` muestra `canal: TERM`.
-- **WEB (OpenCode Web)**: interfaz web en navegador (`http://10.164.1.99:8081`); commits `[WEB]`; `canal: WEB`.
+- **WEB (OpenCode Web)**: interfaz web en navegador (`http://100.72.103.12:8081`); commits `[WEB]`; `canal: WEB`.
 - Los colores del emulador NO son la fuente de verdad (los configura el usuario); Git y los expedientes UDO sí lo son.
 - Verificar siempre: `ura-udo status` (tareas activas por agente) o `git log --oneline --grep="\[WEB\]"`.
 
@@ -67,7 +67,7 @@ ura-doble status    # estado UDO real (fuente de verdad: ASUS)
 ura-doble sync      # solo sincronizar el repo del Mac
 ```
 
-**Cómo funciona**: la fuente de verdad de los expedientes UDO está en ASUS; `ura-doble` ejecuta `ura-udo` vía SSH (`ssh gx10`) y sincroniza el repo local del Mac con `git fetch asus + merge --ff-only`. Requisito: el alias SSH `gx10` en el Mac (`~/.ssh/config` → `ramon@10.164.1.99`, clave `id_ed25519`).
+**Cómo funciona**: la fuente de verdad de los expedientes UDO está en ASUS; `ura-doble` ejecuta `ura-udo` vía SSH (`ssh gx10`) y sincroniza el repo local del Mac con `git fetch asus + merge --ff-only`. Requisito: el alias SSH `gx10` en el Mac (`~/.ssh/config` → `ramon@100.72.103.12`, clave `id_ed25519`).
 
 **Flujo diario**:
 1. La Web (ASUS) programa y commitea `[TASK][WEB]`.

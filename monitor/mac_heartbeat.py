@@ -114,7 +114,7 @@ class MacHeartbeat:
     def get_sync_command(self) -> str:
         """Retorna el comando de sincronización manual."""
         _local = os.environ.get("URA_ROOT", "/Users/ramonesnaola/URA/ura_ia_1972")
-        _remote = os.environ.get("ASUS_SSH", "ramon@10.164.1.99")
+        _remote = os.environ.get("ASUS_SSH", "ramon@100.72.103.12")
         _remote_path = os.environ.get("ASUS_PATH", "/home/ramon/URA/ura_ia_1972")
         return f"rsync -avz {_local}/ {_remote}:{_remote_path}/"
 

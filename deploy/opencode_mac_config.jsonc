@@ -37,7 +37,7 @@
     "workspace": "~/URA/ura_ia_1972",
     "executor": "remote",
     "executor_remote": {
-      "host": "10.164.1.99",
+      "host": "100.72.103.12",
       "user": "ramon",
       "sandbox": "mejora-continua",
       "command": "docker exec -i ura-mejora-continua"
@@ -48,7 +48,7 @@
   "mcp": {
     "openclaw": {
       "type": "remote",
-      "command": ["ssh", "ramon@10.164.1.99", "openclaw", "mcp", "serve"],
+      "command": ["ssh", "ramon@100.72.103.12", "openclaw", "mcp", "serve"],
       "enabled": false,
       "timeout": 30000
     }

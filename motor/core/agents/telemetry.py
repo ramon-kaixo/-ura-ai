@@ -65,7 +65,7 @@ class Telemetria:
         status = {}
         try:
             r = httpx.get(
-                f"{os.environ.get('MODEL_ROUTER_URL', 'http://10.164.1.99:11435')}/health",
+                f"{os.environ.get('MODEL_ROUTER_URL', 'http://100.72.103.12:11435')}/health",
                 timeout=3,
             )
             status["model_router"] = "ok" if r.status_code < 500 and "ok" in r.text else "down"

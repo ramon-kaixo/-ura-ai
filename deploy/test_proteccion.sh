@@ -111,7 +111,7 @@ fi
 # TEST 9: Verificar error_logger
 # ============================================================
 test_n "Verificar error_logger en ASUS"
-if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-10.164.1.99} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'from monitor.error_logger import ErrorLogger; print(\"OK\")'" > /dev/null 2>&1; then
+if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-100.72.103.12} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'from monitor.error_logger import ErrorLogger; print(\"OK\")'" > /dev/null 2>&1; then
     green "error_logger funciona en ASUS"
 else
     red "FALLO: error_logger no funciona en ASUS"
@@ -121,7 +121,7 @@ fi
 # TEST 10: Verificar mac_heartbeat
 # ============================================================
 test_n "Verificar mac_heartbeat en ASUS"
-if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-10.164.1.99} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'from monitor.mac_heartbeat import MacHeartbeat; print(\"OK\")'" > /dev/null 2>&1; then
+if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-100.72.103.12} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'from monitor.mac_heartbeat import MacHeartbeat; print(\"OK\")'" > /dev/null 2>&1; then
     green "mac_heartbeat funciona en ASUS"
 else
     red "FALLO: mac_heartbeat no funciona en ASUS"
@@ -141,7 +141,7 @@ fi
 # TEST 12: Verificar SNC autonomía
 # ============================================================
 test_n "Verificar SNC en ASUS (modo soberanía)"
-if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-10.164.1.99} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'import monitor.snc; print(\"OK\")'" > /dev/null 2>&1; then
+if ssh -o ConnectTimeout=2 ramon@${ASUS_HOST:-100.72.103.12} "cd ${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972 && python3 -c 'import monitor.snc; print(\"OK\")'" > /dev/null 2>&1; then
     green "SNC con autonomía funciona en ASUS"
 else
     red "FALLO: SNC no funciona en ASUS"

@@ -37,8 +37,8 @@ python3 /Users/ramonesnaola/URA/ura_ia_1972/scripts/pro/test_latencia_mac.py
 
 ```bash
 ssh-keygen -t rsa -b 4000 -f ~/.ssh/id_rsa -N ""
-ssh-copy-id -i ~/.ssh/id_rsa.pub ramon@10.164.1.99
-ssh ramon@10.164.1.99 "echo '✅ OK'"
+ssh-copy-id -i ~/.ssh/id_rsa.pub ramon@100.72.103.12
+ssh ramon@100.72.103.12 "echo '✅ OK'"
 ```
 
 ## 6. Programar cron de sincronización

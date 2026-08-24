@@ -40,7 +40,7 @@
 Si quieres la TUI conectada al MISMO servidor web (en vez de una TUI local):
 
 ```bash
-opencode attach http://10.164.1.99:8081
+opencode attach http://100.72.103.12:8081
 ```
 
 ## Pendiente (requiere sudo Ramón — rootfs RO)

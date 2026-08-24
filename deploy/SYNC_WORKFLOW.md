@@ -113,8 +113,8 @@ bash deploy/sync_workflow.sh lock-and-sync
 ## Solución de Problemas
 
 ### rsync sigue fallando
-1. Verificar conectividad: `ping 10.164.1.99`
-2. Verificar permisos SSH: `ssh ramon@10.164.1.99 ls -la /home/ramon/URA/ura_ia_1972`
+1. Verificar conectividad: `ping 100.72.103.12`
+2. Verificar permisos SSH: `ssh ramon@100.72.103.12 ls -la /home/ramon/URA/ura_ia_1972`
 3. Verificar logs: `cat logs/sync_to_asus.log`
 
 ### Mac no se re-bloquea

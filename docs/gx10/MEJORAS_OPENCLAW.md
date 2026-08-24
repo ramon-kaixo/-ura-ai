@@ -12,7 +12,7 @@ OpenClaw Gateway está bloqueado por una aprobación de scope pendiente:
 1. **Acceder al Dashboard de OpenClaw**:
    ```bash
    # Desde tu Mac:
-   ssh -N -L 18789:127.0.0.1:18789 ramon@10.164.1.99
+   ssh -N -L 18789:127.0.0.1:18789 ramon@100.72.103.12
    # Luego abrir en navegador: http://localhost:18789/
    ```
 
@@ -101,7 +101,7 @@ openclaw channels add
 ### 1. Resolver Scope Upgrade (CRÍTICO)
 ```bash
 # Desde Mac:
-ssh -N -L 18789:127.0.0.1:18789 ramon@10.164.1.99 &
+ssh -N -L 18789:127.0.0.1:18789 ramon@100.72.103.12 &
 # Abrir http://localhost:18789/ en navegador
 # Aprobar el scope upgrade en Security/Approvals
 ```
@@ -109,12 +109,12 @@ ssh -N -L 18789:127.0.0.1:18789 ramon@10.164.1.99 &
 ### 2. Actualizar Configuración OpenCode
 ```bash
 # Copiar configuración mejorada
-scp opencode_config_improved.jsonc ramon@10.164.1.99:/home/ramon/.config/opencode/opencode.jsonc
+scp opencode_config_improved.jsonc ramon@100.72.103.12:/home/ramon/.config/opencode/opencode.jsonc
 ```
 
 ### 3. Habilitar Skills
 ```bash
-ssh ramon@10.164.1.99
+ssh ramon@100.72.103.12
 openclaw skills enable github
 openclaw skills enable coding-agent
 openclaw skills enable summarize

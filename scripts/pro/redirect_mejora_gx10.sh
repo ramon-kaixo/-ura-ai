@@ -5,7 +5,7 @@
 # ==============================================================================
 
 # Configuracion de conexiones de red local
-ASUS_HOST="${ASUS_HOST:-10.164.1.99}"
+ASUS_HOST="${ASUS_HOST:-100.72.103.12}"
 ASUS_SSH="${ASUS_SSH:-ramon@${ASUS_HOST}}"
 ASUS_EXEC="http://${ASUS_HOST}:4096"
 SYNC_MCP="http://127.0.0.1:9093"

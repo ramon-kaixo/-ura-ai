@@ -2,7 +2,7 @@
 
 ## Endpoint base
 ```
-POST http://10.164.1.99:8003/api/v1/chat
+POST http://100.72.103.12:8003/api/v1/chat
 ```
 
 ## Autenticación
@@ -59,7 +59,7 @@ data: {"type":"complete","data":{"reply":"El repositorio tiene...","conversation
 
 ## Health
 ```
-GET http://10.164.1.99:8003/health
+GET http://100.72.103.12:8003/health
 ```
 ```json
 {"status":"ok","version":"0.29.0","auth":false}

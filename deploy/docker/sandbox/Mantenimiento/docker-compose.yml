@@ -8,7 +8,7 @@ services:
       - ../../data:/data:rw
       # docker.sock eliminado por seguridad 2026-06-05
     environment:
-      - OLLAMA_HOST=http://10.164.1.99:11434
+      - OLLAMA_HOST=http://100.72.103.12:11434
     deploy:
       resources:
         limits:

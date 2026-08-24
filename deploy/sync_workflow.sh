@@ -59,8 +59,8 @@ case "$1" in
         bash "$IMMUTABLE_SCRIPT" status
         echo ""
         echo "Conectividad ASUS:"
-        if ping -c 1 -W 2 ${ASUS_HOST:-10.164.1.99} >/dev/null 2>&1; then
-            echo "  ✓ ASUS alcanzable (${ASUS_HOST:-10.164.1.99})"
+        if ping -c 1 -W 2 ${ASUS_HOST:-100.72.103.12} >/dev/null 2>&1; then
+            echo "  ✓ ASUS alcanzable (${ASUS_HOST:-100.72.103.12})"
         else
             echo "  ✗ ASUS NO alcanzable"
         fi

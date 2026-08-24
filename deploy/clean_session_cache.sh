@@ -5,7 +5,7 @@
 # ============================================================
 
 MAC_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/ura_ia_1972"
-ASUS_HOST="${ASUS_HOST:-10.164.1.99}"
+ASUS_HOST="${ASUS_HOST:-100.72.103.12}"
 ASUS_SSH="${ASUS_SSH:-ramon@${ASUS_HOST}}"
 ASUS_DIR="${ASUS_PATH:-/home/ramon/URA}/ura_ia_1972"
 LOG_FILE="$MAC_DIR/logs/clean_session_cache.log"

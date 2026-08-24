@@ -3,7 +3,7 @@ set -euo pipefail
 
 URA_ROOT="${URA_ROOT:-$HOME/URA/ura_ia_1972}"
 BLOCK_FLAG="$URA_ROOT/.refactor_blocked"
-OLLAMA_URL="${OLLAMA_URL:-http://10.164.1.99:11434}"
+OLLAMA_URL="${OLLAMA_URL:-http://100.72.103.12:11434}"
 
 rc=0
 

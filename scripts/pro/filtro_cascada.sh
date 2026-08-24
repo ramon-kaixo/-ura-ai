@@ -41,4 +41,4 @@ EOF
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] INDEXADO: $ARCHIVO (${TAMANO_KB}KB, $([ $TIPO_MARKETING -eq 1 ] && echo 'MARKETING' || echo 'CONTENIDO'))" >> "$LOG"
 
 # 3. Sincronización ligera: solo el JSON viaja al Asus
-rsync -av "${ARCHIVO}.json" root@10.164.1.99:/home/ramon/.nervioso/ura_search/cola/hetzner/metadata/ 2>/dev/null || true
+rsync -av "${ARCHIVO}.json" root@100.72.103.12:/home/ramon/.nervioso/ura_search/cola/hetzner/metadata/ 2>/dev/null || true
