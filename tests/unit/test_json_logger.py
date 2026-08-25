@@ -1,6 +1,6 @@
 """Tests de json_logger."""
 
-from motor.core.json_logger import JSONFormatter, StructuredLogger
+from motor.observability.logging import JSONFormatter, StructuredLogger
 
 
 def test_json_formatter() -> None:

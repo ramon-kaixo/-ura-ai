@@ -2025,7 +2025,7 @@ class TestStructuredLogging:
         import logging
 
         from motor.observability.logging import JSONFormatter
-        from knowledge.engine.logging_config import set_correlation_id
+        from motor.observability.logging import set_correlation_id
 
         set_correlation_id("")
         fmt = JSONFormatter()
@@ -2050,7 +2050,7 @@ class TestStructuredLogging:
         import logging
 
         from motor.observability.logging import ContextFilter, JSONFormatter
-        from knowledge.engine.logging_config import set_correlation_id
+        from motor.observability.logging import set_correlation_id
 
         set_correlation_id("abc-123-def")
         fmt = JSONFormatter()
@@ -2073,7 +2073,7 @@ class TestStructuredLogging:
         """URA_STRUCTURED_LOGS=true activa el JSONFormatter."""
         import logging
 
-        from knowledge.engine.logging_config import setup_logging
+        from motor.observability.logging import setup_logging
 
         monkeypatch.setenv("URA_STRUCTURED_LOGS", "true")
         setup_logging()

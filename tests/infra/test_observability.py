@@ -1,6 +1,6 @@
 """Tests de notifier y json_logger."""
 
-from motor.core.json_logger import StructuredLogger
+from motor.observability.logging import StructuredLogger
 from motor.core.notifier import notify
 
 

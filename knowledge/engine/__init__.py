@@ -43,8 +43,6 @@ from knowledge.engine.errors import ErrorCode as ErrorCode
 from knowledge.engine.errors import Severity as Severity
 from knowledge.engine.errors import all_codes as all_codes
 from knowledge.engine.errors import lookup as lookup
-from knowledge.engine.logging_config import set_correlation_id as set_correlation_id
-from knowledge.engine.logging_config import setup_logging as setup_logging
 from knowledge.engine.metrics import export_metrics as export_metrics
 from knowledge.engine.metrics import record_archive as record_archive
 from knowledge.engine.metrics import record_compile as record_compile
@@ -125,3 +123,5 @@ from knowledge.engine.vector_retriever import (
     VectorAugmentedRetriever as VectorAugmentedRetriever,
 )
 from knowledge.engine.verifier import verify_graph as verify_graph
+from motor.observability.logging import set_correlation_id as set_correlation_id
+from motor.observability.logging import setup_logging as setup_logging

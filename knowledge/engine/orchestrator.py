@@ -33,9 +33,9 @@ from knowledge.engine.models import CompileResult
 if TYPE_CHECKING:
     from motor.core.fusion.models import KnowledgeClaim
 from knowledge.engine.lock import LockAcquisitionError, compile_lock
-from knowledge.engine.logging_config import set_correlation_id
 from knowledge.engine.metrics import record_compile
 from knowledge.engine.reader import clear_all_caches
+from motor.observability.logging import set_correlation_id
 
 log = logging.getLogger("ura.knowledge.orchestrator")
 

@@ -58,23 +58,23 @@ class TestCmdApi:
 
 class TestLoggingConfig:
     def test_deprecation_warning(self) -> None:
-        from knowledge.engine.logging_config import setup_logging
+        from motor.observability.logging import setup_logging
 
         with pytest.warns(DeprecationWarning, match="deprecated"):
             setup_logging()
 
     def test_setup_json(self, monkeypatch) -> None:
-        from knowledge.engine.logging_config import setup_logging
+        from motor.observability.logging import setup_logging
 
         monkeypatch.setenv("URA_STRUCTURED_LOGS", "true")
         setup_mock = mock.Mock()
-        monkeypatch.setattr("knowledge.engine.logging_config._setup_logging", setup_mock)
+        monkeypatch.setattr("motor.observability.logging._setup_logging", setup_mock)
         with pytest.warns(DeprecationWarning):
             setup_logging()
         setup_mock.assert_called_once_with(level="INFO", json_output=True)
 
     def test_exports(self) -> None:
-        from knowledge.engine.logging_config import set_correlation_id, setup_logging
+        from motor.observability.logging import set_correlation_id, setup_logging
 
         assert callable(setup_logging)
         assert callable(set_correlation_id)
