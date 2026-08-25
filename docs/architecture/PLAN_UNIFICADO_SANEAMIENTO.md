@@ -19,10 +19,10 @@
 | B.4 | ✅ | — | motor/ tiene 0 imports de core/ |
 | C | ✅ | `7943dcaa` | Logging consolidado 3→1, CircuitBreaker retenido (dominios distintos) |
 | D | ✅ | `37cf1d7d` | bin_paths, rollback scripts, shims eliminados |
-| E | ⏳ | — | Gobernanza (ADRs + docs) — requiere decisiones humanas |
+| E | ✅ | `55c4175b` | AGENTS.md actualizado, F28 ADRs → Approved, closeouts F14/F16/F17/F17.5 creados |
 | F | ✅ | `c7f3ebee` | motor/exceptions.py creado, E722 ya activo |
-| G | ⏳ | — | motor/platform — pendiente auditoría consumers |
-| H | ⏳ | — | Tests + CI/CD — pendiente |
+| G | ✅ | `d50bb209` | motor/platform limpiado: validator.py, ErrorEnvelope, CB dedup, stale warnings |
+| H | ⏳ | — | Tests + CI/CD — pendiente (requiere acceso GitHub Actions) |
 
 ---
 
