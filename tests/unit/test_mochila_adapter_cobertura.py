@@ -23,7 +23,7 @@ from core.mochila.adapter import (
     _MotorChatAdapter,
     _next_trozo,
 )
-from core.mochila.providers.base import ProviderError
+from core.mochila.adapter import ProviderError
 
 
 class FakeProvider:

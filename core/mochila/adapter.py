@@ -21,9 +21,16 @@ import uuid
 from collections.abc import AsyncGenerator
 from typing import Any
 
-from core.mochila.providers.base import ProviderError
-
 log = logging.getLogger(__name__)
+
+
+class ProviderError(Exception):
+    """Error de provider LLM (contrato v1)."""
+
+    def __init__(self, message: str, provider: str, status_code: int | None = None):
+        self.provider = provider
+        self.status_code = status_code
+        super().__init__(message)
 
 
 def _messages_to_prompt(mensajes: list) -> str:

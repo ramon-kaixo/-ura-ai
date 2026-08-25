@@ -206,7 +206,7 @@ class TestChatCompletions:
         assert "[DONE]" in body
 
     def test_provider_error_502(self, client, ms):
-        from core.mochila.providers import ProviderError
+        from core.mochila.adapter import ProviderError
 
         class Explosivo(FakeProvider):
             async def chat(self, *a, **k):

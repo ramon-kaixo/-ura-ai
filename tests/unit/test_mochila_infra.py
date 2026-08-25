@@ -130,7 +130,7 @@ class TestMotorChatAdapter:
 
     @pytest.mark.asyncio
     async def test_chat_error_string_motor_lanza_provider_error(self) -> None:
-        from core.mochila.providers.base import ProviderError
+        from core.mochila.adapter import ProviderError
 
         provider = mock.Mock()
         provider.generate.return_value = "Error: El servicio respondió con código 401."
@@ -142,7 +142,7 @@ class TestMotorChatAdapter:
 
     @pytest.mark.asyncio
     async def test_chat_provider_error(self) -> None:
-        from core.mochila.providers.base import ProviderError
+        from core.mochila.adapter import ProviderError
 
         provider = mock.Mock()
         provider.generate.side_effect = RuntimeError("boom")
@@ -152,7 +152,7 @@ class TestMotorChatAdapter:
 
     @pytest.mark.asyncio
     async def test_chat_provider_error_no_mensaje(self) -> None:
-        from core.mochila.providers.base import ProviderError
+        from core.mochila.adapter import ProviderError
 
         provider = mock.Mock()
         provider.generate.side_effect = ValueError()

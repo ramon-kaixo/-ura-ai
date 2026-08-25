@@ -26,7 +26,7 @@ from core.guardian_disco import (
     verificar_escritura,
 )
 from core.guardians.ast_sentinel import MAX_CC, ASTSentinel, V
-from core.mochila.providers.base import Provider, ProviderError
+from core.mochila.adapter import ProviderError
 from core.mochila.status_endpoint import _fs_bug_status, _ram_info, _timer_status, system_status
 from core.mochila.vram_scheduler import VRAMAwareScheduler
 from core.stealth_fetcher import _default_headers, _random_ua, fetch, fetch_stealth, fetch_with_fallback
@@ -816,75 +816,6 @@ def test_provider_error() -> None:
     assert e.provider == "provider"
     assert e.status_code == 500
     assert str(e) == "msg"
-
-
-def test_provider_abstracto() -> None:
-    with pytest.raises(TypeError):
-        Provider()
-
-
-def test_provider_elipsis_via_super() -> None:
-    class _Parcial(Provider):
-        @property
-        def nombre(self) -> str:
-            r = super().nombre
-            if r is None:
-                return "p"
-            return r
-
-        @property
-        def timeout(self) -> int:
-            r = super().timeout
-            if r is None:
-                return 0
-            return r
-
-        async def chat(self, modelo, mensajes, stream=False, tools=None, max_tokens=4096, temperature=0.0):
-            r = await super().chat(modelo, mensajes, stream, tools, max_tokens, temperature)
-            if r is None:
-                yield {"ok": True}
-
-        async def health(self) -> dict:
-            r = await super().health()
-            if r is None:
-                return {}
-            return r
-
-    p = _Parcial()
-    assert p.nombre == "p"
-    assert p.timeout == 0
-    import inspect
-
-    assert inspect.isasyncgenfunction(p.chat)
-    assert inspect.iscoroutinefunction(p.health)
-
-    async def _probar():
-        async for x in p.chat("m", []):
-            assert x == {"ok": True}
-        assert await p.health() == {}
-
-    asyncio.run(_probar())
-
-
-def test_provider_props_abstractas() -> None:
-    class _P(Provider):
-        @property
-        def nombre(self) -> str:
-            return "p"
-
-        @property
-        def timeout(self) -> int:
-            return 30
-
-        async def chat(self, modelo, mensajes, stream=False, tools=None, max_tokens=4096, temperature=0.0):
-            yield {}
-
-        async def health(self) -> dict:
-            return {}
-
-    p = _P()
-    assert p.nombre == "p"
-    assert p.timeout == 30
 
 
 # ── mochila status_endpoint ──────────────────────────────────

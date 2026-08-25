@@ -1,7 +1,6 @@
 import asyncio
 import json
 import logging
-import os
 import secrets
 import time
 import uuid
@@ -20,19 +19,16 @@ from core.logs.guardian_logger import log_event
 from core.memoria.analizador import analizar
 from core.memoria.consulta import consultar as memoria_consultar
 from core.memoria.ingesto import procesar_inbox_completo
-from motor.core.secrets import require_secret as _require_secret
-
-log = logging.getLogger(__name__)
 from core.memoria.rastreadores.comprar import fase_comprar
 from core.memoria.rastreadores.hacer import fase_hacer
 from core.memoria.rastreadores.saber import fase_saber
 from core.memoria.sintetizador import sintetizar
 from core.memoria.vigilante import generar_parte
+from core.mochila.adapter import ProviderError, _MotorChatAdapter
 from core.mochila.circuit_breaker import CircuitBreaker
 from core.mochila.cost_tracker import CostTracker
 from core.mochila.guardian_middleware import GuardianMiddleware, init_guardian
 from core.mochila.guardian_opencode import OpenCodeGuardian
-from core.mochila.providers.base import ProviderError
 from core.mochila.rate_limiter import RateLimiter
 from core.mochila.router import NoProviderAvailable, Router
 from core.mochila.routes.proxy import (
@@ -45,6 +41,12 @@ from core.mochila.routes.proxy import (
 )
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
+from motor.core.llm.gemini import GeminiProvider as MotorGeminiProvider
+from motor.core.llm.ollama import OllamaProvider as MotorOllamaProvider
+from motor.core.llm.openrouter import OpenRouterProvider as MotorOpenRouterProvider
+from motor.core.secrets import require_secret as _require_secret
+
+log = logging.getLogger(__name__)
 
 load_dotenv(Path("~/URA/.env").expanduser())
 
@@ -53,27 +55,11 @@ _AUTH_EXEMPT = frozenset({"/health", "/metrics", "/openapi.json", "/docs", "/red
 
 OLLAMA_SOCKET = "http://127.0.0.1:11434"
 
-_USAR_MOTOR_V2 = os.environ.get("URA_MOCHILA_MOTOR_V2", "0") == "1"
-
-if _USAR_MOTOR_V2:
-    from core.mochila.adapter import _MotorChatAdapter
-    from motor.core.llm.gemini import GeminiProvider as MotorGeminiProvider
-    from motor.core.llm.ollama import OllamaProvider as MotorOllamaProvider
-    from motor.core.llm.openrouter import OpenRouterProvider as MotorOpenRouterProvider
-
-    PROVIDERS: dict[str, Any] = {
-        "ollama": _MotorChatAdapter("ollama", MotorOllamaProvider()),
-        "openrouter": _MotorChatAdapter("openrouter", MotorOpenRouterProvider()),
-        "gemini": _MotorChatAdapter("gemini", MotorGeminiProvider()),
-    }
-else:
-    from core.mochila.providers import GeminiProvider, OllamaProvider, OpenRouterProvider
-
-    PROVIDERS = {
-        "ollama": OllamaProvider(),
-        "openrouter": OpenRouterProvider(),
-        "gemini": GeminiProvider(),
-    }
+PROVIDERS: dict[str, Any] = {
+    "ollama": _MotorChatAdapter("ollama", MotorOllamaProvider()),
+    "openrouter": _MotorChatAdapter("openrouter", MotorOpenRouterProvider()),
+    "gemini": _MotorChatAdapter("gemini", MotorGeminiProvider()),
+}
 PROVIDER_TIMEOUTS: dict[str, float] = {
     "ollama": 120.0,
     "openrouter": 60.0,

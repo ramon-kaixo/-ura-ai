@@ -34,7 +34,7 @@ class TestChatNoStream:
         assert resp["id"] == "resp-1"
 
     async def test_provider_error_raise_http(self, ms):  # noqa: F811
-        from core.mochila.providers import ProviderError
+        from core.mochila.adapter import ProviderError
 
         class Explosivo(FakeProvider):
             async def chat(self, *a, **k):
@@ -46,7 +46,7 @@ class TestChatNoStream:
         assert excinfo.value.status_code == 500
 
     async def test_provider_error_sin_status(self, ms):  # noqa: F811
-        from core.mochila.providers import ProviderError
+        from core.mochila.adapter import ProviderError
 
         class SinStatus(FakeProvider):
             async def chat(self, *a, **k):
@@ -162,7 +162,7 @@ class TestStreamProviderDirecto:
         assert b"[DONE]" in out
 
     async def test_provider_error(self, ms):  # noqa: F811
-        from core.mochila.providers import ProviderError
+        from core.mochila.adapter import ProviderError
 
         class ErrorProvider(FakeProvider):
             async def chat(self, *a, **k):

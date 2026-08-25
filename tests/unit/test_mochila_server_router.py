@@ -380,7 +380,5 @@ class TestMotorV2:
         assert spec is not None and spec.loader is not None
         mod = importlib.util.module_from_spec(spec)
         sys.modules["mochila_server_v2_test"] = mod
-        monkeypatch.setenv("URA_MOCHILA_MOTOR_V2", "1")
         spec.loader.exec_module(mod)
-        assert mod._USAR_MOTOR_V2 is True
         assert sorted(mod.PROVIDERS) == ["gemini", "ollama", "openrouter"]
