@@ -182,3 +182,20 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 | `ura-sandbox-seguridad` | Auditoría de seguridad | ⚠️ inactivo |
 | `ura-coding-agent-sandbox` | Aislamiento de coding-agent (Docker) | ⚠️ inactivo |
 
+
+## Secretos y ficheros inmutables (2026-08-25)
+
+### Autenticación de opencode-web (:8081)
+- La variable que el binario usa realmente es **`OPENCODE_SERVER_PASSWORD`** (no
+  `OPENCODE_WEB_PASS`, que es convención de clientes/scripts).
+- Ambas viven en `/etc/ura/secrets.env` (root). Rotación: actualizar la línea
+  `OPENCODE_SERVER_PASSWORD=` + `sudo systemctl restart opencode.service` + verificar con
+  `curl -u ramon:$NUEVA http://localhost:8081/project/current` → HTTP 200.
+- Clientes a mantener sincronizados tras rotar: `~/.config/ura/secrets.env` (Mac y GX10,
+  campo `URA_LILDAX_PASS`) y `~/Library/Application Support/lildax/config.json` (Mac).
+
+### Ficheros protegidos con chattr +i
+Cualquier operación git (commit/stash/rebase) sobre estos ficheros sucios falla con
+"unable to unlink" — ver `docs/udo/BUGS.md` BUG-001 para el ritual:
+config/{system_config,reglas_builtin,settings,dispositivos,infra_config,schema}.json ·
+deploy/{lildax_config.json,sync_to_asus.sh,estado_alemania.json} · core/debate/committee_config.json
