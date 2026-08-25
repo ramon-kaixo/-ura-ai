@@ -204,11 +204,13 @@ def gate_pytest(modulo: str, seed: int | None, timeout: int = 900) -> dict:
 def gate_mutmut(modulo: str, umbral_muertos: int, dry: bool = False) -> dict:
     """Gate 5: validación de mutación del módulo.
 
-    NO relanza el barrido completo de mutmut por módulo (el árbol mutado
+    NO relanza el barrido completo de mutación por módulo (el árbol mutado
     rompe tests que dependen del árbol completo y el barrido tarda ~4 min
-    por ejecución). En su lugar valida contra el reporte diario de
-    mutmut_daily (docs/udo/mutation-reports/YYYY-MM-DD_*.md): el módulo
-    debe aparecer sin sobrevivientes críticos o estar en el lote del día.
+    por ejecución). En su lugar valida contra los reportes de mutación en
+    docs/udo/mutation-reports/YYYY-MM-DD_*.md (generados hoy por el gate
+    pytest-gremlins: scripts/run_mutation_tests_gremlins.sh; el antiguo
+    mutmut_daily fue retirado en d6ab59ea): el módulo debe aparecer sin
+    sobrevivientes críticos o estar en el lote del día.
 
     Si no hay reporte del día, devuelve 'pendiente' (no bloquea, queda
     registrado en memoria para la revisión diaria).
@@ -221,7 +223,11 @@ def gate_mutmut(modulo: str, umbral_muertos: int, dry: bool = False) -> dict:
         ayer = (datetime.now(UTC).date() - timedelta(days=1)).isoformat()
         reportes = sorted((REPO / "docs" / "udo" / "mutation-reports").glob(f"{ayer}*.md"))
     if not reportes:
-        return {"code": 2, "salida": "sin reporte mutmut del día (pendiente de mutmut_daily)", "muertos": None}
+        return {
+            "code": 2,
+            "salida": "sin reporte de mutación del día (pendiente del gate pytest-gremlins)",
+            "muertos": None,
+        }
     texto = "\n".join(r.read_text(errors="ignore") for r in reportes)
     target = modulo.rstrip("/")
     if target not in texto:
