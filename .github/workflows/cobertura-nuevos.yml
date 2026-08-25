@@ -16,5 +16,6 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install coverage pytest
-      - name: Verificar cobertura de módulos del diff (gate 85%, meta 100)
+      - run: pip install -e ".[dev]"
+      - name: Verificar cobertura de módulos del diff (gate 90%, meta 100)
         run: python3 scripts/pro/verificador_cobertura.py --ci --base origin/main --min 90
