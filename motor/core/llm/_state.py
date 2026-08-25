@@ -32,7 +32,6 @@ def _get_optional_providers() -> list[tuple[Any, str]]:
         except Exception as exc:
             log.debug("%s not available: %s", nombre, exc)
     return providers
-    return providers
 
 
 @dataclass(frozen=True)
