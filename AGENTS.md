@@ -79,6 +79,14 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 
 **Excepción**: hotfix de seguridad puede ir directo a `main` con commit auditado `[TASK-XXXX][TERM] HOTFIX`, documentado en el expediente.
 
+**Protección de `main` (activada 2026-08-25)**: la rama `main` está protegida en GitHub. Todo cambio requiere:
+- PR desde rama de trabajo (no push directo)
+- 1 aprobación de revisor
+- Status checks verdes: `lint`, `test (3.11)`, `test (3.12)`, `test (3.13)`
+- Force-push a `main` bloqueado
+
+La rama de trabajo (ej. `ia/TASK-XXXX`) sigue siendo la zona activa del TERM; el push a ella NO está restringido.
+
 ## Build & Test Commands
 - Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
