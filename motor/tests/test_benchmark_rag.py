@@ -26,9 +26,6 @@ from motor.core.evaluation import EvaluationCorpus, EvaluationEngine, Evaluation
 from motor.core.evaluation.corpus import EvaluationCorpus as EC
 
 
-
-
-
 def _crear_corpus_test() -> EvaluationCorpus:
     corpus = EC("test")
     queries = [

@@ -133,7 +133,7 @@ class TestContinuousEvaluator:
         m2 = r2.metrics_summary
         # Mismo corpus, mismas configuraciones → mismos resultados
         if "error" not in m1 and "error" not in m2:
-            for metric in ["recall@3", "mrr"]:
+            for _ in ["recall@3", "mrr"]:
                 for cfg in m1.get("general_ranking", []):
                     cfg["config"]
                     # Comparar métricas del experimento

@@ -1,25 +1,16 @@
 """Tests del benchmark multi-proveedor (F22-B8)."""
 
-
-
-
-
 from __future__ import annotations
 
 import pytest
 
 pytestmark = pytest.mark.slow  # G4: requieren scripts/servicios de benchmark pesados
 
-import json
-from pathlib import Path
 from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.registry import ProviderRegistry
 from motor.core.llm.router import LLMRouter
-
-
-
 
 
 class _MockOK(BaseLLMProvider):

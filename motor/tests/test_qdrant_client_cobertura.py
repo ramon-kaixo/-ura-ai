@@ -213,9 +213,7 @@ class TestConexionNativa:
     def test_ambas_fallan(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient(collections_ok=False)
         _instalar_qdrant_fake(monkeypatch, native)
-        monkeypatch.setattr(
-            httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("conn"))
-        )
+        monkeypatch.setattr(httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("conn")))
         c = QdrantClient(_config())
         assert c.disponible is False
         assert not hasattr(c, "_modo_rest") or c._modo_rest is False
@@ -236,7 +234,9 @@ class TestGuardarDocumentos:
     def test_nativo_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
-        monkeypatch.setattr(qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts])
+        monkeypatch.setattr(
+            qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts]
+        )
         c = QdrantClient(_config())
         assert c.guardar_documento("d1", "texto", {"k": "v"}) is True
         assert c.guardar_documentos_batch([("d2", "t2", {})], COLECCION_DOCUMENTOS) == 1
@@ -247,7 +247,9 @@ class TestGuardarDocumentos:
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         monkeypatch.setattr(httpx, "put", lambda *a, **k: SimpleNamespace(status_code=201))
-        monkeypatch.setattr(qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts])
+        monkeypatch.setattr(
+            qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts]
+        )
         c = QdrantClient(_config())
         # modo_rest True -> usa REST
         assert c.guardar_documento("d1", "t") is True
@@ -255,10 +257,10 @@ class TestGuardarDocumentos:
     def test_nativo_error_upsert(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
-        monkeypatch.setattr(qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts])
         monkeypatch.setattr(
-            native, "upsert", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("upsert boom"))
+            qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts]
         )
+        monkeypatch.setattr(native, "upsert", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("upsert boom")))
         c = QdrantClient(_config())
         assert c.guardar_documento("d1", "t") is False
 
@@ -280,7 +282,9 @@ class TestGuardarDocumentos:
 
         monkeypatch.setattr(httpx, "get", fake_get)
         monkeypatch.setattr(httpx, "put", fake_put)
-        monkeypatch.setattr(qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts])
+        monkeypatch.setattr(
+            qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts]
+        )
         c = QdrantClient(_config())
         assert c.guardar_documento("d1", "t") is True
         assert c.guardar_documento("d2", "t") is True
@@ -299,7 +303,9 @@ class TestGuardarDocumentos:
 
         monkeypatch.setattr(httpx, "get", fake_get)
         monkeypatch.setattr(httpx, "put", fake_put)
-        monkeypatch.setattr(qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts])
+        monkeypatch.setattr(
+            qc_mod, "llm_embed", lambda texts, model=None: [[0.1] * VECTOR_SIZE_EMBEDDING for _ in texts]
+        )
         c = QdrantClient(_config())
         assert c.guardar_documento("d1", "t") is False
 
@@ -330,9 +336,7 @@ class TestBusquedas:
     def test_buscar_similitud_nativo_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
-        monkeypatch.setattr(
-            native, "query_points", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("q boom"))
-        )
+        monkeypatch.setattr(native, "query_points", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("q boom")))
         c = QdrantClient(_config())
         assert c.buscar_por_similitud([0.1]) == []
 
@@ -363,9 +367,7 @@ class TestBusquedas:
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         monkeypatch.setattr(httpx, "put", lambda *a, **k: SimpleNamespace(status_code=201))
-        monkeypatch.setattr(
-            httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x"))
-        )
+        monkeypatch.setattr(httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
         c = QdrantClient(_config())
         assert c.buscar_por_similitud([0.1]) == []
 
@@ -402,9 +404,7 @@ class TestEliminarHealthIncidentes:
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         monkeypatch.setattr(httpx, "put", lambda *a, **k: SimpleNamespace(status_code=201))
-        monkeypatch.setattr(
-            httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200)
-        )
+        monkeypatch.setattr(httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200))
         c = QdrantClient(_config())
         assert c.eliminar_por_filtro({"k": "v"}) is True
 
@@ -413,9 +413,7 @@ class TestEliminarHealthIncidentes:
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         monkeypatch.setattr(httpx, "put", lambda *a, **k: SimpleNamespace(status_code=201))
-        monkeypatch.setattr(
-            httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x"))
-        )
+        monkeypatch.setattr(httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
         c = QdrantClient(_config())
         assert c.eliminar_por_filtro({"k": "v"}) is False
 
@@ -482,7 +480,9 @@ class TestEliminarHealthIncidentes:
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         puts: list[dict[str, Any]] = []
-        monkeypatch.setattr(httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1])  # type: ignore[func-returns-value]
+        monkeypatch.setattr(
+            httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1]  # type: ignore[func-returns-value]
+        )
         monkeypatch.setattr(httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200))
         c = QdrantClient(_config())
         assert c.guardar_incidente({"ts": "x"}) is True
@@ -609,6 +609,7 @@ class TestEmbeddings:
     def test_generar_embedding_async_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
+
         async def fake_embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
             return [[0.0] * VECTOR_SIZE_EMBEDDING for _ in texts]
 

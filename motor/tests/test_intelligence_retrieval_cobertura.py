@@ -525,7 +525,9 @@ class TestRerankers:
                 return types.SimpleNamespace(
                     logits=types.SimpleNamespace(
                         squeeze=lambda *a: types.SimpleNamespace(
-                            cpu=lambda: types.SimpleNamespace(numpy=lambda: types.SimpleNamespace(tolist=lambda: [0.5, 0.5]))
+                            cpu=lambda: types.SimpleNamespace(
+                                numpy=lambda: types.SimpleNamespace(tolist=lambda: [0.5, 0.5])
+                            )
                         )
                     )
                 )
@@ -630,7 +632,10 @@ class TestRerankers:
         monkeypatch.setattr(llm, "generate", fake_generate)
         r = llm.LLMReranker(model="m1")
         assert r._score("mi query", "d1", "texto del doc") == 0.7
-        assert recibidos["prompt"] == "Query: mi query\n\nDocument: texto del doc\n\nRate relevance 0-10. Only respond with a single number."
+        assert (
+            recibidos["prompt"]
+            == "Query: mi query\n\nDocument: texto del doc\n\nRate relevance 0-10. Only respond with a single number."
+        )
         assert recibidos["model"] == "m1"
         assert recibidos["options"] == {"num_predict": 10}
 
@@ -675,7 +680,7 @@ class TestRerankers:
         monkeypatch.setattr(llm, "generate", boom)
         assert llm.LLMReranker(model="m")._score("q", "d", "t") == 0.0
 
-    def test_llm_parse_score(self) -> None:  # type: ignore[no-redef]
+    def test_llm_parse_score(self) -> None:  # type: ignore[no-redef]  # noqa: F811
         llm = _import_llm()
         r = llm.LLMReranker()
         assert r._parse_score("7.5") == 0.75

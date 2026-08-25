@@ -153,7 +153,9 @@ class TestExecutorAgent:
         recibido: dict[str, Any] = {}
 
         class _TimeoutExecutor:
-            def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
+            def run(
+                self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None
+            ) -> Any:
                 recibido["timeout"] = timeout
                 from motor.core.executor import ProcessResult
 
@@ -171,7 +173,9 @@ class TestExecutorAgent:
         recibido: dict[str, Any] = {}
 
         class _CaptureExecutor:
-            def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
+            def run(
+                self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None
+            ) -> Any:
                 recibido["cmd"] = cmd
                 from motor.core.executor import ProcessResult
 

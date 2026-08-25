@@ -98,7 +98,7 @@ class TestPerformanceMonitor:
 
     def test_monitor_history_limit(self) -> None:
         m = PerformanceMonitor(hotspot_threshold_ms=9999, history_size=5)
-        for i in range(10):
+        for _ in range(10):
             m.start_operation("p", "gen")
             time.sleep(0.002)
             m.finish_operation("p", "gen")

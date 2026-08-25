@@ -257,7 +257,8 @@ class TestCrawlerHttpx:
                 if raise_head:
                     raise raise_head
                 return FakeResponse(
-                    head.get("status", 200), head.get("headers", {"content-type": "text/html; charset=utf-8"})  # type: ignore[union-attr]
+                    head.get("status", 200),  # type: ignore[union-attr]
+                    head.get("headers", {"content-type": "text/html; charset=utf-8"}),  # type: ignore[union-attr]
                 )
 
             def get(self, url: str) -> FakeResponse:
@@ -1028,9 +1029,9 @@ class TestPersistWeb:
         from motor.core.web.pipeline import WebPipeline
 
         class FakeResult:
-            accepted: list[KnowledgeFact] = [
+            accepted: list[KnowledgeFact] = [  # noqa: RUF012 - clase de test con dato fijo
                 KnowledgeFact(id="bad", subject="s", predicate="p", object="o", confidence=0.5)
-            ]  # noqa: RUF012
+            ]
 
         class FakePipeline:
             @staticmethod
