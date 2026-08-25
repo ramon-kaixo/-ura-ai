@@ -27,4 +27,25 @@ for s in opencode ollama tailscaled; do
   printf "%-12s %s\n" "$s:" "$(systemctl is-active $s.service 2>/dev/null)"
 done
 
+echo "--- 5. Deriva unidades systemd (deploy/timers vs /etc) ---"
+# Petición TASK-20260825-002: detectar corrupción tipo cleanup-auto
+# (OnCalendar válido en repo, inválido desplegado) antes de que mute.
+DERIVA=0
+for f in "$REPO"/deploy/timers/*; do
+  n=$(basename "$f")
+  etc="/etc/systemd/system/$n"
+  if [ -f "$etc" ]; then
+    if ! cmp -s "$f" "$etc"; then
+      echo "DRIFT: $n difiere repo<->/etc:"
+      diff "$f" "$etc" 2>/dev/null | head -4
+      DERIVA=1
+    fi
+  else
+    echo "SOLO REPO (sin desplegar): $n"
+  fi
+done
+[ "$DERIVA" -eq 0 ] && echo "OK: sin derivas en unidades versionadas"
+N_ETC=$(ls /etc/systemd/system/ura-*.service /etc/systemd/system/ura-*.timer 2>/dev/null | wc -l | tr -d " ")
+echo "(info) unidades ura-* instaladas en /etc: $N_ETC (flota no versionada en repo)"
+
 echo "--- FIN ---"
