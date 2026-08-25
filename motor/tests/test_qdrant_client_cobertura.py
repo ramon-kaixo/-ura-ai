@@ -481,8 +481,8 @@ class TestEliminarHealthIncidentes:
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
         puts: list[dict[str, Any]] = []
         monkeypatch.setattr(
-            httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1]
-        )  # type: ignore[func-returns-value]
+            httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1]  # type: ignore[func-returns-value]
+        )
         monkeypatch.setattr(httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200))
         c = QdrantClient(_config())
         assert c.guardar_incidente({"ts": "x"}) is True

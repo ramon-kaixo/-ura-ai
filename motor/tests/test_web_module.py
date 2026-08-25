@@ -257,7 +257,7 @@ class TestCrawlerHttpx:
                 if raise_head:
                     raise raise_head
                 return FakeResponse(
-                    head.get("status", 200),
+                    head.get("status", 200),  # type: ignore[union-attr]
                     head.get("headers", {"content-type": "text/html; charset=utf-8"}),  # type: ignore[union-attr]
                 )
 

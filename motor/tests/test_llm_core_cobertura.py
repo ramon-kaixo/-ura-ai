@@ -179,7 +179,7 @@ class TestOpenAIGenerate:
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
         monkeypatch.setattr(
-            openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))
+            openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
         )  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.generate("hola")
@@ -529,7 +529,7 @@ class TestOllamaGenerate:
 
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            ollama_mod.httpx,
+            ollama_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
@@ -889,7 +889,7 @@ class TestAnthropicCobertura:
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
         monkeypatch.setattr(
-            anthropic_mod.httpx,
+            anthropic_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
@@ -996,7 +996,7 @@ class TestGeminiCobertura:
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         monkeypatch.setattr(
-            gemini_mod.httpx,
+            gemini_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
@@ -1128,7 +1128,7 @@ class TestLMStudioCobertura:
     def test_embed_ok_y_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx,
+            lmstudio_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"data": [{"embedding": [0.3]}, {"embedding": [0.4]}]}),  # type: ignore[attr-defined]
         )
@@ -1141,7 +1141,7 @@ class TestLMStudioCobertura:
 
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx,
+            lmstudio_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"data": [{"embedding": [0.9]}]}),  # type: ignore[attr-defined]
         )
@@ -1182,7 +1182,7 @@ class TestVLLMCobertura:
     def test_embed_y_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = VLLMProvider()
         monkeypatch.setattr(
-            vllm_mod.httpx,
+            vllm_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]}),  # type: ignore[attr-defined]
         )
@@ -1232,13 +1232,13 @@ class TestOpenRouterCobertura:
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
         p = OpenRouterProvider()
         monkeypatch.setattr(
-            openrouter_mod.httpx,
+            openrouter_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]}),  # type: ignore[attr-defined]
         )
         assert p.embed(["a"]) == [[0.2]]
         monkeypatch.setattr(
-            openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x"))
+            openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x"))  # type: ignore[attr-defined]
         )  # type: ignore[attr-defined]
         assert p.embed(["a"]) == [[0.0] * 768]
 

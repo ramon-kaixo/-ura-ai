@@ -94,7 +94,7 @@ ignore = [
 "tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105", "INP001", "TC002"]
 "scripts/*" = ["INP001"]  # scripts autónomos sin __init__.py (namespace por diseño)
 "scripts/pro/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
-"motor/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
+"motor/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "INP001"]  # tests namespace package (sin __init__ por diseño; evita romper mypy)
 "docs/merge_resolution/*" = ["S101", "S110", "INP001"]  # tests documentales de resolución de merges
 
 [tool.pytest.ini_options]
