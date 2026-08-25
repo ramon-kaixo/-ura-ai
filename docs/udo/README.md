@@ -250,3 +250,20 @@ Ahora:
 1. Si la tarea tiene `verificar:` (comando real), el **--ok lo ejecuta** — si falla, el OK se RECHAZA ("OK RECHAZADO — la verificación falló al revisar").
 2. Si el revisor == ejecutor, el veredicto queda marcado **AUTO-REVISIÓN** (honesto, no se finge revisión independiente).
 3. El `--devolver` exige motivo (rechaza sin él).
+
+## Patrón worktree para validar/fusionar sin tocar producción (2026-08-25)
+
+Cuando el repo de producción de una máquina está ocupado por otra rama o
+contiene ficheros inmutables (`chattr +i`), TODA validación y fusión se hace
+en un **worktree temporal** (`git worktree add /tmp/<nombre> <ref>`):
+
+1. `git worktree add -f /tmp/wt origin/<rama>` y ejecutar gates/tests ahí.
+2. Para integrar: commit en el worktree (si los hooks necesitan `.venv`
+   inexistente ahí, `git -c core.hooksPath=/dev/null` SOLO para commits
+   docs-only ya validados) y `git push origin HEAD:<rama>`.
+3. Limpieza SIEMPRE: `git worktree remove --force /tmp/wt`.
+
+Precedentes: TASK-20260825-005 (validación en `/tmp/ura_branch`, fusión
+desde worktree cuando el rebase local quedó bloqueado por BUG-001).
+Nunca forzar escrituras sobre ficheros inmutables: eso es ritual del
+humano (BUG-001).
