@@ -250,21 +250,13 @@ class Experiment:
         Path(path).write_text(json.dumps(self.to_dict(), indent=2) + "\n")
 
     @classmethod
-    def load(cls, path: str | Path) -> ExperimentResult:
-        """Carga resultados de experimento desde JSON.
+    def load(cls, path: str | Path) -> dict[str, Any]:
+        """Carga resultados de experimento desde JSON (como dict).
 
         Nota: solo carga los resultados, no las configuraciones originales.
         Para re-ejecutar, crear un nuevo Experiment con las mismas configs.
         """
         data = json.loads(Path(path).read_text())
-        config = data.get("config", "unknown")
-        params = data.get("params") or {}
-        metrics = data.get("metrics") or {}
-        latency_stats = data.get("latency_stats") or {}
-        return ExperimentResult(
-            config_name=str(config),
-            metrics={str(k): float(v) for k, v in metrics.items()},
-            per_query=[],
-            latency_stats={str(k): float(v) for k, v in latency_stats.items()},
-            params=dict(params),
-        )
+        if not isinstance(data, dict):
+            raise ValueError(f"Formato JSON inesperado en {path}")
+        return data
