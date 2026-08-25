@@ -1,13 +1,14 @@
 """Tests para motor/observability/prometheus_exporter.py y motor/health_monitor.py."""
 from __future__ import annotations
 
+from contextlib import suppress
 from unittest import mock
 
 import pytest
 
 
 class FakeSnap:
-    def __init__(self, value=0, labels=None, count=0, sum=0.0):
+    def __init__(self, value=0, labels=None, count=0, sum=0.0):  # noqa: A002 - fake Prometheus snap
         self._value = value
         self._labels = labels or {}
         self._count = count
@@ -155,14 +156,14 @@ class TestHealthMonitor:
         import motor.health_monitor as hm
 
         notify = mock.Mock(return_value=True)
-        monkeypatch.setattr("core.notifier.notify", notify)
+        monkeypatch.setattr("motor.core.notifier.notify", notify)
         assert hm._send_alert("msg") is True
         notify.assert_called_once_with("msg", level="warning")
 
     def test_send_alert_fallback(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
-        monkeypatch.setattr("core.notifier.notify", mock.Mock(side_effect=ImportError("no")))
+        monkeypatch.setattr("motor.core.notifier.notify", mock.Mock(side_effect=ImportError("no")))
         assert hm._send_alert("msg") is False
 
     def test_backup_memory_dentro_intervalo(self, monkeypatch) -> None:
@@ -210,3 +211,24 @@ class TestHealthMonitor:
         monkeypatch.setattr(hm, "check_and_alert", mock.Mock(return_value={"status": "ok"}))
         monkeypatch.setattr("builtins.print", mock.Mock())
         hm.main()
+
+    def test_backup_memory_error(self, monkeypatch) -> None:
+        """Branche except de _backup_memory (copy2 falla)."""
+        import motor.health_monitor as hm
+
+        monkeypatch.setattr(hm, "_last_backup", 0)
+        monkeypatch.setattr(hm, "BACKUP_INTERVAL", 3600)
+        monkeypatch.setattr(hm, "copy2", mock.Mock(side_effect=OSError("disco")))
+        monkeypatch.setattr("pathlib.Path.exists", mock.Mock(return_value=True))
+        hm._backup_memory()  # no debe lanzar
+
+    def test_main_daemon_interrumpido(self, monkeypatch) -> None:
+        """Modo daemon: el while True termina con KeyboardInterrupt."""
+        import motor.health_monitor as hm
+
+        monkeypatch.setattr("sys.argv", ["hm.py", "--daemon"])
+        monkeypatch.setattr(hm, "check_and_alert", mock.Mock(return_value={"status": "ok"}))
+        monkeypatch.setattr(hm, "_backup_memory", mock.Mock())
+        monkeypatch.setattr("time.sleep", mock.Mock(side_effect=KeyboardInterrupt()))
+        with suppress(KeyboardInterrupt):
+            hm.main()

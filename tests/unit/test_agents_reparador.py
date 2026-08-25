@@ -88,3 +88,65 @@ class TestGenerate:
         result = rep._generate("prompt", "model")
         assert result == "motor code"
         mock_gen.assert_called_once_with("prompt", model="model", options=None)
+
+
+class TestNiveles:
+    def test_nivel_1_exito(self, tmp_path):
+        f = tmp_path / "ok.py"
+        f.write_text("x = 1")
+        rep = AgenteReparador()
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=MagicMock()):
+            assert rep._nivel_1(f) is True
+
+    def test_nivel_1_compilation_error(self, tmp_path):
+        f = tmp_path / "bad.py"
+        f.write_text("x = 1")
+        rep = AgenteReparador()
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=MagicMock()), patch("builtins.compile", side_effect=SyntaxError("boom")):
+                assert rep._nivel_1(f) is False
+
+    def test_nivel_2_sin_errores(self, tmp_path):
+        f = tmp_path / "ok.py"
+        f.write_text("x = 1")
+        rep = AgenteReparador()
+        r = MagicMock()
+        r.returncode = 0
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=r):
+            assert rep._nivel_2(f, "modelo") is True
+
+    def test_nivel_2_genera_fix(self, tmp_path):
+        f = tmp_path / "bad.py"
+        f.write_text("missing = valor_no_definido")
+        rep = AgenteReparador(llm=MagicMock())
+        rep._llm.generate.return_value = "```python\nx = 1\n```"
+        r = MagicMock()
+        r.returncode = 1
+        r.stderr = "F821: undefined name 'valor_no_definido'"
+        r.stdout = ""
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=r):
+            assert rep._nivel_2(f, "modelo") is True
+        assert "x = 1" in f.read_text()
+
+    def test_nivel_3_exito(self, tmp_path):
+        f = tmp_path / "bad.py"
+        f.write_text("y = indefinido")
+        rep = AgenteReparador()
+        r = MagicMock()
+        r.returncode = 1
+        r.stderr = "F821: undefined name 'indefinido'"
+        cm = MagicMock()
+        cm.read.return_value = b'{"choices": [{"message": {"content": "```python\\nz = 1\\n```"}}]}'
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=r), patch("urllib.request.urlopen", return_value=cm) as mock_url:
+                mock_url.return_value.__enter__.return_value = cm
+                assert rep._nivel_3(f) is True
+        assert "z = 1" in f.read_text()
+
+    def test_nivel_3_urlopen_error(self, tmp_path):
+        f = tmp_path / "bad.py"
+        f.write_text("y = indefinido")
+        rep = AgenteReparador()
+        r = MagicMock()
+        r.returncode = 1
+        r.stderr = "F821"
+        with patch("motor.core.agents.reparador.subprocess.run", return_value=r), patch("urllib.request.urlopen", side_effect=OSError("conn")):
+                assert rep._nivel_3(f) is False

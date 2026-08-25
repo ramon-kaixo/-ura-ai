@@ -85,7 +85,7 @@ class TestContarPendientes:
             assert result == 0
 
 
-class TestContarPendientes:
+class TestContarPendientesExtra:
     def test_ast_error_ignorado(self, tmp_path, monkeypatch) -> None:
         """Branches except del parseo AST."""
         import motor.core.agents.orquestador as mod
@@ -95,3 +95,16 @@ class TestContarPendientes:
         monkeypatch.setattr(mod, "URA_ROOT", tmp_path)
         total = mod.AgenteOrquestador._contar_pendientes()
         assert total == 0  # malo.py ignorado, normal.py no excede 80 lineas
+
+    def test_rglob_error_ignorado(self, monkeypatch) -> None:
+        """Branche except del rglob (error al recorrer URA_ROOT)."""
+        import pathlib
+
+        import motor.core.agents.orquestador as mod
+
+        def _explota(self, pattern):
+            raise OSError("permiso")
+
+        monkeypatch.setattr(pathlib.Path, "rglob", _explota)
+        total = mod.AgenteOrquestador._contar_pendientes()
+        assert total == 0
