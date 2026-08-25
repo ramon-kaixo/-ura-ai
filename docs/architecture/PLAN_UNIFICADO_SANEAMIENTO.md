@@ -115,9 +115,9 @@ pyproject.toml ya es 0.29.0. Solo queda:
 
 | Duplicado | Cuántos | Acción |
 |-----------|---------|--------|
-| CircuitBreaker | 3 (core/mochila, motor/core/llm, motor/diagnostico) | Consolidar en motor/core/llm/circuit_breaker.py |
-| Logging | 3 (motor/observability, knowledge/engine, core/json_logger) | Unificar en motor/observability/logging.py |
-| Providers | 6 (core/mochila/providers vs motor/core/llm) | Resolver en Fase B.1 |
+| CircuitBreaker | 3 (core/mochila, motor/core/llm, motor/diagnostico) | ✅ retenido (3 dominios distintos) — decisión arquitectónica documentada |
+| Logging | 3 (motor/observability, knowledge/engine, core/json_logger) | ✅ consolidado 3→1 en motor/observability/logging.py |
+| Providers | 6 (core/mochila/providers vs motor/core/llm) | ✅ eliminados (core/mochila/providers/ removido en B.2) |
 
 **Criterio:** 1 CircuitBreaker, 1 sistema de logging, 0 providers duplicados.
 **Tiempo:** ~8-10h.

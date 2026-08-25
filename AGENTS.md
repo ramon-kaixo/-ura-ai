@@ -305,7 +305,6 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
 - `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
 - `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
-- `core/config.py` — UraConfig (eliminado post-Fase 8; usar `motor/core/config.py`)
 - `motor/core/config.py` — UraConfig único (fuente de verdad)
 - `core/qdrant_client.py` — Proxy hacia motor.core.qdrant_client (regenerable)
 - `scripts/pro/lock_manager.py` — Cerrojo GPU (flock/fcntl para colisión tuneladora/crontab)
@@ -317,7 +316,6 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - `scripts/deploy/fix-path.conf` — Environment file para ura-contraste.service
 - `scripts/deploy/ura-contraste.service` — Unidad systemd oficial del proxy de contraste
 - `scripts/deploy/transition_contraste.sh` — Script de transición watchdog→systemd (auto-deploy)
-- `deploy/ura-openclaw.service` — ~~Unidad systemd oficial de OpenClaw~~ **ELIMINADO** (`c6d60c8c`)
 - `deploy/ura-router-health.service` — Health check del Model Router
 - `deploy/rotate-logs.service` — Rotación de logs vía logrotate
 - `deploy/rotate_logs.timer` — Timer semanal para rotate-logs.service
@@ -514,7 +512,7 @@ Ver `docs/architecture/F25_ARCHITECTURE_AUDIT.md` para auditoría completa y mé
 - RateLimiter (token bucket, thread-safe), payload sanitization (8 patrones bloqueados)
 - 63 tests tracing + 488 tests total en F25-F28+OBS, 0 regresiones
 - Ver `motor/platform/` y `docs/architecture/GOVERNANCE.md`
-- **⚠️ Bugs conocidos:** checksum nunca verificado, race condition en LocalTransport, ADRs en Draft. Ver `docs/architecture/F28_B2_CODE_AUDIT.md`
+- **⚠️ Bugs conocidos:** checksum nunca verificado, race condition en LocalTransport. Ver `docs/architecture/F28_B2_CODE_AUDIT.md`
 
 **Fase 28.1 — Stabilization** ✅ Cerrada (v0.28.3-stable)
 

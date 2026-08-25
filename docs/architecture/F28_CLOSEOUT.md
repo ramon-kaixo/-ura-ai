@@ -23,7 +23,7 @@
 - F28.1: P1+P2+P3 estabilizados
 
 ## Known Gaps
-- ADR-028 en estado Draft (no Approved)
+- ADR-028: ADR-028-01, -03, -04, -05, -06, -10 todos en estado **Approved**
 - Race condition conocida en LocalTransport
 - Checksum pipeline nunca verificado en runtime
 - 3 tests flaky de tracing
