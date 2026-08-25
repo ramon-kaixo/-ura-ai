@@ -43,3 +43,17 @@ Fecha: 2026-08-25 · Autor: TERM · Verificado por: ocpm-check (auto)
 | ASUS Desktop (GX10) | localhost:11434 ✅ | 8 ✅ | REVISOR |
 | Mac Desktop | 100.72.103.12:11434 ✅ | 8 ✅ | GENERADOR |
 | Web/Terminal (GX10) | localhost:11434 ✅ | 8 ✅ | GENERADOR |
+
+## Verificación cruzada CLI (2026-08-25, TERM)
+
+| Instancia | Comando | Resultado |
+|-----------|---------|-----------|
+| Mac Desktop → GX10 Ollama | `curl gx10:11434/api/generate` | ✅ "hola mundo desde Mac" |
+| GX10 Ollama local | `curl localhost:11434/api/generate` | ✅ "hola mundo desde GX10" |
+
+## Pendiente de verificación humana (REVISOR)
+
+- [ ] OpenCode Desktop Mac: abrir dropdown de modelos → confirmar que muestra los 8 modelos
+- [ ] OpenCode Desktop ASUS: abrir dropdown de modelos → confirmar que muestra los 8 modelos
+- [ ] OpenCode Web (:8081): abrir dropdown de modelos → confirmar que muestra los 8 modelos
+- [ ] Si alguno NO muestra modelos: reconfigurar proveedor en ~/.config/opencode/opencode.json
