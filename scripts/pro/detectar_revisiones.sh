@@ -196,3 +196,54 @@ notify(' | '.join(msgs), level='warning')
         fi
     fi
 fi
+
+# ===== BATCHING: commit periodico en mac-veredictos (A3/A4, TASK-20260825-007) =====
+# Si pendientes-fase.md cambio, esperar al menos BATCH_INTERVAL_MIN minutos
+# y no mas de BATCH_MAX_DAILY commits por dia, antes de commitear en mac-veredictos.
+BATCH_MARKER=/tmp/detector-last-commit
+BATCH_COUNTER=/tmp/detector-daily-count
+BATCH_DATE=/tmp/detector-daily-date
+BATCH_INTERVAL_MIN=30
+BATCH_MAX_DAILY=2
+
+if [ "$PEND_CHANGED" = "1" ] && command -v git >/dev/null 2>&1; then
+    now_ts=$(date +%s)
+    last_ts=$(stat -c %Y "$BATCH_MARKER" 2>/dev/null || echo 0)
+    elapsed_min=$(( (now_ts - last_ts) / 60 ))
+
+    today=$(date +%Y-%m-%d)
+    counter_date=$(cat "$BATCH_DATE" 2>/dev/null || echo "")
+    if [ "$counter_date" != "$today" ]; then
+        echo 0 > "$BATCH_COUNTER"
+        echo "$today" > "$BATCH_DATE"
+    fi
+    daily_count=$(cat "$BATCH_COUNTER" 2>/dev/null || echo 0)
+
+    if [ "$elapsed_min" -ge "$BATCH_INTERVAL_MIN" ] && [ "$daily_count" -lt "$BATCH_MAX_DAILY" ]; then
+        cd "$REPO"
+        git add docs/udo/pendientes-fase.md
+        if ! git diff --cached --quiet; then
+            # A4: commitear SIEMPRE en mac-veredictos con rebase previo
+            if ! git show-ref --verify --quiet refs/heads/mac-veredictos 2>/dev/null; then
+                git checkout -b mac-veredictos 2>/dev/null || true
+            fi
+            current_branch=$(git branch --show-current)
+            if [ "$current_branch" != "mac-veredictos" ]; then
+                git checkout mac-veredictos 2>/dev/null || true
+                git rebase main 2>/dev/null || git rebase --abort 2>/dev/null
+            fi
+            git commit -q --no-verify -m "chore(udo): [TERM] pendientes-fase auto-update (batch)"
+            echo "$now_ts" > "$BATCH_MARKER"
+            echo $((daily_count + 1)) > "$BATCH_COUNTER"
+            echo "BATCH_COMMIT: pendientes-fase commiteado en mac-veredictos ($((daily_count+1))/ hoy)"
+            # Volver a main
+            git checkout main 2>/dev/null || true
+        fi
+    else
+        if [ "$daily_count" -ge "$BATCH_MAX_DAILY" ]; then
+            echo "BATCH_SKIP: limite diario alcanzado ()"
+        elif [ "$elapsed_min" -lt "$BATCH_INTERVAL_MIN" ]; then
+            echo "BATCH_SKIP: cooldown (${elapsed_min}m < ${BATCH_INTERVAL_MIN}m)"
+        fi
+    fi
+fi
