@@ -245,7 +245,10 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         # solo se miden módulos con política de cobertura; el resto es SKIP informativo
         zonas_cubribles = ("motor/", "core/", "knowledge/")
-        medibles = [o for o in objetivos if o.startswith(zonas_cubribles)]
+        # los archivos de tests no se miden (son verificadores, no código de producción)
+        medibles = [
+            o for o in objetivos if o.startswith(zonas_cubribles) and "/tests/" not in o and not o.startswith("tests/")
+        ]
         for o in objetivos:
             if o not in medibles:
                 print(f"SKIP {o}: fuera de zonas con política de cobertura")
