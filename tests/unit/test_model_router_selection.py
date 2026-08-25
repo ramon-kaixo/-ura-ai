@@ -54,8 +54,8 @@ class TestObtenerModelosDisponibles:
     def test_ok(self):
         with patch("urllib.request.urlopen") as mock_open:
             resp = mock_open.return_value.__enter__.return_value
-            resp.read.return_value = b'{"models": [{"name": "qwen2.5:3b"}, {"name": "llama3.2:3b"}]}'
-            assert ms.obtener_modelos_disponibles("http://fake:1") == {"qwen2.5:3b", "llama3.2:3b"}
+            resp.read.return_value = b'{"models": [{"name": "qwen3.6:27b"}, {"name": "llama3:latest"}]}'
+            assert ms.obtener_modelos_disponibles("http://fake:1") == {"qwen3.6:27b", "llama3:latest"}
 
     def test_error_devuelve_vacio(self):
         with patch("urllib.request.urlopen", side_effect=OSError("conn")):
@@ -64,17 +64,17 @@ class TestObtenerModelosDisponibles:
 
 class TestGetModelParams:
     def test_exacto(self):
-        p = ms._get_model_params("qwen2.5-coder:14b")
-        assert p["temperature"] == 0.0
+        p = ms._get_model_params("qwen3-coder:30b")
+        assert p["temperature"] == 0.1
+        assert p["num_predict"] == 8192
 
     def test_por_prefijo_base(self):
-        p = ms._get_model_params("qwen2.5-coder:7b")
-        assert p["temperature"] == 0.0
+        p = ms._get_model_params("qwen3-coder:30b-instruct")
+        assert p["temperature"] == 0.1
 
     def test_desconocido_defaults(self):
         p = ms._get_model_params("otro:modelo")
         assert p == ms.DEFAULT_MODEL_PARAMS
-        # no comparte el dict por defecto (mutable)
         p["temperature"] = 99.0
         assert ms.DEFAULT_MODEL_PARAMS["temperature"] == 0.2
 
@@ -82,19 +82,19 @@ class TestGetModelParams:
 class TestApplyModelParams:
     def test_anade_options(self):
         data = {}
-        out = ms._apply_model_params(data, "qwen2.5:3b")
+        out = ms._apply_model_params(data, "llama3:latest")
         assert "options" in out
-        assert out["options"]["temperature"] == 0.3
+        assert out["options"]["temperature"] == 0.2
 
     def test_no_sobreescribe_opciones_existentes(self):
         data = {"options": {"temperature": 1.0}}
-        out = ms._apply_model_params(data, "qwen2.5:3b")
+        out = ms._apply_model_params(data, "llama3:latest")
         assert out["options"]["temperature"] == 1.0
 
     def test_mutacion_directa(self):
         data = {}
-        ms._apply_model_params(data, "llama3.2:3b")
-        assert data["options"]["num_predict"] == 2048
+        ms._apply_model_params(data, "llama3:latest")
+        assert data["options"]["num_predict"] == 4096
 
 
 class TestSuccessRates:
@@ -117,43 +117,42 @@ class TestSuccessRates:
 
 class TestSeleccionarModelo:
     def test_modelo_exacto_disponible(self):
-        assert ms.seleccionar_modelo("respuesta_rapida", {"qwen2.5:3b"}) == "qwen2.5:3b"
+        assert ms.seleccionar_modelo("respuesta_rapida", {"qwen3.6:27b"}) == "qwen3.6:27b"
 
     def test_prioriza_tasa_exito(self):
-        ms._record_success("qwen2.5:3b", "respuesta_rapida", ok=True)
-        assert ms.seleccionar_modelo("respuesta_rapida", {"llama3.2:3b", "qwen2.5:3b"}) == "qwen2.5:3b"
+        ms._record_success("qwen3.6:27b", "respuesta_rapida", ok=True)
+        assert ms.seleccionar_modelo("respuesta_rapida", {"llama3.3:70b", "qwen3.6:27b"}) == "qwen3.6:27b"
 
     def test_match_por_base(self):
-        assert ms.seleccionar_modelo("codigo_rapido", {"qwen2.5-coder:14b-instruct"}) == "qwen2.5-coder:14b-instruct"
+        assert ms.seleccionar_modelo("codigo_rapido", {"qwen3-coder:30b-instruct"}) == "qwen3-coder:30b-instruct"
 
     def test_fallback_cuando_ninguno(self):
         with patch("core.model_router.metrics.metrics") as mock_metrics:
-            result = ms.seleccionar_modelo("razonamiento", {"qwen2.5:3b"})
-        assert result == "qwen2.5:3b"
+            result = ms.seleccionar_modelo("razonamiento", {"llama3:latest"})
+        assert result == "llama3:latest"
         mock_metrics.increment.assert_called_once()
 
     def test_primero_disponible(self):
-        result = ms.seleccionar_modelo("vision", {"llava:latest"})
-        assert result == "llava:latest"
+        result = ms.seleccionar_modelo("vision", {"llava:7b"})
+        assert result == "llava:7b"
 
     def test_sin_disponibles_devuelve_primero_de_ruta(self):
-        assert ms.seleccionar_modelo("razonamiento", set()) == "qwen3:32b-q8_0"
+        assert ms.seleccionar_modelo("razonamiento", set()) == "qwen3.6:27b"
 
     def test_tipo_desconocido_usa_default(self):
-        assert ms.seleccionar_modelo("tipo_inexistente", {"qwen2.5:3b", "llama3.2:3b"}) in {
-            "qwen2.5:3b",
-            "llama3.2:3b",
+        assert ms.seleccionar_modelo("tipo_inexistente", {"qwen3.6:27b", "llama3.3:70b"}) in {
+            "qwen3.6:27b",
+            "llama3.3:70b",
         }
 
     def test_evita_duplicados_por_base(self):
-        # solo un candidato por modelo de ruta aunque varios disponibles compartan base
-        result = ms.seleccionar_modelo("codigo_rapido", {"qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b"})
-        assert result in {"qwen2.5-coder:14b-instruct-q8_0", "qwen2.5-coder:14b"}
+        result = ms.seleccionar_modelo("codigo_rapido", {"qwen3-coder:30b-q8_0", "qwen3-coder:30b"})
+        assert result in {"qwen3-coder:30b-q8_0", "qwen3-coder:30b"}
 
     def test_fallback_sin_metrics_desde_inicio(self):
         original = ms._get_success_rate
         try:
-            ms._get_success_rate = lambda m, t: 0.5  # type: ignore[method-assign]
-            ms.seleccionar_modelo("respuesta_rapida", {"llama3.2:3b"})
+            ms._get_success_rate = lambda m, t: 0.5
+            ms.seleccionar_modelo("respuesta_rapida", {"llama3.3:70b"})
         finally:
             ms._get_success_rate = original
