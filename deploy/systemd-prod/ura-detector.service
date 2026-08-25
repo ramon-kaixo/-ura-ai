@@ -1,0 +1,20 @@
+[Unit]
+Description=URA YOLOv8 Detector + ByteTrack + Behavior Analysis
+After=network-online.target
+Wants=llama-vision.service
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/opt/ura
+EnvironmentFile=-/etc/ura/secrets.env
+Environment=URA_TOKEN=${URA_TOKEN}
+Environment=VISION_URL=http://localhost:11436/v1/chat/completions
+ExecStart=/usr/bin/python3 /opt/ura/agents/detector_gx10.py
+Restart=always
+RestartSec=10
+StandardOutput=append:/opt/ura/logs/detector.log
+StandardError=append:/opt/ura/logs/detector.log
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Backup Qdrant — cada 6h
+RefuseManualStart=no
+
+[Timer]
+OnCalendar=*:0/360
+Persistent=true
+
+[Install]
+WantedBy=timers.target

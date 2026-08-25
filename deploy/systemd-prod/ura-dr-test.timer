@@ -1,0 +1,10 @@
+[Unit]
+Description=URA DR Test Trimestral
+RefuseManualStart=no
+
+[Timer]
+OnCalendar=*-*-01 04:00:00  # Primer día de cada mes (trimestral efectivo)
+Persistent=true
+
+[Install]
+WantedBy=timers.target

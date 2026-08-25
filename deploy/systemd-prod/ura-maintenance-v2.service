@@ -1,0 +1,13 @@
+[Unit]
+Description=URA Maintenance v2 — Tuneladora unificada
+After=network.target
+
+[Service]
+Type=oneshot
+User=ramon
+Group=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python3 scripts/pro/tuneladora_mantenimiento.py
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ura-maintenance-v2

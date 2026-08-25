@@ -1,0 +1,19 @@
+[Unit]
+Description=Pre-carga Best-Effort Qwen 32B
+After=ollama.service
+Wants=ollama.service
+
+
+StartLimitBurst=6
+StartLimitIntervalSec=120
+
+[Service]
+Type=oneshot
+User=ramon
+Group=ramon
+ExecStart=/usr/local/bin/ura-model-preliminar.sh
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=ollama.service

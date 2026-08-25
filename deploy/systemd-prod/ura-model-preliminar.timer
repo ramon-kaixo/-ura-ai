@@ -1,0 +1,9 @@
+[Unit]
+Description=Pre-carga modelo qwen2.5-coder:32b al arranque
+
+[Timer]
+OnBootSec=15
+Persistent=false
+
+[Install]
+WantedBy=timers.target

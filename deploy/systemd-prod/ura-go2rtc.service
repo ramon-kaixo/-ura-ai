@@ -1,0 +1,12 @@
+[Unit]
+Description=go2rtc Camera Stream Proxy
+After=network.target
+
+[Service]
+ExecStart=/opt/ura/agents/go2rtc --config /opt/ura/config/go2rtc.yaml
+WorkingDirectory=/opt/ura
+Restart=always
+User=ramon
+
+[Install]
+WantedBy=multi-user.target

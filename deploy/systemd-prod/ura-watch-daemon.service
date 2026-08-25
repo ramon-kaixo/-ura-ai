@@ -1,0 +1,28 @@
+[Unit]
+Description=URA Watch Daemon — ejecuta pipeline al detectar cambios en .py
+Documentation=https://github.com/anomalyco/opencode
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=ramon
+ExecStartPre=/bin/rm -f /tmp/tuneladora_watch.lock
+ExecStart=/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora/watch_daemon.sh
+Restart=on-failure
+RestartSec=30
+# Hardening básico
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=false
+# Evitar fork bombs y loops
+TasksMax=8
+CPUQuota=25%
+MemoryMax=128M
+# Timeout para shutdown graceful
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

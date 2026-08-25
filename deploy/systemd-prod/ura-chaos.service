@@ -1,0 +1,8 @@
+[Unit]
+Description=chaos engineering
+
+[Service]
+Type=oneshot
+User=ramon
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/chaos_test.py
+Nice=10

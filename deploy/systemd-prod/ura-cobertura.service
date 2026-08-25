@@ -1,0 +1,13 @@
+[Unit]
+Description=URA Pipeline Cobertura — reporte nightly (determinista, 6 gates)
+
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/home/ramon/URA/ura_ia_1972/.venv/bin/python /home/ramon/URA/ura_ia_1972/scripts/pro/pipeline_cobertura.py --reporte
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

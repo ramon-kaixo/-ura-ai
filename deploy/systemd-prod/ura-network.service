@@ -1,0 +1,13 @@
+[Unit]
+Description=URA Network Scanner Service
+
+[Service]
+Type=oneshot
+ExecStart=/home/ramon/ura-network/scan-red.sh
+ExecStart=/home/ramon/ura-network/terminal-manager.sh
+ExecStart=/home/ramon/ura-network/wifi-bt-scanner.sh
+ExecStart=/home/ramon/URA/ura_ia_1972/deploy/network_failover.sh
+User=ramon
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,14 @@
+[Unit]
+Description=URA Metrics Server
+After=network.target
+
+[Service]
+Type=simple
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/scripts/pro/metrics_server.py
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

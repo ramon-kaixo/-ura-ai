@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Backup Qdrant (snapshots)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /home/ramon/URA/ura_ia_1972/scripts/pro/backup_unified.sh --qdrant-only
+User=ramon
+Nice=19
+IOSchedulingClass=idle

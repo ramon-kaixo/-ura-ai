@@ -1,0 +1,13 @@
+[Unit]
+Description=URA Watcher Auditoria — Dispara auditoria al recibir datos
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/bash /home/ramon/URA/ura_ia_1972/scripts/pro/watcher_auditoria.sh
+Restart=always
+RestartSec=10
+User=ramon
+
+[Install]
+WantedBy=multi-user.target

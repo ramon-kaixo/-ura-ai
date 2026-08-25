@@ -1,0 +1,19 @@
+[Unit]
+Description=URA SSH Tunnel to Hetzner
+After=network.target
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=ramon
+ExecStart=/usr/bin/ssh -p 2222 -i /home/ramon/.ssh/id_rsa -o StrictHostKeyChecking=no -o ServerAliveInterval=30 -o ServerAliveCountMax=3 -o ExitOnForwardFailure=yes -N \
+    -L 8888:127.0.0.1:8888 \
+    -L 3000:127.0.0.1:3000 \
+    -D 1080 \
+    root@178.105.81.83
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,12 @@
+[Unit]
+Description=URA Aspirador — vectorize downloaded files
+After=network.target qdrant.service
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/python3 scripts/pro/aspirador.py --dir /home/ramon/Descargas
+StandardOutput=journal
+StandardError=journal
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Health Check Timer (cada 5 min)
+RefuseManualStart=no
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,11 @@
+[Unit]
+Description=URA backup GX10 -> Mac (LAN)
+After=network.target
+
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/bash /home/ramon/URA/ura_ia_1972/deploy/backup_to_mac.sh
+StandardOutput=journal
+StandardError=journal

@@ -1,0 +1,8 @@
+[Unit]
+Description=URA Auto Reindex — documentos stale cada 6h
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/ramon/URA/ura_ia_1972/core/auto_reindex.py --execute
+User=ramon

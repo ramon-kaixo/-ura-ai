@@ -1,0 +1,14 @@
+[Unit]
+Description=URA Fix X11 socket directory
+DefaultDependencies=no
+Before=display-manager.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/mkdir -p /tmp/.X11-unix
+ExecStart=/bin/chmod 1777 /tmp/.X11-unix
+ExecStart=/bin/ls -la /tmp/.X11-unix
+
+[Install]
+WantedBy=multi-user.target

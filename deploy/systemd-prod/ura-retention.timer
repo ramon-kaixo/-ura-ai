@@ -1,0 +1,10 @@
+[Unit]
+Description=URA Retention Policy Timer — semanal
+RefuseManualStart=no
+
+[Timer]
+OnCalendar=weekly
+Persistent=true
+
+[Install]
+WantedBy=timers.target

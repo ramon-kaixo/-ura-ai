@@ -1,0 +1,9 @@
+[Unit]
+Description=limpieza asistente
+
+[Timer]
+OnCalendar=*:0/6
+Persistent=true
+
+[Install]
+WantedBy=timers.target

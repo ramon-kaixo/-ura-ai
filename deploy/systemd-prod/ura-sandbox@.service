@@ -1,0 +1,17 @@
+[Unit]
+Description=URA Sandbox Container: %i
+After=docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+ExecStartPre=-/usr/bin/docker rm -f ura-sandbox-%i
+ExecStart=/usr/bin/docker run --rm --name ura-sandbox-%i --network none --read-only \
+    --memory=512M --pids-limit=50 \
+    -v /home/ramon/URA/ura_ia_1972:/workspace:ro \
+    ura-sandbox-%i:latest
+ExecStop=/usr/bin/docker stop -t 5 ura-sandbox-%i
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

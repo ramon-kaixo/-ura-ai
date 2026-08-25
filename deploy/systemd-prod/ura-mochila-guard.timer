@@ -1,0 +1,11 @@
+[Unit]
+Description=URA Mochila Guard — Timer cada 5 min
+Requires=ura-mochila-guard.service
+
+[Timer]
+OnUnitActiveSec=5min
+OnBootSec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

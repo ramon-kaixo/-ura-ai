@@ -1,0 +1,8 @@
+[Unit]
+Description=URA Health Check
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash /home/ramon/URA/ura_ia_1972/scripts/pro/health_check.sh
+User=ramon

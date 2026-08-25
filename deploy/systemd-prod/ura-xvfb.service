@@ -1,0 +1,15 @@
+[Unit]
+Description=URA Xvfb Virtual Display
+After=network.target
+
+[Service]
+StartLimitIntervalSec=60
+StartLimitBurst=3
+RestartSec=10
+Type=simple
+User=ramon
+ExecStart=/usr/bin/Xvfb :99 -screen 0 1920x1080x24 -ac
+Restart=always
+
+[Install]
+WantedBy=default.target

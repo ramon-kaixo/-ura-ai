@@ -1,0 +1,9 @@
+[Unit]
+Description=make fix — auto-fix de ruff
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
