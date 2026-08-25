@@ -24,7 +24,7 @@ def _derive_key(key: str, salt: bytes) -> bytes | None:
     if not _ENCRYPTION_ENABLED:
         return None
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=100000)
-    return kdf.derive(key.encode())
+    return kdf.derive(key.encode())  # type: ignore[no-any-return]
 
 
 def encrypt(plaintext: bytes, key: str = "") -> bytes:
@@ -37,7 +37,7 @@ def encrypt(plaintext: bytes, key: str = "") -> bytes:
     nonce = b"\x00" * 16
     cipher = Cipher(algorithms.AES(derived), modes.CTR(nonce))
     encryptor = cipher.encryptor()
-    return encryptor.update(plaintext) + encryptor.finalize()
+    return encryptor.update(plaintext) + encryptor.finalize()  # type: ignore[no-any-return]
 
 
 def decrypt(ciphertext: bytes, key: str = "") -> bytes:
@@ -50,7 +50,7 @@ def decrypt(ciphertext: bytes, key: str = "") -> bytes:
     nonce = b"\x00" * 16
     cipher = Cipher(algorithms.AES(derived), modes.CTR(nonce))
     decryptor = cipher.decryptor()
-    return decryptor.update(ciphertext) + decryptor.finalize()
+    return decryptor.update(ciphertext) + decryptor.finalize()  # type: ignore[no-any-return]
 
 
 def is_encryption_available() -> bool:
