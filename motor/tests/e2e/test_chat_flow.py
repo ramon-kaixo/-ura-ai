@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import httpx
 import pytest
 from fastapi.testclient import TestClient
@@ -18,16 +20,16 @@ except Exception:  # noqa: S110
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
     return TestClient(app)
 
 
-def test_health_endpoint(client):
+def test_health_endpoint(client: TestClient) -> None:
     r = client.get("/health")
     assert r.status_code == 200
 
 
-def test_metrics_endpoint(client):
+def test_metrics_endpoint(client: TestClient) -> None:
     r = client.get("/metrics")
     assert r.status_code == 200
     assert "ura_requests_total" in r.text
@@ -35,9 +37,9 @@ def test_metrics_endpoint(client):
 
 @pytest.mark.skipif(not HAS_OLLAMA, reason="Ollama not running")
 @pytest.mark.timeout(15)
-def test_chat_basic(client):
+def test_chat_basic(client: TestClient) -> None:
     # Auth requerida cuando URA_API_KEY está definida (AuthMiddleware)
-    headers = {}
+    headers: dict[str, Any] = {}
     api_key = get_secret("URA_API_KEY", "")
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"

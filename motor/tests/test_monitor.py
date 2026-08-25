@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import time
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.monitor import PerformanceMonitor, PerformanceSnapshot
@@ -26,18 +27,18 @@ class _MockDelayed(BaseLLMProvider):
     def __init__(self, delay: float = 0.0) -> None:
         self.delay = delay
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         if self.delay > 0:
             time.sleep(self.delay)
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -177,6 +178,6 @@ class TestMonitorRouterIntegration:
         reg.register("ok", _MockDelayed(delay=0.01), default=True)
         router = LLMRouter(registry=reg, monitor_enabled=True)
         router.generate("test")
-        report = router._monitor.get_report()
+        report = router._monitor.get_report()  # type: ignore[union-attr]
         assert report["total_operations"] == 1
         assert report["history_size"] >= 1

@@ -176,7 +176,7 @@ class TestEpisodeStore:
 
         e = _episode(payload="q")
         eid = s.store(e)
-        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None)
+        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None)  # type: ignore[assignment]
         s.delete(eid)
         s._conn = None
         s.close()
@@ -259,11 +259,11 @@ class TestEpisodeStore:
     def test_fila_corrupta_en_db(self, tmp_path: Path) -> None:
         db = tmp_path / "rows.db"
         s = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
-        s._conn.execute(
+        s._conn.execute(  # type: ignore[union-attr]
             "INSERT INTO episodes (id, session_id, timestamp, tags, refs, metadata) VALUES (?,?,?,?,?,?)",
             ("bad", "sx", "2026-01-01", "no-json", "no-json", "no-json"),
         )
-        s._conn.commit()
+        s._conn.commit()  # type: ignore[union-attr]
         s3 = EpisodeStore(EpisodeStoreConfig(persist_path=str(db)))
         assert s3.count() == 0
         s.close()
@@ -277,7 +277,7 @@ class TestEpisodeStore:
             raise sqlite3.Error("disco lleno")
 
         fake_conn = types.SimpleNamespace(execute=boom, commit=lambda: None, close=lambda: None)
-        s._conn = fake_conn
+        s._conn = fake_conn  # type: ignore[assignment]
         eid = s.store(_episode(payload="x"))
         assert eid
         s.close()
@@ -398,11 +398,11 @@ class TestSemanticMemoryStore:
     def test_fila_corrupta(self, tmp_path: Path) -> None:
         db = tmp_path / "fc.db"
         s = SemanticMemoryStore(str(db))
-        s._conn.execute(
+        s._conn.execute(  # type: ignore[union-attr]
             "INSERT INTO semantic_facts (id, subject, predicate, obj, tags, metadata) VALUES (?,?,?,?,?,?)",
             ("bad", "a", "b", "c", "no-json", "no-json"),
         )
-        s._conn.commit()
+        s._conn.commit()  # type: ignore[union-attr]
         s.close()
         s2 = SemanticMemoryStore(str(db))
         assert s2.count() == 0
@@ -414,7 +414,7 @@ class TestSemanticMemoryStore:
         def boom(*a: Any, **k: Any) -> None:
             raise sqlite3.Error("boom")
 
-        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None, close=lambda: None)
+        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None, close=lambda: None)  # type: ignore[assignment]
         s.store(SemanticFact("A", "b", "c"))
         s.delete("inexistente")
         s.close()
@@ -436,7 +436,7 @@ class TestSemanticMemoryStore:
         assert s.delete(fid) is True
         f2 = SemanticFact("A", "b", "c")
         fid2 = s.store(f2)
-        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None)
+        s._conn = types.SimpleNamespace(execute=boom, commit=lambda: None)  # type: ignore[assignment]
         s.delete(fid2)
         s._conn = None
         s.close()
@@ -520,7 +520,7 @@ class TestContextRetriever:
     def test_semantic_score_positivo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         st = EpisodeStore()
         ep = _episode(payload="x", ts="2026-08-01T00:00:00+00:00")
-        ep.embedding = [0.1, 0.2]  # type: ignore[attr-defined]
+        ep.embedding = [0.1, 0.2]
         st.store(ep)
         r = ContextRetriever(st, weights={"semantic": 1.0, "recency": 0, "importance": 0, "confidence": 0})
         monkeypatch.setattr(ContextRetriever, "_semantic_score", lambda self, q, emb: 0.5)
@@ -535,10 +535,10 @@ class TestContextRetriever:
         st = EpisodeStore()
         ahora = datetime.now(UTC).isoformat()
         ep = _episode(payload="x", ts=ahora, importance=0.9, confidence=0.9)
-        ep.embedding = [0.1, 0.2]  # type: ignore[attr-defined]
+        ep.embedding = [0.1, 0.2]
         st.store(ep)
         ep2 = _episode(payload="v", ts="2026-01-01T00:00:00+00:00", importance=0.1, confidence=0.1)
-        ep2.embedding = [0.9, 0.1]  # type: ignore[attr-defined]
+        ep2.embedding = [0.9, 0.1]
         st.store(ep2)
         r = ContextRetriever(st, weights={"semantic": 0.5, "recency": 0.2, "importance": 0.2, "confidence": 0.1})
         res = r.search(ContextQuery(text="x", k=1, weights=None))
@@ -784,42 +784,42 @@ class TestForgetPolicies:
         p = TTLForgetPolicy()
         ep = _episode()
         ep.ttl = 0
-        assert p.should_forget(ep, ctx) == (False, "no_ttl")
-        assert p.should_forget(_episode(ts=OLD, ttl=1), ctx) == (True, "ttl_expired_1s")
-        assert p.should_forget(_episode(), ctx) == (False, "ttl_expired_31536000s")
-        assert p.should_forget(SemanticFact("a", "b", "c"), ctx) == (False, "semantic_no_ttl")
-        assert p.should_forget("otra cosa", ctx) == (False, "unknown")
+        assert p.should_forget(ep, ctx) == (False, "no_ttl")  # type: ignore[arg-type]
+        assert p.should_forget(_episode(ts=OLD, ttl=1), ctx) == (True, "ttl_expired_1s")  # type: ignore[arg-type]
+        assert p.should_forget(_episode(), ctx) == (False, "ttl_expired_31536000s")  # type: ignore[arg-type]
+        assert p.should_forget(SemanticFact("a", "b", "c"), ctx) == (False, "semantic_no_ttl")  # type: ignore[arg-type]
+        assert p.should_forget("otra cosa", ctx) == (False, "unknown")  # type: ignore[arg-type]
 
     def test_importance(self) -> None:
         p = ImportanceForgetPolicy(min_importance=0.5, min_age_days=30)
         assert p.name() == "importance"
-        assert p.should_forget(_episode(importance=0.9), None) == (False, "importance_0.9_above_0.5")
+        assert p.should_forget(_episode(importance=0.9), None) == (False, "importance_0.9_above_0.5")  # type: ignore[arg-type]
         joven = _episode(importance=0.1, ts="2026-08-10T00:00:00+00:00")
-        assert p.should_forget(joven, None)[0] is False
+        assert p.should_forget(joven, None)[0] is False  # type: ignore[arg-type]
         viejo = _episode(importance=0.1, ts=OLD)
-        assert p.should_forget(viejo, None) == (True, "importance_0.1_below_0.5")
-        assert p.should_forget(SemanticFact("a", "b", "c", importance=0.9), None)[0] is False
-        assert p.should_forget(SemanticFact("a", "b", "c", importance=0.1), None)[0] is True
-        assert p.should_forget("x", None) == (False, "unknown")
+        assert p.should_forget(viejo, None) == (True, "importance_0.1_below_0.5")  # type: ignore[arg-type]
+        assert p.should_forget(SemanticFact("a", "b", "c", importance=0.9), None)[0] is False  # type: ignore[arg-type]
+        assert p.should_forget(SemanticFact("a", "b", "c", importance=0.1), None)[0] is True  # type: ignore[arg-type]
+        assert p.should_forget("x", None) == (False, "unknown")  # type: ignore[arg-type]
 
     def test_confidence(self) -> None:
         p = ConfidenceForgetPolicy(min_confidence=0.5)
         assert p.name() == "confidence"
-        assert p.should_forget(_episode(confidence=0.9), None)[0] is False
-        assert p.should_forget(_episode(confidence=0.1), None)[0] is True
-        assert p.should_forget(SemanticFact("a", "b", "c", confidence=0.1), None)[0] is True
-        assert p.should_forget(SemanticFact("a", "b", "c", confidence=0.9), None) == (False, "confidence_0.9_above_0.5")
-        assert p.should_forget("x", None) == (False, "unknown")
+        assert p.should_forget(_episode(confidence=0.9), None)[0] is False  # type: ignore[arg-type]
+        assert p.should_forget(_episode(confidence=0.1), None)[0] is True  # type: ignore[arg-type]
+        assert p.should_forget(SemanticFact("a", "b", "c", confidence=0.1), None)[0] is True  # type: ignore[arg-type]
+        assert p.should_forget(SemanticFact("a", "b", "c", confidence=0.9), None) == (False, "confidence_0.9_above_0.5")  # type: ignore[arg-type]
+        assert p.should_forget("x", None) == (False, "unknown")  # type: ignore[arg-type]
 
     def test_hybrid(self) -> None:
         h = HybridForgetPolicy(require_all=False)
         assert h.name() == "hybrid"
-        ok, reason = h.should_forget(_episode(ts=OLD, ttl=1), None)
+        ok, reason = h.should_forget(_episode(ts=OLD, ttl=1), None)  # type: ignore[arg-type]
         assert ok and "ttl" in reason
         h2 = HybridForgetPolicy(require_all=True)
-        ok2, _ = h2.should_forget(_episode(ts=OLD, ttl=1), None)
+        ok2, _ = h2.should_forget(_episode(ts=OLD, ttl=1), None)  # type: ignore[arg-type]
         assert ok2 is False
-        ok3, reason3 = h2.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        ok3, reason3 = h2.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)  # type: ignore[arg-type]
         assert ok3 is True
         assert "ttl" in reason3 and "importance" in reason3 and "confidence" in reason3
         # con políticas custom: todas deben decidir sí para require_all
@@ -829,12 +829,12 @@ class TestForgetPolicies:
             confidence_policy=ConfidenceForgetPolicy(min_confidence=1.0),
             require_all=True,
         )
-        ok4, _ = h3.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)
+        ok4, _ = h3.should_forget(_episode(ts=OLD, ttl=1, importance=0.1, confidence=0.1), None)  # type: ignore[arg-type]
         assert ok4 is True
 
 
 class TestForgettingEngine:
-    def _setup(self) -> tuple[EpisodeStore, SemanticMemoryStore, list]:
+    def _setup(self) -> tuple[EpisodeStore, SemanticMemoryStore, list[Any]]:
         st = EpisodeStore()
         sm = SemanticMemoryStore()
         summary = SummaryRecord(source_episode_ids=["zzz"], summary="s")
@@ -914,7 +914,7 @@ class TestForgettingEngine:
     def test_store_anulado_no_evita_facts(self) -> None:
         st = EpisodeStore()
         eng = ForgettingEngine(st, None, [], policies=[TTLForgetPolicy()])
-        eng._semantic_store = None
+        eng._semantic_store = None  # type: ignore[assignment]
         res = eng.run()
         assert res.facts_removed == 0
         assert res.episodes_removed == 0

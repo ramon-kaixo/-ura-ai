@@ -6,6 +6,8 @@ inmutabilidad de Facts, y estructura de FusionResult.
 
 from __future__ import annotations
 
+from typing import Any
+
 from motor.core.fusion import (
     ChangeDetector,
     Conflict,
@@ -42,38 +44,38 @@ from motor.core.web.citation.citation import Evidence
 
 
 class _StubEngine(FusionEngine):
-    def fuse(self, bundle, documents):
+    def fuse(self, bundle: Any, documents: list[Any]) -> FusionResult:
         return FusionResult(accepted=())
 
 
 class _StubResolver(ConflictResolver):
-    def detect(self, claims):
+    def detect(self, claims: list[Any]) -> list[Any]:
         return []
 
-    def resolve(self, conflicts, claims):
+    def resolve(self, conflicts: list[Any], claims: list[Any]) -> tuple[list[Any], list[Any]]:
         return [], []
 
 
 class _StubScorer(SourceScorer):
-    def score(self, claim):
+    def score(self, claim: Any) -> SourceScore:
         return SourceScore(url="http://test.com")
 
-    def score_evidence(self, evidence_set):
+    def score_evidence(self, evidence_set: Any) -> list[Any]:
         return []
 
 
 class _StubMerger(KnowledgeMerger):
-    def merge(self, claims, conflicts):
+    def merge(self, claims: list[Any], conflicts: list[Any]) -> list[Any]:
         return []
 
 
 class _StubDetector(ChangeDetector):
-    def detect_delta(self, new_facts, existing_facts):
+    def detect_delta(self, new_facts: list[Any], existing_facts: list[Any]) -> KnowledgeDelta:
         return KnowledgeDelta()
 
 
 class _StubSelector(MemoryCandidateSelector):
-    def select(self, fusion_result, max_candidates=100):
+    def select(self, fusion_result: Any, max_candidates: int = 100) -> list[Any]:
         return []
 
 
@@ -82,7 +84,7 @@ class _StubEntityResolver(EntityResolver):
     def version(self) -> str:
         return "1.0.0"
 
-    def resolve(self, text, context=None):
+    def resolve(self, text: str, context: dict[str, Any] | None = None) -> ResolvedEntity:
         return ResolvedEntity(
             entity_id="E000123",
             canonical_name="Apple",
@@ -92,10 +94,10 @@ class _StubEntityResolver(EntityResolver):
             resolver_version=self.version,
         )
 
-    def resolve_many(self, texts, context=None):
+    def resolve_many(self, texts: list[str], context: dict[str, Any] | None = None) -> list[ResolvedEntity]:
         return [self.resolve(t) for t in texts]
 
-    def normalize(self, text):
+    def normalize(self, text: str) -> str:
         return text.strip().lower()
 
 
@@ -487,7 +489,7 @@ class TestKnowledgeFact:
         fid = make_fact_id("Apple", "CEO", "Tim Cook")
         f = KnowledgeFact(id=fid, subject="Apple", predicate="CEO", object="Tim Cook", confidence=0.8)
         try:
-            f.confidence = 0.9
+            f.confidence = 0.9  # type: ignore[misc]
             msg = "Should have raised FrozenInstanceError"
             raise AssertionError(msg)
         except Exception as e:
@@ -670,14 +672,14 @@ class TestKnowledgeDelta:
 class TestFusionEngineContract:
     def test_is_abstract(self) -> None:
         try:
-            FusionEngine()
+            FusionEngine()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class E(FusionEngine):
-            def fuse(self, bundle, documents):
+            def fuse(self, bundle: Any, documents: list[Any]) -> FusionResult:
                 return FusionResult()
 
         assert isinstance(E(), FusionEngine)
@@ -686,17 +688,17 @@ class TestFusionEngineContract:
 class TestConflictResolverContract:
     def test_is_abstract(self) -> None:
         try:
-            ConflictResolver()
+            ConflictResolver()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class R(ConflictResolver):
-            def detect(self, claims):
+            def detect(self, claims: list[Any]) -> list[Any]:
                 return []
 
-            def resolve(self, conflicts, claims):
+            def resolve(self, conflicts: list[Any], claims: list[Any]) -> tuple[list[Any], list[Any]]:
                 return [], []
 
         assert isinstance(R(), ConflictResolver)
@@ -705,17 +707,17 @@ class TestConflictResolverContract:
 class TestSourceScorerContract:
     def test_is_abstract(self) -> None:
         try:
-            SourceScorer()
+            SourceScorer()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class S(SourceScorer):
-            def score(self, claim):
+            def score(self, claim: Any) -> SourceScore:
                 return SourceScore(url="http://test.com")
 
-            def score_evidence(self, evidence_set):
+            def score_evidence(self, evidence_set: Any) -> list[Any]:
                 return []
 
         assert isinstance(S(), SourceScorer)
@@ -724,7 +726,7 @@ class TestSourceScorerContract:
 class TestEntityResolverContract:
     def test_is_abstract(self) -> None:
         try:
-            EntityResolver()
+            EntityResolver()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
@@ -749,14 +751,14 @@ class TestEntityResolverContract:
 class TestKnowledgeMergerContract:
     def test_is_abstract(self) -> None:
         try:
-            KnowledgeMerger()
+            KnowledgeMerger()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class M(KnowledgeMerger):
-            def merge(self, claims, conflicts):
+            def merge(self, claims: list[Any], conflicts: list[Any]) -> list[Any]:
                 return []
 
         assert isinstance(M(), KnowledgeMerger)
@@ -765,14 +767,14 @@ class TestKnowledgeMergerContract:
 class TestChangeDetectorContract:
     def test_is_abstract(self) -> None:
         try:
-            ChangeDetector()
+            ChangeDetector()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class D(ChangeDetector):
-            def detect_delta(self, new_facts, existing_facts):
+            def detect_delta(self, new_facts: list[Any], existing_facts: list[Any]) -> KnowledgeDelta:
                 return KnowledgeDelta()
 
         assert isinstance(D(), ChangeDetector)
@@ -781,14 +783,14 @@ class TestChangeDetectorContract:
 class TestMemoryCandidateSelectorContract:
     def test_is_abstract(self) -> None:
         try:
-            MemoryCandidateSelector()
+            MemoryCandidateSelector()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
 
     def test_valid_subclass(self) -> None:
         class S(MemoryCandidateSelector):
-            def select(self, fusion_result, max_candidates=100):
+            def select(self, fusion_result: Any, max_candidates: int = 100) -> list[Any]:
                 return []
 
         assert isinstance(S(), MemoryCandidateSelector)
@@ -797,7 +799,7 @@ class TestMemoryCandidateSelectorContract:
 class TestPipelineStageContract:
     def test_is_abstract(self) -> None:
         try:
-            PipelineStage()
+            PipelineStage()  # type: ignore[abstract]
             raise AssertionError
         except TypeError:
             pass
@@ -963,7 +965,7 @@ class TestFusionPipeline:
             _StubSelector(),
             entity_resolver=_StubEntityResolver(),
         )
-        assert pipeline.run(bundle="ignored", documents=[]).accepted == ()
+        assert pipeline.run(bundle="ignored", documents=[]).accepted == ()  # type: ignore[arg-type]
 
     def test_create_with_stages(self) -> None:
         s = _make_stub_stage(FusionStage.EXTRACTION)
@@ -1343,7 +1345,7 @@ class TestSelectorCobertura:
         ctx = FusionContext()
         ctx.facts.append(kf)
         ctx.statistics["ambiguous_entity_ids"] = ["e1"]
-        written: list = []
+        written: list[Any] = []
 
         class _FakeMemory:
             def append(self, entry: object) -> None:
@@ -1383,7 +1385,7 @@ class TestDeltaCobertura:
                 self._kf("a", "o1"),
                 self._kf("b", "o2"),
                 self._kf("c", "o3"),
-                KnowledgeFact(id=None, subject="x", predicate="p", object="x", confidence=0.8),
+                KnowledgeFact(id=None, subject="x", predicate="p", object="x", confidence=0.8),  # type: ignore[arg-type]
                 self._kf("e", "new"),
             ],
             [self._kf("a", "o1"), self._kf("b", "old"), self._kf("c", "o3"), self._kf("e", "old")],
@@ -1635,7 +1637,7 @@ class TestRegistryCobertura:
         except KeyError:
             pass
         r.register_change_detector("d1", BasicChangeDetector())
-        assert r.get_change_detector("d1").version == "1.0.0"
+        assert r.get_change_detector("d1").version == "1.0.0"  # type: ignore[attr-defined]
         try:
             r.get_change_detector("nope")
             raise AssertionError
@@ -1693,7 +1695,7 @@ class TestConflictDetectionCobertura:
         assert rf == []
         assert {c.id for c in unres} == {"x2"}
         c1 = next(c for c in conflicts if c.id == "x1")
-        assert c1.resolved and "Preferring claim a1" in c1.resolution
+        assert c1.resolved and "Preferring claim a1" in c1.resolution  # type: ignore[operator]
 
     def test_stage_ramas(self) -> None:
         from motor.core.fusion.stages.conflict_detection import ConflictDetectionStage
@@ -1717,7 +1719,7 @@ class TestConflictDetectionCobertura:
         ctx3.statistics["ambiguous_entity_ids"] = ["otra"]
         ctx4 = ConflictDetectionStage().execute(ctx3)
         assert ctx4.statistics["conflicts_detected"] == 1
-        assert len(ctx4.conflict_graph.edges) == 1
+        assert len(ctx4.conflict_graph.edges) == 1  # type: ignore[union-attr]
         assert ctx4.provenance.conflict_resolver_name == "NaiveConflictResolver"
 
 
@@ -1731,11 +1733,11 @@ class TestContextBuilderCobertura:
         b = ContextBuilder()
         assert b.build_context() == ""
         assert b.index is None
-        b.set_index(None)
+        b.set_index(None)  # type: ignore[arg-type]
         assert b.build_context("que vende apple?") == ""
 
         class _Idx:
-            def lookup_entity(self, entity: str) -> list:
+            def lookup_entity(self, entity: str) -> list[Any]:
                 if entity == "apple":
                     return [
                         (
@@ -1750,7 +1752,7 @@ class TestContextBuilderCobertura:
                     ]
                 return []
 
-        b = ContextBuilder(_Idx())
+        b = ContextBuilder(_Idx())  # type: ignore[arg-type]
         ctx = b.build_context(query="Apple vende que?", include_entities=["apple", "oranges"])
         assert "vende | iPhones" in ctx
         assert "fue | fundada" in ctx
@@ -1760,7 +1762,7 @@ class TestContextBuilderCobertura:
 
         ctx2 = b.build_context(query="apple", include_entities=[])
         assert "Apple" in ctx2
-        ctx3 = ContextBuilder(_Idx()).build_context(query="h", include_entities=["nada"])
+        ctx3 = ContextBuilder(_Idx()).build_context(query="h", include_entities=["nada"])  # type: ignore[arg-type]
         assert ctx3 == ""
 
 
@@ -1841,7 +1843,7 @@ class TestFactIndexCobertura:
         except KeyError:
             pass
         try:
-            idx.add_fact(KnowledgeFact(id=None, subject="s", predicate="p", object="o", confidence=0.5))
+            idx.add_fact(KnowledgeFact(id=None, subject="s", predicate="p", object="o", confidence=0.5))  # type: ignore[arg-type]
             raise AssertionError
         except ValueError:
             pass
@@ -1872,7 +1874,7 @@ class TestFactIndexCobertura:
             version_id="v2", fact_id="f9", confidence=0.95, evidence_ids=("e2",), state=VersionState.CURRENT
         )
         idx.update_current("f9", v2)
-        assert idx.lookup("f9")[1].version_id == "v2"
+        assert idx.lookup("f9")[1].version_id == "v2"  # type: ignore[index]
         assert idx.lookup_subject_predicate("sol", "es")[0][1].version_id == "v2"
         try:
             idx.update_current("zz", v2)
@@ -1893,7 +1895,7 @@ class TestFactIndexCobertura:
         kfs = [
             KnowledgeFact(id="a", subject="S", predicate="P", object="O1", confidence=0.5),
             KnowledgeFact(id="a", subject="S", predicate="P", object="O2", confidence=0.5),
-            KnowledgeFact(id=None, subject="S", predicate="P", object="O3", confidence=0.5),
+            KnowledgeFact(id=None, subject="S", predicate="P", object="O3", confidence=0.5),  # type: ignore[arg-type]
         ]
         idx = FactIndex.build(kfs)
         assert idx.size == 1
@@ -1979,11 +1981,11 @@ class TestEntityResolverCobertura:
         )
 
         class _TieScorer(ScoringStrategy):
-            def select(self, entries, context):
+            def select(self, entries: list[Any], context: str) -> int | None:
                 return None
 
         class _IdxScorer(ScoringStrategy):
-            def select(self, entries, context):
+            def select(self, entries: list[Any], context: str) -> int | None:
                 return 1
 
         multi_reg = EntityRegistry(
@@ -2076,7 +2078,7 @@ class TestEntityResolverCobertura:
 class TestFactHistoryCobertura:
     """Cobertura 100x100: FactHistory completo (TASK-20260814-001)."""
 
-    def _h(self) -> tuple:
+    def _h(self) -> tuple[Any, ...]:
         from motor.core.fusion.fact_history import FactHistory
         from motor.core.fusion.models import Fact, FactVersion, VersionState
 

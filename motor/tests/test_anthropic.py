@@ -85,7 +85,7 @@ class TestAnthropicProvider:
         reg.register("anthropic", AnthropicProvider(), default=True)
         assert "anthropic" in reg
         p = reg.get("anthropic")
-        assert p._provider_name == "anthropic"
+        assert p._provider_name == "anthropic"  # type: ignore[attr-defined]
 
     def test_router_selection(self) -> None:
         reg = ProviderRegistry()

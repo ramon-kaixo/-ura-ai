@@ -83,7 +83,7 @@ class TestGeminiProvider:
         reg.register("gemini", GeminiProvider(), default=True)
         assert "gemini" in reg
         p = reg.get("gemini")
-        assert p._provider_name == "gemini"
+        assert p._provider_name == "gemini"  # type: ignore[attr-defined]
 
     def test_router_selection(self) -> None:
         from motor.core.llm.gemini import GeminiProvider

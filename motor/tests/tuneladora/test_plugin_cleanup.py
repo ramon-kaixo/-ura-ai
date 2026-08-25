@@ -6,13 +6,13 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.tuneladora.plugins.cleanup import CleanupPlugin
 
 
-def test_plugin_init():
+def test_plugin_init() -> None:
     engine = PipelineEngine()
     plugin = CleanupPlugin(engine)
     assert plugin is not None
 
 
-def test_watermark_returns_dict():
+def test_watermark_returns_dict() -> None:
     engine = PipelineEngine()
     plugin = CleanupPlugin(engine)
     result = plugin.watermark()

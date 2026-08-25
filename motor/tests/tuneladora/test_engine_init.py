@@ -6,13 +6,13 @@ from scripts.pro.tuneladora.config import Configuration
 from scripts.pro.tuneladora.engine import PipelineEngine
 
 
-def test_config_init():
+def test_config_init() -> None:
     config = Configuration()
     assert config is not None
     assert config.ura_root.exists()
 
 
-def test_engine_init():
+def test_engine_init() -> None:
     engine = PipelineEngine()
     assert engine is not None
     assert engine.config is not None
@@ -22,13 +22,13 @@ def test_engine_init():
     assert engine.promotion is not None
 
 
-def test_engine_init_with_config():
+def test_engine_init_with_config() -> None:
     config = Configuration()
     engine = PipelineEngine(config=config, pipeline="test_pipeline")
     assert engine.config == config
 
 
-def test_promotion_policy():
+def test_promotion_policy() -> None:
     engine = PipelineEngine()
     assert engine.promotion.can_promote is False
     engine.promotion.record("test_check", True, "OK")

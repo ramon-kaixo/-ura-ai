@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 import time
 from pathlib import Path
+from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.baseline import PerformanceBaseline
@@ -24,18 +25,18 @@ class _MockProvider(BaseLLMProvider):
     def __init__(self, delay: float = 0.0) -> None:
         self.delay = delay
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         if self.delay > 0:
             time.sleep(self.delay)
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -55,7 +56,7 @@ class TestBenchmarkMonitor:
 
         report = monitor.get_report()
         issues = monitor.get_recent_issues(10)
-        snap = {
+        snap: dict[str, Any] = {
             "resultados": {"generate": {"iterations": 1}},
             "monitor_report": report,
             "issues": issues,
@@ -89,7 +90,7 @@ class TestBenchmarkMonitor:
 
     def test_snapshot_json_schema(self) -> None:
         """Snapshot JSON tiene las claves esperadas."""
-        snap = {
+        snap: dict[str, Any] = {
             "resultados": {
                 "generate": {
                     "iterations": 5,
@@ -130,7 +131,7 @@ class TestBenchmarkMonitor:
         bl = PerformanceBaseline(max_samples=100)
         for _ in range(3):
             bl.record("p", "gen", wall_time_ms=100, cpu_time_ms=50)
-        assert bl.get_baseline("p", "gen").sample_count == 3
+        assert bl.get_baseline("p", "gen").sample_count == 3  # type: ignore[union-attr]
 
         # Guardar y recargar
         path = tmp_path / "bl.json"

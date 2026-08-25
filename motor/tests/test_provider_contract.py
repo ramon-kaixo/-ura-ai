@@ -11,6 +11,8 @@ Verifica:
 
 from __future__ import annotations
 
+from typing import Any
+
 from motor.core.llm.base import BaseLLMProvider, ProviderValidationResult, validate_provider
 from motor.core.llm.registry import ProviderRegistry
 from motor.core.llm.router import LLMRouter
@@ -20,39 +22,39 @@ class _ValidProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "valid_test"
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"provider": "valid_test", "status": "ok", "latency_ms": 0}
 
 
 class _NoNameProvider(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
 class _MissingMethod(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
     # Falta embed y embed_async
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -60,16 +62,16 @@ class _WrongReturn(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "wrong_return"
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> Any:
         return 123  # Debe retornar str
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> Any:
         return "not_a_list"  # Debe retornar list
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -99,16 +101,16 @@ class TestProviderContractValidation:
         """Clase que no hereda de BaseLLMProvider debe fallar."""
 
         class _NotAProvider:
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 return "ok"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         result = validate_provider(_NotAProvider)

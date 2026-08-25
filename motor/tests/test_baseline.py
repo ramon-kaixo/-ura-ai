@@ -15,6 +15,7 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.baseline import PerformanceBaseline
@@ -26,18 +27,18 @@ class _MockProvider(BaseLLMProvider):
     def __init__(self, delay: float = 0.0) -> None:
         self.delay = delay
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         if self.delay > 0:
             time.sleep(self.delay)
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -192,7 +193,7 @@ class TestBaselineRouterIntegration:
         reg.register("ok", _MockProvider(delay=0.01), default=True)
         router = LLMRouter(registry=reg, profiling_enabled=True, baseline_enabled=True)
         router.generate("test")
-        stats = router._baseline.get_baseline("ok", "generate")
+        stats = router._baseline.get_baseline("ok", "generate")  # type: ignore[union-attr]
         assert stats is not None
         assert stats.sample_count == 1
         assert stats.wall_time_p50 >= 5
@@ -203,6 +204,6 @@ class TestBaselineRouterIntegration:
         router = LLMRouter(registry=reg, profiling_enabled=True, baseline_enabled=True)
         for _ in range(5):
             router.generate("test")
-        stats = router._baseline.get_baseline("ok", "generate")
+        stats = router._baseline.get_baseline("ok", "generate")  # type: ignore[union-attr]
         assert stats is not None
         assert stats.sample_count == 5

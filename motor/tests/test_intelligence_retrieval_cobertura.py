@@ -12,12 +12,12 @@ import pytest
 
 def _install_ce_deps() -> None:
     fake_torch = types.ModuleType("torch")
-    fake_torch.cuda = types.SimpleNamespace(is_available=lambda: False)
-    fake_torch.no_grad = lambda: _CtxMgr()
-    fake_torch.manual_seed = lambda *a: None
+    fake_torch.cuda = types.SimpleNamespace(is_available=lambda: False)  # type: ignore[attr-defined]
+    fake_torch.no_grad = lambda: _CtxMgr()  # type: ignore[attr-defined]
+    fake_torch.manual_seed = lambda *a: None  # type: ignore[attr-defined]
     fake_transformers = types.ModuleType("transformers")
-    fake_transformers.AutoTokenizer = types.SimpleNamespace()
-    fake_transformers.AutoModelForSequenceClassification = types.SimpleNamespace()
+    fake_transformers.AutoTokenizer = types.SimpleNamespace()  # type: ignore[attr-defined]
+    fake_transformers.AutoModelForSequenceClassification = types.SimpleNamespace()  # type: ignore[attr-defined]
     sys.modules.setdefault("torch", fake_torch)
     sys.modules.setdefault("transformers", fake_transformers)
 
@@ -215,12 +215,12 @@ class _FakePoint:
         self.payload = payload
 
 
-class _FakeFeatures(dict):
+class _FakeFeatures(dict[str, Any]):
     def to(self, device: Any) -> Any:
         return self
 
 
-class _CtxMgr:
+class _CtxMgr:  # type: ignore[no-redef]
     def __enter__(self) -> Any:
         return self
 
@@ -244,7 +244,7 @@ class TestVectorRetriever:
         assert VectorRetriever(None).search("q") == []
 
     def test_sin_cliente(self) -> None:
-        assert VectorRetriever(_FakeQdrant(None)).search("q") == []
+        assert VectorRetriever(_FakeQdrant(None)).search("q") == []  # type: ignore[arg-type]
 
     def test_hits_ok(self) -> None:
         qc = _FakeQdrant(
@@ -255,7 +255,7 @@ class TestVectorRetriever:
                 ],
             ),
         )
-        res = VectorRetriever(qc, collection="col").search("q", k=5)
+        res = VectorRetriever(qc, collection="col").search("q", k=5)  # type: ignore[arg-type]
         assert len(res) == 2
         assert res[0]["doc_id"] == "doc_x"
         assert res[0]["source"] == "vector"
@@ -266,7 +266,7 @@ class TestVectorRetriever:
 
     def test_hits_vacio(self) -> None:
         qc = _FakeQdrant(_FakeClient([]))
-        assert VectorRetriever(qc).search("q") == []
+        assert VectorRetriever(qc).search("q") == []  # type: ignore[arg-type]
 
 
 # ── hybrid ──────────────────────────────────────────────────────────────────
@@ -621,7 +621,7 @@ class TestRerankers:
         llm = _import_llm()
         recibidos: dict[str, Any] = {}
 
-        def fake_generate(prompt: str, model: str, options: dict) -> str:
+        def fake_generate(prompt: str, model: str, options: dict[str, Any]) -> str:
             recibidos["prompt"] = prompt
             recibidos["model"] = model
             recibidos["options"] = options
@@ -675,7 +675,7 @@ class TestRerankers:
         monkeypatch.setattr(llm, "generate", boom)
         assert llm.LLMReranker(model="m")._score("q", "d", "t") == 0.0
 
-    def test_llm_parse_score(self) -> None:
+    def test_llm_parse_score(self) -> None:  # type: ignore[no-redef]
         llm = _import_llm()
         r = llm.LLMReranker()
         assert r._parse_score("7.5") == 0.75
@@ -699,7 +699,7 @@ class TestRerankers:
 
 def _import_ce() -> types.ModuleType:
     if "motor.intelligence.reranking.ce" in sys.modules:
-        return sys.modules["motor.intelligence.reranking.ce"]  # type: ignore[no-any-return]
+        return sys.modules["motor.intelligence.reranking.ce"]
 
     from motor.intelligence.reranking import ce
 

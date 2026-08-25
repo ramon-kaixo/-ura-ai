@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import Any
 
 from motor.core.web.citation.citation import (
     CitationBundle,
@@ -144,7 +145,7 @@ class TestCitationBundle:
 # ── CitationEngine ──────────────────────────
 
 
-def _summarize(text: str, max_len: int = 5) -> tuple:
+def _summarize(text: str, max_len: int = 5) -> tuple[Any, ...]:
     """Helper: crea un resumen a partir de un texto."""
     doc = _doc(text=text)
     s = ExtractiveSummarizer()

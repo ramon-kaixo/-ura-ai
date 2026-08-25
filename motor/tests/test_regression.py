@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
+from typing import Any
 
 from motor.core.evaluation.regression import (
     RegressionBaseline,
@@ -25,9 +26,9 @@ from motor.core.evaluation.regression import (
 
 def _make_result(
     config: str = "bm25",
-    metrics: dict | None = None,
-    latency: dict | None = None,
-) -> dict:
+    metrics: dict[str, Any] | None = None,
+    latency: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     return {
         "config": config,
         "metrics": metrics or {"recall@10": 0.85, "mrr": 0.75, "ndcg@10": 0.80, "map": 0.70},

@@ -72,7 +72,7 @@ class TestOpenRouterProvider:
         reg.register("openrouter", OpenRouterProvider(), default=True)
         assert "openrouter" in reg
         p = reg.get("openrouter")
-        assert p._provider_name == "openrouter"
+        assert p._provider_name == "openrouter"  # type: ignore[attr-defined]
 
     def test_router_selection(self) -> None:
         from motor.core.llm.ollama import OllamaProvider

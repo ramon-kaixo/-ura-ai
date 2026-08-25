@@ -11,6 +11,7 @@ Verifica:
 from __future__ import annotations
 
 import time
+from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.profiler import LLMProfiler
@@ -19,32 +20,32 @@ from motor.core.llm.router import LLMRouter
 
 
 class _MockOK(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         time.sleep(0.01)  # Simular trabajo
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
 class _MockSlow(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         time.sleep(0.05)
         return "slow_ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 

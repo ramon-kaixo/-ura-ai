@@ -6,14 +6,14 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.tuneladora.plugins.code_quality import CodeQualityPlugin
 
 
-def test_plugin_init():
+def test_plugin_init() -> None:
     engine = PipelineEngine()
     plugin = CodeQualityPlugin(engine)
     assert plugin is not None
     assert plugin.engine is engine
 
 
-def test_ruff_check_returns_dict():
+def test_ruff_check_returns_dict() -> None:
     engine = PipelineEngine()
     plugin = CodeQualityPlugin(engine)
     result = plugin.ruff_check()

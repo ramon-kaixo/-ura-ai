@@ -7,20 +7,21 @@ Usa respuestas simuladas (no requiere Qdrant real).
 
 from __future__ import annotations
 
+from typing import Any
 from unittest.mock import patch
 
 from motor.core import qdrant_rest
 
 
 class MockResponse:
-    def __init__(self, status_code: int, json_data: dict | None = None):
+    def __init__(self, status_code: int, json_data: dict[str, Any] | None = None) -> None:
         self.status_code = status_code
         self._json = json_data or {}
 
-    def json(self):
+    def json(self) -> Any:
         return self._json
 
-    def raise_for_status(self):
+    def raise_for_status(self) -> None:
         if self.status_code >= 400:
             raise Exception(f"HTTP {self.status_code}")
 
@@ -30,11 +31,11 @@ class MockConfig:
     qdrant_port = 6333
 
 
-def test_guardar_rest_exitoso():
-    config = MockConfig()
+def test_guardar_rest_exitoso() -> None:
+    config: Any = MockConfig()
     incidente = {"ts": "2026-01-01T00:00:00Z", "tipo": "test", "vector": [0.1, 0.2, 0.3]}
 
-    def build_payload(d):
+    def build_payload(d: Any) -> dict[str, Any]:
         return {
             "timestamp_inicio": d.get("ts", ""),
             "impacto_memoria": d.get("vector", [0.0] * 7),
@@ -57,20 +58,20 @@ def test_guardar_rest_exitoso():
         assert mock_put.call_args[1]["timeout"] == 5
 
 
-def test_guardar_rest_excepcion():
-    config = MockConfig()
+def test_guardar_rest_excepcion() -> None:
+    config: Any = MockConfig()
 
-    def build_payload(d):
+    def build_payload(d: Any) -> dict[str, Any]:
         return {"timestamp_inicio": "", "impacto_memoria": [0.0] * 7, "tipo_incidencia": "test"}
 
     with patch("motor.core.qdrant_rest.httpx.put", side_effect=Exception("net")):
         assert qdrant_rest.guardar_rest(config, {}, build_payload) is False
 
 
-def test_guardar_rest_fallo():
-    config = MockConfig()
+def test_guardar_rest_fallo() -> None:
+    config: Any = MockConfig()
 
-    def build_payload(d):
+    def build_payload(d: Any) -> dict[str, Any]:
         return {"timestamp_inicio": "", "impacto_memoria": [0.0] * 7, "tipo_incidencia": "test"}
 
     with patch("motor.core.qdrant_rest.httpx.put", return_value=MockResponse(500)) as mock_put:
@@ -79,8 +80,8 @@ def test_guardar_rest_fallo():
         mock_put.assert_called_once()
 
 
-def test_guardar_documentos_rest():
-    config = MockConfig()
+def test_guardar_documentos_rest() -> None:
+    config: Any = MockConfig()
     puntos = [{"id": 1, "vector": [0.1], "payload": {}}]
 
     with patch("motor.core.qdrant_rest.httpx.put", return_value=MockResponse(201)) as mock_put:
@@ -92,21 +93,21 @@ def test_guardar_documentos_rest():
         assert mock_put.call_args[1]["timeout"] == 10
 
 
-def test_guardar_documentos_rest_500():
-    config = MockConfig()
+def test_guardar_documentos_rest_500() -> None:
+    config: Any = MockConfig()
     puntos = [{"id": 1, "vector": [0.1], "payload": {}}]
     with patch("motor.core.qdrant_rest.httpx.put", return_value=MockResponse(500)):
         assert qdrant_rest.guardar_documentos_rest(config, puntos, "c") == 0
 
 
-def test_guardar_documentos_rest_excepcion():
-    config = MockConfig()
+def test_guardar_documentos_rest_excepcion() -> None:
+    config: Any = MockConfig()
     with patch("motor.core.qdrant_rest.httpx.put", side_effect=Exception("net")):
         assert qdrant_rest.guardar_documentos_rest(config, [{"id": 1}], "c") == 0
 
 
-def test_buscar_similitud_rest():
-    config = MockConfig()
+def test_buscar_similitud_rest() -> None:
+    config: Any = MockConfig()
     mock_json = {"result": [{"payload": {"text": "test"}, "score": 0.95}]}
 
     with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(200, mock_json)) as mock_post:
@@ -119,21 +120,21 @@ def test_buscar_similitud_rest():
         assert mock_post.call_args[1]["timeout"] == 5
 
 
-def test_buscar_similitud_rest_excepcion():
-    config = MockConfig()
+def test_buscar_similitud_rest_excepcion() -> None:
+    config: Any = MockConfig()
     with patch("motor.core.qdrant_rest.httpx.post", side_effect=Exception("net")):
         assert qdrant_rest.buscar_similitud_rest(config, [0.1], "docs", 5) == []
 
 
-def test_buscar_similitud_rest_vacio():
-    config = MockConfig()
+def test_buscar_similitud_rest_vacio() -> None:
+    config: Any = MockConfig()
     with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(500)):
         results = qdrant_rest.buscar_similitud_rest(config, [0.1], "docs", 5)
         assert results == []
 
 
-def test_eliminar_por_filtro_rest():
-    config = MockConfig()
+def test_eliminar_por_filtro_rest() -> None:
+    config: Any = MockConfig()
     filtro = {"source": "test"}
 
     with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(200)) as mock_post:
@@ -146,14 +147,14 @@ def test_eliminar_por_filtro_rest():
         assert mock_post.call_args[1]["timeout"] == 5
 
 
-def test_eliminar_por_filtro_rest_excepcion():
-    config = MockConfig()
+def test_eliminar_por_filtro_rest_excepcion() -> None:
+    config: Any = MockConfig()
     with patch("motor.core.qdrant_rest.httpx.post", side_effect=Exception("net")):
         assert qdrant_rest.eliminar_por_filtro_rest(config, {"a": 1}, "docs") is False
 
 
-def test_eliminar_por_filtro_rest_fallo():
-    config = MockConfig()
+def test_eliminar_por_filtro_rest_fallo() -> None:
+    config: Any = MockConfig()
     with patch("motor.core.qdrant_rest.httpx.post", return_value=MockResponse(500)):
         result = qdrant_rest.eliminar_por_filtro_rest(config, {}, "docs")
         assert result is False

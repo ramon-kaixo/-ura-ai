@@ -6,14 +6,14 @@ from scripts.pro.tuneladora.engine import PipelineEngine
 from scripts.pro.tuneladora.plugins.health import HealthPlugin
 
 
-def test_plugin_init():
+def test_plugin_init() -> None:
     engine = PipelineEngine()
     plugin = HealthPlugin(engine)
     assert plugin is not None
     assert plugin.engine is engine
 
 
-def test_check_all_returns_dict():
+def test_check_all_returns_dict() -> None:
     engine = PipelineEngine()
     plugin = HealthPlugin(engine)
     result = plugin.check_all()

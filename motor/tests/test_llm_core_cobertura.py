@@ -30,7 +30,7 @@ from motor.core.llm.registry import ProviderRegistry
 
 
 class FakeResp:
-    def __init__(self, data: dict | None = None, status: int = 200, text: str = "detalle") -> None:
+    def __init__(self, data: dict[str, Any] | None = None, status: int = 200, text: str = "detalle") -> None:
         self._data = data or {}
         self.status_code = status
         self.text = text
@@ -44,7 +44,7 @@ class FakeResp:
                 response=httpx.Response(self.status_code),
             )
 
-    def json(self) -> dict:
+    def json(self) -> dict[str, Any]:
         return self._data
 
 
@@ -66,7 +66,7 @@ class FakeStream:
 class FakeAsyncClient:
     def __init__(self, responses: list[Any]) -> None:
         self._responses = list(responses)
-        self.posted: list[tuple[str, dict]] = []
+        self.posted: list[tuple[str, dict[str, Any]]] = []
 
     async def __aenter__(self) -> Self:
         return self
@@ -145,13 +145,13 @@ class TestOpenAIInit:
 class TestOpenAIGenerate:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append({"url": url, "json": kw.get("json", {})})
             return _ok_generate()
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.generate("hola")
         assert out == "hola mundo"
@@ -163,13 +163,13 @@ class TestOpenAIGenerate:
 
     def test_ok_model_y_options(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _ok_generate()
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.generate("hola", model="gpt-x", options={"temperature": 0.9})
         assert out == "hola mundo"
@@ -178,7 +178,7 @@ class TestOpenAIGenerate:
 
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")))
+        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.generate("hola")
         assert out.startswith("Error:")
@@ -187,7 +187,7 @@ class TestOpenAIGenerate:
     def test_http_status_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
         monkeypatch.setattr(
-            openai_mod.httpx,
+            openai_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
                 httpx.HTTPStatusError(
@@ -204,13 +204,13 @@ class TestOpenAIGenerate:
 
     def test_request_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("conn")))
+        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("conn")))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         assert "conectar" in p.generate("hola")
 
     def test_unexpected_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))
+        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         assert "interno" in p.generate("hola")
 
@@ -232,14 +232,14 @@ class TestOpenAIGenerateStream:
 
     def test_stream_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream(self._lines()))
+        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream(self._lines()))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         chunks = list(p.generate_stream("hola"))
         assert chunks == ["un", "dos"]
 
     def test_stream_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream([], status=429))
+        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream([], status=429))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         with pytest.raises(RuntimeError, match="429"):
             list(p.generate_stream("hola"))
@@ -250,7 +250,7 @@ class TestOpenAIGenerateStream:
             "data: " + json.dumps({"choices": [{"delta": {"content": "x"}}]}),
             "data: " + json.dumps({"choices": [{"delta": {"content": "y"}}]}),
         ]
-        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream(lines))
+        monkeypatch.setattr(openai_mod.httpx, "stream", lambda *a, **k: FakeStream(lines))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         assert list(p.generate_stream("hola")) == ["x", "y"]
 
@@ -261,7 +261,7 @@ class TestOpenAIGenerateStream:
 class TestOpenAIChat:
     def test_ok_con_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
@@ -272,7 +272,7 @@ class TestOpenAIChat:
                 }
             )
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.chat_generate([{"role": "user", "content": "q"}], tools=[{"type": "function"}])
         assert out["content"] == "resp"
@@ -282,13 +282,13 @@ class TestOpenAIChat:
 
     def test_ok_sin_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return FakeResp({"choices": [{"message": {"content": None}}]})
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.chat_generate([{"role": "user", "content": "q"}], model="m2")
         assert out["content"] == ""
@@ -297,7 +297,7 @@ class TestOpenAIChat:
 
     def test_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: FakeResp(status=503))
+        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: FakeResp(status=503))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         with pytest.raises(RuntimeError, match="503"):
             p.chat_generate([{"role": "user", "content": "q"}])
@@ -309,13 +309,13 @@ class TestOpenAIChat:
 class TestOpenAIEmbed:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _ok_embed(2)
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.embed(["a", "b"])
         assert out == [[0.1, 0.2], [0.1, 0.2]]
@@ -324,13 +324,13 @@ class TestOpenAIEmbed:
 
     def test_ok_model_explicito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _ok_embed(1)
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.embed(["a"], model="custom-embed")
         assert calls[0]["model"] == "custom-embed"
@@ -344,9 +344,9 @@ class TestOpenAIEmbed:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.embed(["a"], model="otro-embed")
         assert out == [[0.1, 0.2]]
@@ -359,9 +359,9 @@ class TestOpenAIEmbed:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.embed(["a", "b"])
         assert out == [[0.1, 0.2], [0.1, 0.2]]
@@ -374,9 +374,9 @@ class TestOpenAIEmbed:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openai_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.embed(["a", "b"])
         assert out == [[0.0] * 1536, [0.1, 0.2]]
@@ -390,7 +390,7 @@ class TestOpenAIEmbed:
         def fake_async(*a: Any, **k: Any) -> FakeAsyncClient:
             return client
 
-        monkeypatch.setattr(openai_mod.httpx, "AsyncClient", fake_async)
+        monkeypatch.setattr(openai_mod.httpx, "AsyncClient", fake_async)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = asyncio.run(p.embed_async(["a", "b"]))
         assert out == [[0.1, 0.2], [0.1, 0.2]]
@@ -404,7 +404,7 @@ class TestOpenAIEmbed:
         def fake_async(*a: Any, **k: Any) -> FakeAsyncClient:
             return client
 
-        monkeypatch.setattr(openai_mod.httpx, "AsyncClient", fake_async)
+        monkeypatch.setattr(openai_mod.httpx, "AsyncClient", fake_async)  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = asyncio.run(p.embed_async(["a", "b"]))
         assert out == [[0.1, 0.2], [0.0] * 1536]
@@ -417,7 +417,7 @@ class TestOpenAIHealth:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
         monkeypatch.setattr(
-            openai_mod.httpx,
+            openai_mod.httpx,  # type: ignore[attr-defined]
             "get",
             lambda *a, **k: FakeResp({"data": [{"id": "gpt-4"}, {"id": "gpt-3"}]}),
         )
@@ -429,7 +429,7 @@ class TestOpenAIHealth:
 
     def test_is_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="boom"))
+        monkeypatch.setattr(openai_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="boom"))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.health()
         assert out["status"] == "error"
@@ -437,7 +437,7 @@ class TestOpenAIHealth:
 
     def test_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(openai_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.health()
         assert out["status"] == "error"
@@ -468,7 +468,7 @@ class TestOllamaComplemento:
             def iter_lines(self) -> Iterator[str]:
                 yield from lines
 
-        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: FakeOllamaStream())
+        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: FakeOllamaStream())  # type: ignore[attr-defined]
         p = OllamaProvider()
         chunks = list(p.generate_stream("hola"))
         assert "primero" in chunks
@@ -477,7 +477,7 @@ class TestOllamaComplemento:
     def test_health_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OLLAMA_HOST", "http://fake:11434")
         monkeypatch.setattr(
-            ollama_mod.httpx,
+            ollama_mod.httpx,  # type: ignore[attr-defined]
             "get",
             lambda *a, **k: FakeResp({"models": [{"name": "llama3"}, {"name": "qwen"}]}),
         )
@@ -488,7 +488,7 @@ class TestOllamaComplemento:
 
     def test_health_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OLLAMA_HOST", "http://fake:11434")
-        monkeypatch.setattr(ollama_mod.httpx, "get", lambda *a, **k: FakeResp(status=500))
+        monkeypatch.setattr(ollama_mod.httpx, "get", lambda *a, **k: FakeResp(status=500))  # type: ignore[attr-defined]
         p = OllamaProvider()
         out = p.health()
         assert out["status"] == "error"
@@ -496,7 +496,7 @@ class TestOllamaComplemento:
     def test_embed_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OLLAMA_HOST", "http://fake:11434")
         monkeypatch.setattr(
-            ollama_mod.httpx,
+            ollama_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"embeddings": [[0.5, 0.5], [0.6, 0.6]]}),
         )
@@ -507,13 +507,13 @@ class TestOllamaComplemento:
 
 class TestOllamaGenerate:
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return FakeResp({"response": "  respuesta  ", "eval_count": 7, "eval_duration": 1_000_000})
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert p.generate("hola") == "respuesta"
         assert calls[0]["stream"] is False
@@ -521,20 +521,20 @@ class TestOllamaGenerate:
         assert calls[0]["options"]["num_predict"] == p._max_tokens
 
     def test_ok_respuesta_vacia(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: FakeResp({"response": "   "}))
+        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: FakeResp({"response": "   "}))  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert p.generate("hola") == "El modelo no generó ninguna respuesta."
 
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))
+            ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
         )
         p = OllamaProvider()
         assert "tiempo" in p.generate("hola")
 
     def test_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            ollama_mod.httpx,
+            ollama_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
                 httpx.HTTPStatusError(
@@ -546,12 +546,12 @@ class TestOllamaGenerate:
         assert "500" in p.generate("hola")
 
     def test_connection_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert "conectar" in p.generate("hola")
 
     def test_unexpected(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))
+        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert "interno" in p.generate("hola")
 
@@ -576,7 +576,7 @@ class TestOllamaStreamErrores:
             def iter_lines(self) -> Iterator[str]:
                 return iter([])
 
-        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: Bad())
+        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: Bad())  # type: ignore[attr-defined]
         p = OllamaProvider()
         with pytest.raises(RuntimeError, match="500"):
             list(p.generate_stream("hola"))
@@ -594,20 +594,20 @@ class TestOllamaStreamErrores:
             def iter_lines(self) -> Iterator[str]:
                 return iter(["", '{"response": "a"}', '{"response": ""}'])
 
-        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: S())
+        monkeypatch.setattr(ollama_mod.httpx, "stream", lambda *a, **k: S())  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert list(p.generate_stream("hola")) == ["a"]
 
 
 class TestOllamaChat:
     def test_ok_sin_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return FakeResp({"message": {"content": "chat ok"}, "prompt_eval_count": 2, "eval_count": 4})
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         out = p.chat_generate([{"role": "user", "content": "q"}])
         assert out["content"] == "chat ok"
@@ -616,7 +616,7 @@ class TestOllamaChat:
         assert "tools" not in calls[0]
 
     def test_ok_con_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
@@ -629,14 +629,14 @@ class TestOllamaChat:
                 }
             )
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         out = p.chat_generate([{"role": "user", "content": "q"}], tools=[{"type": "function"}])
         assert out["tool_calls"][0]["function"]["arguments"] == {"x": 1}
         assert "tools" in calls[0]
 
     def test_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: FakeResp(status=429))
+        monkeypatch.setattr(ollama_mod.httpx, "post", lambda *a, **k: FakeResp(status=429))  # type: ignore[attr-defined]
         p = OllamaProvider()
         with pytest.raises(RuntimeError, match="429"):
             p.chat_generate([{"role": "user", "content": "q"}])
@@ -646,16 +646,16 @@ class TestOllamaNormalizarToolCalls:
     def test_args_dict(self) -> None:
         out = OllamaProvider._normalizar_tool_calls([{"id": "a", "function": {"name": "n", "arguments": {"k": 1}}}])
         assert out[0]["id"] == "a"
-        assert out[0]["function"]["arguments"] == {"k": 1}
+        assert out[0]["function"]["arguments"] == {"k": 1}  # type: ignore[index]
 
     def test_args_str_valido(self) -> None:
         out = OllamaProvider._normalizar_tool_calls([{"function": {"arguments": '{"k": 2}'}}])
-        assert out[0]["function"]["arguments"]["k"] == 2
-        assert out[0]["id"].startswith("call_")
+        assert out[0]["function"]["arguments"]["k"] == 2  # type: ignore[index]
+        assert out[0]["id"].startswith("call_")  # type: ignore[attr-defined]
 
     def test_args_str_invalido(self) -> None:
         out = OllamaProvider._normalizar_tool_calls([{"function": {"arguments": "no-json"}}])
-        assert out[0]["function"]["arguments"] == {"raw": "no-json"}
+        assert out[0]["function"]["arguments"] == {"raw": "no-json"}  # type: ignore[index]
 
 
 class TestOllamaEmbedFallback:
@@ -666,9 +666,9 @@ class TestOllamaEmbedFallback:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         out = p.embed(["a"])
         assert out == [[0.7]]
@@ -680,9 +680,9 @@ class TestOllamaEmbedFallback:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert p.embed(["a"]) == [[0.1]]
 
@@ -693,9 +693,9 @@ class TestOllamaEmbedFallback:
             resp = respuestas.pop(0)
             if isinstance(resp, Exception):
                 raise resp
-            return resp
+            return resp  # type: ignore[no-any-return]
 
-        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(ollama_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OllamaProvider()
         out = p.embed(["a", "b"])
         assert out == [[0.0] * 768, [0.0] * 768]
@@ -704,7 +704,7 @@ class TestOllamaEmbedFallback:
         import asyncio
 
         client = FakeAsyncClient([FakeResp({"embeddings": [[0.5, 0.5]]})])
-        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)
+        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert asyncio.run(p.embed_async(["a"])) == [[0.5, 0.5]]
 
@@ -712,7 +712,7 @@ class TestOllamaEmbedFallback:
         import asyncio
 
         client = FakeAsyncClient([FakeResp(status=500), FakeResp({"embedding": [0.2]})])
-        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)
+        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert asyncio.run(p.embed_async(["a"])) == [[0.2]]
 
@@ -720,7 +720,7 @@ class TestOllamaEmbedFallback:
         import asyncio
 
         client = FakeAsyncClient([httpx.RequestError("x"), httpx.RequestError("y")])
-        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)
+        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert asyncio.run(p.embed_async(["a"])) == [[0.0] * 768]
 
@@ -728,7 +728,7 @@ class TestOllamaEmbedFallback:
         import asyncio
 
         client = FakeAsyncClient([ValueError("boom"), httpx.RequestError("y")])
-        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)
+        monkeypatch.setattr(ollama_mod.httpx, "AsyncClient", lambda *a, **k: client)  # type: ignore[attr-defined]
         p = OllamaProvider()
         assert asyncio.run(p.embed_async(["a"])) == [[0.0] * 768]
 
@@ -817,8 +817,8 @@ class _MiniProvider:
 class TestRegistryCobertura:
     def test_unregister_default_con_restantes(self) -> None:
         reg = ProviderRegistry()
-        reg.register("a", _MiniProvider(), default=True)
-        reg.register("b", _MiniProvider())
+        reg.register("a", _MiniProvider(), default=True)  # type: ignore[arg-type]
+        reg.register("b", _MiniProvider())  # type: ignore[arg-type]
         reg.unregister("a")
         assert reg.default_name == "b"
         assert reg.default is not None
@@ -857,7 +857,7 @@ class TestAnthropicCobertura:
 
     def test_generate_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
@@ -868,7 +868,7 @@ class TestAnthropicCobertura:
                 }
             )
 
-        monkeypatch.setattr(anthropic_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(anthropic_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert p.generate("hola") == "uno dos"
         assert calls[0]["model"] == "claude-sonnet-4-20250514"
@@ -876,14 +876,14 @@ class TestAnthropicCobertura:
 
     def test_generate_vacio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: FakeResp({"content": []}))
+        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: FakeResp({"content": []}))  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert p.generate("hola") == "El modelo no generó ninguna respuesta."
 
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
         monkeypatch.setattr(
-            anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))
+            anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
         )
         p = AnthropicProvider()
         assert "tiempo" in p.generate("hola")
@@ -891,7 +891,7 @@ class TestAnthropicCobertura:
     def test_generate_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
         monkeypatch.setattr(
-            anthropic_mod.httpx,
+            anthropic_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
                 httpx.HTTPStatusError(
@@ -904,13 +904,13 @@ class TestAnthropicCobertura:
 
     def test_generate_request_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert "conectar" in p.generate("hola")
 
     def test_generate_unexpected(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))
+        monkeypatch.setattr(anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert "interno" in p.generate("hola")
 
@@ -923,7 +923,7 @@ class TestAnthropicCobertura:
     def test_health_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
         monkeypatch.setattr(
-            anthropic_mod.httpx,
+            anthropic_mod.httpx,  # type: ignore[attr-defined]
             "get",
             lambda *a, **k: FakeResp({"data": [{"id": "claude-1"}, {"id": "claude-2"}]}),
         )
@@ -934,13 +934,13 @@ class TestAnthropicCobertura:
 
     def test_health_is_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        monkeypatch.setattr(anthropic_mod.httpx, "get", lambda *a, **k: FakeResp(status=403, text="denegado"))
+        monkeypatch.setattr(anthropic_mod.httpx, "get", lambda *a, **k: FakeResp(status=403, text="denegado"))  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert p.health()["status"] == "error"
 
     def test_health_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
-        monkeypatch.setattr(anthropic_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(anthropic_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = AnthropicProvider()
         assert p.health()["status"] == "error"
 
@@ -963,7 +963,7 @@ class TestGeminiCobertura:
 
     def test_generate_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append({"url": url, "json": kw.get("json", {})})
@@ -974,7 +974,7 @@ class TestGeminiCobertura:
                 }
             )
 
-        monkeypatch.setattr(gemini_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(gemini_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.generate("hola") == "ab"
         assert ":generateContent" in calls[0]["url"]
@@ -983,14 +983,14 @@ class TestGeminiCobertura:
 
     def test_generate_sin_candidates(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: FakeResp({}))
+        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: FakeResp({}))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.generate("hola") == "El modelo no generó ninguna respuesta."
 
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         monkeypatch.setattr(
-            gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))
+            gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
         )
         p = GeminiProvider()
         assert "tiempo" in p.generate("hola")
@@ -998,7 +998,7 @@ class TestGeminiCobertura:
     def test_generate_http_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         monkeypatch.setattr(
-            gemini_mod.httpx,
+            gemini_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
                 httpx.HTTPStatusError(
@@ -1011,32 +1011,32 @@ class TestGeminiCobertura:
 
     def test_generate_request_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert "conectar" in p.generate("hola")
 
     def test_generate_unexpected(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))
+        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(ValueError("boom")))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert "interno" in p.generate("hola")
 
     def test_embed_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return FakeResp({"embeddings": [{"values": [0.1]}, {"values": [0.2]}]})
 
-        monkeypatch.setattr(gemini_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(gemini_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.embed(["a", "b"]) == [[0.1], [0.2]]
         assert ":batchEmbedContents" in calls[0] if False else len(calls[0]["requests"]) == 2
 
     def test_embed_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.embed(["a"]) == [[0.0] * 768]
 
@@ -1045,7 +1045,7 @@ class TestGeminiCobertura:
 
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         monkeypatch.setattr(
-            gemini_mod.httpx,
+            gemini_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: FakeResp({"embeddings": [{"values": [0.5]}]}),
         )
@@ -1054,20 +1054,20 @@ class TestGeminiCobertura:
 
     def test_health_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: FakeResp({}))
+        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: FakeResp({}))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.health()["status"] == "ok"
 
     def test_health_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: FakeResp(status=400, text="bad"))
+        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: FakeResp(status=400, text="bad"))  # type: ignore[attr-defined]
         p = GeminiProvider()
         out = p.health()
         assert out["status"] == "error"
 
     def test_health_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
-        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(gemini_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         p = GeminiProvider()
         assert p.health()["status"] == "error"
 
@@ -1094,13 +1094,13 @@ def _provider_ok_resp() -> FakeResp:
 
 class TestLMStudioCobertura:
     def test_generate_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _provider_ok_resp()
 
-        monkeypatch.setattr(lmstudio_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(lmstudio_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = LMStudioProvider()
         assert p.generate("hola") == "rta ok"
         assert calls[0]["model"] == "local-model"
@@ -1113,16 +1113,16 @@ class TestLMStudioCobertura:
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
-            monkeypatch.setattr(lmstudio_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))
+            monkeypatch.setattr(lmstudio_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))  # type: ignore[attr-defined]
             assert fragmento in p.generate("hola")
 
     def test_embed_ok_y_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.3]}, {"embedding": [0.4]}]})
+            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.3]}, {"embedding": [0.4]}]})  # type: ignore[attr-defined]
         )
         assert p.embed(["a", "b"]) == [[0.3], [0.4]]
-        monkeypatch.setattr(lmstudio_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(lmstudio_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.embed(["a"]) == [[0.0] * 768]
 
     def test_embed_async_y_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1130,27 +1130,27 @@ class TestLMStudioCobertura:
 
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.9]}]})
+            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.9]}]})  # type: ignore[attr-defined]
         )
         assert asyncio.run(p.embed_async(["a"])) == [[0.9]]
-        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "m1"}]}))
+        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "m1"}]}))  # type: ignore[attr-defined]
         assert p.health()["status"] == "ok"
         assert p.health()["modelos_disponibles"] == ["m1"]
-        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="e"))
+        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="e"))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
-        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
 
 
 class TestVLLMCobertura:
     def test_generate_ok_y_errores(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _provider_ok_resp()
 
-        monkeypatch.setattr(vllm_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(vllm_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = VLLMProvider()
         assert p.generate("hola") == "rta ok"
         assert calls[0]["model"] == "local-model"
@@ -1160,22 +1160,22 @@ class TestVLLMCobertura:
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
-            monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))
+            monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))  # type: ignore[attr-defined]
             assert fragmento in p.generate("hola")
 
     def test_embed_y_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = VLLMProvider()
         monkeypatch.setattr(
-            vllm_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]})
+            vllm_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]})  # type: ignore[attr-defined]
         )
         assert p.embed(["a"]) == [[0.1]]
-        monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.embed(["a"]) == [[0.0] * 768]
-        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "v1"}]}))
+        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "v1"}]}))  # type: ignore[attr-defined]
         assert p.health()["status"] == "ok"
-        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: FakeResp(status=500))
+        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: FakeResp(status=500))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
-        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(vllm_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
 
 
@@ -1188,13 +1188,13 @@ class TestOpenRouterCobertura:
 
     def test_generate_ok_y_errores(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
-        calls: list[dict] = []
+        calls: list[dict[str, Any]] = []
 
         def fake_post(url: str, **kw: Any) -> FakeResp:
             calls.append(kw.get("json", {}))
             return _provider_ok_resp()
 
-        monkeypatch.setattr(openrouter_mod.httpx, "post", fake_post)
+        monkeypatch.setattr(openrouter_mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         p = OpenRouterProvider()
         assert p.generate("hola") == "rta ok"
         assert calls[0]["model"] == "openrouter/auto"
@@ -1204,27 +1204,27 @@ class TestOpenRouterCobertura:
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
-            monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))
+            monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, exc=exc, **k: (_ for _ in ()).throw(exc))  # type: ignore[attr-defined]
             assert fragmento in p.generate("hola")
 
     def test_embed_ok_y_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
         p = OpenRouterProvider()
         monkeypatch.setattr(
-            openrouter_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]})
+            openrouter_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]})  # type: ignore[attr-defined]
         )
         assert p.embed(["a"]) == [[0.2]]
-        monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.embed(["a"]) == [[0.0] * 768]
 
     def test_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
         p = OpenRouterProvider()
-        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "o1"}]}))
+        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "o1"}]}))  # type: ignore[attr-defined]
         assert p.health()["status"] == "ok"
-        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="e"))
+        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: FakeResp(status=500, text="e"))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
-        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))
+        monkeypatch.setattr(openrouter_mod.httpx, "get", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
         assert p.health()["status"] == "error"
 
 
@@ -1264,7 +1264,7 @@ class TestMonitorProperties:
 class TestRegistryUnregisterDefault:
     def test_unregister_ultimo(self) -> None:
         reg = ProviderRegistry()
-        reg.register("a", _MiniProvider(), default=True)
+        reg.register("a", _MiniProvider(), default=True)  # type: ignore[arg-type]
         reg.unregister("a")
         assert reg.default is None
         assert reg.default_name is None
@@ -1286,7 +1286,7 @@ class TestRouterHealthLock:
             if estado["i"] == 1:
                 cache["p1"] = (time.monotonic(), {"status": "ok"})
 
-        monkeypatch.setattr(hmod.time, "sleep", fake_sleep)
+        monkeypatch.setattr(hmod.time, "sleep", fake_sleep)  # type: ignore[attr-defined]
         # Entrada con resultado pendiente (None) -> espera hasta que aparece
         assert hmod.health_get_cached("p1", cache, lock, 10.0) == {"status": "ok"}
         # Entrada fresca cacheada -> devuelve directo
@@ -1322,7 +1322,7 @@ class TestRouterBranchProfiler:
             def start(self, *a: Any) -> None:
                 return None
 
-            def stop(self, *a: Any) -> dict:
+            def stop(self, *a: Any) -> dict[str, Any]:
                 return {"hot": True}
 
         class Det:
@@ -1330,10 +1330,10 @@ class TestRouterBranchProfiler:
                 return None
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
-        router._profiler = Prof()
-        router._detector = Det()
+        router._profiler = Prof()  # type: ignore[assignment]
+        router._detector = Det()  # type: ignore[assignment]
         out = router.health(provider="p")
         assert out["status"] == "ok"
 
@@ -1442,10 +1442,10 @@ class TestRamasFinales:
 
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
         p = OpenRouterProvider()
-        monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]}))
+        monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]}))  # type: ignore[attr-defined]
         assert asyncio.run(p.embed_async(["a"])) == [[0.1]]
         p2 = VLLMProvider()
-        monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]}))
+        monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]}))  # type: ignore[attr-defined]
         assert asyncio.run(p2.embed_async(["a"])) == [[0.2]]
 
     def test_llm_api_generate_health_via_state(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1797,7 +1797,7 @@ class TestBaseCobertura:
 
     def test_validate_firma_incorrecta(self) -> None:
         class MalaFirma(BaseLLMProvider):
-            def generate(self, prompt: str) -> str:  # sin model/options
+            def generate(self, prompt: str) -> str:  # type: ignore[override]  # sin model/options
                 return "x"
 
             def embed(self, *a: Any, **k: Any) -> list[list[float]]:
@@ -1836,7 +1836,7 @@ class TestBaseCobertura:
         def bad_sig(*a: Any, **k: Any) -> Any:
             raise ValueError("no sig")
 
-        monkeypatch.setattr(base_mod.inspect, "signature", bad_sig)
+        monkeypatch.setattr(base_mod.inspect, "signature", bad_sig)  # type: ignore[attr-defined]
         assert base_mod._check_signature(mala, ["x"], []) is not None
 
 
@@ -1871,7 +1871,7 @@ class TestBaseRamasFinales:
             embed_async = None
 
         errores: list[str] = []
-        base_mod._validar_metodos(SinMetodos(), errores)
+        base_mod._validar_metodos(SinMetodos(), errores)  # type: ignore[arg-type]
         assert any("Falta método" in e for e in errores)
 
     def test_validate_capacidades_no_dict(self) -> None:
@@ -1947,10 +1947,10 @@ class TestBaseRamasFinales:
 class TestRamasFinales2:
     def test_base_embed_firma_incorrecta(self) -> None:
         class EmbedMalo(BaseLLMProvider):
-            def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 return "x"
 
-            def embed(self, texts: str) -> list[list[float]]:  # firma mala: falta model
+            def embed(self, texts: str) -> list[list[float]]:  # type: ignore[override]  # firma mala: falta model
                 return [[0.0]]
 
             async def embed_async(self, *a: Any, **k: Any) -> list[list[float]]:
@@ -2051,8 +2051,8 @@ class TestRamasFinales3:
 
     def test_registry_unregister_no_default(self) -> None:
         reg = ProviderRegistry()
-        reg.register("a", _MiniProvider(), default=True)
-        reg.register("b", _MiniProvider())
+        reg.register("a", _MiniProvider(), default=True)  # type: ignore[arg-type]
+        reg.register("b", _MiniProvider())  # type: ignore[arg-type]
         reg.unregister("b")
         assert reg.default_name == "a"
         assert "b" not in reg
@@ -2080,10 +2080,10 @@ class TestRamasFinales3:
                 return None
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
-        router._profiler = Prof()
-        router._detector = Det()
+        router._profiler = Prof()  # type: ignore[assignment]
+        router._detector = Det()  # type: ignore[assignment]
         out = router.health(provider="p")
         assert out["status"] == "ok"
 
@@ -2126,7 +2126,7 @@ class TestRamasFinales4:
                 return "x"
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
         router._profiler = None
         router._detector = None
@@ -2146,7 +2146,7 @@ class TestRamasFinales4:
                 return "x"
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
         router._health_cache["p"] = (__import__("time").monotonic(), {"status": "cached"})
         assert router.health(provider="p") == {"status": "cached"}
@@ -2184,11 +2184,11 @@ class TestRamasFinales5:
                 llamadas["det"] += 1
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
         router._health_cache.clear()
-        router._profiler = Prof()
-        router._detector = Det()
+        router._profiler = Prof()  # type: ignore[assignment]
+        router._detector = Det()  # type: ignore[assignment]
         out = router.health(provider="p")
         assert out["status"] == "ok"
         assert llamadas["det"] == 1
@@ -2218,10 +2218,10 @@ class TestRamasFinales6:
                 raise AssertionError("no debe llamarse")
 
         reg = ProviderRegistry()
-        reg.register("p", P(), default=True)
+        reg.register("p", P(), default=True)  # type: ignore[arg-type]
         router = router_mod.LLMRouter(registry=reg)
         router._health_cache.clear()
-        router._profiler = Prof()
-        router._detector = Det()
+        router._profiler = Prof()  # type: ignore[assignment]
+        router._detector = Det()  # type: ignore[assignment]
         out = router.health(provider="p")
         assert out["status"] == "ok"

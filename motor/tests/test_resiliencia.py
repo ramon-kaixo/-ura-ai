@@ -8,6 +8,7 @@ from __future__ import annotations
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -23,51 +24,51 @@ from motor.core.llm.router import LLMRouter
 
 
 class _MockOK(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
 class _MockFail(BaseLLMProvider):
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         msg = "fail"
         raise ValueError(msg)
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
 class _MockTransient(BaseLLMProvider):
     _count: int = 0
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         self._count += 1
         if self._count < 3:
             msg = "transient"
             raise TimeoutError(msg)
         return "ok_after_retry"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -86,7 +87,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         def _fail() -> None:
             msg = "fail"
@@ -104,7 +105,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         with pytest.raises(_Transient):
             cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
@@ -118,7 +119,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         with pytest.raises(_Transient):
             cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
@@ -127,7 +128,7 @@ class TestCircuitBreaker:
         time.sleep(0.1)
         assert cb.is_available  # Timeout passed
         cb.call(lambda: "ok")  # Should transition HALF_OPEN -> CLOSED
-        assert cb.state == CircuitState.CLOSED
+        assert cb.state == CircuitState.CLOSED  # type: ignore[comparison-overlap]
 
     def test_half_open_failure_reopens(self) -> None:
         cb = CircuitBreaker("test", failure_threshold=1, recovery_timeout=0.05)
@@ -135,7 +136,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         with pytest.raises(_Transient):
             cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
@@ -179,14 +180,14 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         with pytest.raises(_Transient):
             cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
         assert cb.state == CircuitState.OPEN
 
         cb.reset()
-        assert cb.state == CircuitState.CLOSED
+        assert cb.state == CircuitState.CLOSED  # type: ignore[comparison-overlap]
         assert cb.is_available
 
     # ── H2: tests de concurrencia ─────────────────
@@ -199,7 +200,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         def _fail() -> None:
             msg = "fail"
@@ -228,7 +229,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         with pytest.raises(_Transient):
             cb.call(lambda: (_ for _ in ()).throw(_Transient("fail")))
@@ -248,7 +249,7 @@ class TestCircuitBreaker:
                 except CircuitBreakerOpenError:
                     open_count += 1
 
-        assert cb.state == CircuitState.CLOSED, (
+        assert cb.state == CircuitState.CLOSED, (  # type: ignore[comparison-overlap]
             f"Expected CLOSED after recovery, got {cb.state}. success={success_count}, open={open_count}"
         )
         # Solo 1 llamada debería pasar (half_open_max_calls=1),
@@ -263,7 +264,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         def _fail() -> None:
             msg = "fail"
@@ -293,7 +294,7 @@ class TestCircuitBreaker:
         class _Transient(Exception):
             pass
 
-        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         before = time.monotonic()
         with pytest.raises(_Transient):
@@ -347,7 +348,7 @@ class TestRetryPolicy:
         class _MockHTTPError(BaseLLMProvider):
             _calls: int = 0
 
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 self._calls += 1
                 if self._calls <= fail_times:
                     import httpx
@@ -362,13 +363,13 @@ class TestRetryPolicy:
                     )
                 return "ok_after_retry"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         return _MockHTTPError()
@@ -381,7 +382,7 @@ class TestRetryPolicy:
         router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
         result = router.generate("test")
         assert "Error:" in str(result), f"Expected error for {status_code}, got {result}"
-        assert prov._calls == 1, f"Expected 1 call for {status_code}, got {prov._calls}"
+        assert prov._calls == 1, f"Expected 1 call for {status_code}, got {prov._calls}"  # type: ignore[attr-defined]
 
     def _assert_retry(self, status_code: int) -> None:
         """Verifica que el código SÍ se reintenta (falla 3 veces, luego error final)."""
@@ -392,7 +393,7 @@ class TestRetryPolicy:
         result = router.generate("test")
         assert "Error:" in str(result), f"Expected error for {status_code}, got {result}"
         # Debería haber al menos 2 llamadas (intento + retry)
-        assert prov._calls >= 2, f"Expected >=2 calls for {status_code}, got {prov._calls}"
+        assert prov._calls >= 2, f"Expected >=2 calls for {status_code}, got {prov._calls}"  # type: ignore[attr-defined]
 
     def _assert_retry_then_succeed(self, status_code: int) -> None:
         """Verifica que el código se reintenta y eventualmente tiene éxito."""
@@ -402,7 +403,7 @@ class TestRetryPolicy:
         router = LLMRouter(registry=reg, retry_enabled=True, retry_max_attempts=3, retry_backoff_base=0.001)
         result = router.generate("test")
         assert "Error:" not in str(result), f"Expected success for {status_code}, got {result}"
-        assert prov._calls == 2, f"Expected 2 calls (1 fail + 1 success) for {status_code}, got {prov._calls}"
+        assert prov._calls == 2, f"Expected 2 calls (1 fail + 1 success) for {status_code}, got {prov._calls}"  # type: ignore[attr-defined]
 
     # 4xx no recuperables → 0 retries
     def test_no_retry_on_400(self) -> None:
@@ -439,20 +440,20 @@ class TestRetryPolicy:
         class _MockTimeout(BaseLLMProvider):
             _calls: int = 0
 
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 self._calls += 1
                 import httpx
 
                 msg = "timeout"
                 raise httpx.TimeoutException(msg, request=httpx.Request("POST", "http://test"))
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         prov = _MockTimeout()
@@ -541,7 +542,7 @@ class TestFallback:
         class _Transient(Exception):
             pass
 
-        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         def _fail_b() -> None:
             msg = "fail"
@@ -569,34 +570,34 @@ class TestFallback:
         class _MockAlsoFail(BaseLLMProvider):
             _calls: int = 0
 
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 self._calls += 1
                 msg = "also fail"
                 raise ValueError(msg)
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         class _MockThird(BaseLLMProvider):
             _calls: int = 0
 
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 self._calls += 1
                 return "third_ok"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         reg = ProviderRegistry()
@@ -609,7 +610,7 @@ class TestFallback:
         # fallback_max_providers=3, fix ADR-007).
         result = router.generate("test")
         assert result == "third_ok", f"Expected third_ok, got {result!r}"
-        assert reg.get("c")._calls == 1, "c should be reached (full chain)"
+        assert reg.get("c")._calls == 1, "c should be reached (full chain)"  # type: ignore[attr-defined]
 
     def test_fallback_does_not_reset_cb(self) -> None:
         """El fallback no debe resetear el CB del proveedor alternativo."""
@@ -625,7 +626,7 @@ class TestFallback:
         class _Transient(Exception):
             pass
 
-        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))
+        cb_b._is_transient = staticmethod(lambda e: isinstance(e, _Transient))  # type: ignore[attr-defined]
 
         def _fail_b() -> None:
             msg = "fail"
@@ -652,18 +653,18 @@ class TestFallback:
         class _MockFailWithCounter(BaseLLMProvider):
             _calls: int = 0
 
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 self._calls += 1
                 msg = "fail"
                 raise ValueError(msg)
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         # Registrar múltiples fallbacks que también fallan
@@ -680,7 +681,7 @@ class TestFallback:
         # Total: a (1) + b (1) + c (1 si fallback_max=2) = 3 calls max
         for name in ("d", "e"):
             p = reg.get(name)
-            assert p._calls == 0, f"{name} should not be called (limit=2)"
+            assert p._calls == 0, f"{name} should not be called (limit=2)"  # type: ignore[attr-defined]
 
 
 # ── B1: Observabilidad ─────────────────────────
@@ -759,16 +760,16 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingOK(BaseLLMProvider):
-            def generate(self, *a, **kw):
+            def generate(self, *a: Any, **kw: Any) -> str:
                 return ""
 
-            def embed(self, *a, **kw):
+            def embed(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            async def embed_async(self, *a, **kw):
+            async def embed_async(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}
@@ -786,16 +787,16 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingOK(BaseLLMProvider):
-            def generate(self, *a, **kw):
+            def generate(self, *a: Any, **kw: Any) -> str:
                 return ""
 
-            def embed(self, *a, **kw):
+            def embed(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            async def embed_async(self, *a, **kw):
+            async def embed_async(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}
@@ -820,16 +821,16 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingHealth(BaseLLMProvider):
-            def generate(self, *a, **kw):
+            def generate(self, *a: Any, **kw: Any) -> str:
                 return ""
 
-            def embed(self, *a, **kw):
+            def embed(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            async def embed_async(self, *a, **kw):
+            async def embed_async(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}
@@ -856,16 +857,16 @@ class TestHealthMonitor:
         call_count = 0
 
         class _CountingHealth(BaseLLMProvider):
-            def generate(self, *a, **kw):
+            def generate(self, *a: Any, **kw: Any) -> str:
                 return ""
 
-            def embed(self, *a, **kw):
+            def embed(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            async def embed_async(self, *a, **kw):
+            async def embed_async(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 nonlocal call_count
                 call_count += 1
                 return {"status": "ok"}

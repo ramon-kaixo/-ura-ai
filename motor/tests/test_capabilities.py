@@ -12,6 +12,8 @@ Verifica:
 
 from __future__ import annotations
 
+from typing import Any
+
 from motor.core.llm.base import DEFAULT_PROVIDER_CAPABILITIES, BaseLLMProvider
 from motor.core.llm.registry import ProviderRegistry
 from motor.core.llm.router import LLMRouter
@@ -25,16 +27,16 @@ class _BasicProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "basic"
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -45,23 +47,23 @@ class _VisionProvider(BaseLLMProvider):
         self._provider_name = "vision_pro"
 
     @property
-    def capabilities(self) -> dict:
+    def capabilities(self) -> dict[str, Any]:
         caps = dict(DEFAULT_PROVIDER_CAPABILITIES)
         caps["vision"] = True
         caps["multimodal"] = True
         caps["max_context"] = 128000
         return caps
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "vision_ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
@@ -72,22 +74,22 @@ class _StreamingProvider(BaseLLMProvider):
         self._provider_name = "stream_pro"
 
     @property
-    def capabilities(self) -> dict:
+    def capabilities(self) -> dict[str, Any]:
         caps = dict(DEFAULT_PROVIDER_CAPABILITIES)
         caps["streaming"] = True
         caps["max_output"] = 8192
         return caps
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "stream_ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 

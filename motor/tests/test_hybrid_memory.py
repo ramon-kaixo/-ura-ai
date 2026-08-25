@@ -17,7 +17,7 @@ from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.record import MemoryType
 
 
-def test_store_and_search():
+def test_store_and_search() -> None:
     mem = HybridMemory(db_path=":memory:")
 
     rid = mem.store(payload="El cielo es azul", metadata={"source": "test"}, memory_type=MemoryType.SEMANTIC)
@@ -32,14 +32,14 @@ def test_store_and_search():
     assert results[0].id == rid
 
 
-def test_search_no_results():
+def test_search_no_results() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="test")
     results = mem.search("xyz_nonexistent", k=5)
     assert len(results) == 0
 
 
-def test_search_with_type_filter():
+def test_search_with_type_filter() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="working memory", memory_type=MemoryType.WORKING)
     mem.store(payload="semantic memory", memory_type=MemoryType.SEMANTIC)
@@ -55,7 +55,7 @@ def test_search_with_type_filter():
     assert semantic[0].type == MemoryType.SEMANTIC
 
 
-def test_get_by_id():
+def test_get_by_id() -> None:
     mem = HybridMemory(db_path=":memory:")
     rid = mem.store(payload="get me", metadata={"k": "v"})
     recovered = mem.get(rid)
@@ -65,12 +65,12 @@ def test_get_by_id():
     assert recovered.id == rid
 
 
-def test_get_nonexistent():
+def test_get_nonexistent() -> None:
     mem = HybridMemory(db_path=":memory:")
     assert mem.get("nonexistent") is None
 
 
-def test_delete():
+def test_delete() -> None:
     mem = HybridMemory(db_path=":memory:")
     rid = mem.store(payload="to delete")
     assert mem.count() == 1
@@ -80,7 +80,7 @@ def test_delete():
     assert mem.search("to delete", k=5) == []  # tambien borrado de FTS
 
 
-def test_count():
+def test_count() -> None:
     mem = HybridMemory(db_path=":memory:")
     assert mem.count() == 0
     mem.store(payload="a")
@@ -89,7 +89,7 @@ def test_count():
     assert mem.count() == 3
 
 
-def test_count_by_type():
+def test_count_by_type() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="a", memory_type=MemoryType.WORKING)
     mem.store(payload="b", memory_type=MemoryType.SEMANTIC)
@@ -97,7 +97,7 @@ def test_count_by_type():
     assert mem.count(MemoryType.SEMANTIC) == 1
 
 
-def test_health():
+def test_health() -> None:
     mem = HybridMemory(db_path=":memory:")
     h = mem.health()
     assert "total_records" in h
@@ -105,7 +105,7 @@ def test_health():
     assert h["total_records"] == 0
 
 
-def test_multiple_stores():
+def test_multiple_stores() -> None:
     mem = HybridMemory(db_path=":memory:")
     ids = [mem.store(payload=f"record {i}") for i in range(10)]
     assert len(set(ids)) == 10  # all unique
@@ -114,7 +114,7 @@ def test_multiple_stores():
     assert len(results) == 10
 
 
-def test_search_ranking():
+def test_search_ranking() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="python programming language for web development")
     mem.store(payload="java is also used for web applications")
@@ -144,14 +144,14 @@ def _boom(*a: Any, **k: Any) -> Any:
     raise sqlite3.Error("boom")
 
 
-def test_context_manager_close_repetido():
+def test_context_manager_close_repetido() -> None:
     with HybridMemory(db_path=":memory:") as mem:
         mem.store(payload="ctx")
         assert mem.count() == 1
     mem.close()  # segundo close es no-op
 
 
-def test_close_exception_logueada():
+def test_close_exception_logueada() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
 
@@ -170,14 +170,14 @@ def test_close_exception_logueada():
     assert mem._conn is None
 
 
-def test_clear_error_logueado():
+def test_clear_error_logueado() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
     mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
     mem.clear()
 
 
-def test_clear_ok():
+def test_clear_ok() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="a")
     mem.store(payload="b")
@@ -186,7 +186,7 @@ def test_clear_ok():
     assert mem.count() == 0
 
 
-def test_store_error_relanza():
+def test_store_error_relanza() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
     mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
@@ -198,7 +198,7 @@ class _FakeVectorStore:
     def __init__(self, fail: bool = False) -> None:
         self._fail = fail
 
-    def guardar_incidente(self, incident: dict) -> Any:
+    def guardar_incidente(self, incident: dict[str, Any]) -> Any:
         if self._fail:
             raise RuntimeError("vector down")
         return None
@@ -209,7 +209,7 @@ class _FakeVectorStore:
         return []
 
 
-def test_vector_store_ok():
+def test_vector_store_ok() -> None:
     vs = _FakeVectorStore(fail=False)
     mem = HybridMemory(vector_store=vs, db_path=":memory:")
     rid = mem.store(payload="vect", vector=[0.1, 0.2])
@@ -217,7 +217,7 @@ def test_vector_store_ok():
     assert mem.health()["vector_store_ok"] is True
 
 
-def test_vector_store_fail_degrada():
+def test_vector_store_fail_degrada() -> None:
     vs = _FakeVectorStore(fail=True)
     mem = HybridMemory(vector_store=vs, db_path=":memory:")
     rid = mem.store(payload="vect", vector=[0.1, 0.2])  # no lanza
@@ -225,14 +225,14 @@ def test_vector_store_fail_degrada():
     assert mem.health()["vector_store_ok"] is False
 
 
-def test_search_query_vacia():
+def test_search_query_vacia() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="x")
     assert mem.search("") == []
     assert mem.search("   ") == []
 
 
-def test_search_fts_error_degradado():
+def test_search_fts_error_degradado() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
 
@@ -245,7 +245,7 @@ def test_search_fts_error_degradado():
     assert mem.search("bad query") == []
 
 
-def test_search_aplica_defaults_filas_invalidas():
+def test_search_aplica_defaults_filas_invalidas() -> None:
     mem = HybridMemory(db_path=":memory:")
     conn = mem._get_conn()
     ts = datetime.now(UTC).isoformat()
@@ -263,14 +263,14 @@ def test_search_aplica_defaults_filas_invalidas():
     assert results[0].metadata.get("access_count") == 0
 
 
-def test_get_excepcion_devuelve_none():
+def test_get_excepcion_devuelve_none() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
     mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
     assert mem.get("cualquier") is None
 
 
-def test_get_aplica_defaults_filas_invalidas():
+def test_get_aplica_defaults_filas_invalidas() -> None:
     mem = HybridMemory(db_path=":memory:")
     conn = mem._get_conn()
     conn.execute(
@@ -285,14 +285,14 @@ def test_get_aplica_defaults_filas_invalidas():
     assert rec.metadata.get("access_count") == 0
 
 
-def test_delete_error_devuelve_false():
+def test_delete_error_devuelve_false() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
     mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
     assert mem.delete("x") is False
 
 
-def test_count_error_devuelve_cero():
+def test_count_error_devuelve_cero() -> None:
     mem = HybridMemory(db_path=":memory:")
     mem._get_conn()
     mem._conn = _fake_conn(execute=_boom)  # type: ignore[assignment]
@@ -300,7 +300,7 @@ def test_count_error_devuelve_cero():
     assert mem.count(MemoryType.WORKING) == 0
 
 
-def test_health_count_error(monkeypatch: pytest.MonkeyPatch):
+def test_health_count_error(monkeypatch: pytest.MonkeyPatch) -> None:
     mem = HybridMemory(db_path=":memory:")
     mem.store(payload="x")
 

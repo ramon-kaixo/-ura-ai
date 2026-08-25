@@ -5,15 +5,16 @@ from __future__ import annotations
 import json
 import logging
 import uuid
+from typing import Any
 
 from motor.assistant.health import get_assistant_health, init_assistant_health
 from motor.assistant.metrics import errors_total, request_latency, requests_total, tokens_total
 
 
-def _counter_value(counter, **labels) -> int:
+def _counter_value(counter: Any, **labels: Any) -> int:
     key = "|".join(f"{k}={v}" for k, v in sorted(labels.items()))
     if key in counter._counters:
-        return counter._counters[key].snapshot()["value"]
+        return counter._counters[key].snapshot()["value"]  # type: ignore[no-any-return]
     return 0
 
 
@@ -128,7 +129,7 @@ class TestTracing:
         from motor.observability.tracing_platform import TraceContext
 
         cid = str(uuid.uuid4())[:8]
-        ctx = TraceContext(source="test", destination="obs", correlation_id=cid)
+        ctx = TraceContext(source="test", destination="obs", correlation_id=cid)  # type: ignore[arg-type]
         assert ctx.correlation_id == cid
 
 

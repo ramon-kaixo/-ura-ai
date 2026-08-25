@@ -237,7 +237,7 @@ class TestCrawlerHttpx:
         get: dict[str, Any] | None = None,
         raise_head: Exception | None = None,
         raise_get: Exception | None = None,
-    ):
+    ) -> Any:
         from motor.core.web.crawler.providers import httpx_crawler as mod
 
         class FakeResponse:
@@ -257,20 +257,20 @@ class TestCrawlerHttpx:
                 if raise_head:
                     raise raise_head
                 return FakeResponse(
-                    head.get("status", 200), head.get("headers", {"content-type": "text/html; charset=utf-8"})
+                    head.get("status", 200), head.get("headers", {"content-type": "text/html; charset=utf-8"})  # type: ignore[union-attr]
                 )
 
             def get(self, url: str) -> FakeResponse:
                 if raise_get:
                     raise raise_get
                 return FakeResponse(
-                    get.get("status", 200),
-                    get.get("headers", {"content-type": "text/html; charset=utf-8"}),
-                    get.get("content", b"<html>ok</html>"),
-                    get.get("url", "http://final/x"),
+                    get.get("status", 200),  # type: ignore[union-attr]
+                    get.get("headers", {"content-type": "text/html; charset=utf-8"}),  # type: ignore[union-attr]
+                    get.get("content", b"<html>ok</html>"),  # type: ignore[union-attr]
+                    get.get("url", "http://final/x"),  # type: ignore[union-attr]
                 )
 
-        monkeypatch.setattr(mod.httpx, "Client", FakeClient)
+        monkeypatch.setattr(mod.httpx, "Client", FakeClient)  # type: ignore[attr-defined]
         return mod.HttpCrawler(max_size=1024)
 
     def test_fetch_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -462,7 +462,7 @@ class TestRankerWeb:
         text: str = "texto",
         title: str = "titulo",
         quality: float = 1.0,
-        metadata: dict | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> WebDocument:
         return WebDocument(
             url=url,
@@ -470,7 +470,7 @@ class TestRankerWeb:
             text=text,
             quality_score=quality,
             word_count=len(text.split()),
-            metadata=metadata or {},
+            metadata=metadata or {},  # type: ignore[arg-type]
         )
 
     def test_ranking_score(self) -> None:
@@ -547,7 +547,7 @@ class TestSearcherDuckDuckGo:
                 content=b'<a class="result__a">T</a><a class="result__url" href="http://u"></a><a class="result__snippet">S</a>'
             )
 
-        monkeypatch.setattr(mod.httpx, "post", fake_post)
+        monkeypatch.setattr(mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         provider = mod.DuckDuckGoSearchProvider()
         assert provider.name == "duckduckgo"
         results = provider.search("query", limit=5)
@@ -557,19 +557,19 @@ class TestSearcherDuckDuckGo:
     def test_search_retries_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import duckduckgo as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
 
         def fake_post(*a: Any, **k: Any) -> FakeResponse:
             raise httpx.TimeoutException("t")
 
-        monkeypatch.setattr(mod.httpx, "post", fake_post)
+        monkeypatch.setattr(mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         with pytest.raises(RuntimeError):
             mod.DuckDuckGoSearchProvider(max_retries=1).search("q")
 
     def test_search_retries_429_then_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import duckduckgo as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         calls = {"n": 0}
 
         def fake_post(*a: Any, **k: Any) -> FakeResponse:
@@ -578,7 +578,7 @@ class TestSearcherDuckDuckGo:
                 raise httpx.HTTPStatusError("x", request=httpx.Request("POST", "u"), response=httpx.Response(429))
             return FakeResponse()
 
-        monkeypatch.setattr(mod.httpx, "post", fake_post)
+        monkeypatch.setattr(mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         assert mod.DuckDuckGoSearchProvider(max_retries=1).search("q") == []
 
     def test_search_http_error_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -587,19 +587,19 @@ class TestSearcherDuckDuckGo:
         def fake_post(*a: Any, **k: Any) -> FakeResponse:
             raise httpx.HTTPStatusError("x", request=httpx.Request("POST", "u"), response=httpx.Response(500))
 
-        monkeypatch.setattr(mod.httpx, "post", fake_post)
+        monkeypatch.setattr(mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         with pytest.raises(httpx.HTTPStatusError):
             mod.DuckDuckGoSearchProvider().search("q")
 
     def test_search_connection_error_retries(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import duckduckgo as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
 
         def fake_post(*a: Any, **k: Any) -> FakeResponse:
             raise httpx.ConnectError("c")
 
-        monkeypatch.setattr(mod.httpx, "post", fake_post)
+        monkeypatch.setattr(mod.httpx, "post", fake_post)  # type: ignore[attr-defined]
         with pytest.raises(RuntimeError):
             mod.DuckDuckGoSearchProvider(max_retries=1).search("q")
 
@@ -611,7 +611,7 @@ class TestSearcherSearxng:
         def fake_get(*a: Any, **k: Any) -> FakeJsonResponse:
             return FakeJsonResponse()
 
-        monkeypatch.setattr(mod.httpx, "get", fake_get)
+        monkeypatch.setattr(mod.httpx, "get", fake_get)  # type: ignore[attr-defined]
         p = mod.SearXNGSearchProvider(base_url="http://sx", max_retries=0)
         assert p.name == "searxng"
         results = p.search("q", limit=10)
@@ -620,19 +620,19 @@ class TestSearcherSearxng:
     def test_search_timeout_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import searxng as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
 
         def fake_get(*a: Any, **k: Any) -> FakeJsonResponse:
             raise httpx.TimeoutException("t")
 
-        monkeypatch.setattr(mod.httpx, "get", fake_get)
+        monkeypatch.setattr(mod.httpx, "get", fake_get)  # type: ignore[attr-defined]
         with pytest.raises(RuntimeError):
             mod.SearXNGSearchProvider(base_url="http://sx", max_retries=1).search("q")
 
     def test_search_503_then_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import searxng as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         calls = {"n": 0}
 
         def fake_get(*a: Any, **k: Any) -> FakeJsonResponse:
@@ -641,7 +641,7 @@ class TestSearcherSearxng:
                 raise httpx.HTTPStatusError("x", request=httpx.Request("GET", "u"), response=httpx.Response(503))
             return FakeJsonResponse()
 
-        monkeypatch.setattr(mod.httpx, "get", fake_get)
+        monkeypatch.setattr(mod.httpx, "get", fake_get)  # type: ignore[attr-defined]
         assert len(mod.SearXNGSearchProvider(base_url="http://sx", max_retries=1).search("q")) == 1
 
     def test_search_http_500_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -650,19 +650,19 @@ class TestSearcherSearxng:
         def fake_get(*a: Any, **k: Any) -> FakeJsonResponse:
             raise httpx.HTTPStatusError("x", request=httpx.Request("GET", "u"), response=httpx.Response(500))
 
-        monkeypatch.setattr(mod.httpx, "get", fake_get)
+        monkeypatch.setattr(mod.httpx, "get", fake_get)  # type: ignore[attr-defined]
         with pytest.raises(httpx.HTTPStatusError):
             mod.SearXNGSearchProvider(base_url="http://sx").search("q")
 
     def test_search_connection_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.web.searcher.providers import searxng as mod
 
-        monkeypatch.setattr(mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
 
         def fake_get(*a: Any, **k: Any) -> FakeJsonResponse:
             raise httpx.ConnectError("c")
 
-        monkeypatch.setattr(mod.httpx, "get", fake_get)
+        monkeypatch.setattr(mod.httpx, "get", fake_get)  # type: ignore[attr-defined]
         with pytest.raises(RuntimeError):
             mod.SearXNGSearchProvider(base_url="http://sx", max_retries=1).search("q")
 
@@ -840,7 +840,7 @@ class TestCitationWeb:
             title="Python",
             text="Python es un lenguaje de programación muy popular. Se usa en ciencia de datos.",
             word_count=15,
-            metadata={"canonical_url": "https://canon/x"},
+            metadata={"canonical_url": "https://canon/x"},  # type: ignore[arg-type]
         )
         summary = ExtractiveSummarizer().summarize([doc], max_length=2)
         bundle = CitationEngine().build(summary, [doc])
@@ -1062,14 +1062,14 @@ class TestCoberturaFinaWeb:
             title="t",
             text="mismo documento aqui",
             quality_score=0.3,
-            metadata={"canonical_url": "https://canon/c"},
+            metadata={"canonical_url": "https://canon/c"},  # type: ignore[arg-type]
         )
         b = WebDocument(
             url="http://x/2",
             title="t",
             text="mismo documento aqui",
             quality_score=0.6,
-            metadata={"canonical_url": "https://canon/c"},
+            metadata={"canonical_url": "https://canon/c"},  # type: ignore[arg-type]
         )
         result = DeduplicationEngine().deduplicate([a, b])
         assert result == [b]
@@ -1118,7 +1118,7 @@ class TestCoberturaFinaWeb:
         head_headers: dict[str, str] | None = None,
         get_content: bytes = b"ok",
         get_raise: Exception | None = None,
-    ):
+    ) -> Any:
         from motor.core.web.crawler.providers import httpx_crawler as mod
 
         class FakeRes:
@@ -1141,5 +1141,5 @@ class TestCoberturaFinaWeb:
                     raise get_raise
                 return FakeRes({"content-type": "text/html; charset=utf-8"}, get_content)
 
-        monkeypatch.setattr(mod.httpx, "Client", FakeClient)
+        monkeypatch.setattr(mod.httpx, "Client", FakeClient)  # type: ignore[attr-defined]
         return mod.HttpCrawler(max_size=1024)

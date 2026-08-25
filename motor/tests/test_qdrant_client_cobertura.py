@@ -133,10 +133,10 @@ class _FakeQdrantModule:
 
 def _instalar_qdrant_fake(monkeypatch: pytest.MonkeyPatch, native: FakeNativeClient) -> None:
     fake = _FakeQdrantModule(native)
-    monkeypatch.setitem(sys.modules, "qdrant_client", fake)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "qdrant_client.http", fake.http)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "qdrant_client.http.exceptions", fake.http.exceptions)  # type: ignore[arg-type]
-    monkeypatch.setitem(sys.modules, "qdrant_client.http.models", fake.http.models)  # type: ignore[arg-type]
+    monkeypatch.setitem(sys.modules, "qdrant_client", fake)
+    monkeypatch.setitem(sys.modules, "qdrant_client.http", fake.http)
+    monkeypatch.setitem(sys.modules, "qdrant_client.http.exceptions", fake.http.exceptions)
+    monkeypatch.setitem(sys.modules, "qdrant_client.http.models", fake.http.models)
 
 
 # ── QdrantClient: conexión nativa ────────────────────────────────────────────
@@ -179,7 +179,7 @@ class TestConexionNativa:
     def test_nativo_falla_rest_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient(collections_ok=False)
         _instalar_qdrant_fake(monkeypatch, native)
-        llamadas: list[tuple[str, dict | None]] = []
+        llamadas: list[tuple[str, dict[str, Any] | None]] = []
 
         def fake_get(url: str, timeout: float = 3) -> SimpleNamespace:
             llamadas.append((url, None))
@@ -481,8 +481,8 @@ class TestEliminarHealthIncidentes:
         native = FakeNativeClient(collections_ok=False)
         _instalar_qdrant_fake(monkeypatch, native)
         monkeypatch.setattr(httpx, "get", lambda *a, **k: SimpleNamespace(status_code=200))
-        puts: list[dict] = []
-        monkeypatch.setattr(httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1])
+        puts: list[dict[str, Any]] = []
+        monkeypatch.setattr(httpx, "put", lambda *a, **k: (puts.append(k.get("json")), SimpleNamespace(status_code=201))[1])  # type: ignore[func-returns-value]
         monkeypatch.setattr(httpx, "post", lambda *a, **k: SimpleNamespace(status_code=200))
         c = QdrantClient(_config())
         assert c.guardar_incidente({"ts": "x"}) is True
@@ -609,7 +609,7 @@ class TestEmbeddings:
     def test_generar_embedding_async_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
-        async def fake_embed_async(texts, model=None):
+        async def fake_embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
             return [[0.0] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
@@ -622,15 +622,15 @@ class TestEmbeddings:
         _instalar_qdrant_fake(monkeypatch, native)
         recibidos: list[str] = []
 
-        async def fake_embed_async(texts, model=None):
-            recibidos.append(texts)
+        async def fake_embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
+            recibidos.append(texts)  # type: ignore[arg-type]
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
         c = QdrantClient(_config())
         out = asyncio.run(c.generar_embedding_async("t"))
         assert out[0] == 0.5
-        assert recibidos == [["t"]]
+        assert recibidos == [["t"]]  # type: ignore[comparison-overlap]
         assert c.embedding_semaphore._value == 1
 
     def test_generar_embedding_sync(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -638,23 +638,23 @@ class TestEmbeddings:
         _instalar_qdrant_fake(monkeypatch, native)
         recibidos: list[str] = []
 
-        async def fake_embed_async(texts, model=None):
-            recibidos.append(texts)
+        async def fake_embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
+            recibidos.append(texts)  # type: ignore[arg-type]
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
         c = QdrantClient(_config())
         out = c.generar_embedding("t")
         assert out[0] == 0.5
-        assert recibidos == [["t"]]
+        assert recibidos == [["t"]]  # type: ignore[comparison-overlap]
 
     def test_generar_embedding_sync_en_loop(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
         _instalar_qdrant_fake(monkeypatch, native)
         recibidos: list[str] = []
 
-        async def fake_embed_async(texts, model=None):
-            recibidos.append(texts)
+        async def fake_embed_async(texts: list[str], model: str | None = None) -> list[list[float]]:
+            recibidos.append(texts)  # type: ignore[arg-type]
             return [[0.5] * VECTOR_SIZE_EMBEDDING for _ in texts]
 
         monkeypatch.setattr(qc_mod, "llm_embed_async", fake_embed_async)
@@ -665,7 +665,7 @@ class TestEmbeddings:
 
         out = asyncio.run(main())
         assert out[0] == 0.5
-        assert recibidos == [["t"]]
+        assert recibidos == [["t"]]  # type: ignore[comparison-overlap]
 
     def test_generar_embeddings_batch(self, monkeypatch: pytest.MonkeyPatch) -> None:
         native = FakeNativeClient()
@@ -679,7 +679,7 @@ class TestEmbeddings:
 
 
 class FakeAsyncResp:
-    def __init__(self, status: int = 200, data: dict | None = None) -> None:
+    def __init__(self, status: int = 200, data: dict[str, Any] | None = None) -> None:
         self.status_code = status
         self._data = data or {}
 
@@ -691,15 +691,15 @@ class FakeAsyncResp:
                 response=httpx.Response(self.status_code),
             )
 
-    def json(self) -> dict:
+    def json(self) -> dict[str, Any]:
         return self._data
 
 
 class FakeAsyncClient2:
     def __init__(self, responses: list[Any] | None = None) -> None:
         self.responses = list(responses or [])
-        self.posts: list[tuple[str, dict]] = []
-        self.puts: list[tuple[str, dict]] = []
+        self.posts: list[tuple[str, dict[str, Any]]] = []
+        self.puts: list[tuple[str, dict[str, Any]]] = []
         self.gets: list[str] = []
         self.closed = False
         self.is_closed = False
@@ -732,7 +732,7 @@ class FakeAsyncClient2:
 class TestURAQdrantClient:
     def test_get_client_crea_y_reusa(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2()
+        c._client = FakeAsyncClient2()  # type: ignore[assignment]
 
         async def main() -> None:
             c1 = await c._get_client()
@@ -745,17 +745,17 @@ class TestURAQdrantClient:
         c = URAQdrantClient()
         viejo = FakeAsyncClient2()
         viejo.is_closed = True
-        c._client = viejo
+        c._client = viejo  # type: ignore[assignment]
 
         async def main() -> None:
             nuevo = await c._get_client()
-            assert nuevo is not viejo
+            assert nuevo is not viejo  # type: ignore[comparison-overlap]
 
         asyncio.run(main())
 
     def test_buscar_vectores_ok(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(200, {"result": [1]})])
+        c._client = FakeAsyncClient2([FakeAsyncResp(200, {"result": [1]})])  # type: ignore[assignment]
 
         async def main() -> None:
             out = await c.buscar_vectores("col", [0.1])
@@ -765,7 +765,7 @@ class TestURAQdrantClient:
 
     def test_buscar_vectores_http_error(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(500, {"detail": "x"})])
+        c._client = FakeAsyncClient2([FakeAsyncResp(500, {"detail": "x"})])  # type: ignore[assignment]
 
         async def main() -> None:
             out = await c.buscar_vectores("col", [0.1])
@@ -775,7 +775,7 @@ class TestURAQdrantClient:
 
     def test_buscar_vectores_request_error(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([httpx.RequestError("net")])
+        c._client = FakeAsyncClient2([httpx.RequestError("net")])  # type: ignore[assignment]
 
         async def main() -> None:
             out = await c.buscar_vectores("col", [0.1])
@@ -785,7 +785,7 @@ class TestURAQdrantClient:
 
     def test_upsert_ok(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(200)])
+        c._client = FakeAsyncClient2([FakeAsyncResp(200)])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.upsert_puntos("col", [{"id": 1}]) == 1
@@ -794,7 +794,7 @@ class TestURAQdrantClient:
 
     def test_upsert_error(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([httpx.RequestError("x")])
+        c._client = FakeAsyncClient2([httpx.RequestError("x")])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.upsert_puntos("col", [{"id": 1}]) == 0
@@ -803,11 +803,11 @@ class TestURAQdrantClient:
 
     def test_close(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2()
+        c._client = FakeAsyncClient2()  # type: ignore[assignment]
 
         async def main() -> None:
             await c.close()
-            assert c._client.closed is True
+            assert c._client.closed is True  # type: ignore[union-attr]
             c._client = None
             await c.close()  # sin cliente
 
@@ -815,7 +815,7 @@ class TestURAQdrantClient:
 
     def test_asegurar_hibrida_existe(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(200)])
+        c._client = FakeAsyncClient2([FakeAsyncResp(200)])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.asegurar_coleccion_hibrida("col") is True
@@ -824,7 +824,7 @@ class TestURAQdrantClient:
 
     def test_asegurar_hibrida_crea(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(404), FakeAsyncResp(201)])
+        c._client = FakeAsyncClient2([FakeAsyncResp(404), FakeAsyncResp(201)])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.asegurar_coleccion_hibrida("col") is True
@@ -833,7 +833,7 @@ class TestURAQdrantClient:
 
     def test_asegurar_hibrida_get_error(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([httpx.RequestError("x"), FakeAsyncResp(200)])
+        c._client = FakeAsyncClient2([httpx.RequestError("x"), FakeAsyncResp(200)])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.asegurar_coleccion_hibrida("col") is True
@@ -842,7 +842,7 @@ class TestURAQdrantClient:
 
     def test_asegurar_hibrida_put_error(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(404), httpx.RequestError("x")])
+        c._client = FakeAsyncClient2([FakeAsyncResp(404), httpx.RequestError("x")])  # type: ignore[assignment]
 
         async def main() -> None:
             assert await c.asegurar_coleccion_hibrida("col") is False
@@ -851,7 +851,7 @@ class TestURAQdrantClient:
 
     def test_buscar_hibrido_ok(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([FakeAsyncResp(200, {"result": [{"id": 1}]})])
+        c._client = FakeAsyncClient2([FakeAsyncResp(200, {"result": [{"id": 1}]})])  # type: ignore[assignment]
 
         async def main() -> None:
             out = await c.buscar_hibrido("col", "query", [0.1])
@@ -861,7 +861,7 @@ class TestURAQdrantClient:
 
     def test_buscar_hibrido_fallback(self) -> None:
         c = URAQdrantClient()
-        c._client = FakeAsyncClient2([httpx.RequestError("x"), FakeAsyncResp(200, {"result": [{"id": 2}]})])
+        c._client = FakeAsyncClient2([httpx.RequestError("x"), FakeAsyncResp(200, {"result": [{"id": 2}]})])  # type: ignore[assignment]
 
         async def main() -> None:
             out = await c.buscar_hibrido("col", "query", [0.1])
