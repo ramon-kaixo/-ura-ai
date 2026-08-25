@@ -195,9 +195,9 @@ def proxy_request(
     tipo: str = "",
     client_ip: str = "",
 ) -> tuple:
-    from motor.core.llm.metrics import metrics
-    from motor.core.model_router.model_selection import _record_success
-    from motor.core.model_router.router import get_urls
+    from core.model_router.metrics import metrics
+    from core.model_router.model_selection import _record_success
+    from core.model_router.router import get_urls
 
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = get_urls()["primary"] if resolved_mode == "TURBO" else get_urls()["fallback"]
