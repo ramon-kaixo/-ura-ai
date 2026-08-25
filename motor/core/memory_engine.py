@@ -314,6 +314,23 @@ def ask(question: str, top_k: int | None = None) -> str:
     """RAG completo: recupera documentos relevantes y genera una respuesta.
     Retorna la respuesta generada por el LLM.
     """
-    docs = query(question, top_k=top_k or TOP_K)
-    context = _build_context(docs)
-    return _generate(context, question)
+    try:
+        docs = query(question, top_k=top_k or TOP_K)
+    except Exception as e:
+        log.error("Error en query RAG: %s", e)
+        return f"Error en la búsqueda de documentos: {e}"
+
+    if not docs:
+        return "No se encontraron documentos relevantes para responder a la pregunta."
+
+    try:
+        context = _build_context(docs)
+    except Exception as e:
+        log.error("Error construyendo contexto: %s", e)
+        return f"Error al construir el contexto: {e}"
+
+    try:
+        return _generate(context, question)
+    except Exception as e:
+        log.error("Error generando respuesta: %s", e)
+        return f"Error al generar la respuesta del LLM: {e}"

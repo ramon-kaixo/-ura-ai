@@ -91,15 +91,15 @@ class OllamaProvider(BaseLLMProvider):
             error = f"http_{e.response.status_code}"
             log_call(self._provider_name, model_name, latency_ms, error)
             return f"Error: El servicio de generación respondió con código {e.response.status_code}."
-        except httpx.RequestError:
+        except httpx.RequestError as e:
             latency_ms = (time.monotonic() - t0) * 1000
             error = "connection_error"
             log_call(self._provider_name, model_name, latency_ms, error)
-            return "Error: No se pudo conectar con el servicio de generación."
-        except Exception:
+            return f"Error: No se pudo conectar con el servicio de generación. ({e})"
+        except Exception as e:
             latency_ms = (time.monotonic() - t0) * 1000
             log_call(self._provider_name, model_name, latency_ms, "unexpected")
-            log.warning("error inesperado en generate")
+            log.warning("error inesperado en generate: %s", e)
             return "Error: Error interno del proveedor."
 
     def generate_stream(
