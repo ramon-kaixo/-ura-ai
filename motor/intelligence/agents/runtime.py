@@ -6,6 +6,7 @@ import logging
 import threading
 import time
 import uuid
+from collections.abc import Callable
 from typing import Any
 
 from motor.intelligence.agents.base import Agent
@@ -71,7 +72,7 @@ class MultiAgentRuntime:
                 "status": "running",
             }
 
-        def _mk_check(wf):
+        def _mk_check(wf: str) -> Callable[[], bool]:
             return lambda: self._is_cancelled(wf)
 
         cancel_check = _mk_check(workflow_id)
@@ -137,7 +138,9 @@ class MultiAgentRuntime:
         with self._lock:
             return len(self._agents)
 
-    def _complete(self, wf_id: str, success: bool, error: str, start: float, extra: dict | None = None) -> AgentResult:
+    def _complete(
+        self, wf_id: str, success: bool, error: str, start: float, extra: dict[str, Any] | None = None
+    ) -> AgentResult:
         elapsed = (time.monotonic() - start) * 1000
         with self._lock:
             if wf_id in self._workflows:

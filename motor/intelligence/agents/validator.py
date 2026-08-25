@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 import time
 import uuid
+from typing import Any
 
 from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentRole, AgentStatus, AgentTask
@@ -44,7 +45,7 @@ class ValidatorAgent(Agent):
         finally:
             self.status = AgentStatus.IDLE
 
-    def _validate(self, objective: str, input_data: dict) -> tuple[bool, list[str]]:
+    def _validate(self, objective: str, input_data: dict[str, Any]) -> tuple[bool, list[str]]:
         issues: list[str] = []
         result_data = input_data.get("result", {})
         if not result_data:

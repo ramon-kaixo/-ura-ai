@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 import uuid
+from typing import Any
 
 from motor.intelligence.agents.base import Agent
 from motor.intelligence.agents.message import AgentResult, AgentRole, AgentStatus, AgentTask
@@ -40,7 +41,7 @@ class PlannerAgent(Agent):
         finally:
             self.status = AgentStatus.IDLE
 
-    def _decompose(self, objective: str, context: dict) -> list[dict]:
+    def _decompose(self, objective: str, context: dict[str, Any]) -> list[dict[str, Any]]:
         keywords = {
             "search": AgentRole.RESEARCHER,
             "find": AgentRole.RESEARCHER,

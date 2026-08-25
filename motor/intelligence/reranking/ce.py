@@ -81,7 +81,7 @@ class CrossEncoderReranker(BaseReranker):
 
         return to_rerank
 
-    def _get_texts(self, candidates: list[dict]) -> list[str]:
+    def _get_texts(self, candidates: list[dict[str, Any]]) -> list[str]:
         return [self._doc_cache.get(doc.get("doc_id", ""), "")[:2000] for doc in candidates]
 
     def _score_batch(self, pairs: list[tuple[str, str]]) -> list[float]:
