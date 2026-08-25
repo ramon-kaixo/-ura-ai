@@ -664,7 +664,7 @@
       "nota": "DONE 2026-08-18."
     }
   },
-  "ultima_ejecucion_despertador": "2026-08-23T20:35:31Z",
+  "ultima_ejecucion_despertador": "2026-08-25T03:49:36Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
@@ -679,6 +679,15 @@
       "tarea": "TASK-20260818-029",
       "veredicto": "OK",
       "nota": "P1.3: asset_store.py 19.6%->100% y agent.py 41.8%->100% (knowledge/engine/agent.py, 15+23 tests). Fix critico FTS5: migracion v15 (triggers 'delete' rotos en SQLite 3.45.1 -> DELETE por rowid; delete_asset fallaba siempre, REPLACE dejaba huerfanos FTS). Registrado en docs/audit/qa_findings_20260818.md."
+    }
+  ],
+  "historial": [
+    {
+      "fecha": "2026-08-25",
+      "tarea": "PLAN_AUDITORIA_C2_20260818",
+      "agente": "TERM (ox-alpha, Mac)",
+      "accion": "REVISION DE PLAN (Modo Analisis) a peticion de Ramon: estado verificado A1 OK (hallazgos-fondo.md, 7 entradas), A2 OK (AGENTS.md lecciones post-C2), A5 OK (gate DONE en ura-udo:392, bloqueo real hoy), A7 OK (ruff verde toda la sesion). A3/A4 PENDIENTES -> TASK-20260825-007. A6 PENDIENTE -> TASK-20260825-008. Plan ~90% ejecutado.",
+      "veredicto": "GO CON CAMBIOS — plan valido y casi cerrado; restos convertidos en TASK-20260825-007/008"
     }
   ]
 }
