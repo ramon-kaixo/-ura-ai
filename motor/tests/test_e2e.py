@@ -12,8 +12,6 @@ No requiere servidores externos (todo en memoria).
 
 from __future__ import annotations
 
-import json
-
 from motor.intelligence.memory.hybrid import HybridMemory
 from motor.intelligence.memory.record import MemoryType
 from motor.observability.health import HealthRegistry
@@ -94,6 +92,7 @@ def test_health_registry() -> None:
     hr.set_degraded("test_component", "prueba degradación")
     snap = hr.snapshot()
     assert snap["global"] == "degraded"
+
 
 # Retirado 2026-08-09 (TASK-20260809-002): test_mcp_memory_tools y test_mcp_ura_health
 # probaban scripts.pro.mcp_mochila, archivado en la purga 38b7921c (.attic/tools).

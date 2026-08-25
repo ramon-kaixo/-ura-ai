@@ -178,7 +178,9 @@ class TestOpenAIGenerate:
 
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("OPENAI_API_KEY", "k")
-        monkeypatch.setattr(openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")))  # type: ignore[attr-defined]
+        monkeypatch.setattr(
+            openai_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))
+        )  # type: ignore[attr-defined]
         p = OpenAIProvider()
         out = p.generate("hola")
         assert out.startswith("Error:")
@@ -527,7 +529,9 @@ class TestOllamaGenerate:
 
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
-            ollama_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
+            ollama_mod.httpx,
+            "post",
+            lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
         p = OllamaProvider()
         assert "tiempo" in p.generate("hola")
@@ -537,9 +541,7 @@ class TestOllamaGenerate:
             ollama_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
-                httpx.HTTPStatusError(
-                    "500", request=httpx.Request("POST", "http://fake"), response=httpx.Response(500)
-                )
+                httpx.HTTPStatusError("500", request=httpx.Request("POST", "http://fake"), response=httpx.Response(500))
             ),
         )
         p = OllamaProvider()
@@ -863,7 +865,11 @@ class TestAnthropicCobertura:
             calls.append(kw.get("json", {}))
             return FakeResp(
                 {
-                    "content": [{"type": "text", "text": " uno "}, {"type": "image", "text": ""}, {"type": "text", "text": "dos"}],
+                    "content": [
+                        {"type": "text", "text": " uno "},
+                        {"type": "image", "text": ""},
+                        {"type": "text", "text": "dos"},
+                    ],
                     "usage": {"input_tokens": 4, "output_tokens": 6},
                 }
             )
@@ -883,7 +889,9 @@ class TestAnthropicCobertura:
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("ANTHROPIC_API_KEY", "k")
         monkeypatch.setattr(
-            anthropic_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
+            anthropic_mod.httpx,
+            "post",
+            lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
         p = AnthropicProvider()
         assert "tiempo" in p.generate("hola")
@@ -894,9 +902,7 @@ class TestAnthropicCobertura:
             anthropic_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
-                httpx.HTTPStatusError(
-                    "401", request=httpx.Request("POST", "http://fake"), response=httpx.Response(401)
-                )
+                httpx.HTTPStatusError("401", request=httpx.Request("POST", "http://fake"), response=httpx.Response(401))
             ),
         )
         p = AnthropicProvider()
@@ -990,7 +996,9 @@ class TestGeminiCobertura:
     def test_generate_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         monkeypatch.setattr(
-            gemini_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t"))  # type: ignore[attr-defined]
+            gemini_mod.httpx,
+            "post",
+            lambda *a, **k: (_ for _ in ()).throw(httpx.TimeoutException("t")),  # type: ignore[attr-defined]
         )
         p = GeminiProvider()
         assert "tiempo" in p.generate("hola")
@@ -1001,9 +1009,7 @@ class TestGeminiCobertura:
             gemini_mod.httpx,  # type: ignore[attr-defined]
             "post",
             lambda *a, **k: (_ for _ in ()).throw(
-                httpx.HTTPStatusError(
-                    "429", request=httpx.Request("POST", "http://fake"), response=httpx.Response(429)
-                )
+                httpx.HTTPStatusError("429", request=httpx.Request("POST", "http://fake"), response=httpx.Response(429))
             ),
         )
         p = GeminiProvider()
@@ -1109,7 +1115,10 @@ class TestLMStudioCobertura:
         p = LMStudioProvider()
         for exc, fragmento in [
             (httpx.TimeoutException("t"), "tiempo"),
-            (httpx.HTTPStatusError("500", request=httpx.Request("POST", "http://f"), response=httpx.Response(500)), "500"),
+            (
+                httpx.HTTPStatusError("500", request=httpx.Request("POST", "http://f"), response=httpx.Response(500)),
+                "500",
+            ),
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
@@ -1119,7 +1128,9 @@ class TestLMStudioCobertura:
     def test_embed_ok_y_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.3]}, {"embedding": [0.4]}]})  # type: ignore[attr-defined]
+            lmstudio_mod.httpx,
+            "post",
+            lambda *a, **k: FakeResp({"data": [{"embedding": [0.3]}, {"embedding": [0.4]}]}),  # type: ignore[attr-defined]
         )
         assert p.embed(["a", "b"]) == [[0.3], [0.4]]
         monkeypatch.setattr(lmstudio_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
@@ -1130,7 +1141,9 @@ class TestLMStudioCobertura:
 
         p = LMStudioProvider()
         monkeypatch.setattr(
-            lmstudio_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.9]}]})  # type: ignore[attr-defined]
+            lmstudio_mod.httpx,
+            "post",
+            lambda *a, **k: FakeResp({"data": [{"embedding": [0.9]}]}),  # type: ignore[attr-defined]
         )
         assert asyncio.run(p.embed_async(["a"])) == [[0.9]]
         monkeypatch.setattr(lmstudio_mod.httpx, "get", lambda *a, **k: FakeResp({"data": [{"id": "m1"}]}))  # type: ignore[attr-defined]
@@ -1156,7 +1169,10 @@ class TestVLLMCobertura:
         assert calls[0]["model"] == "local-model"
         for exc, fragmento in [
             (httpx.TimeoutException("t"), "tiempo"),
-            (httpx.HTTPStatusError("503", request=httpx.Request("POST", "http://f"), response=httpx.Response(503)), "503"),
+            (
+                httpx.HTTPStatusError("503", request=httpx.Request("POST", "http://f"), response=httpx.Response(503)),
+                "503",
+            ),
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
@@ -1166,7 +1182,9 @@ class TestVLLMCobertura:
     def test_embed_y_health(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = VLLMProvider()
         monkeypatch.setattr(
-            vllm_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]})  # type: ignore[attr-defined]
+            vllm_mod.httpx,
+            "post",
+            lambda *a, **k: FakeResp({"data": [{"embedding": [0.1]}]}),  # type: ignore[attr-defined]
         )
         assert p.embed(["a"]) == [[0.1]]
         monkeypatch.setattr(vllm_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
@@ -1200,7 +1218,10 @@ class TestOpenRouterCobertura:
         assert calls[0]["model"] == "openrouter/auto"
         for exc, fragmento in [
             (httpx.TimeoutException("t"), "tiempo"),
-            (httpx.HTTPStatusError("402", request=httpx.Request("POST", "http://f"), response=httpx.Response(402)), "402"),
+            (
+                httpx.HTTPStatusError("402", request=httpx.Request("POST", "http://f"), response=httpx.Response(402)),
+                "402",
+            ),
             (httpx.RequestError("x"), "conectar"),
             (ValueError("boom"), "interno"),
         ]:
@@ -1211,10 +1232,14 @@ class TestOpenRouterCobertura:
         monkeypatch.setenv("OPENROUTER_API_KEY", "k")
         p = OpenRouterProvider()
         monkeypatch.setattr(
-            openrouter_mod.httpx, "post", lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]})  # type: ignore[attr-defined]
+            openrouter_mod.httpx,
+            "post",
+            lambda *a, **k: FakeResp({"data": [{"embedding": [0.2]}]}),  # type: ignore[attr-defined]
         )
         assert p.embed(["a"]) == [[0.2]]
-        monkeypatch.setattr(openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x")))  # type: ignore[attr-defined]
+        monkeypatch.setattr(
+            openrouter_mod.httpx, "post", lambda *a, **k: (_ for _ in ()).throw(httpx.RequestError("x"))
+        )  # type: ignore[attr-defined]
         assert p.embed(["a"]) == [[0.0] * 768]
 
     def test_health(self, monkeypatch: pytest.MonkeyPatch) -> None:

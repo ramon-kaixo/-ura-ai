@@ -38,25 +38,25 @@ class TestContract:
 
     def test_todos_implementan_generate(self) -> None:
         proveedores, _ = self._get_proveedores()
-        for nombre, cls_prov in proveedores:
+        for nombre, cls_prov in proveedores:  # noqa: B007
             assert hasattr(cls_prov, "generate")
             assert callable(cls_prov.generate)
 
     def test_todos_implementan_embed(self) -> None:
         proveedores, _ = self._get_proveedores()
-        for nombre, cls_prov in proveedores:
+        for nombre, cls_prov in proveedores:  # noqa: B007
             assert hasattr(cls_prov, "embed")
             assert callable(cls_prov.embed)
 
     def test_todos_implementan_embed_async(self) -> None:
         proveedores, _ = self._get_proveedores()
-        for nombre, cls_prov in proveedores:
+        for nombre, cls_prov in proveedores:  # noqa: B007
             assert hasattr(cls_prov, "embed_async")
             assert callable(cls_prov.embed_async)
 
     def test_todos_implementan_health(self) -> None:
         proveedores, _ = self._get_proveedores()
-        for nombre, cls_prov in proveedores:
+        for nombre, cls_prov in proveedores:  # noqa: B007
             assert hasattr(cls_prov, "health")
             assert callable(cls_prov.health)
 
@@ -71,13 +71,13 @@ class TestContract:
 
                 base_mod = _sys.modules.get(base.__module__, None)
                 cls_base_mod = _sys.modules.get(
-                    [c for c in cls_prov.__mro__ if c.__name__ == "BaseLLMProvider"][0].__module__, None
+                    next(c for c in cls_prov.__mro__ if c.__name__ == "BaseLLMProvider").__module__, None
                 )
                 assert base_mod is cls_base_mod, f"{nombre}: modulo base {base_mod} != {cls_base_mod}"
 
     def test_todos_tienen_provider_name(self) -> None:
         proveedores, _ = self._get_proveedores()
-        for nombre, cls_prov in proveedores:
+        for nombre, cls_prov in proveedores:  # noqa: B007
             inst = cls_prov()
             assert hasattr(inst, "_provider_name")
             assert isinstance(inst._provider_name, str)
@@ -102,14 +102,14 @@ class TestFormatoBase:
 
 class TestFormato(TestFormatoBase):
     def test_generate_retorna_str(self) -> None:
-        for nombre, inst in self.PROVEEDORES:
+        for nombre, inst in self.PROVEEDORES:  # noqa: B007
             with patch.object(inst, "generate", return_value="mock response"):
                 resultado = inst.generate("test prompt")
                 assert isinstance(resultado, str)
                 assert len(resultado) > 0
 
     def test_embed_retorna_lista_de_listas(self) -> None:
-        for nombre, inst in self.PROVEEDORES:
+        for nombre, inst in self.PROVEEDORES:  # noqa: B007
             with patch.object(inst, "embed", return_value=[[0.1, 0.2], [0.3, 0.4]]):
                 resultado = inst.embed(["texto1", "texto2"])
                 assert isinstance(resultado, list)
@@ -117,20 +117,20 @@ class TestFormato(TestFormatoBase):
                 assert all(isinstance(x, float) for v in resultado for x in v)
 
     def test_health_retorna_dict(self) -> None:
-        for nombre, inst in self.PROVEEDORES:
+        for nombre, inst in self.PROVEEDORES:  # noqa: B007
             with patch.object(inst, "health", return_value={"status": "ok"}):
                 resultado = inst.health()
                 assert isinstance(resultado, dict)
                 assert "status" in resultado
 
     def test_generate_con_modelo_explicto(self) -> None:
-        for nombre, inst in self.PROVEEDORES:
+        for nombre, inst in self.PROVEEDORES:  # noqa: B007
             with patch.object(inst, "generate", return_value="ok"):
                 resultado = inst.generate("prompt", model="test-model")
                 assert isinstance(resultado, str)
 
     def test_generate_con_options(self) -> None:
-        for nombre, inst in self.PROVEEDORES:
+        for nombre, inst in self.PROVEEDORES:  # noqa: B007
             with patch.object(inst, "generate", return_value="ok"):
                 resultado = inst.generate("prompt", options={"temperature": 0.5})
                 assert isinstance(resultado, str)
