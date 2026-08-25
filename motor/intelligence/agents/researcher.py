@@ -71,7 +71,7 @@ class ResearcherAgent(Agent):
         finally:
             self.status = AgentStatus.IDLE
 
-    def _gather_context(self, objective: str, context: dict) -> dict[str, Any]:
+    def _gather_context(self, objective: str, context: dict[str, Any]) -> dict[str, Any]:
         results: dict[str, Any] = {"query": objective, "sources": []}
 
         # Try semantic memory store

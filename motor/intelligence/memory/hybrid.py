@@ -241,7 +241,8 @@ class HybridMemory:
                     )
                 else:
                     cursor = conn.execute("SELECT COUNT(*) FROM memory_metadata")
-                return cursor.fetchone()[0]
+                row = cursor.fetchone()
+                return int(row[0]) if row is not None else 0
         except Exception:
             log.exception("Error counting records")
             return 0
