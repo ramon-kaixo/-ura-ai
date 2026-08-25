@@ -18,6 +18,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import Any
 
 from aiohttp import web
 
@@ -41,7 +42,7 @@ _health.register_component("metrics_server")
 _memory = HybridMemory(db_path=os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
 
 
-def _compute_metrics(lines: list[str]) -> dict:
+def _compute_metrics(lines: list[str]) -> dict[str, Any]:
     events = [json.loads(line) for line in lines if line.strip()]
     if not events:
         return {"status": "no_data", "total_queries": 0}

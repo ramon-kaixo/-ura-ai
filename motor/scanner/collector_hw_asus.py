@@ -1,5 +1,6 @@
 import glob
 import logging
+from typing import Any
 
 from motor.core.executor import SubprocessExecutor
 
@@ -9,7 +10,7 @@ _executor = SubprocessExecutor()
 RUTA_THERMAL = "/sys/class/thermal/thermal_zone*/temp"
 
 
-def escanear_hw_asus(temp_gpu=None) -> dict:
+def escanear_hw_asus(temp_gpu: float | None = None) -> dict[str, Any]:
     """Escanea salud hardware en equipo físico ASUS."""
     return {
         "ok": True,
@@ -31,7 +32,7 @@ def _smart_ok(disk: str = "/dev/nvme0n1") -> bool:
         return True
 
 
-def _thermal_zones() -> dict:
+def _thermal_zones() -> dict[str, float]:
     """Lee temperaturas de zonas térmicas."""
     zonas = {}
     for z in sorted(glob.glob(RUTA_THERMAL)):  # noqa: PTH207

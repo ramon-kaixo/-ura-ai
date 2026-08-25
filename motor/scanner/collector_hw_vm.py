@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 from motor.core.executor import SubprocessExecutor
 
@@ -6,7 +7,7 @@ log = logging.getLogger("ura.scanner.hw_vm")
 _executor = SubprocessExecutor()
 
 
-def escanear_hw_vm() -> dict:
+def escanear_hw_vm() -> dict[str, Any]:
     """Escanea salud hardware en entorno VM."""
     return {
         "ok": True,
@@ -19,7 +20,7 @@ def escanear_hw_vm() -> dict:
     }
 
 
-def _dmesg_errors() -> list:
+def _dmesg_errors() -> list[str]:
     """Obtiene errores del kernel de la última hora."""
     try:
         r = _executor.run(["dmesg", "--level=err", "--since", "1 hour ago"], timeout=5)
@@ -30,7 +31,7 @@ def _dmesg_errors() -> list:
         return []
 
 
-def _io_stats() -> dict:
+def _io_stats() -> dict[str, Any]:
     """Lee estadísticas de IO del disco principal."""
     try:
         with open("/proc/diskstats") as f:  # noqa: PTH123

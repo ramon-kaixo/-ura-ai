@@ -282,7 +282,7 @@ class RegressionDetector:
             total_metrics=metrics_count,
         )
 
-    def _metric_findings(self, cfg: str, metrics: dict) -> list[RegressionFinding]:
+    def _metric_findings(self, cfg: str, metrics: dict[str, Any]) -> list[RegressionFinding]:
         findings: list[RegressionFinding] = []
         for metric, current in metrics.items():
             baseline_val = self._baseline.get(cfg, metric)
@@ -302,7 +302,7 @@ class RegressionDetector:
             )
         return findings
 
-    def _latency_findings(self, cfg: str, lat: dict) -> list[RegressionFinding]:
+    def _latency_findings(self, cfg: str, lat: dict[str, Any]) -> list[RegressionFinding]:
         findings: list[RegressionFinding] = []
         for lat_metric in ("latency_p50", "latency_p95"):
             bl = self._baseline.get(cfg, lat_metric)

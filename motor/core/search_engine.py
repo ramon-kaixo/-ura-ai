@@ -2,13 +2,14 @@
 """Search Engine - Búsqueda simple en documentos indexados."""
 
 import logging
+from typing import Any
 
 from motor.core.memory_engine import query, rag_enabled
 
 log = logging.getLogger(__name__)
 
 
-def search(query_str: str, top_k: int = 5) -> list[dict]:
+def search(query_str: str, top_k: int = 5) -> list[dict[str, Any]]:
     """Busca documentos relevantes para una query.
 
     Args:

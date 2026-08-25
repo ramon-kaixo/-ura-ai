@@ -19,7 +19,7 @@ from motor.agents.models import AgentCapability
 
 if TYPE_CHECKING:
     from motor.agents.base import AuditLogger, Planner, Scheduler, ToolRunner
-    from motor.agents.models import AgentExecution, AgentResult, AgentState, AgentTask
+    from motor.agents.models import AgentExecution, AgentPlan, AgentResult, AgentState, AgentTask
 
 
 class AgentOrchestrator(AgentABC):
@@ -95,7 +95,7 @@ class AgentOrchestrator(AgentABC):
         except Exception as e:
             return self._finalize(execution, AgentState.FAILED, start_time, error=str(e))
 
-    def _execute_plan_steps(self, execution: AgentExecution, plan, start_time: float) -> AgentResult:
+    def _execute_plan_steps(self, execution: AgentExecution, plan: AgentPlan, start_time: float) -> AgentResult:
         from motor.agents.models import AgentState
 
         for step in plan.steps:

@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 log = logging.getLogger("ura.diagnostico.circuit")
 
@@ -9,7 +10,7 @@ class CircuitBreaker:
     FALLOS_MAX = 3
     VENTANA_SEG = 300
 
-    def __init__(self, qdrant) -> None:
+    def __init__(self, qdrant: Any) -> None:
         self._qdrant = qdrant
         self._fallos = 0
         self._abierto = False
@@ -19,7 +20,7 @@ class CircuitBreaker:
         abre el circuito tras FALLOS_MAX fallos."""
         if self._abierto:
             return False
-        ok = self._qdrant.health()
+        ok = bool(self._qdrant.health())
         if ok:
             self._fallos = 0
         else:

@@ -13,7 +13,7 @@ HOST_PING = "8.8.8.8"
 HOST_DNS = "google.com"
 
 
-def escanear_red(config: UraConfig) -> dict:
+def escanear_red(config: UraConfig) -> dict[str, Any]:
     """Escanea conectividad de red, tailscale y peers."""
     r: dict[str, Any] = {
         "gateway": "",
@@ -82,7 +82,7 @@ def _iface_up(iface: str) -> bool:
         return False
 
 
-def _tailscale_status() -> dict:
+def _tailscale_status() -> dict[str, dict[str, Any]]:
     """Obtiene estado de peers Tailscale."""
     peers = {}
     try:
@@ -99,7 +99,7 @@ def _tailscale_status() -> dict:
     return peers
 
 
-def _check_exit_node(peers: dict) -> bool:
+def _check_exit_node(peers: dict[str, dict[str, Any]]) -> bool:
     """Determina si el exit node de Tailscale está online."""
     host = socket.gethostname().lower()
     if "hetzner" in host:

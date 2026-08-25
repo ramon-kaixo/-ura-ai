@@ -2,11 +2,14 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
+
+from motor.core.config import UraConfig
 
 log = logging.getLogger("ura.diagnostico.backup")
 
 
-def backup_incidente(config, incidente: dict | None = None) -> str:
+def backup_incidente(config: UraConfig, incidente: dict[str, Any] | None = None) -> str:
     """Guarda backup de un incidente a disco."""
     dest_dir = Path(config.data_dir)
     dest_dir.mkdir(parents=True, exist_ok=True)

@@ -18,7 +18,7 @@ class AgenteEjecutor:
 
     MODELO = MODELOS["ejecutor"]
 
-    def ejecutar(self, workers: int = 4, timeout: int = 3600) -> dict:
+    def ejecutar(self, workers: int = 4, timeout: int = 3600) -> dict[str, Any]:
         resultados: dict[str, Any] = {"ok": 0, "err": 0, "workers": []}
         workers_list = []
 

@@ -7,7 +7,7 @@ Ninguna lógica de implementación. Solo interfaces.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.agents.models import (
@@ -113,9 +113,9 @@ class ToolRunner(ABC):
     def run(
         self,
         tool_name: str,
-        params: dict,
+        params: dict[str, Any],
         timeout: int = 30,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Ejecuta una herramienta y retorna su resultado."""
         ...
 
@@ -224,7 +224,7 @@ class ToolAdapter(ABC):
         ...
 
     @abstractmethod
-    def run(self, params: dict) -> dict:
+    def run(self, params: dict[str, Any]) -> dict[str, Any]:
         """Ejecuta la herramienta y retorna el resultado."""
         ...
 

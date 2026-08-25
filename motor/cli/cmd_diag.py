@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -16,23 +17,23 @@ ARCHIVO_ESTADO = "estado_alemania.json"
 _executor = SubprocessExecutor()
 
 
-def cmd_history(config: UraConfig, args=None) -> None:
+def cmd_history(config: UraConfig, args: Any | None = None) -> None:
     qdrant = QdrantClient.instancia(config)
     if not qdrant.disponible:
         sys.exit(1)
     qdrant.buscar_incidentes(limit=50)
 
 
-def cmd_check(config: UraConfig, args=None) -> None:
+def cmd_check(config: UraConfig, args: Any | None = None) -> None:
     r = ejecutar_preflight(config)
     sys.exit(0 if r.ok else 1)
 
 
-def cmd_verify(config: UraConfig, args=None) -> None:
+def cmd_verify(config: UraConfig, args: Any | None = None) -> None:
     ejecutar_verificacion(config, hubo_cambios=True)
 
 
-def cmd_detect(config: UraConfig, args=None) -> None:
+def cmd_detect(config: UraConfig, args: Any | None = None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not trend_path.exists():
         sys.exit(1)
@@ -41,7 +42,7 @@ def cmd_detect(config: UraConfig, args=None) -> None:
     cal.detect(lines)
 
 
-def cmd_learn(config: UraConfig, args=None) -> None:
+def cmd_learn(config: UraConfig, args: Any | None = None) -> None:
     trend_path = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not trend_path.exists() or not trend_path.stat().st_size:
         sys.exit(1)
@@ -90,7 +91,7 @@ def cmd_learn(config: UraConfig, args=None) -> None:
             )
 
 
-def cmd_alerta(config: UraConfig | None = None, args=None) -> None:
+def cmd_alerta(config: UraConfig | None = None, args: Any | None = None) -> None:
     r = _executor.run(
         [
             "journalctl",
@@ -109,7 +110,7 @@ def cmd_alerta(config: UraConfig | None = None, args=None) -> None:
     [l for l in r.stdout.strip().split("\n") if "ALERTA" in l or "error" in l.lower()]
 
 
-def cmd_health_check(config: UraConfig, args=None) -> None:
+def cmd_health_check(config: UraConfig, args: Any | None = None) -> None:
     checks = []
     for unit in ["ura-pipeline.service", "ura-pipeline.timer"]:
         try:

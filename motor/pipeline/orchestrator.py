@@ -3,6 +3,7 @@ import logging
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
@@ -81,7 +82,7 @@ class Orchestrator:
         self._emit(result)
         return result
 
-    def _registrar_trend(self, result: PipelineResult, perf: dict | None = None) -> None:
+    def _registrar_trend(self, result: PipelineResult, perf: dict[str, Any] | None = None) -> None:
         """Registra métricas de tendencia a disco."""
         if not result.scan:
             return

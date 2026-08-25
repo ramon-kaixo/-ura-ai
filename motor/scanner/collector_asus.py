@@ -1,6 +1,7 @@
 import logging
 from typing import Any
 
+from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
 from motor.core.secrets import get_secret
 
@@ -13,7 +14,7 @@ PUERTO_WHISPER = 9090
 OPCIONES_SSH = ["-o", "ConnectTimeout=5", "-o", "StrictHostKeyChecking=accept-new", "-o", "BatchMode=yes"]
 
 
-def escanear_asus(config) -> dict:
+def escanear_asus(config: UraConfig) -> dict[str, Any]:
     """Escanea servicios y temperatura en el host ASUS remoto."""
     r: dict[str, Any] = {"ollama": False, "qdrant": False, "whisper": False, "temp_gpu": 0}
     host = config.asus_host

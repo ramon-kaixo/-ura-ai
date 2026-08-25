@@ -81,14 +81,14 @@ class EvaluationEngine:
 
     def __init__(self) -> None:
         self._corpora: dict[str, EvaluationCorpus] = {}
-        self._retrievers: dict[str, Callable] = {}
+        self._retrievers: dict[str, Callable[..., Any]] = {}
         self._results: list[EvaluationRun] = []
         self._max_results = 100
 
     def register_corpus(self, name: str, corpus: EvaluationCorpus) -> None:
         self._corpora[name] = corpus
 
-    def register_retriever(self, name: str, retrieve_fn: Callable) -> None:
+    def register_retriever(self, name: str, retrieve_fn: Callable[..., Any]) -> None:
         self._retrievers[name] = retrieve_fn
 
     def list_corpora(self) -> list[str]:

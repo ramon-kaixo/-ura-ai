@@ -90,7 +90,7 @@ class Scanner:
         )
         return r
 
-    def _get_hostname(self):
+    def _get_hostname(self) -> str:
         try:
             import socket
 
@@ -99,7 +99,7 @@ class Scanner:
             log.warning("no se pudo obtener hostname: %s", e)
             return "unknown"
 
-    def _check_servicios(self) -> dict:
+    def _check_servicios(self) -> dict[str, str]:
         s = {}
         for svc in SERVICIOS_SYSTEMD:
             try:
@@ -129,7 +129,7 @@ class Scanner:
             log.debug("systemctl list-units %s falló: %s", name, e)
             return False
 
-    def _list_docker_containers(self) -> dict:
+    def _list_docker_containers(self) -> dict[str, str]:
         try:
             r = self.executor.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"], timeout=10)
             return dict(line.split("\t") for line in r.stdout.strip().split("\n") if "\t" in line)
@@ -137,13 +137,13 @@ class Scanner:
             log.debug("docker ps falló: %s", e)
             return {}
 
-    def _check_recursos(self) -> dict:
+    def _check_recursos(self) -> dict[str, Any]:
         recursos = _recursos_psutil()
         if recursos is not None:
             return recursos
         return _recursos_proc()
 
-    def _check_contenedores(self) -> dict:
+    def _check_contenedores(self) -> dict[str, int]:
         c = {"total": 0, "running": 0, "exited": 0}
         try:
             r = self.executor.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"], timeout=10)
@@ -161,7 +161,7 @@ class Scanner:
             log.debug("docker ps (contenedores) falló: %s", e)
         return c
 
-    def _detectar_cambios(self, actual: ScanResult) -> tuple:
+    def _detectar_cambios(self, actual: ScanResult) -> tuple[int, list[str]]:
         snap = {
             "servicios": dict(actual.servicios),
             "recursos": dict(actual.recursos),
@@ -195,9 +195,9 @@ class Scanner:
         if not r.hw_health.get("ok", True):
             score -= 15
         score -= r.diff_total * 2
-        return max(0, round(score, 1))
+        return max(0.0, round(float(score), 1))
 
-    def _detectar_duplicados(self) -> dict:
+    def _detectar_duplicados(self) -> dict[str, Any]:
         d = {}
         try:
             r = self.executor.run(["ps", "-eo", "args="], timeout=5)
@@ -228,15 +228,15 @@ class Scanner:
                 pass
         return h.hexdigest()[:16]
 
-    def _detectar_orphans(self) -> list:
-        orphans: list[dict] = []
+    def _detectar_orphans(self) -> list[dict[str, Any]]:
+        orphans: list[dict[str, Any]] = []
         _detectar_pid_files(orphans)
         _detectar_hijos_huerfanos(orphans)
         _detectar_docker_dangling(orphans, self.executor)
         _detectar_systemd_failed(orphans, self.executor)
         return orphans
 
-    def _detectar_systemd_failed(self) -> list:
+    def _detectar_systemd_failed(self) -> list[str]:
         try:
             r = self.executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
             return [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]
@@ -245,7 +245,7 @@ class Scanner:
             return []
 
 
-def _recursos_psutil() -> dict | None:
+def _recursos_psutil() -> dict[str, Any] | None:
     try:
         import psutil
 
@@ -269,7 +269,7 @@ def _recursos_psutil() -> dict | None:
     return None
 
 
-def _recursos_proc() -> dict:
+def _recursos_proc() -> dict[str, Any]:
     mem_total, mem_avail = _leer_meminfo()
     load = _leer_loadavg()
     ncpu = os.cpu_count() or 1
@@ -337,7 +337,7 @@ def _contar_zombies_proc() -> int:
     return zombies
 
 
-def _detectar_pid_files(orphans: list[dict]) -> None:
+def _detectar_pid_files(orphans: list[dict[str, Any]]) -> None:
     try:
         for p in Path("/var/run").glob("*.pid"):
             try:
@@ -350,7 +350,7 @@ def _detectar_pid_files(orphans: list[dict]) -> None:
         log.debug("fallo glob /var/run/*.pid: %s", e)
 
 
-def _detectar_hijos_huerfanos(orphans: list[dict]) -> None:
+def _detectar_hijos_huerfanos(orphans: list[dict[str, Any]]) -> None:
     try:
         import psutil
 
@@ -371,7 +371,7 @@ def _detectar_hijos_huerfanos(orphans: list[dict]) -> None:
         log.debug("deteccion hijos huerfanos fallo: %s", e)
 
 
-def _detectar_docker_dangling(orphans: list[dict], executor: SubprocessExecutor) -> None:
+def _detectar_docker_dangling(orphans: list[dict[str, Any]], executor: SubprocessExecutor) -> None:
     try:
         r = executor.run(["docker", "images", "-f", "dangling=true", "-q"], timeout=10)
         dangling = [i for i in r.stdout.strip().split("\n") if i]
@@ -381,7 +381,7 @@ def _detectar_docker_dangling(orphans: list[dict], executor: SubprocessExecutor)
         log.debug("deteccion docker dangling falló: %s", e)
 
 
-def _detectar_systemd_failed(orphans: list[dict], executor: SubprocessExecutor) -> None:
+def _detectar_systemd_failed(orphans: list[dict[str, Any]], executor: SubprocessExecutor) -> None:
     try:
         r = executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)
         failed = [l.split()[0].lstrip("●").strip() or l.split()[1] for l in r.stdout.strip().split("\n") if l.strip()]

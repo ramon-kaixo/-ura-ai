@@ -30,12 +30,14 @@ class Telemetria:
 
             result = _health()
         if result.get("status") == "ok":
-            modelos = result.get("modelos_disponibles", [])
-            return f"{len(modelos)} modelos"
+            modelos = result.get("modelos_disponibles", []) or []
+            if isinstance(modelos, list):
+                return f"{len(modelos)} modelos"
+            return "down"
         return "down"
 
     @staticmethod
-    def hardware() -> dict:
+    def hardware() -> dict[str, Any]:
         metrics: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat()}
         try:
             import psutil
@@ -59,7 +61,7 @@ class Telemetria:
                 metrics["ram_total_mb"] = 121920
         return metrics
 
-    def red(self) -> dict:
+    def red(self) -> dict[str, Any]:
         import httpx
 
         status = {}
@@ -82,7 +84,7 @@ class Telemetria:
         return status
 
     @staticmethod
-    def llm_stats() -> dict:
+    def llm_stats() -> dict[str, Any]:
         config_path = NERVIOSO / "chunk_config.json"
         if config_path.exists():
             data = json.loads(config_path.read_text())
@@ -109,7 +111,7 @@ class Telemetria:
             log.exception("Error counting F821")
             return -1
 
-    def reporte_completo(self) -> dict:
+    def reporte_completo(self) -> dict[str, Any]:
         return {
             "hardware": self.hardware(),
             "red": self.red(),

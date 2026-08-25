@@ -25,7 +25,7 @@ class SelfHealingLoop:
         self.telemetria = Telemetria()
         self._fallos_consecutivos = 0
 
-    def ejecutar(self, archivo: str | None = None) -> dict:
+    def ejecutar(self, archivo: str | None = None) -> dict[str, Any]:
         inicio = time.monotonic()
         reporte: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat(), "pasos": []}
 
@@ -53,13 +53,13 @@ class SelfHealingLoop:
 
         return self._cerrar_reporte(reporte, inicio, f821_final)
 
-    def _accion_refactorizar(self, reporte: dict) -> None:
+    def _accion_refactorizar(self, reporte: dict[str, Any]) -> None:
         Conciencia.actualizar_proceso("ejecutor", "activo")
         result = self.ejecutor.ejecutar(workers=4)
         reporte["refactor"] = result
         Conciencia.actualizar_proceso("ejecutor", "idle")
 
-    def _accion_reparar(self, reporte: dict) -> None:
+    def _accion_reparar(self, reporte: dict[str, Any]) -> None:
         Conciencia.actualizar_proceso("reparador", "activo")
         try:
             files = self._escanear_f821()
@@ -90,7 +90,7 @@ class SelfHealingLoop:
         data = json.loads(r.stdout)
         return {x["filename"] for x in data if "/.venv/" not in x.get("filename", "")}
 
-    def _accion_pausar(self, reporte: dict) -> None:
+    def _accion_pausar(self, reporte: dict[str, Any]) -> None:
         reporte["pasos"].append({"paso": "pausar", "mensaje": "RAM saturada"})
         time.sleep(30)
 
@@ -110,7 +110,7 @@ class SelfHealingLoop:
             check=False,
         )
 
-    def _cerrar_reporte(self, reporte: dict, inicio: float, f821_final: int) -> dict:
+    def _cerrar_reporte(self, reporte: dict[str, Any], inicio: float, f821_final: int) -> dict[str, Any]:
         if time.monotonic() - inicio > MAX_CICLO_S:
             reporte["resultado"] = "TIMEOUT"
             reporte["razon"] = f"Sobrepasado {MAX_CICLO_S}s limite"

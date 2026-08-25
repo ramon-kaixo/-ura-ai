@@ -9,7 +9,7 @@ import subprocess  # nosec B404 - subprocess con listas de args, sin shell
 import sys
 import urllib.request
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.core.agents.constants import RUFF, SCRIPTS, URA_ROOT
 
@@ -23,14 +23,14 @@ class AgenteReparador:
     def __init__(self, llm: ILLMClient | None = None) -> None:
         self._llm = llm
 
-    def _generate(self, prompt: str, modelo: str, options: dict | None = None) -> str:
+    def _generate(self, prompt: str, modelo: str, options: dict[str, Any] | None = None) -> str:
         if self._llm is not None:
             return self._llm.generate(prompt, model=modelo, options=options)
         from motor.core.llm import generate as _gen
 
         return _gen(prompt, model=modelo, options=options)
 
-    def reparar(self, archivo: str, errores: list) -> tuple[bool, int, str]:
+    def reparar(self, archivo: str, errores: list[Any]) -> tuple[bool, int, str]:
         ruta = Path(archivo) if isinstance(archivo, str) else archivo
         if not ruta.exists():
             return False, -1, "Archivo no encontrado"

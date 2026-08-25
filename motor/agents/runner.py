@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import threading
 import time
+from typing import Any
 
 from motor.agents.base import ToolAdapter
 from motor.agents.base import ToolRunner as ToolRunnerABC
@@ -117,9 +118,9 @@ class AgentToolRunner(ToolRunnerABC):
     def run(
         self,
         tool_name: str,
-        params: dict,
+        params: dict[str, Any],
         timeout: int = 30,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Ejecuta una herramienta y retorna su resultado. (TR-15)."""
         self._rate_limiter.check(tool_name)
         # Backpressure: esperar si hay demasiadas herramientas concurrentes
@@ -138,7 +139,7 @@ class AgentToolRunner(ToolRunnerABC):
 
     # ── Internos ──────────────────────────────────────
 
-    def _build_request(self, tool_name: str, params: dict, timeout: int) -> ToolRequest:
+    def _build_request(self, tool_name: str, params: dict[str, Any], timeout: int) -> ToolRequest:
         from motor.agents.models import ToolRequest, make_tool_execution_id
 
         if tool_name not in self._adapters:
@@ -201,7 +202,7 @@ class AgentToolRunner(ToolRunnerABC):
     ) -> ToolResult:
         """Ejecuta una llamada individual con timeout y cancelación."""
         cancel_event = threading.Event()
-        result_container: list[dict] = []
+        result_container: list[dict[str, Any]] = []
         error_container: list[Exception] = []
 
         def _run() -> None:
@@ -263,7 +264,7 @@ class AgentToolRunner(ToolRunnerABC):
         duration_ms: float,
         error: str = "",
         error_type: str = "",
-        data: dict | None = None,
+        data: dict[str, Any] | None = None,
     ) -> ToolResult:
         return ToolResult(
             execution_id=request.execution_id,

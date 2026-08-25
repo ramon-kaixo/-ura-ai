@@ -1,4 +1,5 @@
 import logging
+from typing import Any
 
 log = logging.getLogger("ura.diagnostico.correlacion")
 
@@ -10,7 +11,7 @@ DEPENDENCIAS = {
 }
 
 
-def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list | None = None) -> list:
+def agrupar_incidentes(tags: list[str], hw_ok: bool = True, hw_issues: list[str] | None = None) -> list[dict[str, Any]]:
     """Agrupa tags en correlaciones con causa raíz y servicios afectados."""
     grupos = []
     procesados = set()
@@ -46,7 +47,7 @@ def agrupar_incidentes(tags: list, hw_ok: bool = True, hw_issues: list | None = 
     return grupos
 
 
-def resumir_incidentes(incidentes: list) -> str:
+def resumir_incidentes(incidentes: list[dict[str, Any]]) -> str:
     """Genera resumen textual de una lista de incidentes."""
     if not incidentes:
         return "Sin incidencias activas"

@@ -7,7 +7,7 @@ No conoce Scheduler, Agent ni ToolRunner.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from motor.agents.base import Planner as PlannerABC
 
@@ -114,7 +114,7 @@ class RuleBasedPlanner(PlannerABC):
     # ── Helpers ──────────────────────────────────────
 
     @staticmethod
-    def _make_step(index: int, action: str, params: dict | None = None) -> PlanStep:
+    def _make_step(index: int, action: str, params: dict[str, Any] | None = None) -> PlanStep:
         from motor.agents.models import PlanStep, make_step_id
 
         step_id = make_step_id("plan", index)

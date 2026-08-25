@@ -26,7 +26,7 @@ class ExperimentConfig:
     """Configuración de un experimento: retriever + nombre + parámetros."""
 
     name: str
-    retrieve_fn: Callable
+    retrieve_fn: Callable[..., Any]
     params: dict[str, Any] = field(default_factory=dict)
     description: str = ""
 
@@ -109,7 +109,7 @@ class Experiment:
     def add_config(
         self,
         name: str,
-        retrieve_fn: Callable,
+        retrieve_fn: Callable[..., Any],
         params: dict[str, Any] | None = None,
         description: str = "",
     ) -> None:
@@ -256,5 +256,15 @@ class Experiment:
         Nota: solo carga los resultados, no las configuraciones originales.
         Para re-ejecutar, crear un nuevo Experiment con las mismas configs.
         """
-        return json.loads(Path(path).read_text())
-        # Devolvemos un resultado directo (o podríamos reconstruir parcialmente)
+        data = json.loads(Path(path).read_text())
+        config = data.get("config", "unknown")
+        params = data.get("params") or {}
+        metrics = data.get("metrics") or {}
+        latency_stats = data.get("latency_stats") or {}
+        return ExperimentResult(
+            config_name=str(config),
+            metrics={str(k): float(v) for k, v in metrics.items()},
+            per_query=[],
+            latency_stats={str(k): float(v) for k, v in latency_stats.items()},
+            params=dict(params),
+        )

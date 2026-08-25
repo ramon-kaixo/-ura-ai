@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from motor.brain.observer import BrainObserver
+    from motor.brain.observer import BrainObserver, HealthObservation
 
 log = __import__("logging").getLogger("ura.brain.alerts")
 
@@ -44,7 +44,7 @@ class AlertEngine:
         self._alert_history = self._alert_history[-100:]
         return alerts
 
-    def _alert_provider_caido(self, observations) -> list[Alert]:
+    def _alert_provider_caido(self, observations: list[HealthObservation]) -> list[Alert]:
         alerts: list[Alert] = []
         for obs in observations:
             if obs.status == "error":
@@ -60,7 +60,7 @@ class AlertEngine:
                 )
         return alerts
 
-    def _alert_disco_critico(self, observations) -> list[Alert]:
+    def _alert_disco_critico(self, observations: list[HealthObservation]) -> list[Alert]:
         alerts: list[Alert] = []
         for obs in observations:
             if obs.subsystem == "disk":
@@ -89,7 +89,7 @@ class AlertEngine:
                     )
         return alerts
 
-    def _alert_desgradacion(self, observations) -> list[Alert]:
+    def _alert_desgradacion(self, observations: list[HealthObservation]) -> list[Alert]:
         alerts: list[Alert] = []
         latency_high = [o for o in observations if o.raw_data.get("latency_ms", 0) > 500]
         errors = [o for o in observations if o.status == "error"]
@@ -107,7 +107,7 @@ class AlertEngine:
             )
         return alerts
 
-    def _alert_red(self, observations) -> list[Alert]:
+    def _alert_red(self, observations: list[HealthObservation]) -> list[Alert]:
         alerts: list[Alert] = []
         latency_high = [o for o in observations if o.raw_data.get("latency_ms", 0) > 500]
         for obs in latency_high:

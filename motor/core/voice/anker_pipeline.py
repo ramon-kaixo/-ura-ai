@@ -12,6 +12,7 @@ import queue
 import re
 import sqlite3
 from pathlib import Path
+from typing import Any, Self
 
 import numpy as np
 import sounddevice as sd
@@ -29,7 +30,7 @@ class AnkerDeterministicPipeline:
         self.sample_rate = SAMPLE_RATE
         self.block_size = BLOCK_SIZE
         self.db_path = db_path
-        self.audio_queue: queue.Queue = queue.Queue()
+        self.audio_queue: queue.Queue[np.ndarray] = queue.Queue()
         self.is_playing_tts: bool = False
 
         os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
@@ -80,7 +81,7 @@ class AnkerDeterministicPipeline:
 
     # ── Audio callback ─────────────────────────────────────────────
 
-    def _audio_callback(self, indata, frames, time, status) -> None:
+    def _audio_callback(self, indata: np.ndarray, frames: int, time: Any, status: Any) -> None:
         """Callback de alta velocidad. Descarta bits si el altavoz está emitiendo TTS."""
         if self.is_playing_tts:
             return
@@ -189,10 +190,10 @@ class AnkerDeterministicPipeline:
 
     # ── TTS semáforo ───────────────────────────────────────────────
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         pass
 
 

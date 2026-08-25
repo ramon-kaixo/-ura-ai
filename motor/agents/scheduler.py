@@ -79,7 +79,7 @@ class _PriorityQueue:
             if prio >= 2:
                 break
             q = self._queues[prio]
-            still_waiting: list = []
+            still_waiting: list[tuple[float, str, AgentExecution]] = []
             for ts, aid, execution in q:
                 if now - ts > 60:  # aging after 60s
                     self._queues[prio + 1].append((ts, aid, execution))
