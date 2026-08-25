@@ -142,3 +142,44 @@ class TestGuardarIncidente:
         assert incidente["impacto_memoria"][5] == 1.0
         assert incidente["impacto_memoria"][6] == 1.0
         assert incidente["tipo"] == "AutoDiagnostico"
+
+
+class TestCorrelacion:
+    def test_agrupar_simple(self) -> None:
+        from motor.diagnostico.correlacion import agrupar_incidentes
+
+        grupos = agrupar_incidentes(["docker"])
+        assert grupos[0]["causa_raiz"] == "docker"
+        assert grupos[0]["servicios_afectados"] == ["container_searxng", "container_n8n", "container_qdrant"]
+
+    def test_agrupar_con_hardware(self) -> None:
+        from motor.diagnostico.correlacion import agrupar_incidentes
+
+        grupos = agrupar_incidentes(["docker", "sshd"], hw_ok=False, hw_issues=["gpu_down"])
+        causas = [g["causa_raiz"] for g in grupos]
+        assert "hardware" in causas
+        assert "docker" in causas
+        assert "sshd" in causas
+
+    def test_agrupar_desconocido(self) -> None:
+        from motor.diagnostico.correlacion import agrupar_incidentes
+
+        grupos = agrupar_incidentes(["raro"])
+        assert grupos[0]["causa_raiz"] == "raro"
+        assert grupos[0]["servicios_afectados"] == ["raro"]
+
+    def test_resumir_vacio(self) -> None:
+        from motor.diagnostico.correlacion import resumir_incidentes
+
+        assert resumir_incidentes([]) == "Sin incidencias activas"
+
+    def test_resumir_con_subtipos(self) -> None:
+        from motor.diagnostico.correlacion import resumir_incidentes
+
+        inc = [
+            {"tipo": "cpu", "subtipo": "alto"},
+            {"tipo": "ram"},
+        ]
+        res = resumir_incidentes(inc)
+        assert "2 incidencia(s)" in res
+        assert "alto" in res

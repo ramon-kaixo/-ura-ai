@@ -1,60 +1,113 @@
-"""Tests for ProposalExecutor (motor/brain/executor.py)."""
+"""Tests for motor/brain/executor.py (ProposalExecutor)."""
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from motor.brain.executor import ProposalExecutor
 
 
-@pytest.fixture
-def executor() -> ProposalExecutor:
-    return ProposalExecutor()
-
-
 class TestToTuneladoraTask:
-    def test_refactor_task(self, executor: ProposalExecutor) -> None:
-        task = executor.to_tuneladora_task({"type": "refactor", "target": "x.py", "priority": "high"})
-        assert task["plugin"] == "code_quality"
-        assert task["target"] == "x.py"
+    def test_mapping_tipos(self) -> None:
+        casos = [
+            ({"type": "refactor"}, "code_quality"),
+            ({"type": "split"}, "refactor"),
+            ({"type": "test"}, "testing"),
+            ({"type": "doc"}, "documentation"),
+            ({"type": "otro"}, "generic"),
+        ]
+        for proposal, plugin in casos:
+            r = ProposalExecutor.to_tuneladora_task(proposal)
+            assert r["plugin"] == plugin
 
-    def test_unknown_type_defaults(self, executor: ProposalExecutor) -> None:
-        task = executor.to_tuneladora_task({"type": "unknown", "target": "y.py", "priority": "low"})
-        assert task["plugin"] == "generic"
+    def test_campos_default(self) -> None:
+        r = ProposalExecutor.to_tuneladora_task({"type": "refactor", "target": "a.py", "priority": "high"})
+        assert r["target"] == "a.py"
+        assert r["priority"] == "high"
+        assert r["params"] == {"type": "refactor", "target": "a.py", "priority": "high"}
 
 
 class TestProposalToArgs:
-    def test_bool_flag(self, executor: ProposalExecutor) -> None:
-        args = executor._proposal_to_args({"type": "refactor", "target": "x.py", "dry_run": True, "priority": "medium"})
-        assert "--dry_run" in args
+    def test_maneja_tipos(self) -> None:
+        p = {
+            "type": "refactor",
+            "target": "mod.py",
+            "priority": "high",
+            "flag": True,
+            "no_flag": False,
+            "lista": ["a", "b"],
+            "num": 3,
+            "texto": "hola",
+            "nulo": None,
+        }
+        args = ProposalExecutor._proposal_to_args(p)
+        assert "--target=mod.py" in args
+        assert "--priority=high" in args
+        assert "--flag" in args
+        assert "--no_flag" not in args
+        assert "--lista=a" in args and "--lista=b" in args
+        assert "--num=3" in args
+        assert "--texto=hola" in args
+        assert "--nulo" not in args
 
-    def test_list_values(self, executor: ProposalExecutor) -> None:
-        args = executor._proposal_to_args({"type": "test", "target": "mod.py", "paths": ["a", "b"], "priority": "high"})
-        assert "--paths=a" in args
-        assert "--paths=b" in args
 
-    def test_none_skipped(self, executor: ProposalExecutor) -> None:
-        args = executor._proposal_to_args({"type": "doc", "target": "mod.py", "optional": None, "priority": "low"})
-        assert "--optional" not in " ".join(args)
+class TestGetEngine:
+    def test_engine_cargado(self) -> None:
+        fake = MagicMock()
+        fake_engine_mod = MagicMock()
+        fake_engine_mod.PipelineEngine.return_value = fake
+        import sys
+
+        with patch.dict(sys.modules, {"scripts.pro.tuneladora.engine": fake_engine_mod}):
+            ex = ProposalExecutor()
+            assert ex._get_engine() == fake
+        assert ex._engine == fake
+
+    def test_engine_import_error(self) -> None:
+        import sys
+
+        with patch.dict(sys.modules, {"scripts.pro.tuneladora.engine": None}):
+            ex = ProposalExecutor()
+            assert ex._get_engine() is None
 
 
 class TestExecute:
-    def test_execute_no_engine(self, executor: ProposalExecutor) -> None:
-        with patch.object(executor, "_get_engine", return_value=None):
-            result = executor.execute({"type": "test", "target": "mod.py", "priority": "low"})
-            assert "error" in result
+    def _fake_result(self, returncode: int = 0) -> MagicMock:
+        r = MagicMock()
+        r.returncode = returncode
+        r.stdout = "out"
+        r.stderr = "err"
+        return r
 
-    def test_execute_success(self, executor: ProposalExecutor) -> None:
-        mock_engine = MagicMock()
-        mock_engine.run_script.return_value.returncode = 0
-        with patch.object(executor, "_get_engine", return_value=mock_engine):
-            result = executor.execute({"type": "refactor", "target": "mod.py", "priority": "medium"})
-            assert result["status"] == "success"
+    def test_engine_none(self) -> None:
+        ex = ProposalExecutor()
+        with patch.object(ex, "_get_engine", return_value=None):
+            r = ex.execute({"type": "refactor"})
+        assert "error" in r
 
-    def test_execute_failure(self, executor: ProposalExecutor) -> None:
-        mock_engine = MagicMock()
-        mock_engine.run_script.return_value.returncode = 1
-        with patch.object(executor, "_get_engine", return_value=mock_engine):
-            result = executor.execute({"type": "refactor", "target": "mod.py", "priority": "medium"})
-            assert result["status"] == "failed"
+    def test_exito(self) -> None:
+        ex = ProposalExecutor()
+        engine = MagicMock()
+        engine.run_script.return_value = self._fake_result(0)
+        with patch.object(ex, "_get_engine", return_value=engine):
+            r = ex.execute({"type": "refactor", "target": "a.py"})
+        assert r["status"] == "success"
+        assert r["returncode"] == 0
+        engine.run_script.assert_called_once()
+
+    def test_fallo_returncode(self) -> None:
+        ex = ProposalExecutor()
+        engine = MagicMock()
+        engine.run_script.return_value = self._fake_result(3)
+        with patch.object(ex, "_get_engine", return_value=engine):
+            r = ex.execute({"type": "test"})
+        assert r["status"] == "failed"
+        assert r["returncode"] == 3
+
+    def test_excepcion(self) -> None:
+        ex = ProposalExecutor()
+        engine = MagicMock()
+        engine.run_script.side_effect = RuntimeError("boom")
+        with patch.object(ex, "_get_engine", return_value=engine):
+            r = ex.execute({"type": "doc"})
+        assert r["status"] == "error"
+        assert "boom" in r["error"]
