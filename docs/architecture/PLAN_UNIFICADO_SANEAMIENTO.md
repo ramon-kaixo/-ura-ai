@@ -13,10 +13,16 @@
 | 0 | ✅ | `6d7e18ac` | gitignore limpio, plan creado |
 | 0-BIS | ✅ | `d7e51e68` | 23 shims eliminados, 20+ archivos migrados, 102 tests pass |
 | A | ✅ | — | pyproject.toml ya era 0.29.0 |
-| B.1 | ✅ | `9e762b0e` | core/interfaces/ (6 files) + secretario_cache eliminados, imports migrados |
-| B.2 | 🔮 | — | core/mochila/providers (6 files) — pendiente (16+ consumers, alto riesgo) |
-| B.3 | 🔮 | — | core/auth_layer, debate, heartbeat, logs, memoria, mochila_server, model_router — KEEP_IN_CORE |
-| C–H | 🔮 | — | Ver detalle abajo |
+| B.1 | ✅ | `9e762b0e` | core/interfaces/ (6 files) + secretario_cache eliminados |
+| B.2 | ✅ | `1b029913` | core/mochila/providers/ (7 files) eliminados, mochila_server migrado a motor/ |
+| B.3 | ✅ | `c7f3ebee` | core/ congelado con README legacy |
+| B.4 | ✅ | — | motor/ tiene 0 imports de core/ |
+| C | ✅ | `7943dcaa` | Logging consolidado 3→1, CircuitBreaker retenido (dominios distintos) |
+| D | ✅ | `37cf1d7d` | bin_paths, rollback scripts, shims eliminados |
+| E | ⏳ | — | Gobernanza (ADRs + docs) — requiere decisiones humanas |
+| F | ✅ | `c7f3ebee` | motor/exceptions.py creado, E722 ya activo |
+| G | ⏳ | — | motor/platform — pendiente auditoría consumers |
+| H | ⏳ | — | Tests + CI/CD — pendiente |
 
 ---
 

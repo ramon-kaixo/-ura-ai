@@ -104,14 +104,14 @@ def setup_logging(
 class StructuredLogger:
     """Wrapper around logging.Logger that emits structured JSON.
 
-    Deprecated: Use motor.platform.logging.ComponentLogger.
+    Deprecated: Use motor.observability.logging.StructuredLogger directly or plain logging.
     """
 
     def __init__(self, name: str, level: int = logging.INFO) -> None:
         import warnings
 
         warnings.warn(
-            "StructuredLogger is deprecated. Use motor.platform.logging.ComponentLogger.",
+            "StructuredLogger is deprecated. Use motor.observability.logging.StructuredLogger.",
             DeprecationWarning,
             stacklevel=2,
         )

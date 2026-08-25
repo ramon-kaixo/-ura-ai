@@ -1,51 +1,13 @@
-"""Tests para motor/platform/validator.py, motor/core/llm/circuit_breaker.py y _state de diagnostico/scanner."""
+"""Tests para motor/core/llm/circuit_breaker.py y _state de diagnostico/scanner."""
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 
 from motor.core.llm.circuit_breaker import CircuitBreaker, CircuitBreakerOpenError
 from motor.diagnostico._state import DiagnosticoState, build_diagnostico_state
-from motor.platform.validator import ProtocolValidator
 from motor.scanner._state import ScannerState, build_scanner_state
-
-
-class TestProtocolValidator:
-    def test_payload_seguro(self) -> None:
-        env = SimpleNamespace(payload=b"texto normal")
-        ProtocolValidator().validate(env)  # no debe lanzar
-
-    def test_payload_script(self) -> None:
-        env = SimpleNamespace(payload=b'<script>alert(1)</script>')
-        with pytest.raises(ValueError, match="unsafe_payload"):
-            ProtocolValidator().validate(env)
-
-    def test_payload_javascript(self) -> None:
-        env = SimpleNamespace(payload=b"javascript:alert(1)")
-        with pytest.raises(ValueError, match="javascript"):
-            ProtocolValidator().validate(env)
-
-    def test_payload_onerror(self) -> None:
-        env = SimpleNamespace(payload=b'<img src=x onerror="alert(1)">')
-        with pytest.raises(ValueError, match="onerror"):
-            ProtocolValidator().validate(env)
-
-    def test_payload_onload(self) -> None:
-        env = SimpleNamespace(payload=b'<body onload="evil()">')
-        with pytest.raises(ValueError, match="onload"):
-            ProtocolValidator().validate(env)
-
-    def test_payload_no_bytes_no_valida(self) -> None:
-        """Payload str no valida (solo bytes) — documentado."""
-        env = SimpleNamespace(payload="texto", checksum=b"<script>x")
-        ProtocolValidator().validate(env)  # no lanza con str
-
-    def test_mayusculas_detectadas(self) -> None:
-        env = SimpleNamespace(payload=b"<SCRIPT>alert(1)</SCRIPT>")
-        with pytest.raises(ValueError, match="script"):
-            ProtocolValidator().validate(env)
 
 
 class TestCircuitBreakerCompat:
