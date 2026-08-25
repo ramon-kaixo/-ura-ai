@@ -3,6 +3,9 @@ from __future__ import annotations
 
 from unittest import mock
 
+from motor.agents.models import AgentTask as MotorAgentTask
+from motor.agents.models import PlanStep
+from motor.agents.planner import RuleBasedPlanner
 from motor.intelligence.agents.message import AgentRole, AgentTask
 from motor.intelligence.agents.planner import PlannerAgent
 from motor.observability.readiness import ReadinessEntry, ReadinessRegistry
@@ -10,6 +13,59 @@ from motor.observability.readiness import ReadinessEntry, ReadinessRegistry
 
 def _task(objective: str, context: dict | None = None) -> AgentTask:
     return AgentTask(id="t1", objective=objective, context=context or {})
+
+
+class TestRuleBasedPlanner:
+    def _tarea(self, objective: str) -> MotorAgentTask:
+        return MotorAgentTask(task_id="t1", objective=objective)
+
+    def test_plan_search(self):
+        plan = RuleBasedPlanner().plan(self._tarea("search for X"))
+        assert isinstance(plan.plan_id, str)
+        assert any(s.action == "search" for s in plan.steps)
+        assert plan.immutable is True
+
+    def test_plan_escribe(self):
+        plan = RuleBasedPlanner().plan(self._tarea("write report"))
+        assert any(s.action == "tool" for s in plan.steps)
+        assert plan.steps[-1].action == "llm"
+
+    def test_plan_sin_keywords(self):
+        plan = RuleBasedPlanner().plan(self._tarea("hola"))
+        assert any(s.action == "llm" for s in plan.steps)
+
+    def test_replan_conserva(self):
+        pl = RuleBasedPlanner()
+        plan = pl.plan(self._tarea("search and write"))
+        failed = plan.steps[0]
+        nuevo = pl.replan(self._tarea("search and write"), plan, context={}, failed_step=failed)
+        assert isinstance(nuevo.plan_id, str)
+        assert nuevo.immutable is True
+
+    def test_replan_sin_fallo_devuelve_original(self):
+        pl = RuleBasedPlanner()
+        plan = pl.plan(self._tarea("hola"))
+        nuevo = pl.replan(self._tarea("hola"), plan, context={}, failed_step=None)
+        assert nuevo is plan
+
+    def test_generate_remaining_search(self):
+        pl = RuleBasedPlanner()
+        paso = PlanStep(step_id="s", action="search", params={})
+        rest = pl._generate_remaining("x", paso)
+        assert rest[0].action == "retrieve"
+        assert rest[-1].action == "llm"
+
+    def test_generate_remaining_tool(self):
+        pl = RuleBasedPlanner()
+        paso = PlanStep(step_id="s", action="tool", params={})
+        rest = pl._generate_remaining("x", paso)
+        assert rest[0].action == "llm"
+
+    def test_generate_remaining_otro(self):
+        pl = RuleBasedPlanner()
+        paso = PlanStep(step_id="s", action="read", params={})
+        rest = pl._generate_remaining("x", paso)
+        assert rest[0].action == "retrieve"
 
 
 class TestPlannerAgent:
