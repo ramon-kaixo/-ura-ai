@@ -8,7 +8,8 @@
 set -euo pipefail
 
 REPO="${REPO:-$HOME/URA/ura_ia_1972}"
-DEST="$REPO/deploy/systemd-prod"
+# DEST_OVERRIDE permite exportar a un directorio temporal (p.ej. audit_semanal)
+DEST="${DEST_OVERRIDE:-$REPO/deploy/systemd-prod}"
 mkdir -p "$DEST"
 
 N=0

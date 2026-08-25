@@ -48,4 +48,24 @@ done
 N_ETC=$(ls /etc/systemd/system/ura-*.service /etc/systemd/system/ura-*.timer 2>/dev/null | wc -l | tr -d " ")
 echo "(info) unidades ura-* instaladas en /etc: $N_ETC (flota no versionada en repo)"
 
+echo "--- 6. Flota versionada (deploy/systemd-prod) vs /etc ---"
+# Exporta a temp y compara SIN tocar el arbol del repo; ignora el manifest
+# porque lleva timestamp.
+if [ -x "$REPO/scripts/pro/exportar_unidades_systemd.sh" ]; then
+  TMPD=$(mktemp -d)
+  if DEST_OVERRIDE="$TMPD" bash "$REPO/scripts/pro/exportar_unidades_systemd.sh" >/dev/null 2>&1; then
+    if diff -rq -x "MANIFEST.sha256" "$TMPD" "$REPO/deploy/systemd-prod" >/dev/null 2>&1; then
+      echo "OK: flota del host = copia versionada en repo"
+    else
+      echo "FLOTA DESACTUALIZADA (ejecuta exportar_unidades_systemd.sh y commitea):"
+      diff -rq -x "MANIFEST.sha256" "$TMPD" "$REPO/deploy/systemd-prod" 2>/dev/null | head -6
+    fi
+  else
+    echo "AVISO: el exportador fallo"
+  fi
+  rm -rf "$TMPD"
+else
+  echo "AVISO: exportar_unidades_systemd.sh no encontrado"
+fi
+
 echo "--- FIN ---"
