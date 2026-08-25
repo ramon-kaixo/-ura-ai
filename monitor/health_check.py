@@ -10,7 +10,7 @@ import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
-from core.config_manager import CONFIG
+from motor.core.config_manager import CONFIG
 
 TARGET = CONFIG["ollama"]["host"]
 OLLAMA_PORT = CONFIG["ollama"]["port"]

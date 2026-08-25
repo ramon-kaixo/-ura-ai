@@ -27,7 +27,7 @@ log "=== Comite de 10 IAs ===
 
 # Código a auditar (sanitizado)
 python3 << 'PY'
-from core.utils.anonymizer import sanitize_text
+from motor.core.utils.anonymizer import sanitize_text
 import os, json
 result = {}
 for f in ['core/memory_engine.py', 'core/auth_layer.py', 'core/guardians/ast_sentinel.py']:

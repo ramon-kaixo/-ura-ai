@@ -5,7 +5,7 @@ import argparse
 import json
 import sys
 
-from core.memory_engine import get_sources, query
+from motor.core.memory_engine import get_sources, query
 
 
 def run_query(text: str, top_k: int, json_out: bool, sources_only: bool) -> int:

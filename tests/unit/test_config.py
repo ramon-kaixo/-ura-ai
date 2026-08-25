@@ -1,6 +1,6 @@
 """Tests de config_manager y document_quality."""
 
-from core.config_manager import CONFIG
+from motor.core.config_manager import CONFIG
 from motor.core.config import UraConfig
 
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from unittest import mock
 
-from core.agents.ejecutor import AgenteEjecutor
+from motor.core.agents.ejecutor import AgenteEjecutor
 
 
 class TestAgenteEjecutor:
@@ -15,9 +15,9 @@ class TestAgenteEjecutor:
         proc.communicate.return_value = ("linea\n✅ OK\n✅ OK\n❌ Error\n", None)
         proc.poll.return_value = 0
         popen = mock.Mock(return_value=proc)
-        monkeypatch.setattr("core.agents.ejecutor.subprocess.Popen", popen)
-        monkeypatch.setattr("core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
-        monkeypatch.setattr("core.config_manager.get_ollama_url", mock.Mock(return_value="http://x:11434"))
+        monkeypatch.setattr("motor.core.agents.ejecutor.subprocess.Popen", popen)
+        monkeypatch.setattr("motor.core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
+        monkeypatch.setattr("motor.core.config_manager.get_ollama_url", mock.Mock(return_value="http://x:11434"))
 
         agente = AgenteEjecutor()
         r = agente.ejecutar(workers=1, timeout=30)
@@ -36,9 +36,9 @@ class TestAgenteEjecutor:
         proc = mock.Mock()
         proc.communicate.side_effect = __import__("subprocess").TimeoutExpired("cmd", 30)
         proc.poll.return_value = None
-        monkeypatch.setattr("core.agents.ejecutor.subprocess.Popen", mock.Mock(return_value=proc))
-        monkeypatch.setattr("core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
-        monkeypatch.setattr("core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
+        monkeypatch.setattr("motor.core.agents.ejecutor.subprocess.Popen", mock.Mock(return_value=proc))
+        monkeypatch.setattr("motor.core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
+        monkeypatch.setattr("motor.core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
 
         agente = AgenteEjecutor()
         r = agente.ejecutar(workers=1, timeout=5)
@@ -53,9 +53,9 @@ class TestAgenteEjecutor:
         proc.terminate.side_effect = OSError("no puedo")
         proc.wait.side_effect = OSError("no espera")
         proc.kill.return_value = None
-        monkeypatch.setattr("core.agents.ejecutor.subprocess.Popen", mock.Mock(return_value=proc))
-        monkeypatch.setattr("core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
-        monkeypatch.setattr("core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
+        monkeypatch.setattr("motor.core.agents.ejecutor.subprocess.Popen", mock.Mock(return_value=proc))
+        monkeypatch.setattr("motor.core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
+        monkeypatch.setattr("motor.core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
 
         agente = AgenteEjecutor()
         r = agente.ejecutar(workers=1, timeout=30)
@@ -69,9 +69,9 @@ class TestAgenteEjecutor:
             p.communicate.return_value = (f"✅ OK {i}", None)
             p.poll.return_value = 0
             procs.append(p)
-        monkeypatch.setattr("core.agents.ejecutor.subprocess.Popen", mock.Mock(side_effect=procs))
-        monkeypatch.setattr("core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
-        monkeypatch.setattr("core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
+        monkeypatch.setattr("motor.core.agents.ejecutor.subprocess.Popen", mock.Mock(side_effect=procs))
+        monkeypatch.setattr("motor.core.agents.ejecutor.os.environ", {"PATH": "/usr/bin"})
+        monkeypatch.setattr("motor.core.config_manager.get_ollama_url", mock.Mock(return_value="http://x"))
 
         agente = AgenteEjecutor()
         r = agente.ejecutar(workers=2, timeout=30)

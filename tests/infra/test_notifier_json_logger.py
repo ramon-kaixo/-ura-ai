@@ -1,7 +1,7 @@
 """Tests de path_setup, notifier, json_logger."""
 
-from core.json_logger import StructuredLogger
-from core.notifier import notify
+from motor.core.json_logger import StructuredLogger
+from motor.core.notifier import notify
 from path_setup import get_project_root, setup_path
 
 

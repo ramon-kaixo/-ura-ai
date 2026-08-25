@@ -86,7 +86,7 @@ EOF
 notify() {
     local msg="Rotación de secrets necesaria (última hace >$MAX_AGE_DAYS días)"
     python3 -c "
-from core.notifier import notify
+from motor.core.notifier import notify
 notify('$msg', level='warning')
 " 2>/dev/null || echo "Notificación falló (notifier no disponible)"
 }

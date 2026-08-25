@@ -37,7 +37,7 @@ echo "============================================"
 # 0. Verificar imports
 echo ""
 echo "[0] Verificando imports..."
-check "config_manager importa" python3 -c "from core.config_manager import CONFIG; print(CONFIG['role'])"
+check "config_manager importa" python3 -c "from motor.core.config_manager import CONFIG; print(CONFIG['role'])"
 check "ura_maintenance importa" python3 -c "from mantenimiento.ura_maintenance import MaintenanceOrchestrator"
 check "ura_maintenance_remote importa" python3 -c "from mantenimiento.ura_maintenance_remote import validate_ip"
 

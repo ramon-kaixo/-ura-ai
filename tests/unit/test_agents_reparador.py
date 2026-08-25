@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from core.agents.reparador import AgenteReparador
+from motor.core.agents.reparador import AgenteReparador
 
 
 class TestReparar:
@@ -13,7 +13,7 @@ class TestReparar:
         assert nivel == -1
         assert "no encontrado" in msg
 
-    @patch("core.agents.reparador.shutil.copy2")
+    @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=True)
     def test_nivel_1_ok(self, mock_n1, mock_copy, tmp_path):
         f = tmp_path / "test.py"
@@ -25,7 +25,7 @@ class TestReparar:
         assert "determinista" in msg
         mock_n1.assert_called_once()
 
-    @patch("core.agents.reparador.shutil.copy2")
+    @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=True)
     def test_nivel_2_ok(self, mock_n2, mock_n1, mock_copy, tmp_path):
@@ -37,7 +37,7 @@ class TestReparar:
         assert nivel == 2
         assert "DeepSeek" in msg
 
-    @patch("core.agents.reparador.shutil.copy2")
+    @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=False)
     @patch.object(AgenteReparador, "_nivel_3", return_value=True)
@@ -50,7 +50,7 @@ class TestReparar:
         assert nivel == 3
         assert "OpenCode" in msg
 
-    @patch("core.agents.reparador.shutil.copy2")
+    @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=False)
     @patch.object(AgenteReparador, "_nivel_3", return_value=False)

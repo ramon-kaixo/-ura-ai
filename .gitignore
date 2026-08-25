@@ -125,3 +125,4 @@ data/evidencias/
 # === Reports ===
 audit_reports/
 diagnostics/
+.nervioso/

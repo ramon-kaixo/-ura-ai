@@ -6,8 +6,8 @@ from unittest import mock
 
 import pytest
 
-from core.json_logger import StructuredLogger
-from core.query_cache import AsyncQueryCache
+from motor.core.json_logger import StructuredLogger
+from motor.core.query_cache import AsyncQueryCache
 
 
 class TestStructuredLogger:

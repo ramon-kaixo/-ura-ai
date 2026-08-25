@@ -1,7 +1,7 @@
 """Tests para core/chunking.py — chunking semantico y ventana de palabras."""
 from __future__ import annotations
 
-from core.chunking import _split_paragraphs, _split_sections, _word_window, chunk_semantic
+from motor.core.chunking import _split_paragraphs, _split_sections, _word_window, chunk_semantic
 
 
 class TestChunkSemantic:

@@ -1,7 +1,7 @@
 """Tests para core/utils/anonymizer.py."""
 
 
-from core.utils.anonymizer import sanitize_text
+from motor.core.utils.anonymizer import sanitize_text
 
 
 class TestSanitizeText:

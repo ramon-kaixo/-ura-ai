@@ -51,7 +51,7 @@ def run_tests():
 # TEST 2: Config carga y tiene estructura correcta
 # ============================================================
 
-from core.config_manager import (
+from motor.core.config_manager import (
     CONFIG,
     get_base_dir,
     get_hostname,
@@ -278,7 +278,7 @@ if compose_file.exists():
 
 check("memory_engine.py importa", lambda: __import__("core.memory_engine"))
 
-from core.memory_engine import (
+from motor.core.memory_engine import (
     MAX_TOKENS,
     OLLAMA_URL,
     RAG_MODEL,
@@ -332,7 +332,7 @@ check("manifest: save + load = idempotente", lambda: loaded["total_documents"] =
 check("manifest: archivos preservados", lambda: "test.md" in loaded.get("files", {}))
 
 # Limpiar manifest de test
-from core.memory_engine import MANIFEST_PATH
+from motor.core.memory_engine import MANIFEST_PATH
 
 MANIFEST_PATH.unlink(missing_ok=True)
 

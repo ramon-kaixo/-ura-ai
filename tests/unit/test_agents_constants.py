@@ -1,6 +1,6 @@
 """Tests for core/agents/constants.py."""
 
-from core.agents.constants import MAX_CICLO_S, MODELOS, RUFF, URA_ROOT
+from motor.core.agents.constants import MAX_CICLO_S, MODELOS, RUFF, URA_ROOT
 
 
 class TestConstants:

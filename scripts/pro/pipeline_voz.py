@@ -14,7 +14,7 @@ doble-módulo de los shims core.voice.*).
 import sys
 import time
 
-from core.utils.anonymizer import sanitize_text
+from motor.core.utils.anonymizer import sanitize_text
 from motor.core.voice.anker_pipeline import AnkerDeterministicPipeline
 from motor.core.voice.tts_piper import PiperTTSMotor
 

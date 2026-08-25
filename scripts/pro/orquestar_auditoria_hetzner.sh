@@ -19,7 +19,7 @@ log "=== Orquestacion Asus → Hetzner ==="
 # 1. Sanitizar código local con anonymizer
 log "[1/5] Sanitizando codigo local..."
 python3 -c "
-from core.utils.anonymizer import sanitize_text
+from motor.core.utils.anonymizer import sanitize_text
 import os
 for root, dirs, files in os.walk('core/'):
     for f in files:

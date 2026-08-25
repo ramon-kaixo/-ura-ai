@@ -6,7 +6,7 @@ from unittest import mock
 
 import pytest
 
-from core import notifier
+from motor.core import notifier
 from core.secretario_cache import LRU_MAX, SecretarioCache
 
 

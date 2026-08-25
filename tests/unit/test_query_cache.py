@@ -2,7 +2,7 @@
 
 import asyncio
 
-from core.query_cache import AsyncQueryCache
+from motor.core.query_cache import AsyncQueryCache
 
 
 def test_cache_basic() -> None:

@@ -3,8 +3,8 @@
 import sys
 from pathlib import Path
 
-from core.json_logger import StructuredLogger
-from core.notifier import notify
+from motor.core.json_logger import StructuredLogger
+from motor.core.notifier import notify
 from path_setup import get_project_root, setup_path
 
 

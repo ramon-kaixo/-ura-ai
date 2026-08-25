@@ -25,7 +25,7 @@ import pytest
 class TestPiperTTSMotor:
     @pytest.fixture
     def tts(self, tmp_path, monkeypatch):
-        from core.voice.tts_piper import PiperTTSMotor
+        from motor.core.voice.tts_piper import PiperTTSMotor
 
         mod = sys.modules[PiperTTSMotor.__module__]
         monkeypatch.setattr(mod, "VOICES_DIR", tmp_path / "voices")
@@ -45,7 +45,7 @@ class TestPiperTTSMotor:
         assert tts.output_wav == "/tmp/ura_tts_output.wav"
 
     def test_init_voice_no_existe(self, tmp_path, monkeypatch) -> None:
-        from core.voice.tts_piper import PiperTTSMotor
+        from motor.core.voice.tts_piper import PiperTTSMotor
 
         mod = sys.modules[PiperTTSMotor.__module__]
         monkeypatch.setattr(mod, "VOICES_DIR", tmp_path / "nope")
@@ -86,8 +86,8 @@ class TestPiperTTSMotor:
 class TestAnkerPipeline:
     @pytest.fixture
     def pipeline(self, tmp_path, monkeypatch):
-        monkeypatch.setattr("core.voice.anker_pipeline.DB_PATH", str(tmp_path / "corrections.db"))
-        from core.voice.anker_pipeline import AnkerDeterministicPipeline
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.DB_PATH", str(tmp_path / "corrections.db"))
+        from motor.core.voice.anker_pipeline import AnkerDeterministicPipeline
 
         with mock.patch.object(__import__("sounddevice"), "query_devices", return_value=[]):
             with mock.patch("whisper.load_model"):
@@ -99,20 +99,20 @@ class TestAnkerPipeline:
 
     def test_find_anker_device(self, pipeline, monkeypatch) -> None:
         devs = [{"name": "PowerConf S500", "max_input_channels": 2}, {"name": "otro", "max_input_channels": 1}]
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.query_devices", lambda: devs)
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.query_devices", lambda: devs)
         assert pipeline._find_anker_device() == 0
 
     def test_find_anker_device_no_existe(self, pipeline, monkeypatch) -> None:
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.query_devices", lambda: [{"name": "x", "max_input_channels": 0}])
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.query_devices", lambda: [{"name": "x", "max_input_channels": 0}])
         assert pipeline._find_anker_device() is None
 
     def test_find_anker_error(self, pipeline, monkeypatch) -> None:
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.query_devices", mock.Mock(side_effect=OSError("no audio")))
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.query_devices", mock.Mock(side_effect=OSError("no audio")))
         assert pipeline._find_anker_device() is None
 
     def test_find_default_input(self, pipeline, monkeypatch) -> None:
         devs = [{"name": "mic", "max_input_channels": 1}]
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.query_devices", lambda: devs)
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.query_devices", lambda: devs)
         assert pipeline._find_default_input() == 0
 
     def test_audio_callback_tts_playing(self, pipeline) -> None:
@@ -156,7 +156,7 @@ class TestAnkerPipeline:
 
     def test_transcribe_stream_error(self, pipeline, monkeypatch) -> None:
         pipeline.device_index = 0
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.InputStream", mock.Mock(side_effect=OSError("no device")))
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.InputStream", mock.Mock(side_effect=OSError("no device")))
         assert pipeline.listen_and_transcribe(1.0) == ("", "")
 
     def test_transcribe_sin_audio(self, pipeline, monkeypatch) -> None:
@@ -164,7 +164,7 @@ class TestAnkerPipeline:
         stream = mock.Mock()
         stream.__enter__ = mock.Mock(return_value=stream)
         stream.__exit__ = mock.Mock(return_value=False)
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.InputStream", mock.Mock(return_value=stream))
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.InputStream", mock.Mock(return_value=stream))
         monkeypatch.setattr(pipeline.audio_queue, "get", mock.Mock(side_effect=__import__("queue").Empty()))
         assert pipeline.listen_and_transcribe(1.0) == ("", "")
 
@@ -174,7 +174,7 @@ class TestAnkerPipeline:
         stream = mock.Mock()
         stream.__enter__ = mock.Mock(return_value=stream)
         stream.__exit__ = mock.Mock(return_value=False)
-        monkeypatch.setattr("core.voice.anker_pipeline.sd.InputStream", mock.Mock(return_value=stream))
+        monkeypatch.setattr("motor.core.voice.anker_pipeline.sd.InputStream", mock.Mock(return_value=stream))
         def _get(timeout=None):
             if _get.called:
                 raise __import__("queue").Empty
@@ -202,7 +202,7 @@ class TestAnkerPipeline:
 class TestAnkerMacPipeline:
     @pytest.fixture
     def mac(self, tmp_path, monkeypatch):
-        from core.voice.anker_mac_pipeline import AnkerMacPipeline
+        from motor.core.voice.anker_mac_pipeline import AnkerMacPipeline
 
         with mock.patch.object(__import__("sounddevice"), "query_devices", return_value=[]):
             with mock.patch("whisper.load_model"):
@@ -227,7 +227,7 @@ class TestAnkerMacPipeline:
 
     def test_trigger_notification_sound_valido(self, mac, monkeypatch) -> None:
         popen = mock.Mock()
-        monkeypatch.setattr("core.voice.anker_mac_pipeline.subprocess.Popen", popen)
+        monkeypatch.setattr("motor.core.voice.anker_mac_pipeline.subprocess.Popen", popen)
         mac._trigger_macos_notification("Título", "Mensaje", "Tink")
         cmd = popen.call_args.args[0]
         assert cmd[0] == "osascript"
@@ -235,7 +235,7 @@ class TestAnkerMacPipeline:
 
     def test_trigger_notification_sound_invalido(self, mac, monkeypatch) -> None:
         popen = mock.Mock()
-        monkeypatch.setattr("core.voice.anker_mac_pipeline.subprocess.Popen", popen)
+        monkeypatch.setattr("motor.core.voice.anker_mac_pipeline.subprocess.Popen", popen)
         mac._trigger_macos_notification("T", "M", "NoExiste")
         cmd = popen.call_args.args[0]
         assert "Tink" in cmd[2]  # fallback
@@ -257,7 +257,7 @@ class TestAnkerMacPipeline:
 
     def test_listen_stream_error(self, mac, monkeypatch) -> None:
         mac.device_index = 0
-        monkeypatch.setattr("core.voice.anker_mac_pipeline.sd.InputStream", mock.Mock(side_effect=OSError("x")))
+        monkeypatch.setattr("motor.core.voice.anker_mac_pipeline.sd.InputStream", mock.Mock(side_effect=OSError("x")))
         assert mac.listen_and_transcribe(1) == ("", "", "")
 
     def test_listen_transcribe_y_sanitiza(self, mac, monkeypatch) -> None:
@@ -266,7 +266,7 @@ class TestAnkerMacPipeline:
         stream = mock.Mock()
         stream.__enter__ = mock.Mock(return_value=stream)
         stream.__exit__ = mock.Mock(return_value=False)
-        monkeypatch.setattr("core.voice.anker_mac_pipeline.sd.InputStream", mock.Mock(return_value=stream))
+        monkeypatch.setattr("motor.core.voice.anker_mac_pipeline.sd.InputStream", mock.Mock(return_value=stream))
         # queue.get devuelve el chunk una vez, luego Empty (iteraciones cortas)
         def _get(timeout=None):
             if _get.called:
@@ -279,7 +279,7 @@ class TestAnkerMacPipeline:
         stt = mock.Mock()
         stt.transcribe.return_value = {"text": "hola mundo"}
         mac.stt_model = stt
-        monkeypatch.setattr("core.voice.anker_mac_pipeline.sanitize_text", mock.Mock(return_value="hola mundo"))
+        monkeypatch.setattr("motor.core.voice.anker_mac_pipeline.sanitize_text", mock.Mock(return_value="hola mundo"))
         raw, _corr, san = mac.listen_and_transcribe(1)
         assert raw == "hola mundo"
         assert san == "hola mundo"

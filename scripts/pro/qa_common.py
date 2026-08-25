@@ -153,10 +153,10 @@ def send_notification(message: str) -> None:
         message (str): Message content to send
     """
     try:
-        from core.notifier import send_message
+        from motor.core.notifier import notify
 
         logger.info("Sending notification")
-        send_message("QA Pipeline", message)
+        notify(message)
     except ImportError as e:
         logger.warning(f"Notification not sent due to import error: {e}")
 

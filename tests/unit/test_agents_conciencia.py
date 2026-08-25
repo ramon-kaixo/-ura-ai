@@ -3,7 +3,7 @@
 
 import pytest
 
-from core.agents.conciencia import Conciencia
+from motor.core.agents.conciencia import Conciencia
 
 
 class TestConciencia:

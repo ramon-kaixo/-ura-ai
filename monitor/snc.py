@@ -81,7 +81,7 @@ def _notify(msg: str, level: str = "warning") -> None:
         import sys as _sys
 
         _sys.path.insert(0, str(Path(__file__).parent.parent))
-        from core.notifier import notify as _n
+        from motor.core.notifier import notify as _n
 
         _n(msg, level=level)
     except Exception as e:

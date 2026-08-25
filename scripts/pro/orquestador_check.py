@@ -108,7 +108,7 @@ def main() -> int:
     if args.notify:
         try:
             sys.path.insert(0, str(ROOT))
-            from core.notifier import notify  # type: ignore[import-not-found]
+            from motor.core.notifier import notify  # type: ignore[import-not-found]
 
             msg = "".join(f"\n- {p}" for p in pendientes)
             ok = notify(f"Orquestador: {len(pendientes)} pendiente(s):{msg}")
