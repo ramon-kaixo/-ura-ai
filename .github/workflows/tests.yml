@@ -37,7 +37,11 @@ jobs:
           pip install pytest-gremlins sounddevice librosa ffmpeg-python
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install openai-whisper
-      - name: Cobertura unitaria (motor)
+      - name: Cobertura unitaria (motor, informativa — no bloqueante)
+        # NOTA: corre SOLO tests/unit/ (subset). El porcentaje global
+        # subestima la cobertura real del núcleo: cada módulo se mide con
+        # sus tests dedicados (--source relativo al módulo, política AGENTS.md).
+        # Este job es informativo; el gate real de cobertura es cobertura-nuevos.
         run: pytest tests/unit/ -q --tb=short --cov=motor --cov-report=term-missing || true
 
   integracion:
