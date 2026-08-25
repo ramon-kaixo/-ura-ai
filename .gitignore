@@ -1,116 +1,127 @@
-# Archivo recreado por tuneladora — ignorar (duplicado, está en tests/unit/)
-/tests/test_mochila.py
+# === Python ===
 __pycache__/
 *.pyc
 *.pyo
+*.egg-info/
+dist/
+build/
+
+# === Environment ===
 .env
 .env.secrets
-hetzner.env
 .venv/
-audit_reports/
-backups/
-knowledge/code-wiki/
-diagnostics/
-data/events/
-data/auto_dumps/
-logs/
-*.log
+deploy/secrets.env
+hetzner.env
+backups/env/
+
+# === IDE ===
+.DS_Store
+
+# === Testing/Coverage ===
 .coverage
+.coverage.*
 coverage.xml
+coverage.json
+coverage/
 htmlcov/
 perf/
 .mypy_cache/
-.hypothesis/
-.pytest_cache/
 .ruff_cache/
-.sandbox_packages/
-.semgrep_logs/
-.nervioso/
-motor/data/
-deploy/ura-pool/node_modules/
-node_modules/
+.pytest_cache/
+.hypothesis/
+ mutants/
+
+# === Logs ===
+*.log
+logs/
+agent_hierarchy.log
+log_sistema.txt
+
+# === Data (runtime, regenerable) ===
 *.db
+*.sqlite
+*.sqlite3
 knowledge/knowledge.db
 knowledge/knowledge.db-shm
 knowledge/knowledge.db-wal
 knowledge/interacciones/
 knowledge/evaluation/results/
-*.onnx
-*.sqlite
-*.sqlite3
+knowledge/code-wiki/
+data/
 board.db
-agent_hierarchy.log
-*.bak
-log_sistema.txt
-.DS_Store
-apple-ncm/
-backup_versiones/
-ura_ia_1972/
-*.tmp
-reporte_final.json
-models/
-*.*:*
-scripts/deploy/fix-path.conf
-benchmark_f10_baseline.json
-build/
-*.egg-info/
-dist/
-memory_snapshot_*.json
-coverage.xml
-.ruff_cache/
-.mypy_cache/
-deploy/secrets.env
-hetzner.env
-backups/env/
+motor/data/
+
+# === Binary artifacts ===
+*.onnx
 *.svg
+models/
+
+# === Node ===
+node_modules/
+deploy/ura-pool/node_modules/
+
+# === Sandbox ===
+.sandbox_packages/
+.semgrep_logs/
+
+# === Backups y artefactos locales ===
+backups/
+backups_gx10/
+archives/
+backup_versiones/
+*.bak
+*.bak_repair
+*.tmp
+*.*:*
+apple-ncm/
+
+# === UDO runtime ===
+docs/udo/.lock
+docs/udo/pendientes-fase.md.estado
+docs/udo/plans/openclaw-workspace-state.json
+docs/udo/coordination.lock
+
+# === OpenClaw ===
+.openclaw-orq-home/
+
+# === Working tree ===
+/db
+ revisiones/
+investigaciones/
+
+# === Archivos auxiliares ===
 core_deps.txt
 motor_deps.txt
 knowledge_deps.txt
 archivos_python.txt
 imports.txt
-build/
-.attic/
-.tuneladora/
-data/tuneladora_reports/
-data/orquestador_logs/
-mutants/
-data/evidencias/
-data/
-mutants/
-*.bak
-*.bak_repair
-__pycache__/
-*.pyc
-.agent_lock
-# --- UDO ---
-# Artefactos runtime de ura-udo/detector (no versionar)
-docs/udo/.lock
-docs/udo/pendientes-fase.md.estado
+benchmark_f10_baseline.json
+reporte_final.json
+agent_hierarchy.log
+ura_ia_1972/
+core/modules/data/
+scripts/deploy/fix-path.conf
 
-# OpenClaw perfil orquestador: estado local (HOME virtual por rootfs RO)
-.openclaw-orq-home/
-
-# Working tree root db: SQLite runtime vacío (artefacto de proceso, no versionar)
-/db
-
-# Orquestador: estado local del workspace (no versionar)
-docs/udo/plans/openclaw-workspace-state.json
-docs/udo/coordination.lock
-
-# Informes OpenClaw/revisor automático (fuera de trazabilidad git; contexto opencode)
-/revisiones/
-/investigaciones/
-coverage.json
-.coverage.*
-coverage/
-
-# Backups locales de mantenimiento (2026-08-24)
-deploy/lildax_config.json.backup.*
-scripts/pro/ura-doble.backup.*
-
-# Artefactos runtime opencode
+# === OpenCode runtime ===
 .opencode/opencode.db-shm
 .opencode/opencode.db-wal
 
-# Datos locales regenerables (nunca en git) - FASE 1 master plan 2026-08-25
-core/modules/data/
+# === Backups de mantenimiento ===
+deploy/lildax_config.json.backup.*
+scripts/pro/ura-doble.backup.*
+
+# === Memory snapshots (runtime) ===
+memory_snapshot_*.json
+
+# === Tuneladora ===
+.tuneladora/
+data/tuneladora_reports/
+data/orquestador_logs/
+data/evidencias/
+
+# === Lock files ===
+.agent_lock
+
+# === Reports ===
+audit_reports/
+diagnostics/
