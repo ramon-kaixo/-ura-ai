@@ -956,9 +956,9 @@ class TestGeminiCobertura:
     def test_init_y_urls(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("GEMINI_API_KEY", "k")
         p = GeminiProvider()
-        assert p._model == "gemini-2.0-flash-001"
+        assert p._model == "gemini-2.5-flash"
         assert p._embedding_model == "text-embedding-004"
-        assert "gemini-2.0-flash-001" in p._base_url("gemini-2.0-flash-001")
+        assert "gemini-2.5-flash" in p._base_url("gemini-2.5-flash")
         assert p._headers()["x-goog-api-key"] == "k"
 
     def test_generate_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:

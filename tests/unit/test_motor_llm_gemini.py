@@ -55,7 +55,7 @@ class TestInit:
     def test_defaults(self, gemini_mod) -> None:
         with mock.patch.object(gemini_mod, "get_secret", side_effect=lambda name, default=None: default):
             p = gemini_mod.GeminiProvider()
-        assert p._model == "gemini-2.0-flash-001"
+        assert p._model == "gemini-2.5-flash"
         assert p._embedding_model == "text-embedding-004"
         assert p._timeout == 120
         assert p._temperature == 0.3

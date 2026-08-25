@@ -2,7 +2,7 @@
 
 Configuración mediante secretos:
     GEMINI_API_KEY       — requerida
-    GEMINI_MODEL         — opcional (default: gemini-2.0-flash-001)
+    GEMINI_MODEL         — opcional (default: gemini-2.5-flash)
     GEMINI_EMBEDDING_MODEL — opcional (default: text-embedding-004)
     GEMINI_TIMEOUT       — opcional (default: 120)
     GEMINI_TEMPERATURE   — opcional (default: 0.3)
@@ -45,7 +45,7 @@ class GeminiProvider(BaseLLMProvider):
     def __init__(self) -> None:
         self._provider_name = "gemini"
         self._api_key = get_secret("GEMINI_API_KEY")
-        self._model: str = get_secret("GEMINI_MODEL", "gemini-2.0-flash-001")
+        self._model: str = get_secret("GEMINI_MODEL", "gemini-2.5-flash")
         self._embedding_model: str = get_secret("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
         self._timeout: int = int(get_secret("GEMINI_TIMEOUT", "120"))
         self._temperature: float = float(get_secret("GEMINI_TEMPERATURE", "0.3"))
