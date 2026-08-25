@@ -1,0 +1,4 @@
+# Auditoría diaria URA — FASE 4/D (creado 2026-08-25)
+# Instalar en GX10 con: crontab -e
+# Precondición: pytest --collect-only pasa (verificado 2026-08-25: 10518 tests)
+# 0 9 * * * cd /home/ramon/URA/ura_ia_1972 && ./scripts/pro/audit_diario.sh

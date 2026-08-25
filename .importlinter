@@ -1,0 +1,8 @@
+[importlinter]
+root_packages = motor,core,knowledge
+
+[importlinter:contract:1]
+name = Motor no depende de Core
+type = forbidden
+source_modules = motor
+forbidden_modules = core

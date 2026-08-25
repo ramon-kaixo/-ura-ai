@@ -274,3 +274,20 @@ Actualmente no existe un gestor de secretos unificado. Cada consumidor:
 
 Estos archivos están fuera del alcance de migración automática de F17.5 porque no son módulos Python.
 Requieren refactorización manual para usar variables de entorno.
+
+---
+
+## ACTUALIZACIÓN 2026-08-25 — Sesión cierre (verificado)
+
+### Estado real de los archivos de la tabla anterior
+Los 3 archivos (lildax_config.json, install_opencode_mac.sh, docker-compose.yml) **ya NO contienen** `ura_1972_secure_autonomous` (0 ocurrencias) — fueron migrados a secrets.env. La tabla anterior queda obsoleta en ese punto.
+
+### Password `ura_1972_secure_autonomous` — COMPROMETIDA en historial git
+- **23 ocurrencias** en commits históricos (migración F17.5, 2026-08-12 a 08-16).
+- **NO está en código activo** (verificado: motor/, core/, knowledge/, scripts/, deploy/).
+- **Backup con el valor real ELIMINADO** (`backups_gx10/deploy/lildax_config.json.backup.20260825_000850`) el 2026-08-25.
+
+### Acción recomendada [HUMANO]
+- **Rotar** la password en todos los servicios (generar nueva, actualizar secrets.env en Mac + GX10).
+- El historial git contiene la antigua (comprometida pero inactiva). No reescribir historial (riesgo de desync entre 3 máquinas).
+- Documentar aquí tras rotar: "ROTADA el [fecha]. Nueva en secrets.env."
