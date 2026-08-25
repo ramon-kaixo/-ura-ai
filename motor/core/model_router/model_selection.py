@@ -1,11 +1,18 @@
 """Puente temporal core -> motor: seleccion de modelos.
 
-Re-exporta la API consumida por los clientes migrados. Implementacion
-viva en core/model_router/model_selection.py (TASK-20260825-005).
+Reenvia dinamicamente (PEP 562) a core.model_router.model_selection
+(TASK-20260825-005).
 """
 
 from __future__ import annotations
 
-from core.model_router.model_selection import _record_success as _record_success  # noqa: PLC0414
+from typing import Any
 
-__all__ = ["_record_success"]
+import core.model_router.model_selection as _core
+
+
+def __getattr__(name: str) -> Any:
+    return getattr(_core, name)
+
+
+__all__ = ["_record_success"]  # noqa: F822
