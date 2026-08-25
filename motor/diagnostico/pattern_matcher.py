@@ -1,9 +1,10 @@
 import logging
+from typing import Any
 
 log = logging.getLogger("ura.diagnostico.pattern")
 
 
-def buscar_patrones(scan, qdrant, config) -> tuple:
+def buscar_patrones(scan: Any, qdrant: Any, config: Any) -> tuple[list[dict[str, Any]], dict[str, dict[str, int]]]:
     """Busca patrones de incidente en el resultado del escaneo."""
     incidentes = (
         _incidentes_servicios(scan)
@@ -16,9 +17,9 @@ def buscar_patrones(scan, qdrant, config) -> tuple:
     return incidentes, costes
 
 
-def _incidentes_servicios(scan) -> list:
+def _incidentes_servicios(scan: Any) -> list[dict[str, Any]]:
     """Incidentes por servicios systemd inactivos o fallidos."""
-    incidentes: list = []
+    incidentes: list[dict[str, Any]] = []
     for svc, estado in scan.servicios.items():
         if estado in ("inactive", "failed"):
             incidentes.append(
@@ -32,9 +33,9 @@ def _incidentes_servicios(scan) -> list:
     return incidentes
 
 
-def _incidentes_recursos(scan) -> list:
+def _incidentes_recursos(scan: Any) -> list[dict[str, Any]]:
     """Incidentes por presión de recursos (RAM, disco, CPU)."""
-    incidentes: list = []
+    incidentes: list[dict[str, Any]] = []
     if scan.recursos.get("ram_pct", 0) > 90:
         incidentes.append(
             {
@@ -67,9 +68,9 @@ def _incidentes_recursos(scan) -> list:
     return incidentes
 
 
-def _incidentes_red(scan) -> list:
+def _incidentes_red(scan: Any) -> list[dict[str, Any]]:
     """Incidentes por fallos de topología de red."""
-    incidentes: list = []
+    incidentes: list[dict[str, Any]] = []
     if not scan.red.get("internet", True):
         incidentes.append(
             {
@@ -91,9 +92,9 @@ def _incidentes_red(scan) -> list:
     return incidentes
 
 
-def _incidentes_hardware(scan) -> list:
+def _incidentes_hardware(scan: Any) -> list[dict[str, Any]]:
     """Incidentes por fallos de hardware (dmesg, journal, health)."""
-    incidentes: list = []
+    incidentes: list[dict[str, Any]] = []
     dmesg = scan.hw_health.get("dmesg_errors", [])
     if dmesg:
         incidentes.append(
@@ -127,9 +128,9 @@ def _incidentes_hardware(scan) -> list:
     return incidentes
 
 
-def _incidentes_varios(scan) -> list:
+def _incidentes_varios(scan: Any) -> list[dict[str, Any]]:
     """Incidentes variados: contenedores, duplicados, flapping, diffs."""
-    incidentes: list = []
+    incidentes: list[dict[str, Any]] = []
     if scan.contenedores_ko:
         incidentes.append(
             {
@@ -170,7 +171,7 @@ def _incidentes_varios(scan) -> list:
     return incidentes
 
 
-def _calcular_costes_historicos(incidentes: list) -> dict:
+def _calcular_costes_historicos(incidentes: list[dict[str, Any]]) -> dict[str, dict[str, int]]:
     """Cuenta frecuencias de tipos/subtipos de incidentes."""
     costes: dict[str, dict[str, int]] = {}
     for inc in incidentes:

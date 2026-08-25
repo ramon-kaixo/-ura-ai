@@ -2,6 +2,7 @@ import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.qdrant_client import QdrantClient
@@ -15,25 +16,25 @@ log = logging.getLogger("ura.cli")
 ARCHIVO_TRENDS = "trends.ndjson"
 
 
-def cmd_pipeline(config: UraConfig, args) -> None:
+def cmd_pipeline(config: UraConfig, args: Any) -> None:
     orch = Orchestrator(config)
     r = orch.run(dry_run=args.dry_run)
     sys.exit(0 if r.ok else 1)
 
 
-def cmd_scan(config: UraConfig, args=None) -> None:
+def cmd_scan(config: UraConfig, args: Any | None = None) -> None:
     sc = Scanner(config)
     sc.run()
 
 
-def cmd_diagnose(config: UraConfig, args=None) -> None:
+def cmd_diagnose(config: UraConfig, args: Any | None = None) -> None:
     qdrant = QdrantClient.instancia(config)
     diag = Diagnostico(config, qdrant)
     scan = ScanResult(ok=True, timestamp="")
     diag.run(scan)
 
 
-def cmd_calibrate(config: UraConfig, args) -> None:
+def cmd_calibrate(config: UraConfig, args: Any) -> None:
     cal = Calibration(config)
     if cal.hay_baseline and not args.force:
         sys.exit(1)

@@ -7,6 +7,15 @@ from __future__ import annotations
 
 from shared.paths import URA_ROOT
 
+__all__ = [
+    "MAX_CICLO_S",
+    "MODELOS",
+    "NERVIOSO",
+    "RUFF",
+    "SCRIPTS",
+    "URA_ROOT",
+]
+
 MAX_CICLO_S = 300
 
 MODELOS: dict[str, str] = {

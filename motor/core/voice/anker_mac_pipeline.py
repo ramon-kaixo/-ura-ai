@@ -14,6 +14,7 @@ import re
 import sqlite3
 import subprocess  # nosec B404 - subprocess con listas de args, sin shell
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import sounddevice as sd
@@ -24,11 +25,11 @@ from motor.core.utils.anonymizer import sanitize_text
 
 
 class AnkerMacPipeline:
-    def __init__(self, base_path="/Users/ramonesnaola/URA/ura_ia_1972/", model_size="small") -> None:
+    def __init__(self, base_path: str = "/Users/ramonesnaola/URA/ura_ia_1972/", model_size: str = "small") -> None:
         self.sample_rate = 16000
         self.block_size = 480
         self.db_path = Path(base_path) / "config/voice_corrections.db"
-        self.audio_queue: queue.Queue = queue.Queue()
+        self.audio_queue: queue.Queue[np.ndarray] = queue.Queue()
         self.is_playing_tts = False
 
         os.makedirs(Path(self.db_path).parent, exist_ok=True)  # noqa: PTH103
@@ -52,7 +53,7 @@ class AnkerMacPipeline:
             """)
             conn.commit()
 
-    def _find_anker_device(self):
+    def _find_anker_device(self) -> int | None:
         try:
             for idx, dev in enumerate(sd.query_devices()):
                 if "powerconf s500" in dev["name"].lower() and dev["max_input_channels"] > 0:
@@ -61,7 +62,7 @@ class AnkerMacPipeline:
             pass
         return None
 
-    def _audio_callback(self, indata, frames, time, status) -> None:
+    def _audio_callback(self, indata: np.ndarray, frames: int, time: Any, status: Any) -> None:
         if not self.is_playing_tts:
             self.audio_queue.put(indata.copy())
 
@@ -120,7 +121,7 @@ class AnkerMacPipeline:
 
         return corrected_text
 
-    def listen_and_transcribe(self, duration_seconds=5) -> tuple[str, str, str]:
+    def listen_and_transcribe(self, duration_seconds: float = 5) -> tuple[str, str, str]:
         """Escucha, transcribe, corrige y sanitiza.
 
         Returns:

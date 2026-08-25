@@ -94,7 +94,7 @@ class ContinuousEvaluator:
     def add_config(
         self,
         name: str,
-        retrieve_fn: Callable,
+        retrieve_fn: Callable[..., Any],
         params: dict[str, Any] | None = None,
         description: str = "",
     ) -> None:

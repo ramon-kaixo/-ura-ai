@@ -4,6 +4,7 @@ import json
 import logging
 import threading
 from datetime import UTC, datetime
+from typing import Any
 
 from motor.core.agents.constants import NERVIOSO
 
@@ -17,16 +18,17 @@ class Conciencia:
     _lock = threading.Lock()
 
     @classmethod
-    def leer(cls) -> dict:
+    def leer(cls) -> dict[str, Any]:
         if cls.PATH.exists():
             try:
-                return json.loads(cls.PATH.read_text())
+                data = json.loads(cls.PATH.read_text())
+                return data if isinstance(data, dict) else cls._nuevo()
             except Exception:
                 log.exception("Error reading conciencia.json")
         return cls._nuevo()
 
     @classmethod
-    def _nuevo(cls) -> dict:
+    def _nuevo(cls) -> dict[str, Any]:
         return {
             "estado_general": "ok",
             "nivel_error": 0,
@@ -44,7 +46,7 @@ class Conciencia:
         }
 
     @classmethod
-    def escribir(cls, data: dict) -> None:
+    def escribir(cls, data: dict[str, Any]) -> None:
         with cls._lock:
             cls.PATH.parent.mkdir(parents=True, exist_ok=True)
             tmp = cls.PATH.with_suffix(".tmp")
@@ -77,4 +79,4 @@ class Conciencia:
 
     @classmethod
     def nivel_error(cls) -> int:
-        return cls.leer().get("nivel_error", 0)
+        return int(cls.leer().get("nivel_error", 0))

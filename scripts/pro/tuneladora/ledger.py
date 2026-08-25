@@ -211,7 +211,7 @@ class ExecutionLedger:
 # ── Persistencia SQLite (v4.0) ─────────────────────────
 
 
-def _init_sqlite(nervioso):
+def _init_sqlite(nervioso: Path) -> None:
     import sqlite3
 
     db_path = nervioso / "tuneladora.db"
@@ -238,7 +238,7 @@ def _init_sqlite(nervioso):
         )
 
 
-def save_execution(entry, nervioso):
+def save_execution(entry: dict[str, Any], nervioso: Path) -> None:
     import sqlite3
 
     try:
@@ -262,7 +262,7 @@ def save_execution(entry, nervioso):
         _log.exception("Failed to save execution entry")
 
 
-def get_history(nervioso, pipeline=None, limit=100):
+def get_history(nervioso: Path, pipeline: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
     import sqlite3
 
     try:
@@ -282,7 +282,7 @@ def get_history(nervioso, pipeline=None, limit=100):
         return []
 
 
-def cleanup_history(nervioso, days=90):
+def cleanup_history(nervioso: Path, days: int = 90) -> int:
     import sqlite3
 
     try:

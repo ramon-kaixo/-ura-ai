@@ -26,7 +26,7 @@ class ExperimentConfig:
     """Configuración de un experimento: retriever + nombre + parámetros."""
 
     name: str
-    retrieve_fn: Callable
+    retrieve_fn: Callable[..., Any]
     params: dict[str, Any] = field(default_factory=dict)
     description: str = ""
 
@@ -109,7 +109,7 @@ class Experiment:
     def add_config(
         self,
         name: str,
-        retrieve_fn: Callable,
+        retrieve_fn: Callable[..., Any],
         params: dict[str, Any] | None = None,
         description: str = "",
     ) -> None:
@@ -250,11 +250,13 @@ class Experiment:
         Path(path).write_text(json.dumps(self.to_dict(), indent=2) + "\n")
 
     @classmethod
-    def load(cls, path: str | Path) -> ExperimentResult:
-        """Carga resultados de experimento desde JSON.
+    def load(cls, path: str | Path) -> dict[str, Any]:
+        """Carga resultados de experimento desde JSON (como dict).
 
         Nota: solo carga los resultados, no las configuraciones originales.
         Para re-ejecutar, crear un nuevo Experiment con las mismas configs.
         """
-        return json.loads(Path(path).read_text())
-        # Devolvemos un resultado directo (o podríamos reconstruir parcialmente)
+        data = json.loads(Path(path).read_text())
+        if not isinstance(data, dict):
+            raise ValueError(f"Formato JSON inesperado en {path}")
+        return data

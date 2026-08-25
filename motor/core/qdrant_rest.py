@@ -7,15 +7,21 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections.abc import Callable
+from typing import Any
 
 import httpx
+
+from motor.core.config import UraConfig
 
 COLECCION_INCIDENTES = "incidentes"
 
 log = logging.getLogger("ura.qdrant.rest")
 
 
-def guardar_rest(config, incidente: dict, build_payload) -> bool:
+def guardar_rest(
+    config: UraConfig, incidente: dict[str, Any], build_payload: Callable[[dict[str, Any]], dict[str, Any]]
+) -> bool:
     try:
         payload = build_payload(incidente)
         point = {
@@ -31,7 +37,7 @@ def guardar_rest(config, incidente: dict, build_payload) -> bool:
         return False
 
 
-def guardar_documentos_rest(config, puntos: list[dict], collection: str) -> int:
+def guardar_documentos_rest(config: UraConfig, puntos: list[dict[str, Any]], collection: str) -> int:
     try:
         url = f"http://{config.qdrant_host}:{config.qdrant_port}/collections/{collection}/points"
         r = httpx.put(url, json={"points": puntos}, timeout=10)
@@ -41,7 +47,9 @@ def guardar_documentos_rest(config, puntos: list[dict], collection: str) -> int:
         return 0
 
 
-def buscar_similitud_rest(config, query_vector: list, collection: str, limit: int) -> list:
+def buscar_similitud_rest(
+    config: UraConfig, query_vector: list[float], collection: str, limit: int
+) -> list[dict[str, Any]]:
     try:
         url = f"http://{config.qdrant_host}:{config.qdrant_port}/collections/{collection}/points/search"
         r = httpx.post(url, json={"vector": query_vector, "limit": limit}, timeout=5)
@@ -52,7 +60,7 @@ def buscar_similitud_rest(config, query_vector: list, collection: str, limit: in
     return []
 
 
-def eliminar_por_filtro_rest(config, filtro: dict, collection: str) -> bool:
+def eliminar_por_filtro_rest(config: UraConfig, filtro: dict[str, Any], collection: str) -> bool:
     try:
         url = f"http://{config.qdrant_host}:{config.qdrant_port}/collections/{collection}/points/delete"
         must = [{"key": k, "match": {"value": v}} for k, v in filtro.items()]

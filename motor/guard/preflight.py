@@ -35,13 +35,13 @@ def ejecutar_preflight(config: UraConfig) -> PreflightResult:
     return r
 
 
-def _detectar_configs_duplicadas() -> list:
+def _detectar_configs_duplicadas() -> list[str]:
     """Detecta si hay múltiples archivos de configuración de opencode."""
     existentes = [p for p in RUTAS_CONFIG_OPENCODE if Path(p).exists()]
     return existentes if len(existentes) > 1 else []
 
 
-def _snapshot_configs() -> dict:
+def _snapshot_configs() -> dict[str, dict[str, Any]]:
     """Toma hash y tamaño de los archivos de configuración."""
     snap = {}
     for p in RUTAS_CONFIG_OPENCODE:
@@ -51,7 +51,7 @@ def _snapshot_configs() -> dict:
     return snap
 
 
-def _snapshot_procesos() -> list:
+def _snapshot_procesos() -> list[str]:
     """Snapshot de los primeros 30 procesos del sistema."""
     try:
         r = _executor.run(["ps", "-eo", "pid,comm", "--no-headers"], timeout=3)

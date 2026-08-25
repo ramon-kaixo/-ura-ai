@@ -65,7 +65,8 @@ class SnapshotService:
         map_file = self._nervioso / "sistema_map.json"
         if not map_file.exists():
             return {}
-        return json.loads(map_file.read_text(encoding="utf-8"))
+        data = json.loads(map_file.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
 
     @staticmethod
     def _snapshot_files(index: dict[str, Any]) -> dict[str, dict[str, Any]]:

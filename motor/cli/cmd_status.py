@@ -18,7 +18,7 @@ PROCESOS_DUPLICADOS_CLAVE = ("opencode", "python3")
 _executor = SubprocessExecutor()
 
 
-def cmd_status(config: UraConfig, args=None) -> None:
+def cmd_status(config: UraConfig, args: Any | None = None) -> None:
     info = {"hostname": "", "health_score": "-", "servicios": {}, "recursos": {}}
     try:
         info["hostname"] = socket.gethostname()
@@ -40,7 +40,7 @@ def cmd_status(config: UraConfig, args=None) -> None:
         log.debug("status procesos duplicados falló: %s", e)
 
 
-def cmd_cross(config: UraConfig, args=None) -> None:
+def cmd_cross(config: UraConfig, args: Any | None = None) -> None:
     res: dict[str, Any] = {"ts": datetime.now(UTC).isoformat() + "Z", "local": {"hostname": socket.gethostname()}}
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if estado_path.exists():
@@ -75,14 +75,14 @@ def cmd_cross(config: UraConfig, args=None) -> None:
             res[name] = {"error": str(e)[:200]}
 
 
-def cmd_trend(config: UraConfig, args=None) -> None:
+def cmd_trend(config: UraConfig, args: Any | None = None) -> None:
     dep = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not dep.exists():
         sys.exit(1)
     [json.loads(l) for l in dep.read_text().strip().splitlines() if l.strip()]
 
 
-def cmd_graph(config: UraConfig, args=None) -> None:
+def cmd_graph(config: UraConfig, args: Any | None = None) -> None:
     dep = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not dep.exists():
         sys.exit(1)
@@ -99,7 +99,7 @@ def cmd_graph(config: UraConfig, args=None) -> None:
         lines[idx + i]["ts"][11:16]
 
 
-def cmd_perf(config: UraConfig, args=None) -> None:
+def cmd_perf(config: UraConfig, args: Any | None = None) -> None:
     dep = Path(config.deploy_dir) / ARCHIVO_TRENDS
     if not dep.exists():
         sys.exit(1)
@@ -111,7 +111,7 @@ def cmd_perf(config: UraConfig, args=None) -> None:
     {k: round(sum(p["perf"][k] for p in with_perf[-20:]) / max(len(with_perf[-20:]), 1), 1) for k in last}
 
 
-def cmd_summarise(config: UraConfig, args=None) -> None:
+def cmd_summarise(config: UraConfig, args: Any | None = None) -> None:
     socket.gethostname()
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if not estado_path.exists():

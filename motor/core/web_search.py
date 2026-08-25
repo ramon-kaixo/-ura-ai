@@ -11,6 +11,7 @@ import asyncio
 import os
 import re
 import time
+from typing import Any
 
 import httpx
 
@@ -23,7 +24,7 @@ _last_search: float = 0.0
 _rate_limit_lock = asyncio.Lock()
 
 
-async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
+async def _buscar_ddg(query: str, max_results: int = 5) -> dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=15) as client:
             resp = await client.post(
@@ -63,7 +64,7 @@ async def _buscar_ddg(query: str, max_results: int = 5) -> dict:
         return {"error": str(e), "query": query}
 
 
-async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
+async def _buscar_searxng(query: str, max_results: int = 5) -> dict[str, Any]:
     params: dict[str, str | int] = {
         "q": query,
         "format": "json",
@@ -92,7 +93,7 @@ async def _buscar_searxng(query: str, max_results: int = 5) -> dict:
         return {"error": "SearXNG error", "query": query}
 
 
-async def web_search(query: str, max_results: int = 5) -> dict:
+async def web_search(query: str, max_results: int = 5) -> dict[str, Any]:
     global _last_search  # noqa: PLW0603
     async with _rate_limit_lock:
         ahora = time.time()

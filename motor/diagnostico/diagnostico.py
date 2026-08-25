@@ -58,7 +58,7 @@ class Diagnostico:
         log.info("diagnostico: %d incidentes, %d causas", len(r.incidentes), len(r.causas_raiz))
         return r
 
-    def _tomar_snapshot_inicial(self) -> dict:
+    def _tomar_snapshot_inicial(self) -> dict[str, Any]:
         snap: dict[str, Any] = {"timestamp": datetime.now(UTC).isoformat() + "Z"}
         for archivo in RUTAS_CONFIG_OPENCODE:
             p = Path(archivo)
@@ -71,7 +71,7 @@ class Diagnostico:
             log.debug("snapshot procesos falló: %s", e)
         return snap
 
-    def _extraer_tags(self, incidentes: list, scan: ScanResult) -> list:
+    def _extraer_tags(self, incidentes: list[dict[str, Any]], scan: ScanResult) -> list[str]:
         tags = set()
         for inc in incidentes:
             tags.add(inc.get("tipo", "Unknown"))
@@ -87,7 +87,7 @@ class Diagnostico:
             tags.add("exit_node_offline")
         return list(tags)
 
-    def _determinar_causas(self, correlaciones: list) -> list:
+    def _determinar_causas(self, correlaciones: list[dict[str, Any]]) -> list[str]:
         return [c["causa_raiz"] for c in correlaciones if "causa_raiz" in c]
 
     def _guardar_incidente_qdrant(self, diag: DiagnoseResult, scan: ScanResult) -> None:

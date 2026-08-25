@@ -9,7 +9,7 @@ import hashlib
 import json
 from dataclasses import dataclass, field
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.platform.models import ProtocolEnvelope
@@ -82,7 +82,7 @@ class AgentTask:
 class PlanStep:
     step_id: str
     action: str
-    params: dict = field(default_factory=dict)
+    params: dict[str, Any] = field(default_factory=dict)
     depends_on: tuple[str, ...] = field(default_factory=tuple)
 
 
@@ -95,10 +95,10 @@ class AgentPlan:
 
 @dataclass
 class AgentContext:
-    conversation: list[dict] = field(default_factory=list)
+    conversation: list[dict[str, Any]] = field(default_factory=list)
     knowledge_facts: list[str] = field(default_factory=list)
     memory_entries: list[str] = field(default_factory=list)
-    execution_state: dict = field(default_factory=dict)
+    execution_state: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -159,7 +159,7 @@ class AgentAuditRecord:
     facts_consulted: list[str]
     memory_consulted: list[str]
     llm_calls: int
-    decisions: list[dict]
+    decisions: list[dict[str, Any]]
     result: str
     state: str
     duration_ms: float
@@ -185,7 +185,7 @@ class AuditEvent:
     event_type: str
     agent_id: str
     timestamp: float
-    data: dict = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
 
 
 # ── ToolRunner ─────────────────────────────
@@ -195,7 +195,7 @@ class AuditEvent:
 class ToolRequest:
     execution_id: str
     tool_name: str
-    params: dict
+    params: dict[str, Any]
     timeout: int = 30
     attempt: int = 1
     protocol_version: str = "1.0"
@@ -277,7 +277,7 @@ class ToolResult:
     execution_id: str
     tool_name: str
     success: bool
-    data: dict = field(default_factory=dict)
+    data: dict[str, Any] = field(default_factory=dict)
     error: str | None = None
     error_type: str | None = None
     duration_ms: float = 0.0

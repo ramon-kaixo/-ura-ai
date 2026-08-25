@@ -37,7 +37,8 @@ _last_backup: float = 0
 def _fetch_health() -> dict[str, Any] | None:
     try:
         with urllib.request.urlopen(f"{METRICS_URL}/health", timeout=5) as r:  # nosec  # noqa: S310
-            return json.loads(r.read().decode())
+            data = json.loads(r.read().decode())
+            return data if isinstance(data, dict) else None
     except Exception as e:
         log.warning("Health fetch falló: %s", e)
         return None

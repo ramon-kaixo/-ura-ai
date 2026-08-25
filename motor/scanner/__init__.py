@@ -93,7 +93,7 @@ class Scanner:
         )
         return r
 
-    def _get_hostname(self):
+    def _get_hostname(self) -> str:
         """Obtiene el hostname del sistema."""
         try:
             import socket
@@ -103,7 +103,7 @@ class Scanner:
             log.warning("no se pudo obtener hostname: %s", e)
             return "unknown"
 
-    def _check_servicios(self) -> dict:
+    def _check_servicios(self) -> dict[str, str]:
         """Comprueba estado de servicios systemd y docker."""
         s = {}
         for svc in SERVICIOS_SYSTEMD:
@@ -135,7 +135,7 @@ class Scanner:
             log.debug("systemctl list-units %s falló: %s", name, e)
             return False
 
-    def _list_docker_containers(self) -> dict:
+    def _list_docker_containers(self) -> dict[str, str]:
         """Lista contenedores docker y su estado."""
         try:
             r = _executor.run(["docker", "ps", "-a", "--format", "{{.Names}}\t{{.State}}"], timeout=10)
@@ -144,14 +144,14 @@ class Scanner:
             log.debug("docker ps falló: %s", e)
             return {}
 
-    def _check_recursos(self) -> dict:
+    def _check_recursos(self) -> dict[str, Any]:
         """Recolecta métricas de RAM, disco, CPU y zombies."""
         recursos = _recursos_psutil()
         if recursos is not None:
             return recursos
         return _recursos_proc()
 
-    def _check_contenedores(self) -> dict:
+    def _check_contenedores(self) -> dict[str, int]:
         """Cuenta contenedores docker por estado."""
         c = {"total": 0, "running": 0, "exited": 0}
         try:
@@ -170,7 +170,7 @@ class Scanner:
             log.debug("docker ps (contenedores) falló: %s", e)
         return c
 
-    def _detectar_cambios(self, actual: ScanResult) -> tuple:
+    def _detectar_cambios(self, actual: ScanResult) -> tuple[int, list[str]]:
         """Compara estado actual vs ventana previa y devuelve (diff_count, anomalias)."""
         snap = {
             "servicios": dict(actual.servicios),
@@ -206,9 +206,9 @@ class Scanner:
         if not r.hw_health.get("ok", True):
             score -= 15
         score -= r.diff_total * 2
-        return max(0, round(score, 1))
+        return max(0.0, round(float(score), 1))
 
-    def _detectar_duplicados(self) -> dict:
+    def _detectar_duplicados(self) -> dict[str, Any]:
         """Detecta procesos duplicados (opencode, node, docker)."""
         d = {}
         try:
@@ -241,16 +241,16 @@ class Scanner:
                 pass
         return h.hexdigest()[:16]
 
-    def _detectar_orphans(self) -> list:
+    def _detectar_orphans(self) -> list[dict[str, Any]]:
         """Detecta PIDs huérfanos, hijos de padres muertos, docker dangling y systemd falladas."""
-        orphans: list[dict] = []
+        orphans: list[dict[str, Any]] = []
         _detectar_pid_files(orphans)
         _detectar_hijos_huerfanos(orphans)
         _detectar_docker_dangling(orphans, _executor)
         _detectar_systemd_failed(orphans, _executor)
         return orphans
 
-    def _detectar_systemd_failed(self) -> list:
+    def _detectar_systemd_failed(self) -> list[str]:
         """Devuelve lista de unidades systemd en estado failed."""
         try:
             r = _executor.run(["systemctl", "list-units", "--state=failed", "--no-legend"], timeout=10)

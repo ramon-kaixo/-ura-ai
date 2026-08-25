@@ -5,24 +5,27 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from motor.core.config import UraConfig
+
 log = logging.getLogger("ura.scanner.calib")
 
 
 class Calibration:
     """Gestión de baseline y detección de anomalías por calibración."""
 
-    def __init__(self, config) -> None:
+    def __init__(self, config: UraConfig) -> None:
         self.config = config
         self.baseline_path = (
             Path(config.baseline_path) if config.baseline_path else Path(config.data_dir) / "baseline_inicial.json"
         )
         self._baseline = self._cargar()
 
-    def _cargar(self) -> dict:
+    def _cargar(self) -> dict[str, Any]:
         """Carga baseline desde disco."""
         try:
             if self.baseline_path.exists():
-                return json.loads(self.baseline_path.read_text())
+                data = json.loads(self.baseline_path.read_text())
+                return data if isinstance(data, dict) else {}
         except (json.JSONDecodeError, OSError) as e:
             log.warning("error cargando baseline: %s", e)
         return {}
@@ -32,7 +35,7 @@ class Calibration:
         """Indica si existe un baseline cargado."""
         return bool(self._baseline)
 
-    def detectar_anomalias(self, estado) -> list:
+    def detectar_anomalias(self, estado: Any) -> list[str]:
         """Detecta anomalías comparando estado actual vs baseline."""
         if not self._baseline:
             return []
@@ -44,7 +47,7 @@ class Calibration:
                 anomalias.append(f"Calib.{metric}={actual} > limite={bl.get(limite, 999)}")
         return anomalias
 
-    def learn(self, estado, trends: list | None = None) -> dict:
+    def learn(self, estado: Any, trends: list[dict[str, Any]] | None = None) -> dict[str, Any]:
         """Entrena baseline a partir de un scan y tendencias históricas."""
         bl: dict[str, Any] = {k: v for k, v in estado.recursos.items() if isinstance(v, (int, float))}
         if trends and len(trends) >= 3:
@@ -66,7 +69,7 @@ class Calibration:
         log.info("baseline actualizada (%d puntos de tendencia)", bl["puntos_trend"])
         return bl
 
-    def detect(self, trends: list) -> dict:
+    def detect(self, trends: list[dict[str, Any]]) -> dict[str, Any]:
         """Detecta anomalías vs tendencia histórica usando z-score."""
         if not trends:
             return {"anomalias": [], "ok": True}

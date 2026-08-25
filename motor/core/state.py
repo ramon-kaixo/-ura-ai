@@ -67,9 +67,9 @@ class ScanResult:
     red: dict[str, Any] = field(default_factory=dict)
     hw_health: dict[str, Any] = field(default_factory=lambda: {"ok": True, "issues": []})
     health_score: float = 100.0
-    anomalias: list[Any] = field(default_factory=list)
+    anomalias: list[str] = field(default_factory=list)
     diff_total: int = 0
-    flapping: list[str] = field(default_factory=list)
+    flapping: list[dict[str, Any]] = field(default_factory=list)
     calibration_status: str = "unknown"
     duplicados: dict[str, Any] = field(default_factory=dict)
     contenedores_ko: list[str] = field(default_factory=list)

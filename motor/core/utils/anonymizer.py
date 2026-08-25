@@ -12,7 +12,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-PATTERNS: dict[str, re.Pattern] = {
+PATTERNS: dict[str, re.Pattern[str]] = {
     "IP_ADDRESS": re.compile(
         r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b",
     ),

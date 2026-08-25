@@ -3,13 +3,14 @@ import hashlib
 import json
 import time
 from collections import OrderedDict
+from typing import Any
 
 
 class AsyncQueryCache:
     def __init__(self, max_size: int = 128, ttl: int = 300) -> None:
         self.max_size = max_size
         self.ttl = ttl
-        self.cache: OrderedDict[str, tuple[float, list[dict]]] = OrderedDict()
+        self.cache: OrderedDict[str, tuple[float, list[dict[str, Any]]]] = OrderedDict()
         self.lock = asyncio.Lock()
 
     def compute_key(
@@ -27,7 +28,7 @@ class AsyncQueryCache:
         }
         return hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
 
-    async def get(self, key: str) -> list[dict] | None:
+    async def get(self, key: str) -> list[dict[str, Any]] | None:
         async with self.lock:
             if key in self.cache:
                 ts, results = self.cache[key]
@@ -37,7 +38,7 @@ class AsyncQueryCache:
                 del self.cache[key]
             return None
 
-    async def set(self, key: str, results: list[dict]) -> None:
+    async def set(self, key: str, results: list[dict[str, Any]]) -> None:
         async with self.lock:
             self.cache[key] = (time.monotonic(), results)
             self.cache.move_to_end(key)

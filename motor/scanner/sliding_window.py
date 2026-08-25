@@ -11,12 +11,12 @@ class SlidingWindow:
     def __init__(self, maxlen: int = 3) -> None:
         self._buffer: deque[Any] = deque(maxlen=maxlen)
 
-    def add_and_check(self, estado: Any) -> list:
+    def add_and_check(self, estado: Any) -> list[dict[str, Any]]:
         """Añade un estado y detecta flapping entre las últimas N muestras."""
         self._buffer.append(estado)
         return self._detectar_flapping()
 
-    def _detectar_flapping(self) -> list:
+    def _detectar_flapping(self) -> list[dict[str, Any]]:
         """Detecta servicios que cambian de estado entre muestras."""
         if len(self._buffer) < 3:
             return []

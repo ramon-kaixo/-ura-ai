@@ -2,6 +2,7 @@
 
 import ast
 import logging
+from typing import Any
 
 from motor.core.agents.constants import MODELOS, URA_ROOT
 
@@ -13,7 +14,7 @@ class AgenteOrquestador:
 
     MODELO = MODELOS["orquestador"]
 
-    def decidir(self, telemetria: dict, conciencia: dict) -> tuple[str, str]:
+    def decidir(self, telemetria: dict[str, Any], conciencia: dict[str, Any]) -> tuple[str, str]:
         ram = telemetria.get("hardware", {}).get("ram_pct", 0)
         f821 = telemetria.get("f821", 99)
 

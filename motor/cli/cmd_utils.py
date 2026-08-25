@@ -3,6 +3,7 @@ import logging
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -14,7 +15,7 @@ ARCHIVO_DIAGNOSTICO = "diagnostico.json"
 _executor = SubprocessExecutor()
 
 
-def cmd_notify(config: UraConfig, args=None) -> None:
+def cmd_notify(config: UraConfig, args: Any | None = None) -> None:
     estado_path = Path(config.deploy_dir) / ARCHIVO_ESTADO
     if not estado_path.exists():
         sys.exit(0)
@@ -38,7 +39,7 @@ def cmd_notify(config: UraConfig, args=None) -> None:
         pass
 
 
-def cmd_qdrant_backup(config: UraConfig, args=None) -> None:
+def cmd_qdrant_backup(config: UraConfig, args: Any | None = None) -> None:
     qdrant = QdrantClient.instancia(config)
     if not qdrant.disponible:
         sys.exit(1)
@@ -53,5 +54,5 @@ def cmd_qdrant_backup(config: UraConfig, args=None) -> None:
     )
 
 
-def cmd_bench(config: UraConfig | None = None, args=None) -> None:
+def cmd_bench(config: UraConfig | None = None, args: Any | None = None) -> None:
     pass

@@ -67,16 +67,21 @@ def _chunk_text(text: str, size: int = CHUNK_SIZE, overlap: int = CHUNK_OVERLAP)
 # =====================================================
 
 
-def load_manifest() -> dict:
+def load_manifest() -> dict[str, Any]:
     if MANIFEST_PATH.exists():
         try:
-            return json.loads(MANIFEST_PATH.read_text())
+            data = json.loads(MANIFEST_PATH.read_text())
+            return (
+                data
+                if isinstance(data, dict)
+                else {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
+            )
         except Exception:
             log.warning("Error cargando manifest: {e}")
     return {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
 
 
-def save_manifest(manifest: dict) -> None:
+def save_manifest(manifest: dict[str, Any]) -> None:
     DATA_DIR.mkdir(parents=True, exist_ok=True)
 
     # Verificar espacio en disco antes de escribir
@@ -96,7 +101,7 @@ def save_manifest(manifest: dict) -> None:
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True))
 
 
-def index_documents(force: bool = False) -> dict:
+def index_documents(force: bool = False) -> dict[str, Any]:
     """Indexa todos los documentos en data/documentos/ en Qdrant.
     - Archivos nuevos → chunk + embed (vía Ollama)
     - Archivos modificados (SHA-256 ≠) → re-indexa
@@ -127,7 +132,7 @@ def index_documents(force: bool = False) -> dict:
     return stats
 
 
-def _cargar_manifest(force: bool) -> dict:
+def _cargar_manifest(force: bool) -> dict[str, Any]:
     if force:
         return {"indexed_at": None, "total_documents": 0, "total_chunks": 0, "files": {}}
     return load_manifest()
@@ -142,7 +147,9 @@ def _escanear_archivos() -> dict[str, str]:
     return current_files
 
 
-def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats: dict) -> None:
+def _procesar_eliminados(
+    manifest: dict[str, Any], current_files: dict[str, str], qdrant: Any, stats: dict[str, Any]
+) -> None:
     for rel_path in list(manifest.get("files", {}).keys()):
         if rel_path not in current_files:
             try:
@@ -153,7 +160,9 @@ def _procesar_eliminados(manifest: dict, current_files: dict, qdrant: Any, stats
                 log.warning("Error eliminando {rel_path}: {e}")
 
 
-def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any, stats: dict, force: bool) -> None:
+def _indexar_archivo(
+    rel_path: str, file_hash: str, manifest: dict[str, Any], qdrant: Any, stats: dict[str, Any], force: bool
+) -> None:
     existing = manifest.get("files", {}).get(rel_path, {})
     if existing.get("sha256") == file_hash and not force:
         stats["unchanged"] += 1
@@ -195,7 +204,9 @@ def _indexar_archivo(rel_path: str, file_hash: str, manifest: dict, qdrant: Any,
     }
 
 
-def _construir_batch(rel_path: str, file_hash: str, chunks: list[str], now: str) -> list:
+def _construir_batch(
+    rel_path: str, file_hash: str, chunks: list[str], now: str
+) -> list[tuple[str, str, dict[str, Any]]]:
     docs_batch = []
     for i, chunk_text in enumerate(chunks):
         doc_id = f"{rel_path}_{i}"
@@ -214,7 +225,7 @@ def _construir_batch(rel_path: str, file_hash: str, chunks: list[str], now: str)
 # =====================================================
 
 
-def query(question: str, top_k: int = TOP_K) -> list[dict]:
+def query(question: str, top_k: int = TOP_K) -> list[dict[str, Any]]:
     """Busca los chunks más relevantes para una pregunta en Qdrant.
     Retorna lista de {content, source, chunk_index, similarity}.
     """
@@ -248,7 +259,7 @@ def query(question: str, top_k: int = TOP_K) -> list[dict]:
     return output
 
 
-def get_sources(results: list[dict]) -> list[dict]:
+def get_sources(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Extrae fuentes únicas de los resultados de query()."""
     seen = set()
     sources = []
@@ -277,7 +288,7 @@ def rag_enabled() -> bool:
     return qdrant.disponible and DOCS_DIR.exists()
 
 
-def _build_context(results: list[dict], max_chars: int = 8000) -> str:
+def _build_context(results: list[dict[str, Any]], max_chars: int = 8000) -> str:
     """Construye un string de contexto a partir de los resultados de query()."""
     parts: list[str] = []
     for i, r in enumerate(results):

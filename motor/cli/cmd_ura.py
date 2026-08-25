@@ -7,6 +7,7 @@ import shlex
 import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from motor.core.config import UraConfig
 from motor.core.executor import SubprocessExecutor
@@ -22,7 +23,7 @@ def _memory_path() -> Path:
     return Path(os.environ.get("URA_MEMORY_DB", str(Path.home() / ".ura" / "memory.db")))
 
 
-def _run(cmd, _desc):
+def _run(cmd: list[str], _desc: str) -> tuple[bool, str]:
     result = _executor.run(cmd, cwd=str(ROOT))
     if result.ok:
         return True, result.stdout
@@ -31,7 +32,7 @@ def _run(cmd, _desc):
     return False, result.stderr
 
 
-def cmd_finalize(config: UraConfig, args) -> int:
+def cmd_finalize(config: UraConfig, args: Any) -> int:
     message = None
     for i, a in enumerate(args):
         if a == "-m" and i + 1 < len(args):
@@ -82,7 +83,7 @@ def cmd_finalize(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_test(config: UraConfig, args) -> int:
+def cmd_test(config: UraConfig, args: Any) -> int:
     from motor.core.config_manager import validate_config, validate_schema
 
     errors = validate_schema()
@@ -102,7 +103,7 @@ def cmd_test(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_snapshot(config: UraConfig, args) -> int:
+def cmd_snapshot(config: UraConfig, args: Any) -> int:
     timestamp = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
     snap_dir = ROOT / "data" / "snapshots"
     snap_dir.mkdir(parents=True, exist_ok=True)
@@ -129,7 +130,7 @@ def cmd_snapshot(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_maintenance(config: UraConfig, args):
+def cmd_maintenance(config: UraConfig, args: Any) -> int:
     dry = "--dry-run" in args or "-d" in args
     if dry:
         return _executor.run(["python3", str(MAINTENANCE_SCRIPT), "--dry-run"], cwd=str(ROOT)).returncode
@@ -139,15 +140,15 @@ def cmd_maintenance(config: UraConfig, args):
     ).returncode
 
 
-def cmd_rotate(config: UraConfig, args):
+def cmd_rotate(config: UraConfig, args: Any) -> int:
     return _executor.run(["bash", str(ROOT / "mantenimiento" / "rotate_logs.sh")], cwd=str(ROOT)).returncode
 
 
-def cmd_health(config: UraConfig, args):
+def cmd_health(config: UraConfig, args: Any) -> int:
     return _executor.run(["python3", str(ROOT / "monitor" / "health_check.py")], cwd=str(ROOT)).returncode
 
 
-def cmd_system(config: UraConfig, args):
+def cmd_system(config: UraConfig, args: Any) -> int:
     """Estado unificado del sistema: salud, memoria, version, pipeline."""
     from motor.intelligence.memory.hybrid import HybridMemory
     from motor.observability.health import HealthRegistry
@@ -190,11 +191,11 @@ def cmd_system(config: UraConfig, args):
     return 0
 
 
-def cmd_alerts(config: UraConfig, args):
+def cmd_alerts(config: UraConfig, args: Any) -> int:
     return _executor.run(["python3", str(ROOT / "monitor" / "log_alerts.py")], cwd=str(ROOT)).returncode
 
 
-def cmd_snc(config: UraConfig, args) -> int:
+def cmd_snc(config: UraConfig, args: Any) -> int:
     """Estado del Sistema Nervioso Central — fetch desde GX10."""
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
 
@@ -232,7 +233,7 @@ def cmd_snc(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_doctor(config: UraConfig, args) -> int:
+def cmd_doctor(config: UraConfig, args: Any) -> int:
     """Diagnóstico completo del sistema."""
     from motor.core.config_manager import validate_schema
 
@@ -279,7 +280,7 @@ def cmd_doctor(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_metrics(config: UraConfig, args) -> int:
+def cmd_metrics(config: UraConfig, args: Any) -> int:
     """Métricas del router: modelos, latencia, cache."""
     try:
         with urllib.request.urlopen(f"http://{TARGET}:{OLLAMA_PORT}/metrics", timeout=5) as r:  # nosec B310
@@ -292,7 +293,7 @@ def cmd_metrics(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_dashboard(config: UraConfig, args) -> int:
+def cmd_dashboard(config: UraConfig, args: Any) -> int:
     """Dashboard unificado — lee del SNC state file + Git + Config local."""
     remote_state = Path.home() / "URA" / "logs" / "snc_state.json"
     local_state = Path.home() / ".ura" / "run" / "ura_snc_state.json"
@@ -329,7 +330,7 @@ def cmd_dashboard(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_index(config: UraConfig, args) -> int:
+def cmd_index(config: UraConfig, args: Any) -> int:
     """Indexar documentos en la memoria RAG."""
     force = "--force" in args or "-f" in args
 
@@ -353,7 +354,7 @@ def cmd_index(config: UraConfig, args) -> int:
     return 0
 
 
-def cmd_ask(config: UraConfig, args):
+def cmd_ask(config: UraConfig, args: Any) -> int:
     """RAG completo: recupera documentos y genera respuesta con LLM."""
     question = " ".join(args) if args else None
     if not question:
@@ -378,7 +379,7 @@ def cmd_ask(config: UraConfig, args):
     return result.returncode or 1
 
 
-def cmd_memory(config: UraConfig, args) -> int:
+def cmd_memory(config: UraConfig, args: Any) -> int:
     """Estadísticas y operaciones de la memoria híbrida."""
     from motor.intelligence.memory.hybrid import HybridMemory
 
@@ -412,7 +413,7 @@ def cmd_memory(config: UraConfig, args) -> int:
     return 0
 
 
-def _memory_search(mem, raw: list[str]) -> None:
+def _memory_search(mem: Any, raw: list[str]) -> None:
     if len(raw) < 1:
         _memory_usage()
         return
@@ -423,7 +424,7 @@ def _memory_search(mem, raw: list[str]) -> None:
         print(f"  {i}. [{r.type.value}] {r.payload[:100]}...")
 
 
-def _memory_store(mem, raw: list[str]) -> None:
+def _memory_store(mem: Any, raw: list[str]) -> None:
     if len(raw) < 1:
         _memory_usage()
         return
@@ -495,7 +496,7 @@ def _memory_usage() -> None:
     print("  ura memory restore <archivo>  — restaurar desde backup")
 
 
-def _systemctl(args: list[str]) -> "subprocess.CompletedProcess":
+def _systemctl(args: list[str]) -> "subprocess.CompletedProcess[Any]":
     import subprocess as _sp  # nosec
 
     r = _sp.run([*["systemctl", "--user"], *args], capture_output=True, text=True, timeout=30, check=False)  # nosec
@@ -504,7 +505,7 @@ def _systemctl(args: list[str]) -> "subprocess.CompletedProcess":
     return _sp.run([*["systemctl"], *args], capture_output=True, text=True, timeout=30, check=False)  # nosec
 
 
-def cmd_service(config: UraConfig, args) -> int:
+def cmd_service(config: UraConfig, args: Any) -> int:
     """Gestiona servicios del sistema (start/stop/status)."""
     if not _systemctl([]).stdout and not _systemctl([]).stderr:
         print("systemctl no disponible en este sistema")
@@ -539,7 +540,7 @@ def cmd_service(config: UraConfig, args) -> int:
     return 0
 
 
-def _audit_ejecutar_arq() -> tuple[dict | None, str]:
+def _audit_ejecutar_arq() -> tuple[dict[str, Any] | None, str]:
     """Ejecuta arq_auditor y parsea su JSON. (None, error) si falla."""
     import json
     import subprocess  # nosec
@@ -558,14 +559,14 @@ def _audit_ejecutar_arq() -> tuple[dict | None, str]:
     return json.loads(r.stdout), ""
 
 
-def _audit_contar(blocks: dict) -> tuple[int, int]:
+def _audit_contar(blocks: dict[str, Any]) -> tuple[int, int]:
     """Cuenta FAIL/P0 y WARNING/MEDIUM entre todos los bloques."""
     total_fail = sum(1 for b in blocks.values() for f in b if f.get("level") in ("FAIL", "P0"))
     total_warn = sum(1 for b in blocks.values() for f in b if f.get("level") in ("WARNING", "MEDIUM"))
     return total_fail, total_warn
 
 
-def _audit_imprimir_cabecera(data: dict, total_fail: int, total_warn: int) -> None:
+def _audit_imprimir_cabecera(data: dict[str, Any], total_fail: int, total_warn: int) -> None:
     files_scanned = data.get("files_scanned", 0)
     print(f"\n📊 Auditoría Arquitectónica — {data.get('version', '?')}")
     print(f"{'=' * 60}")
@@ -573,7 +574,7 @@ def _audit_imprimir_cabecera(data: dict, total_fail: int, total_warn: int) -> No
     print()
 
 
-def _audit_imprimir_bloques(blocks: dict) -> None:
+def _audit_imprimir_bloques(blocks: dict[str, Any]) -> None:
     for bid in sorted(blocks.keys()):
         items = blocks[bid]
         if not items:
@@ -596,7 +597,7 @@ def _audit_veredicto(total_fail: int, total_warn: int) -> str:
     return "✅ SUPERADO"
 
 
-def cmd_audit(config: UraConfig, args) -> int:
+def cmd_audit(config: UraConfig, args: Any) -> int:
     """Auditoría arquitectónica completa (ARQ)."""
     data, error = _audit_ejecutar_arq()
     if data is None:
