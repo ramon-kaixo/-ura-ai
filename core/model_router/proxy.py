@@ -13,7 +13,7 @@ import urllib.request
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
-from motor.core.model_router.router import CONN_TIMEOUT, READ_TIMEOUT
+from core.model_router.router import CONN_TIMEOUT, READ_TIMEOUT
 
 log = logging.getLogger(__name__)
 

@@ -30,7 +30,7 @@ print("PUENTES-OK")
 
 def test_bridges_identidad_en_subproceso() -> None:
     """Identidad de los 3 puentes, aislada del proceso de tests."""
-    result = subprocess.run(  # noqa: S603
+    result = subprocess.run(
         [sys.executable, "-c", BRIDGE_IDENTITY_SNIPPET],
         capture_output=True,
         text=True,
