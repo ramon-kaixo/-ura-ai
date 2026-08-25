@@ -40,3 +40,23 @@ correctamente las tool calls de Ollama. Issues abiertos:
 ## Recomendacion
 No instalar opencode-local-ollama sin aprobacion de Ramon (riesgo v0.1.0).
 Mejor esperar PR #33103 o usar OpenCode Web como fallback.
+## Plugin instalado (2026-08-25)
+
+opencode-local-ollama v0.1.0 instalado globalmente en GX10.
+
+### Para activar, anadir a ~/.config/opencode/opencode.json:
+
+    "plugin": {
+      "opencode-local-ollama": {
+        "host": "http://localhost:11434",
+        "providerID": "ollama",
+        "timeout": 5000,
+        "context": 8192,
+        "output": 4096
+      }
+    }
+
+### Nota:
+El provider ollama actual usa @ai-sdk/openai-compatible. El plugin podria
+conflictuar. Probar en sesion de pruebas antes de aplicar a produccion.
+Si hay conflicto, eliminar el bloque "plugin" del config.
