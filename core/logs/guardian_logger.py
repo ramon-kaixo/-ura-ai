@@ -10,11 +10,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core.interfaces import IConfigProvider
+    from motor.core.interfaces import IConfigProvider
 
 logger = logging.getLogger("ura.guardian")
 
 GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
+
 
 def _ensure_log_dir():
     path = Path(GUARDIAN_LOG).parent
@@ -37,6 +38,7 @@ def _publish_to_event_bus(record: dict) -> None:
         )
     except Exception:  # noqa: S110 — degradación controlada: el bus nunca debe romper el log
         pass
+
 
 def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None:
     try:
@@ -67,7 +69,7 @@ def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None
         pass
 
 
-def log_event(  # noqa: PLR0917 — firma pública estable (compatibilidad con callers existentes)
+def log_event(
     event: str,
     model: str = "",
     file: str = "",

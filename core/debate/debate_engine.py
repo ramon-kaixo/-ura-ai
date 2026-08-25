@@ -15,7 +15,7 @@ from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event
 
 if TYPE_CHECKING:
-    from core.interfaces import ILLMClient
+    from motor.core.interfaces import ILLMClient
 
 logger = logging.getLogger("ura.debate")
 

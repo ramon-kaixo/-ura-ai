@@ -1,4 +1,4 @@
-"""Tests para core/notifier.py y core/secretario_cache.py."""
+"""Tests para core/notifier.py (secretario_cache eliminado en Fase B)."""
 from __future__ import annotations
 
 import json
@@ -7,7 +7,6 @@ from unittest import mock
 import pytest
 
 from motor.core import notifier
-from core.secretario_cache import LRU_MAX, SecretarioCache
 
 
 class FakeResp:
@@ -187,67 +186,3 @@ class TestNotifierEnvio:
         monkeypatch.setattr(notifier.httpx, "post", post)
         assert notifier.notify("m") is True  # telegram ok aunque pushover falle
         assert post.call_count == 2
-
-
-class TestSecretarioCache:
-    def test_interact_cachea(self, monkeypatch) -> None:
-        sc = SecretarioCache()
-        resp = FakeResp(body=json.dumps({"ok": True}).encode())
-        urlopen = mock.Mock(return_value=FakeUrlopenCtx(resp))
-        monkeypatch.setattr(notifier.urllib, "urlopen", urlopen) if False else None
-
-        monkeypatch.setattr("core.secretario_cache.urllib.request.urlopen", urlopen)
-        r1 = sc.interact("hola")
-        r2 = sc.interact("hola")
-        assert r1 == {"ok": True}
-        assert r2 == {"ok": True}
-        assert urlopen.call_count == 1  # segunda vez desde cache
-
-    def test_interact_error(self, monkeypatch) -> None:
-        sc = SecretarioCache()
-        monkeypatch.setattr("core.secretario_cache.urllib.request.urlopen", mock.Mock(side_effect=OSError("net")))
-        r = sc.interact("hola")
-        assert r["validation"]["ok"] is False
-        assert "error" in r
-
-    def test_interact_structure_default(self, monkeypatch) -> None:
-        sc = SecretarioCache()
-        resp = FakeResp(body=b"{}")
-        monkeypatch.setattr("core.secretario_cache.urllib.request.urlopen", mock.Mock(return_value=FakeUrlopenCtx(resp)))
-        sc.interact("hola")
-        # no debe explotar; cache contiene el resultado
-        assert sc.estado()["cache_size"] == 1
-
-    def test_put_cache_lru_eviction(self) -> None:
-        sc = SecretarioCache()
-        for i in range(LRU_MAX + 5):
-            sc._put_cache(f"k{i}", {"i": i})
-        assert len(sc._cache) == LRU_MAX
-        assert "k0" not in sc._cache
-
-    def test_limpiar_cache(self) -> None:
-        sc = SecretarioCache()
-        sc._put_cache("k", {"v": 1})
-        sc.limpiar_cache()
-        assert sc.estado()["cache_size"] == 0
-
-    def test_estado(self, monkeypatch) -> None:
-        monkeypatch.setattr("core.secretario_cache.ASUS_EXEC_URL", "http://x:1")
-        sc = SecretarioCache()
-        st = sc.estado()
-        assert st["cache_max"] == LRU_MAX
-        assert st["asus_url"] == "http://x:1"
-
-    def test_buscar_qdrant_ok(self, monkeypatch) -> None:
-        sc = SecretarioCache()
-        body = json.dumps({"result": {"points": [{"payload": {"idea": "a"}}, {"payload": {"idea": "b"}}]}}).encode()
-        monkeypatch.setattr("core.secretario_cache.urllib.request.urlopen", mock.Mock(return_value=FakeUrlopenCtx(FakeResp(body=body))))
-        out = sc.buscar_qdrant("ideas")
-        assert len(out) == 2
-        assert out[0]["idea"] == "a"
-
-    def test_buscar_qdrant_error(self, monkeypatch) -> None:
-        sc = SecretarioCache()
-        monkeypatch.setattr("core.secretario_cache.urllib.request.urlopen", mock.Mock(side_effect=OSError("net")))
-        out = sc.buscar_qdrant("ideas")
-        assert out == [{"error": mock.ANY}] or "error" in out[0]

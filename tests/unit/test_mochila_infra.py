@@ -196,7 +196,7 @@ class TestInterfaces:
     """Protocols runtime_checkable: isinstance con objetos que cumplen el contrato."""
 
     def test_illm_client(self) -> None:
-        from core.interfaces import ILLMClient
+        from motor.core.interfaces import ILLMClient
 
         class Cliente:
             def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
@@ -208,7 +208,7 @@ class TestInterfaces:
         assert isinstance(Cliente(), ILLMClient)
 
     def test_iexecutor(self) -> None:
-        from core.interfaces import IExecutor, IProcessResult
+        from motor.core.interfaces import IExecutor, IProcessResult
 
         class Resultado:
             ok = True
@@ -229,7 +229,7 @@ class TestInterfaces:
         assert isinstance(Resultado(), IProcessResult)
 
     def test_iconfig_provider(self) -> None:
-        from core.interfaces import IConfigProvider
+        from motor.core.interfaces import IConfigProvider
 
         campos = [
             "qdrant_host",
@@ -259,7 +259,7 @@ class TestInterfaces:
         assert isinstance(Config(), IConfigProvider)
 
     def test_ivector_store(self) -> None:
-        from core.interfaces import IVectorStore
+        from motor.core.interfaces import IVectorStore
 
         class Store:
             def guardar_incidente(self, incidente: dict) -> bool:
@@ -271,7 +271,7 @@ class TestInterfaces:
         assert isinstance(Store(), IVectorStore)
 
     def test_isecret_store(self) -> None:
-        from core.interfaces import ISecretStore
+        from motor.core.interfaces import ISecretStore
 
         class Store:
             def get_secret(self, name: str, default: str | None = None) -> str | None:

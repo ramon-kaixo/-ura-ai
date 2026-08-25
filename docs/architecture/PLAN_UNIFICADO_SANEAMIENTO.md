@@ -2,7 +2,20 @@
 
 **Fecha:** 2026-08-25
 **Autor:** TERM (corregido sobre V1.1.0 + AUDITORIA_FORENSE_V1)
-**Estado:** ANÁLISIS → EJECUCIÓN
+**Estado:** EN EJECUCIÓN
+
+---
+
+## Progreso
+
+| Fase | Estado | Commit | Nota |
+|------|--------|--------|------|
+| 0 | ✅ | `6d7e18ac` | gitignore limpio, plan creado |
+| 0-BIS | ✅ | `d7e51e68` | 23 shims eliminados, 20+ archivos migrados, 102 tests pass |
+| A | ✅ | — | pyproject.toml ya era 0.29.0 |
+| B | 🔮 | — | Migrar 17 production core→motor ( pendiente) |
+| C | 🔮 | — | Consolidar CircuitBreaker (3→1) y logging (3→1) |
+| D–H | 🔮 | — | Ver detalle abajo |
 
 ---
 

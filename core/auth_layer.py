@@ -7,7 +7,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from core.interfaces import ISecretStore
+    from motor.core.interfaces import ISecretStore
 
 DEFAULT_API_KEY: str | None = None
 AUTH_ENABLED = os.environ.get("URA_AUTH_ENABLED", "true").lower() == "true"
