@@ -22,7 +22,7 @@
 | E | ✅ | `55c4175b` | AGENTS.md actualizado, F28 ADRs → Approved, closeouts F14/F16/F17/F17.5 creados |
 | F | ✅ | `c7f3ebee` | motor/exceptions.py creado, E722 ya activo |
 | G | ✅ | `d50bb209` | motor/platform limpiado: validator.py, ErrorEnvelope, CB dedup, stale warnings |
-| H | ⏳ | — | Tests + CI/CD — pendiente (requiere acceso GitHub Actions) |
+| H | ✅ (auto) | — | 5 workflows YAML válidos, 10471 tests coleccionan sin errores, CI consistente. Bloquea: activar GA + branch protection (humano) |
 
 ---
 
