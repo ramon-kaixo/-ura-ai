@@ -6,7 +6,6 @@ Mide: disco, RAM, carga CPU, VRAM Ollama, latencia SSH/HTTP.
 import subprocess
 import sys
 import time
-import urllib.request
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -58,12 +57,14 @@ def measure_ssh_latency() -> float:
 def measure_http_latency() -> float:
     """Mide latencia HTTP Ollama en ms."""
     try:
+        import http.client
+
         start = time.time()
-        url = f"http://{TARGET}:{OLLAMA_PORT}/api/tags"
-        req = urllib.request.Request(url)
-        req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):  # noqa: S310 - URL local Ollama
-            return (time.time() - start) * 1000
+        conn = http.client.HTTPConnection(TARGET, OLLAMA_PORT, timeout=5)
+        conn.request("GET", "/api/tags")
+        conn.getresponse()
+        conn.close()
+        return (time.time() - start) * 1000
     except Exception:
         return -1
 
