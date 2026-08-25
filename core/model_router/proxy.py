@@ -13,6 +13,8 @@ import urllib.request
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
 
+from core.model_router.router import CONN_TIMEOUT, READ_TIMEOUT
+
 log = logging.getLogger(__name__)
 
 _fallback_log: deque[float] = deque(maxlen=3600)
@@ -47,7 +49,7 @@ def _measare_asus_latency() -> float:
         t0 = time.monotonic()
         req = urllib.request.Request(f"{get_urls()['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5):  # noqa: S310
+        with urllib.request.urlopen(req, timeout=CONN_TIMEOUT) as _:  # noqa: S310
             elapsed = (time.monotonic() - t0) * 1000
             return round(elapsed, 1)
     except Exception:
@@ -193,9 +195,9 @@ def proxy_request(
     tipo: str = "",
     client_ip: str = "",
 ) -> tuple:
-    from core.model_router.metrics import metrics
-    from core.model_router.model_selection import _record_success
-    from core.model_router.router import get_urls
+    from motor.core.llm.metrics import metrics
+    from motor.core.model_router.model_selection import _record_success
+    from motor.core.model_router.router import get_urls
 
     resolved_mode = _resolve_mode_for_client(client_ip or "127.0.0.1")
     active_url = get_urls()["primary"] if resolved_mode == "TURBO" else get_urls()["fallback"]
@@ -203,9 +205,13 @@ def proxy_request(
     req = urllib.request.Request(url, data=body if method == "POST" else None, method=method)  # noqa: S310
     req.add_header("Content-Type", "application/json")
 
+    # Timeouts: conexión corta (disponible para diagnóstico), lectura razonable
+    read_timeout = READ_TIMEOUT
+
     start_time = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=600) as resp:  # noqa: S310
+        # Usamos una timeout total razonable para la petición HTTP
+        with urllib.request.urlopen(req, timeout=read_timeout) as resp:  # noqa: S310
             latency = time.time() - start_time
             metrics.record_latency("ollama_request", latency)
             if modelo and tipo:

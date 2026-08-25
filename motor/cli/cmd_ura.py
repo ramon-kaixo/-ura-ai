@@ -362,11 +362,19 @@ def cmd_ask(config: UraConfig, args):
     safe_q = shlex.quote(question)
     inner_py = "from motor.core.memory_engine import ask\nprint(ask(" + safe_q + "))"
     cmd = f'cd ~/URA/ura_ia_1972/ && python3 -c "{inner_py}"'
-    result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=120)
+    try:
+        result = _executor.run(["ssh", TARGET, cmd], cwd=str(ROOT), timeout=120)
+    except Exception as e:
+        print(f"Error ejecutando consulta: {e}")
+        return 1
     if result.ok and result.stdout:
+        with contextlib.suppress(Exception):
+            print(result.stdout.strip())
         return 0
     if result.stderr:
-        pass
+        print(f"Error stderr: {result.stderr[:200]}")
+    if result.returncode != 0:
+        print(f"Error: comando retornó código {result.returncode}")
     return result.returncode or 1
 
 

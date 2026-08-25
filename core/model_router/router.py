@@ -28,6 +28,10 @@ except ImportError:
 
     rate_limiter = _NoOpRateLimiter()
 
+# Timeouts de red por defecto (segundos)
+CONN_TIMEOUT = 10
+READ_TIMEOUT = 30
+
 
 try:
     from core.auth_layer import require_auth
@@ -66,7 +70,7 @@ def _resolve_ollama_url() -> str:
     try:
         req = urllib.request.Request(f"{urls['primary']}/api/tags")  # noqa: S310
         req.add_header("Connection", "close")
-        with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
+        with urllib.request.urlopen(req, timeout=CONN_TIMEOUT) as _:  # noqa: S310
             log.info("ASUS conectado: %s", urls["primary"])
             return urls["primary"]
     except Exception as e:

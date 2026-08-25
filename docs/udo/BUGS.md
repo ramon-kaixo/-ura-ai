@@ -17,3 +17,19 @@ dispositivos,infra_config,schema}.json · deploy/{lildax_config,sync_to_asus.sh,
    y verificar con `git apply --reverse --check`.
 
 **Estado**: abierto — requiere decisión de diseño (¿skip-worktree en vez de chattr?).
+
+## BUG-002 — tests/nightly/test_knowledge_engine.py referencia script borrado
+**Síntoma**: `tests/nightly/test_knowledge_engine.py:1085` ejecuta
+`scripts/pro/knowledge_engine.py`, que ya no existe en el repo
+(`[Errno 2] No such file or directory`). Falla siempre que se lanza la
+suite completa fuera de CI (detectado 2026-08-25 en GX10 durante la
+validación de pytest-gremlins, TASK-20260825-001).
+
+**Impacto**: ruido en ejecuciones locales/completas; contamina métricas
+de mutation testing (cualquier mutante parece "killed" por este test).
+
+**Fix propuesto**: borrar el test o reescribirlo contra el módulo real;
+si permanece, añadir a `.github/tests-ci-exclude.txt` con revisión
+anual según política de exclusiones.
+
+**Estado**: abierto — pendiente decisión (borrar vs reescribir).
