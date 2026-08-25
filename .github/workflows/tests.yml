@@ -9,6 +9,7 @@ name: Mutation & Quality
 #   - semgrep (SAST rápido)
 #
 # Ejecuta en: push a main, PRs, y programado (nightly).
+# El job `mutation` solo corre en push a main y schedule (no en PRs).
 
 on:
   push:
@@ -69,6 +70,11 @@ jobs:
   mutation:
     runs-on: ubuntu-latest
     needs: [coverage, mypy]
+    # Solo en push a main y schedule (nightly), NO en PRs: el gate de
+    # mutación tarda (timeout 3600s) y no forma parte de los status checks
+    # obligatorios de la protección de main (lint/test). Correrlo en cada PR
+    # solo añade espera y a veces queda en None sin bloquear nada.
+    if: github.event_name == 'push' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
