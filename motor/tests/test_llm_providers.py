@@ -24,7 +24,7 @@ class TestContract:
     """Verifica que cada proveedor cumple el contrato BaseLLMProvider."""
 
     @classmethod
-    def _get_proveedores(cls):
+    def _get_proveedores(cls) -> tuple[list[tuple[str, Any]], type[Any]]:
         import importlib
 
         result: list[tuple[str, type]] = []
@@ -179,16 +179,16 @@ class TestRegistryRouter:
         from motor.core.llm.router import LLMRouter
 
         class MockProvider(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 return f"mock:{prompt}"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "ok"}
 
         reg = ProviderRegistry()
@@ -203,29 +203,29 @@ class TestRegistryRouter:
         from motor.core.llm.router import LLMRouter
 
         class MockA(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 return "A"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "A"}
 
         class MockB(BaseLLMProvider):
-            def generate(self, prompt, model=None, options=None):
+            def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
                 return "B"
 
-            def embed(self, texts, model=None):
+            def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[1.0]]
 
-            async def embed_async(self, texts, model=None):
+            async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
                 return [[1.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "B"}
 
         reg = ProviderRegistry()
@@ -248,16 +248,16 @@ class TestRegistryRouter:
         from motor.core.llm.router import LLMRouter
 
         class Mock(BaseLLMProvider):
-            def generate(self, *a, **kw):
+            def generate(self, *a: Any, **kw: Any) -> str:
                 return "x"
 
-            def embed(self, *a, **kw):
+            def embed(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[0.0]]
 
-            async def embed_async(self, *a, **kw):
+            async def embed_async(self, *a: Any, **kw: Any) -> list[list[float]]:
                 return [[0.0]]
 
-            def health(self):
+            def health(self) -> dict[str, Any]:
                 return {"status": "x"}
 
         reg = ProviderRegistry()

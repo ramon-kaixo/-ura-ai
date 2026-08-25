@@ -8,6 +8,7 @@ from __future__ import annotations
 import tempfile
 import time as _time
 from pathlib import Path
+from typing import Any
 
 from motor.observability.tracing_exporter import (
     InMemoryExporter,
@@ -20,16 +21,16 @@ class FakeSpanEvent:
         self.trace_id = trace_id
         self.name = name
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {"trace_id": self.trace_id, "name": self.name, "ts": _time.time()}
 
 
-def test_in_memory_exporter():
+def test_in_memory_exporter() -> None:
     exp = InMemoryExporter()
     assert exp.size() == 0
 
     event = FakeSpanEvent("abc123")
-    exp.emit(event)
+    exp.emit(event)  # type: ignore[arg-type]
     assert exp.size() == 1
 
     events = exp.events()
@@ -40,31 +41,31 @@ def test_in_memory_exporter():
     assert exp.size() == 0
 
 
-def test_in_memory_exporter_multiple():
+def test_in_memory_exporter_multiple() -> None:
     exp = InMemoryExporter()
     for i in range(10):
-        exp.emit(FakeSpanEvent(f"trace_{i}"))
+        exp.emit(FakeSpanEvent(f"trace_{i}"))  # type: ignore[arg-type]
     assert exp.size() == 10
 
     events = exp.events(since=5)
     assert len(events) == 5
 
 
-def test_in_memory_close():
+def test_in_memory_close() -> None:
     exp = InMemoryExporter()
-    exp.emit(FakeSpanEvent("test"))
+    exp.emit(FakeSpanEvent("test"))  # type: ignore[arg-type]
     exp.close()
     assert exp.size() == 0
 
 
-def test_latency_stats():
+def test_latency_stats() -> None:
     stats = LatencyStats(window=100)
     for i in range(10):
         stats.add(i * 1_000_000)  # 0-9ms
     assert len(stats.durations_ns) == 10
 
 
-def test_latency_stats_window():
+def test_latency_stats_window() -> None:
     stats = LatencyStats(window=3)
     for i in range(10):
         stats.add(i)
@@ -73,7 +74,7 @@ def test_latency_stats_window():
     assert stats.durations_ns[0] == 7  # oldest in window
 
 
-def test_file_exporter_basic():
+def test_file_exporter_basic() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         from motor.observability.tracing_exporter import FileExporter
 
@@ -83,8 +84,8 @@ def test_file_exporter_basic():
             flush_interval=0.1,
             max_file_size=1024 * 1024,
         )
-        exp.emit(FakeSpanEvent("test1"))
-        exp.emit(FakeSpanEvent("test2"))
+        exp.emit(FakeSpanEvent("test1"))  # type: ignore[arg-type]
+        exp.emit(FakeSpanEvent("test2"))  # type: ignore[arg-type]
         _time.sleep(0.3)  # wait for flush
         exp.close()
 
@@ -92,7 +93,7 @@ def test_file_exporter_basic():
         assert len(files) >= 1
 
 
-def test_trace_exporter_basic():
+def test_trace_exporter_basic() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         trace_path = str(Path(tmpdir) / "traces.jsonl")
         from motor.observability.tracing_exporter import TraceExporter
@@ -103,13 +104,13 @@ def test_trace_exporter_basic():
             flush_interval=0.1,
             max_file_size=1024 * 1024,
         )
-        exp.emit(FakeSpanEvent("trace1"))
-        exp.emit(FakeSpanEvent("trace2"))
+        exp.emit(FakeSpanEvent("trace1"))  # type: ignore[arg-type]
+        exp.emit(FakeSpanEvent("trace2"))  # type: ignore[arg-type]
         _time.sleep(0.3)
         exp.close()
 
 
-def test_file_exporter_drop_head():
+def test_file_exporter_drop_head() -> None:
     import queue as _queue
 
     exp_type = type("Exp", (object,), {"_buffer": _queue.Queue(maxsize=3)})

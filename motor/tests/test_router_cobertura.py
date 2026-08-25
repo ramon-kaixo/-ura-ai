@@ -135,7 +135,7 @@ class TestRouterStrategy:
         def boom(*a: Any, **k: Any) -> str:
             raise ConnectionError("red")
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         prov = FakeProv("p1")
         prov.generate = boom  # type: ignore[method-assign]
         result = call_with_retry(
@@ -146,7 +146,7 @@ class TestRouterStrategy:
     def test_call_with_retry_transient_retries_then_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_retry
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         calls = {"n": 0}
 
         def boom(*a: Any, **k: Any) -> str:
@@ -279,7 +279,7 @@ class TestRouterStrategy:
     def test_call_with_retry_embed_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_retry
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
 
         def boom(*a: Any, **k: Any) -> list[list[float]]:
             raise httpx.TimeoutException("t")
@@ -294,33 +294,33 @@ class TestRouterStrategy:
 
         p1, p2 = FakeProv("p1"), FakeProv("p2")
         reg = FakeRegistry({"p1": p1, "p2": p2})
-        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")
+        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")  # type: ignore[arg-type]
         assert result == "respuesta-p1" and used == "p1"
 
     def test_call_with_fallback_uses_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         p1, p2 = FakeProv("p1"), FakeProv("p2")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         reg = FakeRegistry({"p1": p1, "p2": p2})
-        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")
+        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")  # type: ignore[arg-type]
         assert result == "respuesta-p2" and used == "p2"
 
     def test_call_with_fallback_no_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         p1 = FakeProv("p1")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         reg = FakeRegistry({"p1": p1})
-        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")
+        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")  # type: ignore[arg-type]
         assert used == "p1" and "Error:" in result
 
     def test_call_with_fallback_skips_unavailable(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         p1, p2, p3 = FakeProv("p1"), FakeProv("p2"), FakeProv("p3")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         p2.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
@@ -329,18 +329,18 @@ class TestRouterStrategy:
             closed.call(lambda: (_ for _ in ()).throw(ConnectionError("c")))
         cbs = {"p2": closed}
         reg = FakeRegistry({"p1": p1, "p2": p2, "p3": p3})
-        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, cbs, "prompt")
+        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, cbs, "prompt")  # type: ignore[arg-type]
         assert result == "respuesta-p3" and used == "p3"
 
     def test_call_with_fallback_all_fail(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.strategy import call_with_fallback
 
-        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)
+        monkeypatch.setattr(strategy_mod.time, "sleep", lambda s: None)  # type: ignore[attr-defined]
         p1, p2 = FakeProv("p1"), FakeProv("p2")
         p1.generate = lambda prompt, **kw: "Error: boom"  # type: ignore[method-assign]
         p2.generate = lambda prompt, **kw: "Error: boom2"  # type: ignore[method-assign]
         reg = FakeRegistry({"p1": p1, "p2": p2})
-        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")
+        result, used = call_with_fallback(p1, "generate", "task", "p1", reg, {}, "prompt")  # type: ignore[arg-type]
         assert used == "p1" and result == "Error: boom"
 
     def test_call_with_fallback_disabled(self) -> None:
@@ -359,47 +359,47 @@ class TestRouterProviders:
 
         reg = FakeRegistry({"a": FakeProv("a"), "b": FakeProv("b")})
         assert resolve("generate", "a", reg, {}).name[1] if False else True
-        assert resolve("generate", "a", reg, {})._name == "a"
-        assert resolve_name("generate", "a", reg, {}) == "a"
+        assert resolve("generate", "a", reg, {})._name == "a"  # type: ignore[arg-type]
+        assert resolve_name("generate", "a", reg, {}) == "a"  # type: ignore[arg-type]
 
     def test_resolve_routes(self) -> None:
         from motor.core.llm.router.providers import resolve, resolve_name
 
         reg = FakeRegistry({"a": FakeProv("a"), "b": FakeProv("b")})
-        assert resolve("generate", None, reg, {"generate": "b"})._name == "b"
-        assert resolve_name("generate", None, reg, {"generate": "b"}) == "b"
+        assert resolve("generate", None, reg, {"generate": "b"})._name == "b"  # type: ignore[arg-type]
+        assert resolve_name("generate", None, reg, {"generate": "b"}) == "b"  # type: ignore[arg-type]
 
     def test_resolve_default(self) -> None:
         from motor.core.llm.router.providers import resolve, resolve_name
 
         reg = FakeRegistry({"a": FakeProv("a")}, default="a")
-        assert resolve("generate", None, reg, {})._name == "a"
-        assert resolve_name("generate", None, reg, {}) == "a"
+        assert resolve("generate", None, reg, {})._name == "a"  # type: ignore[arg-type]
+        assert resolve_name("generate", None, reg, {}) == "a"  # type: ignore[arg-type]
 
     def test_resolve_unknown_provider_raises(self) -> None:
         from motor.core.llm.router.providers import resolve
 
         reg = FakeRegistry({"a": FakeProv("a")}, default="a")
         with pytest.raises(RuntimeError):
-            resolve("generate", "zz", reg, {})
+            resolve("generate", "zz", reg, {})  # type: ignore[arg-type]
 
     def test_resolve_no_default_raises(self) -> None:
         from motor.core.llm.router.providers import resolve
 
         reg = FakeRegistry({})
         with pytest.raises(RuntimeError):
-            resolve("generate", None, reg, {})
+            resolve("generate", None, reg, {})  # type: ignore[arg-type]
 
     def test_resolve_route_unregistered_then_default(self) -> None:
         from motor.core.llm.router.providers import resolve, resolve_name
 
         reg = FakeRegistry({"a": FakeProv("a")}, default="a")
-        assert resolve("generate", None, reg, {"generate": "no-existe"})._name == "a"
+        assert resolve("generate", None, reg, {"generate": "no-existe"})._name == "a"  # type: ignore[arg-type]
         empty = FakeRegistry({})
         with pytest.raises(RuntimeError):
-            resolve("generate", None, empty, {"generate": "no-existe"})
-        assert resolve_name("generate", None, reg, {"generate": "no-existe"}) == "a"
-        assert resolve_name("x", None, FakeRegistry({}), {}) == "unknown"
+            resolve("generate", None, empty, {"generate": "no-existe"})  # type: ignore[arg-type]
+        assert resolve_name("generate", None, reg, {"generate": "no-existe"}) == "a"  # type: ignore[arg-type]
+        assert resolve_name("x", None, FakeRegistry({}), {}) == "unknown"  # type: ignore[arg-type]
 
 
 class TestRouterCapability:
@@ -411,15 +411,15 @@ class TestRouterCapability:
                 raise RuntimeError("boom")
 
         reg = FakeRegistry({"a": BoomProv("a"), "b": FakeProv("b", ["chat"])})
-        assert find_providers_by_capability("chat", reg) == ["b"]
+        assert find_providers_by_capability("chat", reg) == ["b"]  # type: ignore[arg-type]
 
     def test_select_preferred(self) -> None:
         from motor.core.llm.router.capability import select_provider_by_capability
 
         reg = FakeRegistry({"a": FakeProv("a", ["chat"]), "b": FakeProv("b", ["embed"])})
-        assert select_provider_by_capability("chat", None, reg) == "a"
-        assert select_provider_by_capability("embed", "a", reg) == "b"
-        assert select_provider_by_capability("chat", "b", reg) == "a"
+        assert select_provider_by_capability("chat", None, reg) == "a"  # type: ignore[arg-type]
+        assert select_provider_by_capability("embed", "a", reg) == "b"  # type: ignore[arg-type]
+        assert select_provider_by_capability("chat", "b", reg) == "a"  # type: ignore[arg-type]
 
     def test_select_preferred_error(self) -> None:
         from motor.core.llm.router.capability import select_provider_by_capability
@@ -429,16 +429,16 @@ class TestRouterCapability:
                 raise RuntimeError("boom")
 
         reg = FakeRegistry({"a": BoomProv("a"), "b": FakeProv("b", ["chat"])})
-        assert select_provider_by_capability("chat", "a", reg) == "b"
+        assert select_provider_by_capability("chat", "a", reg) == "b"  # type: ignore[arg-type]
         with pytest.raises(RuntimeError):
-            select_provider_by_capability("vision", None, reg)
+            select_provider_by_capability("vision", None, reg)  # type: ignore[arg-type]
 
     def test_select_no_capability_raises(self) -> None:
         from motor.core.llm.router.capability import select_provider_by_capability
 
         reg = FakeRegistry({"a": FakeProv("a", ["chat"])})
         with pytest.raises(RuntimeError):
-            select_provider_by_capability("vision", None, reg)
+            select_provider_by_capability("vision", None, reg)  # type: ignore[arg-type]
 
 
 class TestRouterHealthCache:
@@ -494,8 +494,8 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         reg = FakeRegistry({"a": FakeProv("a", ["chat", "generate"])}, default="a")
-        router = LLMRouter(registry=reg)
-        assert router.registry is reg
+        router = LLMRouter(registry=reg)  # type: ignore[arg-type]
+        assert router.registry is reg  # type: ignore[comparison-overlap]
         assert router.circuit_state("nope") == "no_circuit"
         router.generate("hola")
         assert router.circuit_state("a") in ("closed", "open", "half_open", "half-open")
@@ -504,7 +504,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         reg = FakeRegistry({"a": FakeProv("a", ["chat", "generate"])}, default="a")
-        router = LLMRouter(registry=reg)
+        router = LLMRouter(registry=reg)  # type: ignore[arg-type]
         router.reset_circuit("sin-circuito")
         router.generate("hola")
         router.reset_circuit("a")
@@ -514,7 +514,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a, b = FakeProv("a"), FakeProv("b")
-        router = LLMRouter(registry=FakeRegistry({"a": a, "b": b}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a, "b": b}, default="a"))  # type: ignore[arg-type]
         assert router.generate("hola", provider="b") == "respuesta-b"
         assert router.generate("hola", model="m", options={"x": 1}) == "respuesta-a"
 
@@ -524,7 +524,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a = FakeProv("a")
-        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))  # type: ignore[arg-type]
         assert router.embed(["uno"], provider="a") == [[0.1, 0.2]]
         assert asyncio.run(router.embed_async(["uno"], provider="a")) == [[0.1, 0.2]]
 
@@ -532,7 +532,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a = FakeProv("a")
-        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))  # type: ignore[arg-type]
         router._health_cache["a"] = (1.0, {"x": 1})
         router.invalidate_health_cache("a")
         assert router._health_cache == {}
@@ -544,7 +544,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a = FakeProv("a")
-        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))  # type: ignore[arg-type]
         h1 = router.health()
         assert h1["status"] == "ok" and "latency_ms" in h1
         h2 = router.health()
@@ -557,7 +557,7 @@ class TestLLMRouterRemanentes:
             def health(self) -> dict[str, Any]:
                 raise ConnectionError("cae")
 
-        router = LLMRouter(registry=FakeRegistry({"a": BadProv("a")}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": BadProv("a")}, default="a"))  # type: ignore[arg-type]
         h = router.health()
         assert h["status"] == "error" and "detail" in h
 
@@ -565,7 +565,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a = FakeProv("a")
-        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"))  # type: ignore[arg-type]
         cb = CircuitBreaker("a", failure_threshold=1, recovery_timeout=600.0)
         with pytest.raises(ConnectionError):
             cb.call(lambda: (_ for _ in ()).throw(ConnectionError("c")))
@@ -577,7 +577,7 @@ class TestLLMRouterRemanentes:
         from motor.core.llm.router import LLMRouter
 
         a, b = FakeProv("a", ["chat"]), FakeProv("b", ["embed"])
-        router = LLMRouter(registry=FakeRegistry({"a": a, "b": b}, default="a"))
+        router = LLMRouter(registry=FakeRegistry({"a": a, "b": b}, default="a"))  # type: ignore[arg-type]
         assert router.find_providers_by_capability("embed") == ["b"]
         assert router.select_provider_by_capability("embed") == "b"
         assert router.select_provider_by_capability("chat", preferred="b") == "a"
@@ -588,7 +588,7 @@ class TestLLMRouterRemanentes:
 
         a = FakeProv("a", ["chat", "generate"])
         router = LLMRouter(
-            registry=FakeRegistry({"a": a}, default="a"),
+            registry=FakeRegistry({"a": a}, default="a"),  # type: ignore[arg-type]
             monitor_enabled=True,
             profiling_enabled=True,
             hotspot_threshold_ms=50.0,
@@ -611,7 +611,7 @@ class TestRouterCoberturaFina:
         from motor.core.llm.router import LLMRouter
 
         a = FakeProv("a")
-        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"), monitor_enabled=True, health_cache_ttl=0.001)
+        router = LLMRouter(registry=FakeRegistry({"a": a}, default="a"), monitor_enabled=True, health_cache_ttl=0.001)  # type: ignore[arg-type]
         h = router.health()
         assert h["status"] == "ok"
 
@@ -620,7 +620,7 @@ class TestRouterCoberturaFina:
 
         a = FakeProv("a")
         router = LLMRouter(
-            registry=FakeRegistry({"a": a}, default="a"),
+            registry=FakeRegistry({"a": a}, default="a"),  # type: ignore[arg-type]
             profiling_enabled=True,
             hotspot_threshold_ms=10.0,
             health_cache_ttl=0.001,
@@ -632,7 +632,7 @@ class TestRouterCoberturaFina:
         from motor.core.llm.router.capability import select_provider_by_capability
 
         reg = FakeRegistry({"a": FakeProv("a", ["chat"])})
-        assert select_provider_by_capability("chat", "a", reg) == "a"
+        assert select_provider_by_capability("chat", "a", reg) == "a"  # type: ignore[arg-type]
 
     def test_classify_error_sin_httpx(self, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.core.llm.router.utils import _classify_error

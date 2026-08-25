@@ -114,17 +114,17 @@ class TestAgentBase:
 
 
 class _OkExecutor:
-    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None) -> Any:
+    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
         return SimpleNamespace(stdout="ok out", stderr="", returncode=0)
 
 
 class _FailExecutor:
-    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None) -> Any:
+    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
         return SimpleNamespace(stdout="", stderr="boom", returncode=1)
 
 
 class _RaisingExecutor:
-    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict | None = None) -> Any:
+    def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
         raise RuntimeError("executor exploded")
 
 
@@ -138,7 +138,7 @@ class TestExecutorAgent:
         assert agent.status == AgentStatus.IDLE
 
     def test_success_with_cmd(self) -> None:
-        agent = ExecutorAgent(executor=_OkExecutor())
+        agent = ExecutorAgent(executor=_OkExecutor())  # type: ignore[arg-type]
         res = agent.run(_task())
         assert res.success
         assert res.output["objective"] == "execute tarea"
@@ -150,10 +150,10 @@ class TestExecutorAgent:
 
     def test_timeout_custom(self) -> None:
         """Timeout del input_data se pasa al executor."""
-        recibido: dict = {}
+        recibido: dict[str, Any] = {}
 
         class _TimeoutExecutor:
-            def run(self, cmd, timeout=30, cwd=None, env=None):
+            def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
                 recibido["timeout"] = timeout
                 from motor.core.executor import ProcessResult
 
@@ -168,10 +168,10 @@ class TestExecutorAgent:
 
     def test_cmd_del_input_data(self) -> None:
         """El cmd del input_data se pasa al executor."""
-        recibido: dict = {}
+        recibido: dict[str, Any] = {}
 
         class _CaptureExecutor:
-            def run(self, cmd, timeout=30, cwd=None, env=None):
+            def run(self, cmd: list[str], timeout: int = 30, cwd: str | None = None, env: dict[str, Any] | None = None) -> Any:
                 recibido["cmd"] = cmd
                 from motor.core.executor import ProcessResult
 
@@ -182,7 +182,7 @@ class TestExecutorAgent:
         assert recibido["cmd"] == ["echo", "ok"]
 
     def test_allow_failure(self) -> None:
-        agent = ExecutorAgent(executor=_FailExecutor())
+        agent = ExecutorAgent(executor=_FailExecutor())  # type: ignore[arg-type]
         task = _task()
         task.input_data["allow_failure"] = True
         res = agent.run(task)
@@ -190,19 +190,19 @@ class TestExecutorAgent:
         assert res.output["returncode"] == 1
 
     def test_failure_raises_runtime_error(self) -> None:
-        agent = ExecutorAgent(executor=_FailExecutor())
+        agent = ExecutorAgent(executor=_FailExecutor())  # type: ignore[arg-type]
         res = agent.run(_task())
         assert not res.success
         assert "Command failed" in res.error
 
     def test_executor_exception(self) -> None:
-        agent = ExecutorAgent(executor=_RaisingExecutor())
+        agent = ExecutorAgent(executor=_RaisingExecutor())  # type: ignore[arg-type]
         res = agent.run(_task())
         assert not res.success
         assert "executor exploded" in res.error
 
     def test_custom_agent_id(self) -> None:
-        agent = ExecutorAgent(agent_id="ex1", executor=_OkExecutor())
+        agent = ExecutorAgent(agent_id="ex1", executor=_OkExecutor())  # type: ignore[arg-type]
         assert agent.id == "ex1"
         assert agent.capabilities == ["execute", "run", "compute"]
 
@@ -1135,14 +1135,14 @@ class TestMultiAgentRuntime:
         assert res.output["workflow_id"]
         assert "plan" in res.output
         assert res.output["supervisor"]["steps"][0]["status"] == "completed"
-        assert rt.get_workflow(res.output["workflow_id"])["status"] == "completed"
+        assert rt.get_workflow(res.output["workflow_id"])["status"] == "completed"  # type: ignore[index]
 
     def test_execute_no_agents(self) -> None:
         rt = MultiAgentRuntime()
         res = rt.execute_workflow("execute tarea")
         assert not res.success
         assert res.error == ""
-        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"
+        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"  # type: ignore[index]
         assert res.duration_ms >= 0
         assert res.agent_id == "runtime"
 
@@ -1152,7 +1152,7 @@ class TestMultiAgentRuntime:
         res = rt.execute_workflow("execute tarea")
         assert not res.success
         assert res.error == ""
-        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"
+        assert rt.get_workflow(res.output["workflow_id"])["status"] == "failed"  # type: ignore[index]
         assert res.output["supervisor"]["steps"][-1]["status"] == "failed"
 
     def test_execute_cancelled_initial(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1203,7 +1203,7 @@ class TestMultiAgentRuntime:
             res = fut.result(timeout=10)
             assert not res.success
             assert res.error == "cancelled"
-            assert rt.get_workflow(wf_id)["status"] == "cancelled"
+            assert rt.get_workflow(wf_id)["status"] == "cancelled"  # type: ignore[index]
             assert rt.cancel(wf_id) is False
         finally:
             release.set()
@@ -1276,7 +1276,7 @@ class TestPlannerAgent:
         class _TaskCon:  # objectivo no string -> .lower() falla
             pass
 
-        task = AgentTask(objective=_TaskCon(), agent_role=AgentRole.EXECUTOR)
+        task = AgentTask(objective=_TaskCon(), agent_role=AgentRole.EXECUTOR)  # type: ignore[arg-type]
         res = planner.run(task)
         assert not res.success
         assert res.error

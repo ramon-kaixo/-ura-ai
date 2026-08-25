@@ -49,7 +49,7 @@ class TestMetricsServer(AioHTTPTestCase):
         return _build_app()
 
     @unittest_run_loop
-    async def test_health_endpoint(self):
+    async def test_health_endpoint(self) -> None:
         resp = await self.client.request("GET", "/health")
         assert resp.status == 200
         data = await resp.json()
@@ -57,14 +57,14 @@ class TestMetricsServer(AioHTTPTestCase):
         assert "components" in data
 
     @unittest_run_loop
-    async def test_ready_endpoint(self):
+    async def test_ready_endpoint(self) -> None:
         resp = await self.client.request("GET", "/ready")
         assert resp.status in (200, 503)
         data = await resp.json()
         assert "global" in data
 
     @unittest_run_loop
-    async def test_version_endpoint(self):
+    async def test_version_endpoint(self) -> None:
         resp = await self.client.request("GET", "/version")
         assert resp.status == 200
         data = await resp.json()
@@ -72,7 +72,7 @@ class TestMetricsServer(AioHTTPTestCase):
         assert "python" in data
 
     @unittest_run_loop
-    async def test_memory_endpoint(self):
+    async def test_memory_endpoint(self) -> None:
         resp = await self.client.request("GET", "/memory")
         assert resp.status == 200
         data = await resp.json()
@@ -81,14 +81,14 @@ class TestMetricsServer(AioHTTPTestCase):
         assert data["vector_store_ok"] is False  # no vector store configured
 
     @unittest_run_loop
-    async def test_metrics_endpoint(self):
+    async def test_metrics_endpoint(self) -> None:
         resp = await self.client.request("GET", "/metrics")
         assert resp.status == 200
         data = await resp.json()
         assert "status" in data
 
     @unittest_run_loop
-    async def test_dashboard_endpoint(self):
+    async def test_dashboard_endpoint(self) -> None:
         resp = await self.client.request("GET", "/dashboard")
         assert resp.status == 200
         text = await resp.text()
@@ -97,7 +97,7 @@ class TestMetricsServer(AioHTTPTestCase):
         assert "Memoria Híbrida" in text
 
     @unittest_run_loop
-    async def test_pipeline_status_endpoint(self):
+    async def test_pipeline_status_endpoint(self) -> None:
         resp = await self.client.request("GET", "/pipeline/status")
         assert resp.status == 200
         data = await resp.json()
@@ -105,7 +105,7 @@ class TestMetricsServer(AioHTTPTestCase):
         assert data.get("status") in ("ok", "no_data")
 
     @unittest_run_loop
-    async def test_health_after_store(self):
+    async def test_health_after_store(self) -> None:
         """Verifica que almacenar memoria actualiza /memory."""
 
         mem = HybridMemory(db_path=":memory:")

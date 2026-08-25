@@ -19,7 +19,7 @@ from motor.intelligence.memory.record import MemoryType
 from motor.observability.health import HealthRegistry
 
 
-def test_hybrid_memory_store_and_search():
+def test_hybrid_memory_store_and_search() -> None:
     """Test básico: almacenar y buscar en HybridMemory."""
     mem = HybridMemory(db_path=":memory:")
 
@@ -32,7 +32,7 @@ def test_hybrid_memory_store_and_search():
     assert results[0].id == rid
 
 
-def test_hybrid_memory_with_types():
+def test_hybrid_memory_with_types() -> None:
     """Test: almacenar con diferentes MemoryType y filtrar."""
     mem = HybridMemory(db_path=":memory:")
 
@@ -56,7 +56,7 @@ def test_hybrid_memory_with_types():
     assert semantic[0].metadata.get("type") == "semantic"
 
 
-def test_hybrid_memory_delete_and_count():
+def test_hybrid_memory_delete_and_count() -> None:
     """Test: eliminar registros y verificar conteo."""
     mem = HybridMemory(db_path=":memory:")
     assert mem.count() == 0
@@ -72,7 +72,7 @@ def test_hybrid_memory_delete_and_count():
     assert mem.count() == 0
 
 
-def test_hybrid_memory_health():
+def test_hybrid_memory_health() -> None:
     """Test: health() sin vector store debe indicar vector_store_ok=False."""
     mem = HybridMemory(db_path=":memory:")
     h = mem.health()
@@ -81,7 +81,7 @@ def test_hybrid_memory_health():
     assert h["vector_store_ok"] is False
 
 
-def test_health_registry():
+def test_health_registry() -> None:
     """Test: HealthRegistry reporta estado correctamente."""
     hr = HealthRegistry()
     hr.register_component("test_component")

@@ -78,7 +78,7 @@ class TestVLLMProvider:
 
         reg = ProviderRegistry()
         reg.register("vllm", VLLMProvider(), default=True)
-        assert reg.get("vllm")._provider_name == "vllm"
+        assert reg.get("vllm")._provider_name == "vllm"  # type: ignore[attr-defined]
 
     def test_router(self) -> None:
         from motor.core.llm.ollama import OllamaProvider

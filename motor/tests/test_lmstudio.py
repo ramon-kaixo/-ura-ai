@@ -70,7 +70,7 @@ class TestLMStudioProvider:
         reg = ProviderRegistry()
         reg.register("lmstudio", LMStudioProvider(), default=True)
         assert "lmstudio" in reg
-        assert reg.get("lmstudio")._provider_name == "lmstudio"
+        assert reg.get("lmstudio")._provider_name == "lmstudio"  # type: ignore[attr-defined]
 
     def test_router_selection(self) -> None:
         from motor.core.llm.lmstudio import LMStudioProvider

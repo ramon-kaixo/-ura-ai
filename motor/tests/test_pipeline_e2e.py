@@ -9,6 +9,8 @@ entre etapas se detectará inmediatamente.
 
 from __future__ import annotations
 
+from typing import Any
+
 from motor.core.web.citation.citation import CitationBundle, CitationEngine
 from motor.core.web.cleaner.cleaner import DocumentCleaner
 from motor.core.web.cleaner.deduplication import DeduplicationEngine
@@ -71,7 +73,7 @@ MAX_SUMMARY_SENTENCES = 6
 class TestPipelineE2E:
     """Test end-to-end determinista del pipeline completo."""
 
-    def _extract_all(self) -> list:
+    def _extract_all(self) -> list[Any]:
         extractor = HtmlExtractor()
         docs = []
         for url, html in URLS.items():
@@ -177,7 +179,7 @@ class TestPipelineE2E:
             ("summarize", lambda: ExtractiveSummarizer().summarize([], 5)),
         ]
         for name, fn in pipeline_stages:
-            result = fn()
+            result = fn()  # type: ignore[no-untyped-call]
             assert result is not None, f"{name} returned None"
 
     def test_determinism(self) -> None:
@@ -186,7 +188,7 @@ class TestPipelineE2E:
         cleaner = DocumentCleaner()
         dedup = DeduplicationEngine()
 
-        def run() -> tuple:
+        def run() -> tuple[Any, ...]:
             c = cleaner.clean(list(docs))  # fresh copy
             u = dedup.deduplicate(c.documents)
             s = ExtractiveSummarizer().summarize(u, max_length=4)

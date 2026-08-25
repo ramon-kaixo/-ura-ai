@@ -12,6 +12,7 @@ pytestmark = pytest.mark.slow  # G4: requieren scripts/servicios de benchmark pe
 
 import json
 from pathlib import Path
+from typing import Any
 
 from motor.core.llm.base import BaseLLMProvider
 from motor.core.llm.registry import ProviderRegistry
@@ -22,37 +23,37 @@ from motor.core.llm.router import LLMRouter
 
 
 class _MockOK(BaseLLMProvider):
-    def __init__(self):
+    def __init__(self) -> None:
         self._provider_name = "mock_ok"
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         return "ok"
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 
 class _MockFail(BaseLLMProvider):
-    def __init__(self):
+    def __init__(self) -> None:
         self._provider_name = "mock_fail"
 
-    def generate(self, prompt, model=None, options=None):
+    def generate(self, prompt: str, model: str | None = None, options: dict[str, Any] | None = None) -> str:
         msg = "fail"
         raise ValueError(msg)
 
-    def embed(self, texts, model=None):
+    def embed(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    async def embed_async(self, texts, model=None):
+    async def embed_async(self, texts: list[str], model: str | None = None) -> list[list[float]]:
         return [[0.0]]
 
-    def health(self):
+    def health(self) -> dict[str, Any]:
         return {"status": "ok"}
 
 

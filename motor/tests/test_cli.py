@@ -6,7 +6,7 @@ from motor.core.config import UraConfig
 from motor.core.state import ScanResult
 
 
-def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
+def _make_trends(path: Path, puntos: int = 10, health: float = 99.0, ram: float = 50.0, disk: float = 60.0) -> None:
     lines = []
     for i in range(puntos):
         lines.append(  # noqa: PERF401
@@ -41,7 +41,7 @@ def _make_trends(path, puntos=10, health=99.0, ram=50.0, disk=60.0):
     Path(path).write_text("\n".join(lines) + "\n")
 
 
-def test_detect_no_trends():
+def test_detect_no_trends() -> None:
     from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
@@ -51,7 +51,7 @@ def test_detect_no_trends():
     assert len(res["anomalias"]) == 0
 
 
-def test_detect_with_trends():
+def test_detect_with_trends() -> None:
     from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
@@ -66,7 +66,7 @@ def test_detect_with_trends():
     assert len(anomalias) > 0
 
 
-def test_calibration_with_trends():
+def test_calibration_with_trends() -> None:
     from motor.scanner.calibration import Calibration
 
     cfg = UraConfig()
@@ -88,7 +88,7 @@ def test_calibration_with_trends():
     assert "ram_pct_max" in bl
 
 
-def test_pattern_matcher_empty():
+def test_pattern_matcher_empty() -> None:
     from motor.diagnostico.pattern_matcher import buscar_patrones
 
     scan = ScanResult(ok=True, timestamp="test")
@@ -105,7 +105,7 @@ def test_pattern_matcher_empty():
     assert len(incidents) == 0
 
 
-def test_pattern_matcher_failure():
+def test_pattern_matcher_failure() -> None:
     from motor.diagnostico.pattern_matcher import buscar_patrones
 
     scan = ScanResult(ok=True, timestamp="test")
@@ -114,7 +114,7 @@ def test_pattern_matcher_failure():
     scan.red = {"internet": False, "exit_node_online": False}
     scan.hw_health = {"ok": False, "tipo": "vm", "dmesg_errors": ["OOM"], "journal_corrupt": 1}
     scan.duplicados = {"python3": 3}
-    scan.flapping = ["sshd"]
+    scan.flapping = ["sshd"]  # type: ignore[list-item]
     scan.contenedores_ko = ["agent-foo"]
     scan.diff_total = 5
     cfg = UraConfig()
@@ -127,7 +127,7 @@ def test_pattern_matcher_failure():
     assert "HardwareFailure" in tipos
 
 
-def test_correlacion():
+def test_correlacion() -> None:
     from motor.diagnostico.correlacion import agrupar_incidentes
 
     tags = ["ServiceFailure", "docker"]
@@ -135,14 +135,14 @@ def test_correlacion():
     assert isinstance(r, list)
 
 
-def test_sliding_window():
+def test_sliding_window() -> None:
     from motor.scanner.sliding_window import SlidingWindow
 
     sw = SlidingWindow()
     assert sw is not None
 
 
-def test_diff_detector():
+def test_diff_detector() -> None:
     from motor.scanner.diff_detector import compute_diff
 
     actual = {
@@ -162,7 +162,7 @@ def test_diff_detector():
     assert len(anomalias) > 0
 
 
-def test_status_returns_json():
+def test_status_returns_json() -> None:
     import json
     import subprocess
 
@@ -178,7 +178,7 @@ def test_status_returns_json():
         assert "hostname" in d or "health_score" in d
 
 
-def test_preflight_module():
+def test_preflight_module() -> None:
     from motor.guard.preflight import ejecutar_preflight
 
     cfg = UraConfig()

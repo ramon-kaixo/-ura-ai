@@ -1,14 +1,18 @@
+from __future__ import annotations
+
+from pathlib import Path
+
 from motor.core.config import UraConfig
 from motor.guard.preflight import _detectar_configs_duplicadas, ejecutar_preflight
 
 
-def test_preflight_no_dups():
+def test_preflight_no_dups() -> None:
     r = ejecutar_preflight(UraConfig())
     assert r.snapshot_path
     assert not r.bloqueado
 
 
-def test_preflight_dups(tmp_path):
+def test_preflight_dups(tmp_path: Path) -> None:
     f1 = tmp_path / "test_ura_opennaut_config_dup.json"
     f2 = tmp_path / "test_ura_opennaut_config_dup.jsonc"
     f1.write_text("{}")
@@ -20,7 +24,7 @@ def test_preflight_dups(tmp_path):
         pass
 
 
-def test_snapshot_hash():
+def test_snapshot_hash() -> None:
     cfg = UraConfig()
     r = ejecutar_preflight(cfg)
     assert "configs" in open(r.snapshot_path).read()  # noqa: PTH123, SIM115
@@ -28,5 +32,5 @@ def test_snapshot_hash():
 
 if __name__ == "__main__":
     test_preflight_no_dups()
-    test_preflight_dups()
+    test_preflight_dups()  # type: ignore[call-arg]
     test_snapshot_hash()

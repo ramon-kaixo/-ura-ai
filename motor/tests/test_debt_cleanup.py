@@ -58,7 +58,7 @@ class TestNoUnusedRegistryEntries:
         for name, cls in registry.list().items():
             try:
                 inst = cls()
-                assert inst._provider_name == name, f"{name}: _provider_name mismatch"
+                assert inst._provider_name == name, f"{name}: _provider_name mismatch"  # type: ignore[attr-defined]
             except Exception:  # noqa: S110
                 pass
 
