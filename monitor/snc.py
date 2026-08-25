@@ -23,12 +23,16 @@ _monitor_dir = str(Path(__file__).resolve().parent)
 if _monitor_dir not in sys.path:
     sys.path.insert(0, _monitor_dir)
 
+import shutil
+
 from error_logger import ErrorLogger
 from mac_heartbeat import MacHeartbeat
 
-from core.bin_paths import PGREP, PKILL, SYSTEMCTL
+PGREP = shutil.which("pgrep") or "/usr/bin/pgrep"
+PKILL = shutil.which("pkill") or "/usr/bin/pkill"
+SYSTEMCTL = shutil.which("systemctl") or "/usr/bin/systemctl"
 
-# notifier está en core/, se importa bajo demanda para evitar circular imports
+# notifier está en motor.core.notifier, se importa bajo demanda
 
 # Autosuficiente: carga system_config.json directamente (no depende de config_manager)
 _config_path = Path(__file__).parent.parent / "config" / "system_config.json"

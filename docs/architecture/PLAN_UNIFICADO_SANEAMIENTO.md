@@ -13,9 +13,10 @@
 | 0 | ✅ | `6d7e18ac` | gitignore limpio, plan creado |
 | 0-BIS | ✅ | `d7e51e68` | 23 shims eliminados, 20+ archivos migrados, 102 tests pass |
 | A | ✅ | — | pyproject.toml ya era 0.29.0 |
-| B | 🔮 | — | Migrar 17 production core→motor ( pendiente) |
-| C | 🔮 | — | Consolidar CircuitBreaker (3→1) y logging (3→1) |
-| D–H | 🔮 | — | Ver detalle abajo |
+| B.1 | ✅ | `9e762b0e` | core/interfaces/ (6 files) + secretario_cache eliminados, imports migrados |
+| B.2 | 🔮 | — | core/mochila/providers (6 files) — pendiente (16+ consumers, alto riesgo) |
+| B.3 | 🔮 | — | core/auth_layer, debate, heartbeat, logs, memoria, mochila_server, model_router — KEEP_IN_CORE |
+| C–H | 🔮 | — | Ver detalle abajo |
 
 ---
 
