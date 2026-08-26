@@ -101,7 +101,7 @@ class TestConstantes:
     def test_constantes(self) -> None:
         assert r.ROUTER_PORT == 11435
         assert r.DEFAULT_TIPO == "respuesta_rapida"
-        assert r.FALLBACK_MODEL == "qwen2.5:3b"
+        assert r.FALLBACK_MODEL == "llama3:latest"
         assert r.CACHE_TTL == 7200
 
 
