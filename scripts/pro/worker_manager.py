@@ -54,7 +54,7 @@ class WorkerManager:
     def run_workers(
         self,
         count: int = 4,
-        model: str = "qwen2.5-coder:14b",
+        model: str = "qwen3-coder:30b",
         timeout: int = 3600,
     ) -> list[dict[str, Any]]:
         """Lanza count workers en paralelo. Retorna resultados de cada uno."""

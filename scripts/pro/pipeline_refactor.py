@@ -2,7 +2,7 @@
 """Pipeline de Refactorización — independiente, invocable desde mejora continua.
 
 Uso:
-    python3 scripts/pro/pipeline_refactor.py [--workers 4] [--model qwen2.5-coder:14b]
+    python3 scripts/pro/pipeline_refactor.py [--workers 4] [--model qwen3-coder:30b]
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ def main() -> int:
 
     parser = argparse.ArgumentParser(description="Pipeline de Refactorización")
     parser.add_argument("--workers", type=int, default=4, help="Número de workers")
-    parser.add_argument("--model", default="qwen2.5-coder:14b", help="Modelo de refactor")
+    parser.add_argument("--model", default="qwen3-coder:30b", help="Modelo de refactor")
     parser.add_argument("--timeout", type=int, default=3600, help="Timeout por worker (s)")
     parser.add_argument("--deep", action="store_true", help="Modo profundo (limpia snapshots)")
     args = parser.parse_args()

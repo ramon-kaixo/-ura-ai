@@ -76,7 +76,7 @@ class Configuration:
 
         # Modelos
         self.review_model: str = os.environ.get("TUNEL_REVIEW_MODEL", "qwen3:32b-q8_0")
-        self.llm_fallback_model: str = os.environ.get("TUNEL_LLM_FALLBACK_MODEL", "qwen2.5-coder:14b")
+        self.llm_fallback_model: str = os.environ.get("TUNEL_LLM_FALLBACK_MODEL", "qwen3-coder:30b")
         self.llm_retries: int = int(os.environ.get("TUNEL_LLM_RETRIES", "2"))
 
         # Sandbox

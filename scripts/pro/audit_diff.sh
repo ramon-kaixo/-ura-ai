@@ -61,15 +61,15 @@ _handle_32b_failure() {
 if [ "$DEEP_MODE" = true ]; then
     echo "[$(date '+%H:%M:%S')] ⚡ Modo --deep: análisis directo a 32B (sin criba 14B)" >&2
     DEEP_FILE="$OUTDIR/${HASH}_32b.txt"
-    if _call_ollama "qwen2.5-coder:32b" "$DEEP_PROMPT" "$DEEP_FILE" 600; then
+    if _call_ollama "qwen3-coder:30b" "$DEEP_PROMPT" "$DEEP_FILE" 600; then
         echo "[$(date '+%H:%M:%S')] ✅ Análisis profundo 32B: $DEEP_FILE" >&2
     else
         _handle_32b_failure "$HASH" true
     fi
 else
-    echo "[$(date '+%H:%M:%S')] Criba con qwen2.5-coder:14b..." >&2
+    echo "[$(date '+%H:%M:%S')] Criba con qwen3-coder:30b..." >&2
     SCREENING_FILE="$OUTDIR/${HASH}_14b.txt"
-    if _call_ollama "qwen2.5-coder:14b" "$SCREENING_PROMPT" "$SCREENING_FILE" 120; then
+    if _call_ollama "qwen3-coder:30b" "$SCREENING_PROMPT" "$SCREENING_FILE" 120; then
         echo "[$(date '+%H:%M:%S')] ✅ Criba 14B: $SCREENING_FILE" >&2
     else
         echo "[$(date '+%H:%M:%S')] [ERROR] 14B falló" >&2
@@ -80,7 +80,7 @@ else
     if echo "$RESPONSE" | grep -qiE "CRITICO|BUG|SEGURIDAD|MOCK"; then
         echo "[$(date '+%H:%M:%S')] ⚠️  Criba detectó señal de alerta, enviando a 32B..." >&2
         DEEP_FILE="$OUTDIR/${HASH}_32b.txt"
-        if _call_ollama "qwen2.5-coder:32b" "$DEEP_PROMPT" "$DEEP_FILE" 300; then
+        if _call_ollama "qwen3-coder:30b" "$DEEP_PROMPT" "$DEEP_FILE" 300; then
             echo "[$(date '+%H:%M:%S')] ✅ Análisis profundo 32B: $DEEP_FILE" >&2
         else
             _handle_32b_failure "$HASH" false

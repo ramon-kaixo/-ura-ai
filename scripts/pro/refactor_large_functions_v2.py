@@ -76,7 +76,7 @@ WORKER_TOTAL = int(os.environ.get("REFACTOR_WORKER_TOTAL", "1"))
 # Valores por defecto — enviar "auto" para que el router seleccione el mejor modelo
 # con temperatura optimizada por arquitectura (Qwen=0.0, DeepSeek=0.2, etc.)
 MODEL = os.environ.get("REFACTOR_MODEL", "auto")
-MODEL_FALLBACK = os.environ.get("REFACTOR_MODEL_FALLBACK", "qwen2.5-coder:14b")
+MODEL_FALLBACK = os.environ.get("REFACTOR_MODEL_FALLBACK", "qwen3-coder:30b")
 URA_ROOT = Path(os.environ.get("URA_ROOT", Path("~/URA/ura_ia_1972").expanduser()))
 DRY_RUN = os.environ.get("DRY_RUN", "0") == "1"
 MAX_FUNCTIONS = int(os.environ.get("MAX_FUNCTIONS", "999"))

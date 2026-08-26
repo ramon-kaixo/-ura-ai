@@ -110,10 +110,11 @@ class VRAMAwareScheduler:
             return int(body["_vram_mb"])
         model = body.get("model", "")
         base_weights = {
-            "qwen2.5-coder:32b": 18000,
-            "qwen2.5-coder:14b": 9000,
-            "qwen2-vl-7b": 6000,
-            "llama3.2:3b": 2500,
+            "qwen3-coder:30b": 18000,
+            "qwen3.6:27b": 17000,
+            "gemma4:26b": 17000,
+            "llava:7b": 4700,
+            "llama3:latest": 4700,
         }
         base = base_weights.get(model, 512)
         prompt = body.get("prompt", "") or str(body.get("messages", ""))
