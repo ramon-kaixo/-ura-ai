@@ -30,11 +30,13 @@ from pydantic import BaseModel
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from motor.orchestration.task_queue import TaskQueue
+from motor.orchestration.telemetry import TelemetryStore, dashboard_html
 
 log = logging.getLogger(__name__)
 
 app = FastAPI(title="URA Task Queue", version="1.0.0")
 _queue = TaskQueue()
+_telemetry = TelemetryStore()
 
 
 # ---------------------------------------------------------------------------
@@ -170,6 +172,38 @@ def health():
         "status": "ok",
         "queue": stats,
     }
+
+
+# ---------------------------------------------------------------------------
+# Telemetry endpoints
+# ---------------------------------------------------------------------------
+
+
+@app.get("/telemetry/stats")
+def telemetry_stats(minutes: int = 60):
+    return _telemetry.stats(since_minutes=minutes)
+
+
+@app.get("/telemetry/recent")
+def telemetry_recent(limit: int = 20):
+    return {"tasks": _telemetry.recent_tasks(limit)}
+
+
+@app.get("/telemetry/query")
+def telemetry_query(event: str | None = None, task_id: str | None = None, limit: int = 50):
+    metrics = _telemetry.query(event=event, task_id=task_id, limit=limit)
+    return {
+        "metrics": [{"id": m.id, "ts": m.ts, "event": m.event, "task_id": m.task_id, "node": m.node} for m in metrics]
+    }
+
+
+@app.get("/dashboard", response_class=None)
+def dashboard():
+    from fastapi.responses import HTMLResponse
+
+    stats = _telemetry.stats(since_minutes=60)
+    tasks = _telemetry.recent_tasks()
+    return HTMLResponse(dashboard_html(stats, tasks))
 
 
 def main():

@@ -395,3 +395,109 @@ class TestContracts:
         assert "core.proxy" in md
         assert "def proxy(url: str) -> bytes" in md
         assert "SOLO LECTURA" in md
+
+
+# ---------------------------------------------------------------------------
+# Telemetry
+# ---------------------------------------------------------------------------
+
+
+class TestTelemetry:
+    def test_record_and_query(self, tmp_path: Path) -> None:
+        from motor.orchestration.telemetry import TelemetryStore
+
+        store = TelemetryStore(tmp_path / "test_telemetry.db")
+        store.record("task_created", task_id="TASK-001", node="mac")
+        store.record("task_completed", task_id="TASK-001", node="gx10")
+
+        metrics = store.query(task_id="TASK-001")
+        assert len(metrics) == 2
+        assert metrics[0].event == "task_completed"
+        assert metrics[1].event == "task_created"
+
+    def test_stats(self, tmp_path: Path) -> None:
+        from motor.orchestration.telemetry import TelemetryStore
+
+        store = TelemetryStore(tmp_path / "test_telemetry.db")
+        store.record("task_completed", task_id="TASK-001")
+        store.record("task_failed", task_id="TASK-002")
+        store.record("gate_pass")
+
+        stats = store.stats(since_minutes=60)
+        assert stats["total_events"] == 3
+        assert stats["tasks"]["completed"] == 1
+        assert stats["tasks"]["failed"] == 1
+        assert stats["tasks"]["success_rate_pct"] == 50.0
+
+    def test_recent_tasks(self, tmp_path: Path) -> None:
+        from motor.orchestration.telemetry import TelemetryStore
+
+        store = TelemetryStore(tmp_path / "test_telemetry.db")
+        store.record("task_started", task_id="TASK-001")
+        store.record("task_completed", task_id="TASK-001")
+
+        tasks = store.recent_tasks()
+        assert len(tasks) == 1
+        assert tasks[0]["task_id"] == "TASK-001"
+        assert tasks[0]["status"] == "done"
+
+    def test_clear_old(self, tmp_path: Path) -> None:
+        from motor.orchestration.telemetry import TelemetryStore
+
+        store = TelemetryStore(tmp_path / "test_telemetry.db")
+        store.record("task_created")
+        # clear_old with 0 days should not remove recent entries
+        removed = store.clear_old(days=0)
+        assert removed == 0
+
+
+# ---------------------------------------------------------------------------
+# Distributed Lock
+# ---------------------------------------------------------------------------
+
+
+class TestDistributedLock:
+    def test_acquire_release(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import DistributedLock
+
+        lock = DistributedLock("test-lock", tmp_path / "locks")
+        assert lock.acquire(timeout=1.0)
+        assert lock.is_locked()
+        lock.release()
+        assert not lock.is_locked()
+
+    def test_context_manager(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import DistributedLock
+
+        lock = DistributedLock("test-ctx", tmp_path / "locks")
+        with lock.locked() as acquired:
+            assert acquired
+            assert lock.is_locked()
+        assert not lock.is_locked()
+
+    def test_double_lock_fails(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import DistributedLock
+
+        lock1 = DistributedLock("test-double", tmp_path / "locks")
+        lock2 = DistributedLock("test-double", tmp_path / "locks")
+
+        assert lock1.acquire(timeout=1.0)
+        assert not lock2.acquire(timeout=0.5)
+        lock1.release()
+
+    def test_audit_lock(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import AuditLock
+        from motor.orchestration.distributed_lock import _DEFAULT_LOCK_DIR
+
+        # Override default lock dir for test
+        import motor.orchestration.distributed_lock as dl_mod
+
+        original = dl_mod._DEFAULT_LOCK_DIR
+        dl_mod._DEFAULT_LOCK_DIR = tmp_path / "locks"
+
+        try:
+            lock = AuditLock("test-node")
+            with lock.exclusive() as acquired:
+                assert acquired
+        finally:
+            dl_mod._DEFAULT_LOCK_DIR = original
