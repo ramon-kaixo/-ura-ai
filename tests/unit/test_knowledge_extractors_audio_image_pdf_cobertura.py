@@ -756,6 +756,9 @@ def test_pdf_metadata_vacia(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -
     p = Path(str(tmp_path)) / "b.pdf"
     p.write_bytes(b"%PDF")
 
+    # Determinista: probar la rama "sin OCR" en cualquier entorno
+    monkeypatch.setattr(pdf_mod, "_HAS_TESSERACT", False)
+
     class _DocSinMeta:
         page_count = 1
         metadata = None
