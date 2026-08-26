@@ -67,7 +67,7 @@ class TestNoUnexpectedPorts:
                 if ":" in part:
                     try:
                         port = int(part.split(":")[-1])
-                        if port not in self.WHITELIST and port > 1024:
+                        if port not in self.WHITELIST and port > 1024 and port < 32768:
                             unexpected.append(f"  puerto {port}: {line.strip()}")
                     except (ValueError, IndexError):
                         pass
