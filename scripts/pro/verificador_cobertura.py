@@ -168,7 +168,7 @@ def auto_detectar_tests(objetivo: str) -> list[str]:
 
     # Mapping explícito para módulos cuyo test no sigue la convención
     _EXTRA_TESTS: dict[str, list[str]] = {
-        "motor/plugin/base.py": ["tests/unit/test_motor_plugin_registry.py"],
+        "motor/plugin/base": ["tests/unit/test_motor_plugin_registry.py"],
     }
     norm = _normalize_modulo(objetivo).replace("\\", "/")
     if norm in _EXTRA_TESTS:
