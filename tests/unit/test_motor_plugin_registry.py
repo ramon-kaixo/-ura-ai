@@ -4,7 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 from unittest import mock
 
-from motor.plugin.base import PluginBase, PluginMeta, PluginResult
+from motor.plugin.base import PluginBase, PluginMeta, PluginResult, _ast_dict_to_dict
 from motor.plugin.registry import PluginRegistry
 
 PLUGIN_SRC = '''
@@ -305,3 +305,82 @@ class TestRunOne:
             "motor.plugin.registry.PluginRegistry.run_phase", return_value=[]
         ):
             assert registry.run_one("demo_plugin") is None
+
+
+# ── Cobertura base.py — AST branches + edge cases ──
+
+
+class TestPluginBaseCobertura:
+    def test_from_source_syntax_error(self):
+        result = PluginMeta.from_source("def (invalid syntax")
+        assert result is None
+
+    def test_from_file_exception_fallback(self, tmp_path):
+        bad = tmp_path / "bad.py"
+        bad.write_bytes(b"\x80\x81\x82")  # invalid UTF-8 → UnicodeDecodeError
+        result = PluginMeta.from_file(bad)
+        assert result is not None
+        assert result.name == "bad"
+
+    def test_ast_list_value(self):
+        import ast as _ast
+
+        tree = _ast.parse('x = {"k": [1, 2]}')
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["k"] == [1, 2]
+
+    def test_ast_dict_nested_value(self):
+        import ast as _ast
+
+        tree = _ast.parse('x = {"k": {"nested": "v"}}')
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["k"]["nested"] == "v"
+
+    def test_ast_not_unary_op(self):
+        import ast as _ast
+
+        tree = _ast.parse("x = {'flag': not True}")
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["flag"] is False
+
+    def test_ast_name_true_value(self):
+        import ast as _ast
+
+        tree = _ast.parse("x = {'flag': True}")
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["flag"] is True
+
+    def test_ast_name_value_none(self):
+        import ast as _ast
+
+        tree = _ast.parse("x = {'val': None}")
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["val"] is None
+
+    def test_ast_name_unknown_identifier(self):
+        import ast as _ast
+
+        tree = _ast.parse("x = {'val': SOME_UNDEFINED}")
+        node = tree.body[0].value  # type: ignore[union-attr]
+        result = _ast_dict_to_dict(node)
+        assert result["val"] == "SOME_UNDEFINED"
+
+    def test_plugin_repr(self):
+        class _P(PluginBase):
+            def on_load(self) -> None:
+                pass
+
+            def on_unload(self) -> None:
+                pass
+
+            def execute(self):
+                return None
+
+        p = _P()
+        assert "repr" not in ""  # just ensure no crash
+        assert "_P" in repr(p)
