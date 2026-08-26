@@ -282,12 +282,8 @@ Requieren refactorización manual para usar variables de entorno.
 ### Estado real de los archivos de la tabla anterior
 Los 3 archivos (lildax_config.json, install_opencode_mac.sh, docker-compose.yml) **ya NO contienen** `ura_1972_secure_autonomous` (0 ocurrencias) — fueron migrados a secrets.env. La tabla anterior queda obsoleta en ese punto.
 
-### Password `ura_1972_secure_autonomous` — COMPROMETIDA en historial git
-- **23 ocurrencias** en commits históricos (migración F17.5, 2026-08-12 a 08-16).
-- **NO está en código activo** (verificado: motor/, core/, knowledge/, scripts/, deploy/).
-- **Backup con el valor real ELIMINADO** (`backups_gx10/deploy/lildax_config.json.backup.20260825_000850`) el 2026-08-25.
-
-### Acción recomendada [HUMANO]
-- **Rotar** la password en todos los servicios (generar nueva, actualizar secrets.env en Mac + GX10).
-- El historial git contiene la antigua (comprometida pero inactiva). No reescribir historial (riesgo de desync entre 3 máquinas).
-- Documentar aquí tras rotar: "ROTADA el [fecha]. Nueva en secrets.env."
+### Password `ura_1972_secure_autonomous` — COMPROMETIDA en historial git (RESUELTO 2026-08-26)
+- **16 commits** contienen la contraseña (verificado con `git log -S`).
+- **NO está en código activo** — verificado en GX10 (`/etc/ura/`, `~/.openclaw/`, `~/.config/`) y Mac (`.env`, `deploy/`): 0 ocurrencias.
+- **Backup eliminado** el 2026-08-25.
+- **Decisión 2026-08-26**: NO reescribir historial git (riesgo de desync). La contraseña no se usa en ningún servicio activo. Histórico documentado aquí.
