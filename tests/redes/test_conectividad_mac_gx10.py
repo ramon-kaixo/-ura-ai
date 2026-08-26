@@ -67,6 +67,25 @@ class TestMacToGX10OpenCode:
         )
 
 
+@pytest.mark.mac
+class TestMacToGX10ModelRouter:
+    """Verifica que Mac puede alcanzar Model Router en GX10."""
+
+    ROUTER_URL = f"http://{GX10_TS_IP}:11435"
+
+    def test_mac_curl_gx10_model_router(self) -> None:
+        """Mac hace curl a GX10:11435 y obtiene respuesta HTTP."""
+        rc, out, _ = run_cmd(
+            f"curl -s --connect-timeout 5 -o /dev/null -w '%{{http_code}}' {self.ROUTER_URL}/health",
+            timeout=10,
+        )
+        assert rc == 0, "No se pudo conectar a Model Router en GX10"
+        http_code = out.strip()
+        assert http_code in ("200", "401", "403"), (
+            f"Model Router en GX10 retorno HTTP {http_code} (esperado 200/401/403)"
+        )
+
+
 @pytest.mark.gx10
 class TestGX10ServicesBinding:
     """Verifica que servicios criticos en GX10 escuchan en todas las interfaces."""
@@ -89,12 +108,11 @@ class TestGX10ServicesBinding:
             f"OpenCode no escucha en 0.0.0.0: {out.strip()}"
         )
 
-    def test_model_router_bound_to_localhost(self) -> None:
-        """Model Router debe estar en 127.0.0.1 (no expuesto)."""
+    def test_model_router_bound_to_0_0_0_0(self) -> None:
+        """Model Router debe estar en 0.0.0.0 (accesible desde Mac)."""
         rc, out, _ = run_cmd("ss -tlnp | grep :11435")
         if rc != 0:
             pytest.skip("Model Router no activo")
-        if "127.0.0.1" in out:
-            pass  # Correcto
-        elif "0.0.0.0" in out:
-            pytest.xfail("Model Router escucha en 0.0.0.0 — considerar binding a 127.0.0.1")
+        assert "0.0.0.0" in out, (
+            f"Model Router no escucha en 0.0.0.0: {out.strip()}"
+        )
