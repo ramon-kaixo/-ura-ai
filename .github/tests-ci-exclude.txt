@@ -3,5 +3,8 @@
 Este archivo es la fuente de la política "Policy: Exclusiones de CI" de AGENTS.md.
 Cada exclusión requiere: causa, evaluación de retorno, y revisión en cada release.
 
-**Estado actual (2026-08-08)**: sin exclusiones activas. CI ejecuta `pytest motor/tests/` (ci.yml).
-Cualquier exclusión futura debe registrarse aquí con: test, causa, fecha, responsable.
+**Estado actual (2026-08-26):**
+
+| Test | Causa | Fecha | Responsable | Retorno |
+|------|-------|-------|-------------|---------|
+| `tests/infra/` marker `gx10` | Tests de infraestructuraGX10 — requieren acceso directo al servidor, permisos sudo, servicios corriendo. No aplicable a CI GitHub Actions. | 2026-08-26 | TERM | Evaluar en cada release si algún test puede volver a CI. |
