@@ -22,7 +22,7 @@ class TestReadme:
         content = (ROOT / "README.md").read_text()
         assert "┌" in content  # ASCII art
 
-    @pytest.mark.skip(reason='doc restructured in v0.34')
+    @pytest.mark.skip(reason="doc restructured in v0.34")
     def test_has_config_table(self):
         content = (ROOT / "README.md").read_text()
         assert "URA_OLLAMA_URL" in content
@@ -78,12 +78,12 @@ class TestArchitecture:
     def test_exists(self):
         assert (ROOT / "docs/ARCHITECTURE.md").exists()
 
-    @pytest.mark.skip(reason='module map moved to docs/SOLID_AUDIT.md')
+    @pytest.mark.skip(reason="module map moved to docs/SOLID_AUDIT.md")
     def test_has_module_map(self):
         content = (ROOT / "docs/ARCHITECTURE.md").read_text()
         assert "motor/intelligence" in content
 
-    @pytest.mark.skip(reason='data flow moved to docs/ARCHITECTURE.md')
+    @pytest.mark.skip(reason="data flow moved to docs/ARCHITECTURE.md")
     def test_has_data_flow(self):
         content = (ROOT / "docs/ARCHITECTURE.md").read_text()
         assert "Workflow" in content or "workflow" in content

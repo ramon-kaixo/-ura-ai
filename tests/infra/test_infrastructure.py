@@ -19,7 +19,7 @@ class TestDockerfile:
         content = (ROOT / "Dockerfile").read_text()
         assert "python:3.12-slim" in content
 
-    @pytest.mark.skip(reason='Dockerfile removed in v0.34')
+    @pytest.mark.skip(reason="Dockerfile removed in v0.34")
     def test_non_root_user(self):
         content = (ROOT / "Dockerfile").read_text()
         assert "useradd" in content or "adduser" in content or "USER" in content
@@ -28,12 +28,12 @@ class TestDockerfile:
         content = (ROOT / "Dockerfile").read_text()
         assert "HEALTHCHECK" in content
 
-    @pytest.mark.skip(reason='Dockerfile removed in v0.34')
+    @pytest.mark.skip(reason="Dockerfile removed in v0.34")
     def test_entrypoint_defined(self):
         content = (ROOT / "Dockerfile").read_text()
         assert "ENTRYPOINT" in content
 
-    @pytest.mark.skip(reason='Dockerfile removed in v0.34')
+    @pytest.mark.skip(reason="Dockerfile removed in v0.34")
     def test_environment_vars(self):
         content = (ROOT / "Dockerfile").read_text()
         assert "URA_OLLAMA_URL" in content
@@ -54,7 +54,8 @@ class TestDockerIgnore:
 
 
 class TestDockerCompose:
-    pytestmark = __import__('pytest').mark.skip(reason='docker-compose.yml not present in v0.34')
+    pytestmark = __import__("pytest").mark.skip(reason="docker-compose.yml not present in v0.34")
+
     def test_exists(self):
         assert (ROOT / "docker-compose.yml").exists()
 
