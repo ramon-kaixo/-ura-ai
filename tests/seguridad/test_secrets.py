@@ -16,9 +16,15 @@ from tests.infra.conftest import REPO_ROOT, run_cmd
 class TestDetectSecrets:
     """Ejecuta detect-secrets y verifica que no hay nuevos secretos."""
 
+    def _venv_python(self) -> str:
+        """Retorna python3 del venv si existe, sino python3 del sistema."""
+        venv_python = REPO_ROOT / ".venv" / "bin" / "python3"
+        return str(venv_python) if venv_python.exists() else "python3"
+
     def test_detect_secrets_installed(self) -> None:
-        rc, _, _ = run_cmd("python3 -c 'import detect_secrets; print(\"ok\")'")
-        assert rc == 0, "detect-secrets no esta instalado"
+        py = self._venv_python()
+        rc, _, _ = run_cmd(f"{py} -c 'import detect_secrets; print(\"ok\")'")
+        assert rc == 0, "detect-secrets no esta instalado (ni en venv ni en sistema)"
 
     def test_no_new_secrets(self) -> None:
         """Ejecuta detect-secrets scan y compara con baseline."""
@@ -26,7 +32,7 @@ class TestDetectSecrets:
         if not baseline.exists():
             pytest.skip(".secrets.baseline no existe — ejecutar detect-secrets scan primero")
         rc, out, _ = run_cmd(
-            f"cd {REPO_ROOT} && python3 -m detect_secrets scan --all-files",
+            f"cd {REPO_ROOT} && {self._venv_python()} -m detect_secrets scan --all-files",
             timeout=60,
         )
         if rc != 0:
@@ -49,14 +55,19 @@ class TestDetectSecrets:
 class TestBanditScan:
     """Ejecuta bandit y verifica que no hay hallazgos criticos."""
 
+    def _venv_bin(self, cmd: str) -> str:
+        """Retorna comando del venv si existe, sino del sistema."""
+        venv_bin = REPO_ROOT / ".venv" / "bin" / cmd
+        return str(venv_bin) if venv_bin.exists() else cmd
+
     def test_bandit_installed(self) -> None:
-        rc, _, _ = run_cmd("bandit --version")
+        rc, _, _ = run_cmd(f"{self._venv_bin('bandit')} --version")
         assert rc == 0, "bandit no esta instalado"
 
     def test_no_high_severity_issues(self) -> None:
         """Ejecuta bandit en modo ligero (-ll) y verifica sin issues high."""
         rc, out, _ = run_cmd(
-            "bandit -r motor/ core/ -ll -ii --format json 2>/dev/null",
+            f"{self._venv_bin('bandit')} -r motor/ core/ -ll -ii --format json 2>/dev/null",
             timeout=120,
         )
         if rc == -1:

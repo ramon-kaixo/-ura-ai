@@ -101,36 +101,43 @@ def test_get_expirado_borra() -> None:
 
 
 def test_get_by_session() -> None:
+    now = datetime.now(UTC)
     s = EpisodeStore()
-    s.store(_ep("a", ts="2026-08-19T00:00:00+00:00", session="s1"))
-    s.store(_ep("b", ts="2026-08-19T01:00:00+00:00", session="s1"))
-    s.store(_ep("c", ts="2026-08-19T02:00:00+00:00", session="s2"))
+    s.store(_ep("a", ts=(now - timedelta(hours=2)).isoformat(), session="s1"))
+    s.store(_ep("b", ts=(now - timedelta(hours=1)).isoformat(), session="s1"))
+    s.store(_ep("c", ts=(now - timedelta(hours=3)).isoformat(), session="s2"))
     res = s.get_by_session("s1")
     assert [e.id for e in res] == ["b", "a"]
     assert s.get_by_session("zzz") == []
 
 
 def test_get_by_session_limit_offset() -> None:
+    now = datetime.now(UTC)
     s = EpisodeStore()
     for i in range(5):
-        s.store(_ep(f"e{i}", ts=f"2026-08-19T{i+1:02d}:00:00+00:00", session="s1"))
+        s.store(_ep(f"e{i}", ts=(now - timedelta(hours=5 - i)).isoformat(), session="s1"))
     res = s.get_by_session("s1", limit=2, offset=1)
     assert len(res) == 2
 
 
 def test_get_by_time_range() -> None:
+    now = datetime.now(UTC)
+    start = (now - timedelta(hours=3)).isoformat()
+    end = (now + timedelta(hours=1)).isoformat()
     s = EpisodeStore()
-    s.store(_ep("a", ts="2026-08-19T00:00:00+00:00"))
-    s.store(_ep("b", ts="2026-08-19T03:00:00+00:00"))
-    s.store(_ep("c", ts="2026-08-18T00:00:00+00:00"))
-    res = s.get_by_time_range("2026-08-19", "2026-08-20")
+    s.store(_ep("a", ts=(now - timedelta(hours=2)).isoformat()))
+    s.store(_ep("b", ts=(now - timedelta(hours=1)).isoformat()))
+    s.store(_ep("c", ts=(now - timedelta(days=2)).isoformat()))
+    res = s.get_by_time_range(start, end)
     assert [e.id for e in res] == ["b", "a"]
 
 
 def test_get_recent() -> None:
+    now = datetime.now(UTC)
     s = EpisodeStore()
-    for i in range(3):
-        s.store(_ep(f"e{i}", ts=f"2026-08-19T0{i+1}:00:00+00:00"))
+    s.store(_ep("e0", ts=(now - timedelta(hours=3)).isoformat()))
+    s.store(_ep("e1", ts=(now - timedelta(hours=2)).isoformat()))
+    s.store(_ep("e2", ts=(now - timedelta(hours=1)).isoformat()))
     res = s.get_recent(k=2)
     assert [e.id for e in res] == ["e2", "e1"]
 

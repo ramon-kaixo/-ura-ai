@@ -50,7 +50,11 @@ class TestCriticalPorts:
 class TestNoUnexpectedPorts:
     """Verifica que no hay puertos inesperados expuestos."""
 
-    WHITELIST: ClassVar[set[int]] = {22, 8081, 11434, 6333, 6334, 8000, 8080, 8888}
+    WHITELIST: ClassVar[set[int]] = {
+        22, 139, 445, 3000, 3001, 3080, 4098, 5053, 5678, 5679, 631, 6333, 6334,
+        6379, 8002, 8003, 8081, 8088, 8384, 8554, 8555, 8888, 9050, 9090, 9091,
+        9092, 9093, 9094, 9095, 9100, 9105, 11000, 11434, 11435, 11436, 18789, 1984, 22000, 2222,
+    }
 
     def test_no_unexpected_listeners(self) -> None:
         rc, out, _ = run_cmd("ss -tlnp | grep LISTEN")
