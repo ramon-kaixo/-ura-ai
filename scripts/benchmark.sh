@@ -17,7 +17,7 @@ echo "Schema: $(PYTHONPATH=. python3 -c 'from knowledge.engine.migrations import
 echo ""
 
 # Init
-PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$DB" init
+PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$DB" init
 echo "DB initialized"
 
 # Create 100 documents
@@ -44,7 +44,7 @@ cd - > /dev/null
 echo ""
 echo "--- Compile 100 docs ---"
 START=$(date +%s%N)
-PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$DB" compile --source-dir "$SRC"
+PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$DB" compile --source-dir "$SRC"
 END=$(date +%s%N)
 COMPILE_MS=$(( (END - START) / 1000000 ))
 echo "  Time: ${COMPILE_MS}ms"
@@ -54,7 +54,7 @@ echo ""
 echo "--- 1000 searches ---"
 START=$(date +%s%N)
 for i in $(seq 1 1000); do
-    PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$DB" search "Document" >/dev/null 2>/dev/null
+    PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$DB" search "Document" >/dev/null 2>/dev/null
 done
 END=$(date +%s%N)
 SEARCH_MS=$(( (END - START) / 1000000 ))
@@ -65,7 +65,7 @@ echo ""
 echo "--- 100 archives ---"
 START=$(date +%s%N)
 for i in $(seq 1 100); do
-    PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$DB" archive source --source-dir "$SRC" --archive-dir "$ARCHIVE" >/dev/null 2>/dev/null
+    PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$DB" archive source --source-dir "$SRC" --archive-dir "$ARCHIVE" >/dev/null 2>/dev/null
 done
 END=$(date +%s%N)
 ARCHIVE_MS=$(( (END - START) / 1000000 ))

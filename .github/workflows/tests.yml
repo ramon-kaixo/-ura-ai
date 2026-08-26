@@ -58,6 +58,8 @@ jobs:
         run: |
           pytest tests/integration/test_contracts.py tests/integration/test_e2e.py \
             tests/performance/ -q --tb=short
+      - name: Nightly smoke (valida archivos nightly no rotos)
+        run: pytest tests/nightly/test_smoke_nightly.py -q --tb=short --timeout=30
 
   mypy:
     runs-on: ubuntu-latest

@@ -74,9 +74,9 @@ print(f'  ✅ Property tests: {ok}/100')
 "
 # doctor y audit-db contra DB temporal (evita depender de DB de producción)
 CI_DB=$(mktemp /tmp/ci_knowledge_XXXXXX.db)
-env PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$CI_DB" init
-run "ke doctor"        env PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$CI_DB" doctor
-run "ke audit-db"      env PYTHONPATH=. python3 knowledge/engine/cli.py --db-path "$CI_DB" audit-db
+env PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$CI_DB" init
+run "ke doctor"        env PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$CI_DB" doctor
+run "ke audit-db"      env PYTHONPATH=. python3 -m knowledge.engine.cli --db-path "$CI_DB" audit-db
 rm -f "$CI_DB" "$CI_DB-wal" "$CI_DB-shm"
 
 echo ""
