@@ -55,6 +55,12 @@ def _log_rutas(modelo_routes: dict, disponibles: set[str], seleccionar_modelo) -
 def main() -> None:
     setup_logging(level="INFO", fmt="%(asctime)s - %(levelname)s - %(message)s")
 
+    host = "127.0.0.1"
+    for i, arg in enumerate(sys.argv):
+        if arg == "--host" and i + 1 < len(sys.argv):
+            host = sys.argv[i + 1]
+            break
+
     from core.model_router.model_selection import (
         MODELO_ROUTES,
         clasificar_peticion,
@@ -83,10 +89,10 @@ def main() -> None:
 
     from core.model_router.handler import RouterHandler
 
-    server = ThreadingHTTPServer(("127.0.0.1", ROUTER_PORT), RouterHandler)
-    log.info("Escuchando en 127.0.0.1:%s", ROUTER_PORT)
-    log.info("Dashboard: http://127.0.0.1:%s/dashboard", ROUTER_PORT)
-    log.info("Metricas:  http://127.0.0.1:%s/metrics", ROUTER_PORT)
+    server = ThreadingHTTPServer((host, ROUTER_PORT), RouterHandler)
+    log.info("Escuchando en %s:%s", host, ROUTER_PORT)
+    log.info("Dashboard: http://%s:%s/dashboard", host, ROUTER_PORT)
+    log.info("Metricas:  http://%s:%s/metrics", host, ROUTER_PORT)
 
     try:
         server.serve_forever()

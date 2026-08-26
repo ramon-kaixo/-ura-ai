@@ -10,7 +10,7 @@ from core.memoria.ficha import Idea
 log = logging.getLogger("memoria.compresor")
 
 OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
-MODELO_COMPRESOR = "qwen2.5-coder:14b"
+MODELO_COMPRESOR = "qwen3-coder:30b"
 MAX_CHARS_TEXTO = 8000
 
 PROMPT_COMPRESOR = """Eres un extractor de conocimiento practico. Lee el texto y extrae SOLO ideas accionables: cosas que alguien PUEDE HACER, USAR o SABER para aplicarlo.

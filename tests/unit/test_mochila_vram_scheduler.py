@@ -45,7 +45,7 @@ class TestEstimarVram:
         assert VRAMAwareScheduler.estimar_vram({"_vram_mb": 4000}) == 4000
 
     def test_modelo_conocido(self):
-        assert VRAMAwareScheduler.estimar_vram({"model": "qwen2.5-coder:14b"}) == 9000
+        assert VRAMAwareScheduler.estimar_vram({"model": "qwen3-coder:30b"}) == 18000
 
     def test_modelo_desconocido_base_512(self):
         assert VRAMAwareScheduler.estimar_vram({"model": "otro"}) == 512
@@ -72,10 +72,10 @@ class TestAvailableMb:
 class TestAcquireRelease:
     @pytest.mark.asyncio
     async def test_adquiere_inmediato(self, scheduler):
-        req_id = await scheduler.acquire(1000, data={"model": "llama3.2:3b"})
+        req_id = await scheduler.acquire(1000, data={"model": "llama3:latest"})
         assert req_id is not None
         assert req_id in scheduler._active
-        assert scheduler._active[req_id]["model"] == "llama3.2:3b"
+        assert scheduler._active[req_id]["model"] == "llama3:latest"
 
     @pytest.mark.asyncio
     async def test_no_permite_segunda_activa(self, scheduler):

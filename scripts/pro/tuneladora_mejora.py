@@ -115,7 +115,7 @@ def _handle_refactor(engine, hay_trabajo):
         "--workers",
         "4",
         "--model",
-        "qwen2.5-coder:14b",
+        "qwen3-coder:30b",
     ]
     result = subprocess.run(cmd, timeout=3600, check=False, cwd=str(engine.config.ura_root))
     engine.ledger.plugin_done("pipeline_refactor", round(time.time() - t_ref, 1))

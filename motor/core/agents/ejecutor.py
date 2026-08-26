@@ -27,7 +27,7 @@ class AgenteEjecutor:
             env["REFACTOR_WORKER_ID"] = str(i)
             env["REFACTOR_WORKER_TOTAL"] = str(workers)
             env["REFACTOR_MODEL"] = self.MODELO
-            env["REFACTOR_MODEL_FALLBACK"] = "qwen2.5-coder:14b"
+            env["REFACTOR_MODEL_FALLBACK"] = "qwen3-coder:30b"
             env["MIN_LINES"] = "80"
             from motor.core.config_manager import get_ollama_url
 

@@ -72,7 +72,7 @@ class SofiaReport:
 class Sofia:
     def __init__(self, cfg: Configuration) -> None:
         self.cfg = cfg
-        self._model = getattr(cfg, "sofia_model", "qwen2.5-coder:14b")
+        self._model = getattr(cfg, "sofia_model", "qwen3-coder:30b")
 
     def should_review(self, diff: str, api_diff: str, tests_modified: bool, n_files: int) -> bool:
         if not diff.strip() and not api_diff.strip():

@@ -1,4 +1,5 @@
 """Tests para preflight_system.py (system manifest + pre-flight check)."""
+
 from __future__ import annotations
 
 import json
@@ -51,9 +52,9 @@ class TestCheckSystemdService:
     def test_active_system(self):
         with mock.patch("subprocess.run") as m:
             m.side_effect = [
-                mock.Mock(stdout="loaded\n"),    # show system
-                mock.Mock(stdout="active\n"),    # is-active system
-                mock.Mock(stdout="not-found\n"), # show user
+                mock.Mock(stdout="loaded\n"),  # show system
+                mock.Mock(stdout="active\n"),  # is-active system
+                mock.Mock(stdout="not-found\n"),  # show user
             ]
             result = check_systemd_service("ura-mochila")
             assert result["exists"] is True
@@ -63,9 +64,9 @@ class TestCheckSystemdService:
     def test_inactive_service(self):
         with mock.patch("subprocess.run") as m:
             m.side_effect = [
-                mock.Mock(stdout="loaded\n"),    # show system
+                mock.Mock(stdout="loaded\n"),  # show system
                 mock.Mock(stdout="inactive\n"),  # is-active system
-                mock.Mock(stdout="not-found\n"), # show user
+                mock.Mock(stdout="not-found\n"),  # show user
             ]
             result = check_systemd_service("old-service")
             assert result["exists"] is True
@@ -74,8 +75,8 @@ class TestCheckSystemdService:
     def test_not_found(self):
         with mock.patch("subprocess.run") as m:
             m.side_effect = [
-                mock.Mock(stdout="not-found\n"), # show system
-                mock.Mock(stdout="not-found\n"), # show user
+                mock.Mock(stdout="not-found\n"),  # show system
+                mock.Mock(stdout="not-found\n"),  # show user
             ]
             result = check_systemd_service("nonexistent")
             assert result["exists"] is False
@@ -267,7 +268,9 @@ class TestAuditServices:
         issues: list[str] = []
         with (
             mock.patch("scripts.pro.tuneladora.preflight_system.check_systemd_service") as m,
-            mock.patch("scripts.pro.tuneladora.preflight_system.check_port", return_value={"in_use": True, "process": "x"}),
+            mock.patch(
+                "scripts.pro.tuneladora.preflight_system.check_port", return_value={"in_use": True, "process": "x"}
+            ),
         ):
             m.return_value = {"exists": True, "active": False, "scopes": ["system(inactive)"]}
             _audit_services(sample_manifest, issues)

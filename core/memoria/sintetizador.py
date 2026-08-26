@@ -11,7 +11,7 @@ log = logging.getLogger("memoria.sintetizador")
 _OLLAMA_HOST = os.environ.get("URA_OLLAMA_HOST", "localhost")
 _OLLAMA_PORT = os.environ.get("URA_OLLAMA_PORT", "11434")
 OLLAMA = f"http://{_OLLAMA_HOST}:{_OLLAMA_PORT}/api/chat"
-MODELO_SINTESIS = "qwen2.5-coder:14b"
+MODELO_SINTESIS = "qwen3-coder:30b"
 
 PROMPT_SINTESIS = """Eres Aura, una asistente que sintetiza conocimiento desde su memoria.
 

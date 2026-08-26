@@ -1,4 +1,5 @@
 """Tests para AutoMaintainer (A1 + A2)."""
+
 from __future__ import annotations
 
 import time
@@ -62,10 +63,12 @@ class TestScan:
         observer = mock.Mock()
         executor = mock.Mock()
         maintainer = AutoMaintainer(observer, executor)
-        maintainer._alerts.evaluate = mock.Mock(return_value=[
-            _make_alert(severity="emergency", title="DISCO CRITICO"),
-            _make_alert(severity="critical", title="DEGRADACION DEL SISTEMA"),
-        ])
+        maintainer._alerts.evaluate = mock.Mock(
+            return_value=[
+                _make_alert(severity="emergency", title="DISCO CRITICO"),
+                _make_alert(severity="critical", title="DEGRADACION DEL SISTEMA"),
+            ]
+        )
         proposals = maintainer.scan()
         assert len(proposals) == 2
         assert proposals[0].action == "clean_disk"
@@ -298,7 +301,9 @@ class TestVerification:
         observer.observe_all.return_value = [_make_observation(subsystem="disk", status="ok", anomaly=None)]
         executor = mock.Mock()
         maintainer = AutoMaintainer(observer, executor)
-        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+        proposal = MaintenanceProposal(
+            alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={}
+        )
 
         v = maintainer._verify_resolution(proposal)
         assert v["resolved"] is True
@@ -308,7 +313,9 @@ class TestVerification:
         observer.observe_all.return_value = [_make_observation(subsystem="disk", status="error", anomaly="low")]
         executor = mock.Mock()
         maintainer = AutoMaintainer(observer, executor)
-        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+        proposal = MaintenanceProposal(
+            alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={}
+        )
 
         v = maintainer._verify_resolution(proposal)
         assert v["resolved"] is False
@@ -318,7 +325,9 @@ class TestVerification:
         observer.observe_all.return_value = [_make_observation(subsystem="ollama", status="ok")]
         executor = mock.Mock()
         maintainer = AutoMaintainer(observer, executor)
-        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+        proposal = MaintenanceProposal(
+            alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={}
+        )
 
         v = maintainer._verify_resolution(proposal)
         assert v == {"resolved": False, "error": "Subsystem not found"}
@@ -332,7 +341,9 @@ class TestVerification:
         ]
         executor = mock.Mock()
         maintainer = AutoMaintainer(observer, executor)
-        proposal = MaintenanceProposal(alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={})
+        proposal = MaintenanceProposal(
+            alert=_make_alert(affected_subsystems=["disk"]), action="clean_disk", target="disk", params={}
+        )
 
         v = maintainer._verify_resolution(proposal)
         assert v["resolved"] is False
@@ -399,7 +410,9 @@ class TestAlertToProposal:
 
 class TestClassifyRiskExtra:
     def test_check_network_is_safe(self):
-        proposal = MaintenanceProposal(alert=_make_alert(title="red"), action="check_network", target="network", params={})
+        proposal = MaintenanceProposal(
+            alert=_make_alert(title="red"), action="check_network", target="network", params={}
+        )
         assert AutoMaintainer._classify_risk(proposal) == "safe"
 
     def test_unknown_action_is_medium(self):
@@ -457,9 +470,7 @@ class TestProposeAndExecute:
 
     def test_pending_not_executed(self):
         maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
-        maintainer._alerts.evaluate = mock.Mock(
-            return_value=[_make_alert(severity="emergency", title="DISCO CRITICO")]
-        )
+        maintainer._alerts.evaluate = mock.Mock(return_value=[_make_alert(severity="emergency", title="DISCO CRITICO")])
         results = maintainer.propose_and_maybe_execute()
         assert results[0]["status"] == "pending"
         assert results[0]["auto_executed"] is False
@@ -486,9 +497,7 @@ class TestScheduler:
             assert status == {"running": True, "pipelines": [{"name": "health"}], "pipeline_count": 3}
 
     def test_start_scheduler_import_error(self):
-        with mock.patch.dict(
-            "sys.modules", {"scripts.pro.tuneladora.scheduler": None}
-        ):
+        with mock.patch.dict("sys.modules", {"scripts.pro.tuneladora.scheduler": None}):
             maintainer = AutoMaintainer(mock.Mock(), mock.Mock())
             maintainer.start_scheduler()
             assert maintainer._scheduler is None

@@ -80,9 +80,9 @@ class LLMBridge:
         if mode == ConversationMode.EXPLANATION:
             return self._fallback
         if mode == ConversationMode.WORK:
-            return "qwen2.5-coder:14b"
+            return "qwen3-coder:30b"
         if intent_value in ("command", "search"):
-            return "qwen2.5:7b"
+            return "llama3:latest"
         return self._fallback
 
     async def generate_async(

@@ -14,9 +14,13 @@ MCP_URL = "http://127.0.0.1:9091"
 try:
     with open(Path(__file__).resolve().parents[2] / "config" / "dispositivos.json") as f:  # noqa: PTH123
         cfg = json.load(f)
-    GX10 = cfg.get("dispositivos", {}).get("gx10-64c3", {}).get("ip_cable", os.environ.get("ASUS_HOST", "10.164.1.99"))
+    GX10 = (
+        cfg.get("dispositivos", {})
+        .get("gx10-64c3", {})
+        .get("ip_tailscale", os.environ.get("ASUS_HOST", "100.72.103.12"))
+    )
 except (FileNotFoundError, json.JSONDecodeError):
-    GX10 = os.environ.get("ASUS_HOST", "10.164.1.99")
+    GX10 = os.environ.get("ASUS_HOST", "100.72.103.12")
 LOG = Path.home() / "URA/ura_ia_1972/logs/master_conciencia.log"
 
 TEST_ACTIONS = [

@@ -48,7 +48,7 @@ class OllamaProvider(BaseLLMProvider):
         self._provider_name = "ollama"
         cfg = UraConfig.load()
         self._url = f"http://{cfg.ollama_host}:{cfg.ollama_port}"
-        self._rag_model: str = cfg.ollama_model or get_secret("OLLAMA_MODEL") or "qwen2.5:3b"
+        self._rag_model: str = cfg.ollama_model or get_secret("OLLAMA_MODEL") or "llama3:latest"
         self._embedding_model: str = (
             cfg.ollama_embedding_model or get_secret("OLLAMA_EMBEDDING_MODEL") or "nomic-embed-text"
         )

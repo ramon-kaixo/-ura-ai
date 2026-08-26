@@ -1,7 +1,7 @@
 """Tests de notifier y json_logger."""
 
-from motor.observability.logging import StructuredLogger
 from motor.core.notifier import notify
+from motor.observability.logging import StructuredLogger
 
 
 def test_notifier_empty_returns_false() -> None:

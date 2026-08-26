@@ -174,7 +174,7 @@ class TestApplyEnvOverrides:
         c = UraConfig()
         _apply_env_overrides(c)
         assert c.log_level == "INFO"
-        assert c.ollama_model == "qwen2.5:3b"
+        assert c.ollama_model == "llama3:latest"
 
 
 class TestUraConfigDefaults:

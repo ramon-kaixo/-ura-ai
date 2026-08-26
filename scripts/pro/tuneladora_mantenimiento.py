@@ -46,7 +46,7 @@ def _resolve_host(hostname: str, default: str = "") -> str:
 
 def _load_devices(root: Path) -> dict[str, str]:
     defaults = {
-        "gx10_principal": "10.164.1.99",
+        "gx10_principal": os.environ.get("ASUS_HOST", "100.72.103.12"),
         "gx10_wifi": "10.164.1.247",
         "gx10_tailscale": _resolve_host(MAGICDNS_GX10, "100.72.103.12"),
         "mac_ethernet": "10.164.1.26",
