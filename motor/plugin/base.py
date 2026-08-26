@@ -71,32 +71,42 @@ class PluginMeta:
 
 
 def _ast_dict_to_dict(d: ast.Dict) -> dict[str, Any]:
-    """Convierte un AST Dict literal a dict Python."""
+    """Convierte un AST Dict literal a dict Python.
+
+    Python 3.12+ solo emite ast.Constant (ast.Str/ast.Name fueron
+    eliminados). Compatible con 3.11-3.14.
+    """
     result: dict[str, Any] = {}
     for key_node, value_node in zip(d.keys, d.values, strict=False):
-        if isinstance(key_node, (ast.Constant, ast.Str)):
-            key = key_node.value if isinstance(key_node, ast.Constant) else key_node.s
+        if isinstance(key_node, ast.Constant):
+            key = key_node.value
             if not isinstance(key, str):
                 continue
         else:
             continue
         if isinstance(value_node, ast.Constant):
             result[key] = value_node.value
-        elif isinstance(value_node, ast.Str):  # pragma: no cover - ast.Str legacy, Python moderno produce Constant
-            result[key] = value_node.s
         elif isinstance(value_node, ast.List):
             result[key] = [elm.value for elm in value_node.elts if isinstance(elm, ast.Constant)]
         elif isinstance(value_node, ast.Dict):
             result[key] = _ast_dict_to_dict(value_node)
-        elif isinstance(value_node, ast.Name):
-            result[key] = value_node.id
         elif isinstance(value_node, ast.UnaryOp) and isinstance(value_node.op, ast.Not):
             # Handle `not True` → False
             if isinstance(value_node.operand, ast.Constant):
                 result[key] = not value_node.operand.value
-        elif isinstance(value_node, ast.Expression):  # pragma: no cover - ast.parse de módulo nunca produce Expression
-            result[key] = ast.literal_eval(value_node)
+        elif isinstance(value_node, ast.Name):
+            # ast.Name (identificadores) — resolver constantes conocidas
+            result[key] = _ast_name_value(value_node)
     return result
+
+
+def _ast_name_value(node: ast.Name) -> Any:
+    """Resuelve ast.Name a su valor si es una constante conocida."""
+    return {
+        "True": True,
+        "False": False,
+        "None": None,
+    }.get(node.id, node.id)
 
 
 @dataclass

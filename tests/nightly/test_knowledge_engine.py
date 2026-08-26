@@ -60,6 +60,8 @@ from knowledge.engine.verifier import verify_graph
 from motor.core.config import VALID_LOG_LEVELS, UraConfig
 
 ENGINE_SCRIPT = Path(__file__).resolve().parents[2] / "scripts" / "pro" / "knowledge_engine.py"
+# CLI real desde el saneamiento: python -m knowledge.engine.cli
+ENGINE_CMD = [sys.executable, "-m", "knowledge.engine.cli"]
 SCHEMA_PATH = Path(__file__).resolve().parent.parent.parent / "schemas" / "knowledge_graph.sql"
 
 
@@ -992,7 +994,7 @@ class TestKnowledgeEngineCLI:
     def test_cli_init(self, tmp_path):
         db_path = tmp_path / "test_cli.db"
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1005,14 +1007,14 @@ class TestKnowledgeEngineCLI:
     def test_cli_verify_empty(self, tmp_path):
         db_path = tmp_path / "test_cli_verify.db"
         subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
             timeout=15,
             check=False,
         )
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "verify"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "verify"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1022,7 +1024,7 @@ class TestKnowledgeEngineCLI:
 
     def test_cli_help(self):
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--help"],
+            [*ENGINE_CMD,  "--help"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1040,7 +1042,7 @@ class TestIntegration:
         db_path = tmp_path / "test_pipeline.db"
 
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "init"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "init"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1049,7 +1051,7 @@ class TestIntegration:
         assert result.returncode == 0
 
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "verify"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "verify"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1058,7 +1060,7 @@ class TestIntegration:
         assert "All checks passed" in result.stdout
 
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db_path), "status"],
+            [*ENGINE_CMD,  "--db-path", str(db_path), "status"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1069,14 +1071,14 @@ class TestIntegration:
     def test_compile_returns_ok_when_no_changes(self, tmp_path):
         db = tmp_path / "test_compile.db"
         subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "init"],
+            [*ENGINE_CMD,  "--db-path", str(db), "init"],
             capture_output=True,
             text=True,
             timeout=15,
             check=False,
         )
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "compile"],
+            [*ENGINE_CMD,  "--db-path", str(db), "compile"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1234,7 +1236,7 @@ class TestKnowledgeReader:
     def test_search_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "search", "introduction"],
+            [*ENGINE_CMD,  "--db-path", str(db), "search", "introduction"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1245,7 +1247,7 @@ class TestKnowledgeReader:
     def test_read_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "read", "e37a304847f4"],
+            [*ENGINE_CMD,  "--db-path", str(db), "read", "e37a304847f4"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1256,7 +1258,7 @@ class TestKnowledgeReader:
     def test_related_cli(self, tmp_path):
         db = self.setup_reader(tmp_path)
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "related", "e37a304847f4"],
+            [*ENGINE_CMD,  "--db-path", str(db), "related", "e37a304847f4"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -1377,7 +1379,7 @@ class TestMigration:
     def test_cli_init_sets_schema_version(self, tmp_path):
         db = tmp_path / "cli_init.db"
         result = subprocess.run(
-            [sys.executable, str(ENGINE_SCRIPT), "--db-path", str(db), "init"],
+            [*ENGINE_CMD,  "--db-path", str(db), "init"],
             capture_output=True,
             text=True,
             timeout=15,
@@ -2024,8 +2026,7 @@ class TestStructuredLogging:
         """El JSONFormatter produce JSON válido con campos esperados."""
         import logging
 
-        from motor.observability.logging import JSONFormatter
-        from motor.observability.logging import set_correlation_id
+        from motor.observability.logging import JSONFormatter, set_correlation_id
 
         set_correlation_id("")
         fmt = JSONFormatter()
@@ -2049,8 +2050,7 @@ class TestStructuredLogging:
         """Si correlation_id está presente, aparece en el JSON."""
         import logging
 
-        from motor.observability.logging import ContextFilter, JSONFormatter
-        from motor.observability.logging import set_correlation_id
+        from motor.observability.logging import ContextFilter, JSONFormatter, set_correlation_id
 
         set_correlation_id("abc-123-def")
         fmt = JSONFormatter()

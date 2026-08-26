@@ -165,7 +165,18 @@ def auto_detectar_tests(objetivo: str) -> list[str]:
     """
     if not objetivo:
         return []
-    partes = _normalize_modulo(objetivo).replace("\\", "/").split("/")
+
+    # Mapping explícito para módulos cuyo test no sigue la convención
+    _EXTRA_TESTS: dict[str, list[str]] = {
+        "motor/plugin/base": ["tests/unit/test_motor_plugin_registry.py"],
+    }
+    norm = _normalize_modulo(objetivo).replace("\\", "/")
+    if norm in _EXTRA_TESTS:
+        found = [t for t in _EXTRA_TESTS[norm] if Path(t).exists()]
+        if found:
+            return found
+
+    partes = norm.split("/")
     nombre = partes[-1]
     padre = partes[-2] if len(partes) > 1 else ""
     tests_dir = REPO_ROOT / "tests" / "unit"
