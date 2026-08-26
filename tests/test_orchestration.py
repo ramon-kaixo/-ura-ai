@@ -1,0 +1,397 @@
+"""Tests para Task Queue, Tier-3 Proxy y Orquestador."""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Task Queue Tests
+# ---------------------------------------------------------------------------
+
+
+class TestTaskQueue:
+    """Tests para la cola de tareas SQLite."""
+
+    def _make_queue(self, tmp_path: Path):
+        from motor.orchestration.task_queue import TaskQueue
+        return TaskQueue(db_path=tmp_path / "test_queue.db")
+
+    def test_create_task(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Implementar proxy tier-3", plan_phase="phase-1", priority=1)
+        assert task.id.startswith("TASK-")
+        assert task.description == "Implementar proxy tier-3"
+        assert task.status == "pending"
+        assert task.priority == 1
+
+    def test_claim_task(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        claimed = q.claim(task.id, "generador-mac")
+        assert claimed is not None
+        assert claimed.status == "assigned"
+        assert claimed.assigned_to == "generador-mac"
+
+    def test_claim_wrong_status_fails(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent-1")
+        q.start(task.id)
+        result = q.claim(task.id, "agent-2")
+        assert result is None
+
+    def test_start_task(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        started = q.start(task.id)
+        assert started is not None
+        assert started.status == "in_progress"
+
+    def test_complete_task(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        q.review(task.id, "auditor")
+        done = q.complete(task.id, commit_sha="abc123")
+        assert done is not None
+        assert done.status == "done"
+        assert done.commit_sha == "abc123"
+
+    def test_fail_task_retry(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task", max_retries=3)
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        failed = q.fail(task.id, "ruff check failed")
+        assert failed is not None
+        assert failed.status == "failed"
+        assert failed.retries == 1
+
+    def test_fail_task_human_review(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task", max_retries=1)
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        failed = q.fail(task.id, "ruff check failed")
+        assert failed is not None
+        assert failed.status == "failed_require_human"
+        assert failed.retries == 1
+
+    def test_heartbeat(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        assert q.heartbeat(task.id) is True
+
+    def test_list_by_status(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        q.create("Task 1")
+        q.create("Task 2")
+        q.create("Task 3")
+        pending = q.list_by_status("pending")
+        assert len(pending) == 3
+
+    def test_stats(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        q.create("Task 1")
+        q.create("Task 2")
+        stats = q.stats()
+        assert stats["total"] == 2
+        assert stats["by_status"]["pending"] == 2
+
+    def test_get_events(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        events = q.get_events(task.id)
+        assert len(events) >= 2  # created + assigned
+
+    def test_recover_stale(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        # Manually set old heartbeat
+        import sqlite3
+        conn = sqlite3.connect(str(tmp_path / "test_queue.db"))
+        old_time = "2020-01-01T00:00:00+00:00"
+        conn.execute("UPDATE tasks SET last_heartbeat = ?, status = 'in_progress' WHERE id = ?", (old_time, task.id))
+        conn.commit()
+        conn.close()
+
+        stale = q.recover_stale()
+        assert len(stale) == 1
+        assert stale[0].id == task.id
+
+    def test_error_truncation(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task", max_retries=5)
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        long_error = "\n".join([f"error line {i}" for i in range(100)])
+        failed = q.fail(task.id, long_error)
+        error_lines = failed.error_log.strip().split("\n")
+        assert len(error_lines) <= 50
+
+
+# ---------------------------------------------------------------------------
+# Tier-3 Proxy Tests
+# ---------------------------------------------------------------------------
+
+
+class TestTier3Proxy:
+    """Tests para el proxy tier-3."""
+
+    def test_defaults_load(self):
+        from core.model_router.tier3_proxy import Tier3Proxy
+        proxy = Tier3Proxy()
+        # Should have at least ollama-local
+        assert len(proxy._providers) >= 1
+        assert proxy._providers[-1].name == "ollama-local"
+
+    def test_health(self):
+        from core.model_router.tier3_proxy import Tier3Proxy
+        proxy = Tier3Proxy()
+        health = proxy.health()
+        assert "status" in health
+        assert "providers" in health
+        assert len(health["providers"]) >= 1
+
+    def test_circuit_breaker(self):
+        from core.model_router.tier3_proxy import ProviderCircuitBreaker, ProviderState
+        cb = ProviderCircuitBreaker("test")
+        assert cb.state == ProviderState.HEALTHY
+
+        # Record 3 429s
+        for _ in range(3):
+            cb.record_429()
+        assert cb.state == ProviderState.COOLDOWN
+
+        # Reset
+        cb.reset()
+        assert cb.state == ProviderState.HEALTHY
+
+    def test_context_bridge(self):
+        from core.model_router.tier3_proxy import _build_context_header
+        messages = [
+            {"role": "system", "content": "You are URA assistant"},
+            {"role": "user", "content": "Hello"},
+            {"role": "assistant", "content": "```python\ndef hello():\n    pass\n```"},
+        ]
+        header = _build_context_header("groq/llama-3.3-70b", "ollama/qwen3-coder:30b", messages)
+        assert len(header) == 1
+        assert "CONTEXT_TRANSFER" in header[0]["content"]
+        assert "groq/llama-3.3-70b" in header[0]["content"]
+
+    def test_arch_detection(self):
+        from core.model_router.tier3_proxy import Tier3Proxy
+        proxy = Tier3Proxy()
+        assert proxy._extract_arch("ollama/qwen3-coder:30b") == "qwen"
+        assert proxy._extract_arch("groq/llama-3.3-70b-versatile") == "llama"
+        assert proxy._extract_arch("gemma4:26b") == "gemma"
+
+
+# ---------------------------------------------------------------------------
+# Orchestrator Tests
+# ---------------------------------------------------------------------------
+
+
+class TestOrchestrator:
+    """Tests para el orquestador."""
+
+    def test_parse_plan_phases(self):
+        from motor.orchestration.orchestrator import Orchestrator
+        orch = Orchestrator()
+        plan = """
+## Fase 1: Proxy Tier-3
+Implementar proxy con cascada de 3 niveles.
+- Prioridad: 1
+- Horas: 4
+
+## Fase 2: Context Bridge
+Serialización de contexto al cambiar modelo.
+- Prioridad: 2
+- Horas: 3
+"""
+        phases = orch._parse_plan(plan)
+        assert len(phases) == 2
+        assert phases[0].id == "phase-1"
+        assert phases[0].priority == 1
+        assert phases[1].id == "phase-2"
+
+    def test_parse_plain_text(self):
+        from motor.orchestration.orchestrator import Orchestrator
+        orch = Orchestrator()
+        plan = "Primero hacer el proxy.\n\nDespués el context bridge."
+        phases = orch._parse_plan(plan)
+        assert len(phases) == 2
+        assert phases[0].id == "phase-1"
+
+
+# ---------------------------------------------------------------------------
+# Auditor Tests
+# ---------------------------------------------------------------------------
+
+
+class TestAuditor:
+    """Tests para el auditor."""
+
+    def test_run_gate_timeout(self):
+        from motor.orchestration.auditor import Auditor
+        auditor = Auditor()
+        passed, output = auditor._run_gate("slow", ["sleep", "100"], Path("/tmp"))
+        assert not passed
+        assert "TIMEOUT" in output
+
+    def test_run_gate_success(self):
+        from motor.orchestration.auditor import Auditor
+        auditor = Auditor()
+        passed, output = auditor._run_gate("echo", ["echo", "hello"], Path("/tmp"))
+        assert passed
+        assert len(output.strip()) > 0
+
+    def test_run_gate_failure(self):
+        from motor.orchestration.auditor import Auditor
+        auditor = Auditor()
+        passed, _output = auditor._run_gate("false", ["false"], Path("/tmp"))
+        assert not passed
+
+
+# ---------------------------------------------------------------------------
+# Interface Contracts Tests
+# ---------------------------------------------------------------------------
+
+
+class TestContracts:
+    """Tests para el sistema de Interface Contracts."""
+
+    def test_freeze_contracts(self, tmp_path):
+        from motor.orchestration.contracts import (
+            APISurface,
+            ContractGenerator,
+            ContractValidator,
+            FunctionContract,
+            InterfaceContractSet,
+        )
+        ContractGenerator(tmp_path)
+        validator = ContractValidator(tmp_path)
+
+        # Create a contract set
+        contracts = InterfaceContractSet(
+            plan_id="test-plan-001",
+            modules=[
+                APISurface(
+                    module="core.proxy",
+                    functions=[
+                        FunctionContract(
+                            name="proxy_request",
+                            module="core.proxy",
+                            params=[{"name": "path", "type": "str"}, {"name": "body", "type": "bytes"}],
+                            return_type="tuple[int, dict, bytes]",
+                        ),
+                    ],
+                ),
+            ],
+        )
+
+        # Freeze
+        path = validator.freeze_contracts(contracts)
+        assert path.exists()
+        assert (tmp_path / "INTERFACE_CONTRACTS.md").exists()
+        assert (tmp_path / ".interface_contracts.sha256").exists()
+
+    def test_verify_hash(self, tmp_path):
+        from motor.orchestration.contracts import ContractValidator, InterfaceContractSet
+        validator = ContractValidator(tmp_path)
+
+        contracts = InterfaceContractSet(plan_id="test")
+        validator.freeze_contracts(contracts)
+
+        # Hash should verify
+        assert validator._verify_hash() is True
+
+        # Tamper with the file
+        (tmp_path / "INTERFACE_CONTRACTS.md").write_text("TAMPERED")
+        assert validator._verify_hash() is False
+
+    def test_validate_module(self, tmp_path):
+        from motor.orchestration.contracts import ContractValidator, InterfaceContractSet
+        validator = ContractValidator(tmp_path)
+
+        contracts = InterfaceContractSet(plan_id="test")
+        validator.freeze_contracts(contracts)
+
+        # Create a valid module
+        mod = tmp_path / "test_module.py"
+        mod.write_text("def hello():\n    return 'world'\n")
+        errors = validator.validate_module(mod, "test_module")
+        assert len(errors) == 0
+
+        # Create a module with forbidden pattern
+        mod_bad = tmp_path / "bad_module.py"
+        mod_bad.write_text("result = eval('1+1')\n")
+        errors = validator.validate_module(mod_bad, "bad_module")
+        assert any("Forbidden" in e for e in errors)
+
+    def test_validate_function_signature(self, tmp_path):
+        from motor.orchestration.contracts import (
+            ContractValidator,
+            FunctionContract,
+            InterfaceContractSet,
+        )
+        validator = ContractValidator(tmp_path)
+
+        contracts = InterfaceContractSet(plan_id="test")
+        validator.freeze_contracts(contracts)
+
+        # Create module with correct signature
+        mod = tmp_path / "proxy.py"
+        mod.write_text("def proxy_request(path: str, body: bytes) -> tuple:\n    pass\n")
+        expected = FunctionContract(
+            name="proxy_request",
+            module="proxy",
+            params=[{"name": "path", "type": "str"}, {"name": "body", "type": "bytes"}],
+            return_type="tuple",
+        )
+        errors = validator.validate_function_signature(mod, expected)
+        assert len(errors) == 0
+
+        # Wrong return type
+        expected_bad = FunctionContract(
+            name="proxy_request",
+            module="proxy",
+            params=[],
+            return_type="dict",  # Wrong!
+        )
+        errors = validator.validate_function_signature(mod, expected_bad)
+        assert len(errors) > 0
+
+    def test_contracts_to_markdown(self, tmp_path):
+        from motor.orchestration.contracts import (
+            APISurface,
+            FunctionContract,
+            InterfaceContractSet,
+            contracts_to_markdown,
+        )
+        contracts = InterfaceContractSet(
+            plan_id="plan-001",
+            modules=[
+                APISurface(
+                    module="core.proxy",
+                    functions=[
+                        FunctionContract(
+                            name="proxy",
+                            module="core.proxy",
+                            params=[{"name": "url", "type": "str"}],
+                            return_type="bytes",
+                        ),
+                    ],
+                ),
+            ],
+        )
+        md = contracts_to_markdown(contracts)
+        assert "INTERFACE CONTRACTS" in md
+        assert "core.proxy" in md
+        assert "def proxy(url: str) -> bytes" in md
+        assert "SOLO LECTURA" in md
