@@ -501,3 +501,138 @@ class TestDistributedLock:
                 assert acquired
         finally:
             dl_mod._DEFAULT_LOCK_DIR = original
+
+
+# ---------------------------------------------------------------------------
+# Atomic Write + Utils
+# ---------------------------------------------------------------------------
+
+
+class TestAtomicWrite:
+    def test_atomic_write_string(self, tmp_path: Path) -> None:
+        from motor.core.utils import atomic_write
+
+        target = tmp_path / "test.txt"
+        atomic_write(target, "hello world")
+        assert target.read_text() == "hello world"
+
+    def test_atomic_write_json(self, tmp_path: Path) -> None:
+        from motor.core.utils import atomic_write_json
+
+        target = tmp_path / "test.json"
+        atomic_write_json(target, {"key": "value", "num": 42})
+        import json
+
+        data = json.loads(target.read_text())
+        assert data["key"] == "value"
+        assert data["num"] == 42
+
+    def test_atomic_write_no_partial(self, tmp_path: Path) -> None:
+        from motor.core.utils import atomic_write
+
+        target = tmp_path / "test.txt"
+        atomic_write(target, "first")
+        atomic_write(target, "second")
+        assert target.read_text() == "second"
+        # No .tmp files left behind
+        assert list(tmp_path.glob("*.tmp")) == []
+
+    def test_sha256(self, tmp_path: Path) -> None:
+        from motor.core.utils import file_sha256
+
+        target = tmp_path / "test.txt"
+        target.write_text("hello")
+        sha = file_sha256(target)
+        assert len(sha) == 64  # SHA-256 hex digest
+
+
+# ---------------------------------------------------------------------------
+# Failover
+# ---------------------------------------------------------------------------
+
+
+class TestOrchestratorHealthChecker:
+    def test_initial_state(self) -> None:
+        from motor.orchestration.failover import OrchestratorHealthChecker, OrchestratorState
+
+        checker = OrchestratorHealthChecker(orchestrator_url="http://localhost:99999")
+        assert checker.state == OrchestratorState.HEALTHY
+
+    def test_probe_down_server(self) -> None:
+        from motor.orchestration.failover import OrchestratorHealthChecker
+
+        checker = OrchestratorHealthChecker(orchestrator_url="http://localhost:99999")
+        result = checker._probe()
+        assert result.error  # Should have error (connection refused)
+
+    def test_callback_on_state_change(self) -> None:
+        from motor.orchestration.failover import OrchestratorHealthChecker, OrchestratorState
+
+        changes: list[tuple[OrchestratorState, OrchestratorState]] = []
+        checker = OrchestratorHealthChecker(
+            orchestrator_url="http://localhost:99999",
+            failure_threshold=1,
+        )
+        checker.on_state_change(lambda new, old: changes.append((new, old)))
+
+        # Force a failure
+        checker._consecutive_failures = 0
+        result = checker._probe()
+        checker._update_state(result)
+
+        assert len(changes) == 1
+        assert changes[0][0] == OrchestratorState.DOWN
+
+
+class TestRemoteExecutor:
+    def test_run_echo(self) -> None:
+        from motor.orchestration.failover import RemoteExecutor
+
+        executor = RemoteExecutor(default_host="localhost", max_retries=0)
+        result = executor.run("echo hello")
+        # May fail if SSH not configured to localhost, but shouldn't crash
+        assert result.command == "echo hello"
+
+    def test_is_reachable(self) -> None:
+        from motor.orchestration.failover import RemoteExecutor
+
+        executor = RemoteExecutor(default_host="localhost", max_retries=0)
+        # localhost may or may not be reachable via SSH
+        # Just verify the method doesn't crash
+        result = executor.is_reachable()
+        assert isinstance(result, bool)
+
+
+class TestAutonomousFailover:
+    def test_initial_mode(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode
+
+        fo = AutonomousFailover()
+        assert fo.mode == FailoverMode.NORMAL
+        assert not fo.is_autonomous
+
+    def test_enter_autonomous(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode
+
+        fo = AutonomousFailover()
+        fo._enter_autonomous_mode()
+        assert fo.mode == FailoverMode.AUTONOMOUS
+        assert fo.is_autonomous
+
+    def test_exit_autonomous(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode
+
+        fo = AutonomousFailover()
+        fo._enter_autonomous_mode()
+        fo._exit_autonomous_mode()
+        assert fo.mode == FailoverMode.NORMAL
+        assert not fo.is_autonomous
+
+    def test_status(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover
+
+        fo = AutonomousFailover()
+        status = fo.get_status()
+        assert "mode" in status
+        assert "orchestrator_state" in status
+        assert "active_worktrees" in status

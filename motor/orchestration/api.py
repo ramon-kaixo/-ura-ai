@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -204,6 +205,77 @@ def dashboard():
     stats = _telemetry.stats(since_minutes=60)
     tasks = _telemetry.recent_tasks()
     return HTMLResponse(dashboard_html(stats, tasks))
+
+
+# ---------------------------------------------------------------------------
+# Failover + Readiness/Liveness
+# ---------------------------------------------------------------------------
+
+_failover: Any = None
+
+
+def _get_failover() -> Any:
+    global _failover  # noqa: PLW0603
+    if _failover is None:
+        from motor.orchestration.failover import AutonomousFailover
+
+        _failover = AutonomousFailover()
+    return _failover
+
+
+@app.get("/readiness")
+def readiness():
+    """Kubernetes-style readiness probe."""
+    stats = _queue.stats()
+    pending = stats.get("by_status", {}).get("pending", 0)
+    in_progress = stats.get("by_status", {}).get("in_progress", 0)
+    queue_depth = pending + in_progress
+
+    ready = queue_depth < 100  # Backpressure threshold
+    return {
+        "ready": ready,
+        "queue_depth": queue_depth,
+        "pending": pending,
+        "in_progress": in_progress,
+    }
+
+
+@app.get("/liveness")
+def liveness():
+    """Kubernetes-style liveness probe."""
+    return {"alive": True, "pid": os.getpid()}
+
+
+@app.get("/failover/status")
+def failover_status():
+    """Estado del sistema de failover."""
+    fo = _get_failover()
+    return fo.get_status()
+
+
+@app.post("/failover/start")
+def failover_start():
+    """Inicia el health checker del failover."""
+    fo = _get_failover()
+    fo.start()
+    return {"status": "started", "mode": fo.mode.value}
+
+
+@app.post("/failover/stop")
+def failover_stop():
+    """Detiene el health checker del failover."""
+    fo = _get_failover()
+    fo.stop()
+    return {"status": "stopped"}
+
+
+@app.post("/recover-stale-auto")
+def recover_stale_auto():
+    """Stale recovery automatico (sin intervencion manual)."""
+    stale = _queue.recover_stale()
+    if stale:
+        _telemetry.record("auto_stale_recovery", details={"count": len(stale)})
+    return {"recovered": len(stale), "tasks": [t.to_dict() for t in stale]}
 
 
 def main():
