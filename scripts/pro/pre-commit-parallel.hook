@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# pre-commit hook — parallel-lock.json: bloqueo de archivos entre nodos
+# Se instala en .git/hooks/pre-commit
+# Bash puro, sin dependencias Python.
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+LOCK_FILE="$REPO_ROOT/.opencode/parallel-lock.json"
+NODE_ID=$(cat "$REPO_ROOT/.opencode/.current-node-id" 2>/dev/null || echo "unknown")
+
+# Si no hay lock file, permitir
+if [[ ! -f "$LOCK_FILE" ]]; then
+    exit 0
+fi
+
+# Obtener archivos staged
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+if [[ -z "$STAGED_FILES" ]]; then
+    exit 0
+fi
+
+# Verificar conflictos usando grep (sin Python)
+BLOCKED=false
+while IFS= read -r file; do
+    [[ -z "$file" ]] && continue
+
+    # Buscar si otro nodo tiene este archivo en el lock
+    # Formato: {"locks": {"gx10": ["file1.py"], "mac": ["file2.py"]}}
+    LOCKED_BY=""
+    if command -v python3 &>/dev/null; then
+        LOCKED_BY=$(python3 -c "
+import json, sys
+try:
+    data = json.load(open('$LOCK_FILE'))
+    for node, files in data.get('locks', {}).items():
+        if node != '$NODE_ID' and '$file' in files:
+            print(node)
+            sys.exit(0)
+except: pass
+" 2>/dev/null || echo "")
+    fi
+
+    if [[ -n "$LOCKED_BY" ]]; then
+        echo "[BLOCKED] Archivo '$file' bloqueado por nodo '$LOCKED_BY'"
+        echo "[BLOCKED] Sincroniza: ./scripts/pro/parallel-sync.sh"
+        BLOCKED=true
+    fi
+done <<< "$STAGED_FILES"
+
+if [[ "$BLOCKED" == "true" ]]; then
+    exit 1
+fi
+
+# Registrar archivos modificados por este nodo
+if command -v python3 &>/dev/null; then
+    python3 -c "
+import json, os
+lock_file = '$LOCK_FILE'
+node = '$NODE_ID'
+files = '''$STAGED_FILES'''.strip().split('\n')
+data = {'locks': {}}
+if os.path.exists(lock_file):
+    try: data = json.load(open(lock_file))
+    except: pass
+data.setdefault('locks', {})
+data['locks'][node] = list(set(data['locks'].get(node, []) + [f for f in files if f]))
+json.dump(data, open(lock_file, 'w'), indent=2)
+" 2>/dev/null || true
+fi
+
+exit 0
