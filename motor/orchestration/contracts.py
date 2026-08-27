@@ -278,13 +278,77 @@ class ContractValidator:
         self._repo = repo_root
 
     def _load_contracts(self) -> InterfaceContractSet | None:
-        """Carga los contratos desde el repo."""
+        """Carga los contratos desde el repo y parsea el markdown."""
         contracts_file = self._repo / _CONTRACTS_FILE
         if not contracts_file.exists():
             return None
-        # For now, return a basic parsed version
-        # In production, this would parse the markdown back to structured data
-        return InterfaceContractSet(plan_id="loaded", metadata={"source": "file"})
+
+        try:
+            content = contracts_file.read_text()
+        except Exception:
+            return None
+
+        # Parse markdown back to structured data
+        modules: list[APISurface] = []
+        current_module: APISurface | None = None
+        current_functions: list[FunctionContract] = []
+        in_functions = False
+
+        for line in content.split("\n"):
+            # Detect module header
+            if line.startswith("## Module: `"):
+                if current_module:
+                    current_module.functions = current_functions
+                    modules.append(current_module)
+                mod_name = line.split("`")[1] if "`" in line else "unknown"
+                current_module = APISurface(module=mod_name)
+                current_functions = []
+                in_functions = False
+                continue
+
+            if line.strip() == "### Functions":
+                in_functions = True
+                continue
+            if line.strip().startswith("### ") and in_functions:
+                in_functions = False
+
+            # Parse function signatures from code blocks
+            if in_functions and line.strip().startswith("def "):
+                sig_line = line.strip()
+                # Extract: def name(params) -> return_type:
+                import re as _re
+                match = _re.match(
+                    r"(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)(?:\s*->\s*(\S+))?",
+                    sig_line,
+                )
+                if match:
+                    name = match.group(1)
+                    params_str = match.group(2)
+                    return_type = match.group(3) or "None"
+                    params = []
+                    for raw_p in params_str.split(","):
+                        p = raw_p.strip()
+                        if p and ":" in p:
+                            pname, ptype = p.split(":", 1)
+                            params.append({"name": pname.strip(), "type": ptype.strip()})
+                    current_functions.append(
+                        FunctionContract(
+                            name=name,
+                            module=current_module.module if current_module else "",
+                            params=params,
+                            return_type=return_type,
+                        )
+                    )
+
+        if current_module:
+            current_module.functions = current_functions
+            modules.append(current_module)
+
+        return InterfaceContractSet(
+            plan_id="parsed",
+            modules=modules,
+            metadata={"source": "markdown_parse"},
+        )
 
     def _verify_hash(self) -> bool:
         """Verifica que el archivo de contratos no fue modificado."""
@@ -292,7 +356,7 @@ class ContractValidator:
         hash_file = self._repo / _CONTRACTS_HASH_FILE
 
         if not contracts_file.exists() or not hash_file.exists():
-            return True  # No hash to verify
+            return False  # Security: fail if files are missing (prevents bypass by deletion)
 
         current_hash = hashlib.sha256(contracts_file.read_bytes()).hexdigest()
         stored_hash = hash_file.read_text().strip()

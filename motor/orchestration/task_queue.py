@@ -53,6 +53,10 @@ class TaskEvent(StrEnum):
     HUMAN_REVIEW = "human_review"
 
 
+class TaskStateError(Exception):
+    """Lanzada cuando se intenta una transición de estado inválida."""
+
+
 # ---------------------------------------------------------------------------
 # Database
 # ---------------------------------------------------------------------------
@@ -281,23 +285,34 @@ class TaskQueue:
         return None
 
     def fail(self, task_id: str, error: str, require_human: bool = False) -> Task | None:
-        """Marca tarea como fallida."""
+        """Marca tarea como fallida. Solo permite fallar tareas ASSIGNED o IN_PROGRESS."""
         now = self._now()
-        task = self.get(task_id)
-        if not task:
-            return None
-
-        new_retries = task.retries + 1
         truncated_error = "\n".join(error.split("\n")[-50:])  # Max 50 líneas
 
-        if require_human or new_retries >= task.max_retries:
-            status = TaskStatus.FAILED_HUMAN.value
-            event = TaskEvent.HUMAN_REVIEW.value
-        else:
-            status = TaskStatus.FAILED.value
-            event = TaskEvent.RETRY.value
-
         with self._lock, _open_db(self._db_path) as conn:
+            # Read within same lock to prevent race condition
+            row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+            if not row:
+                return None
+
+            task = Task(**dict(row))
+
+            # Status guard: only ASSIGNED or IN_PROGRESS can be failed
+            if task.status not in (TaskStatus.ASSIGNED.value, TaskStatus.IN_PROGRESS.value):
+                raise TaskStateError(
+                    f"Cannot fail task {task_id}: status={task.status}, "
+                    f"must be 'assigned' or 'in_progress'"
+                )
+
+            new_retries = task.retries + 1
+
+            if require_human or new_retries >= task.max_retries:
+                status = TaskStatus.FAILED_HUMAN.value
+                event = TaskEvent.HUMAN_REVIEW.value
+            else:
+                status = TaskStatus.FAILED.value
+                event = TaskEvent.RETRY.value
+
             conn.execute(
                 """UPDATE tasks
                    SET status = ?, retries = ?, error_log = ?, updated_at = ?
@@ -309,10 +324,16 @@ class TaskQueue:
                    VALUES (?, ?, ?, ?)""",
                 (task_id, event, truncated_error[:500], now),
             )
+
         log.warning(
             "[TASK_QUEUE] %s falló (retry %d/%d): %s", task_id, new_retries, task.max_retries, truncated_error[:100]
         )
-        return self.get(task_id)
+        # Return updated task from same connection
+        with _open_db(self._db_path) as conn:
+            updated = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+            if updated:
+                return Task(**dict(updated))
+        return None
 
     def review(self, task_id: str, reviewer: str) -> Task | None:
         """Marca tarea para revisión."""

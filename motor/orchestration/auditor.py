@@ -124,7 +124,7 @@ class Auditor:
                 self._git(["worktree", "remove", "--force", str(wt_path)])
 
     def merge_task(self, task: dict) -> dict:
-        """Merge de la tarea aprobada a main."""
+        """Merge de la tarea aprobada a main (local only, no push)."""
         task_id = task["id"]
         commit_sha = task.get("commit_sha", "")
 
@@ -141,11 +141,10 @@ class Auditor:
                 self._git(["merge", "--abort"])
                 return {"task_id": task_id, "merged": False, "error": f"Merge failed: {result.stderr}"}
 
-            result = self._git(["push", "origin", "main"])
-            push_ok = result.returncode == 0
-
-            log.info("[AUDITOR] %s merged a main (push: %s)", task_id, "ok" if push_ok else "failed")
-            return {"task_id": task_id, "merged": True, "pushed": push_ok, "error": ""}
+            # Local merge only — do NOT push to main (branch protection policy).
+            # Push is handled by the human via PR workflow.
+            log.info("[AUDITOR] %s merged a main (local only, push via PR)", task_id)
+            return {"task_id": task_id, "merged": True, "pushed": False, "error": ""}
 
         except Exception as e:
             return {"task_id": task_id, "merged": False, "error": str(e)}

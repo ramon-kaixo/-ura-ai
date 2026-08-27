@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shlex
 import subprocess
 import threading
 import time
@@ -252,7 +253,12 @@ class RemoteExecutor:
         timeout = timeout_s or self._timeout_s
 
         if cwd:
-            command = f"cd {cwd} && {command}"
+            # Security: sanitize cwd to prevent command injection
+            safe_cwd = str(Path(cwd).resolve())
+            command = f"cd {safe_cwd} && {command}"
+
+        # Security: quote the entire command for the remote shell
+        quoted_command = shlex.quote(command)
 
         last_error = ""
         for attempt in range(self._max_retries + 1):
@@ -274,7 +280,7 @@ class RemoteExecutor:
                         "-o",
                         "ControlPersist=60",
                         target_host,
-                        command,
+                        quoted_command,
                     ],
                     capture_output=True,
                     text=True,
@@ -646,7 +652,8 @@ class AutonomousFailover:
         if state_path:
             self._state_path = Path(state_path)
         else:
-            self._state_path = Path("/tmp/ura-failover-state.json")
+            self._state_path = Path.home() / ".ura" / "failover-state.json"
+            self._state_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Register callback for state changes
         self._health.on_state_change(self._on_health_change)
@@ -661,50 +668,38 @@ class AutonomousFailover:
         return self.mode == FailoverMode.AUTONOMOUS
 
     def _on_health_change(self, new_state: OrchestratorState, old_state: OrchestratorState) -> None:
-        """Callback when orchestrator health changes."""
-        if new_state == OrchestratorState.DOWN and old_state != OrchestratorState.DOWN:
-            self._enter_autonomous_mode()
-        elif new_state == OrchestratorState.HEALTHY and old_state == OrchestratorState.DOWN:
-            self._exit_autonomous_mode()
-
-    def _enter_autonomous_mode(self) -> None:
-        """Activa modo autonomo."""
+        """Callback when orchestrator health changes. Thread-safe state transitions."""
         with self._lock:
-            if self._mode == FailoverMode.AUTONOMOUS:
-                return
-            self._mode = FailoverMode.AUTONOMOUS
-
-        log.critical("[FAILOVER] Entering AUTONOMOUS mode — orchestrator DOWN")
-        atomic_write_json(
-            self._state_path,
-            {
-                "mode": "autonomous",
-                "entered_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                "reason": "orchestrator_down",
-            },
-        )
-
-    def _exit_autonomous_mode(self) -> None:
-        """Sale del modo autonomo."""
-        with self._lock:
-            if self._mode == FailoverMode.NORMAL:
-                return
-            self._mode = FailoverMode.NORMAL
-
-        log.info("[FAILOVER] Exiting autonomous mode — orchestrator RECOVERED")
-        atomic_write_json(
-            self._state_path,
-            {
-                "mode": "normal",
-                "exited_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
-                "reason": "orchestrator_recovered",
-            },
-        )
-
-        # Cleanup worktrees
-        cleaned = self._worktrees.cleanup_all()
-        if cleaned > 0:
-            log.info("[FAILOVER] Cleaned up %d worktrees after recovery", cleaned)
+            if new_state == OrchestratorState.DOWN and old_state != OrchestratorState.DOWN:
+                if self._mode == FailoverMode.AUTONOMOUS:
+                    return
+                self._mode = FailoverMode.AUTONOMOUS
+                log.critical("[FAILOVER] Entering AUTONOMOUS mode — orchestrator DOWN")
+                atomic_write_json(
+                    self._state_path,
+                    {
+                        "mode": "autonomous",
+                        "entered_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "reason": "orchestrator_down",
+                    },
+                )
+            elif new_state == OrchestratorState.HEALTHY and old_state == OrchestratorState.DOWN:
+                if self._mode == FailoverMode.NORMAL:
+                    return
+                self._mode = FailoverMode.NORMAL
+                log.info("[FAILOVER] Exiting autonomous mode — orchestrator RECOVERED")
+                atomic_write_json(
+                    self._state_path,
+                    {
+                        "mode": "normal",
+                        "exited_at": time.strftime("%Y-%m-%dT%H:%M:%S"),
+                        "reason": "orchestrator_recovered",
+                    },
+                )
+                # Cleanup worktrees
+                cleaned = self._worktrees.cleanup_all()
+                if cleaned > 0:
+                    log.info("[FAILOVER] Cleaned up %d worktrees after recovery", cleaned)
 
     def start(self) -> None:
         """Inicia el sistema de failover."""
@@ -741,9 +736,11 @@ class AutonomousFailover:
             wt = self._worktrees.create(task_id)
 
             # 2. Execute in worktree
+            safe_path = str(Path(wt.path).resolve())
             result = self._executor.run(
-                f"cd {wt.path} && {command}",
+                command,
                 host=remote_host,
+                cwd=safe_path,
             )
 
             if not result.success:

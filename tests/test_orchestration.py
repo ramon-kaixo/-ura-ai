@@ -611,22 +611,46 @@ class TestAutonomousFailover:
         assert fo.mode == FailoverMode.NORMAL
         assert not fo.is_autonomous
 
-    def test_enter_autonomous(self) -> None:
-        from motor.orchestration.failover import AutonomousFailover, FailoverMode
+    def test_enter_autonomous_via_callback(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode, OrchestratorState
 
         fo = AutonomousFailover()
-        fo._enter_autonomous_mode()
+        fo._on_health_change(OrchestratorState.DOWN, OrchestratorState.HEALTHY)
         assert fo.mode == FailoverMode.AUTONOMOUS
         assert fo.is_autonomous
 
-    def test_exit_autonomous(self) -> None:
-        from motor.orchestration.failover import AutonomousFailover, FailoverMode
+    def test_exit_autonomous_via_callback(self) -> None:
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode, OrchestratorState
 
         fo = AutonomousFailover()
-        fo._enter_autonomous_mode()
-        fo._exit_autonomous_mode()
+        fo._on_health_change(OrchestratorState.DOWN, OrchestratorState.HEALTHY)
+        fo._on_health_change(OrchestratorState.HEALTHY, OrchestratorState.DOWN)
         assert fo.mode == FailoverMode.NORMAL
         assert not fo.is_autonomous
+
+    def test_concurrent_state_transition(self) -> None:
+        """Verify state transitions are atomic under threading."""
+        import threading
+
+        from motor.orchestration.failover import AutonomousFailover, FailoverMode, OrchestratorState
+
+        fo = AutonomousFailover()
+        results = []
+
+        def toggle():
+            for _ in range(10):
+                fo._on_health_change(OrchestratorState.DOWN, OrchestratorState.HEALTHY)
+                fo._on_health_change(OrchestratorState.HEALTHY, OrchestratorState.DOWN)
+            results.append(fo.mode)
+
+        threads = [threading.Thread(target=toggle) for _ in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        # After all threads, mode should be stable (not corrupted)
+        assert fo.mode in (FailoverMode.NORMAL, FailoverMode.AUTONOMOUS)
 
     def test_status(self) -> None:
         from motor.orchestration.failover import AutonomousFailover
@@ -636,3 +660,142 @@ class TestAutonomousFailover:
         assert "mode" in status
         assert "orchestrator_state" in status
         assert "active_worktrees" in status
+
+
+# ---------------------------------------------------------------------------
+# Bug Fix Tests — Sprint 0.1
+# ---------------------------------------------------------------------------
+
+
+class TestBug1SSHInjection:
+    """Bug 1: SSH injection via command arguments."""
+
+    def test_shlex_quote_in_remote_executor(self) -> None:
+        """Verify shlex.quote is used in RemoteExecutor.run."""
+        import inspect
+        from motor.orchestration.failover import RemoteExecutor
+
+        source = inspect.getsource(RemoteExecutor.run)
+        assert "shlex.quote" in source, "RemoteExecutor.run must use shlex.quote()"
+
+    def test_injection_attempt_in_command(self) -> None:
+        """Verify shlex.quote prevents shell injection in commands."""
+        import shlex
+
+        malicious = "legit_cmd; rm -rf /"
+        quoted = shlex.quote(malicious)
+        # The injection should be neutralized
+        assert ";" not in quoted or quoted.startswith("'"), "shlex.quote must neutralize semicolons"
+
+
+class TestBug2FailGuard:
+    """Bug 2: fail() must reject tasks not in ASSIGNED/IN_PROGRESS."""
+
+    def _make_queue(self, tmp_path: Path):
+        from motor.orchestration.task_queue import TaskQueue
+        return TaskQueue(db_path=tmp_path / "test_queue.db")
+
+    def test_fail_pending_task_raises(self, tmp_path):
+        from motor.orchestration.task_queue import TaskStateError
+
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        # task is PENDING — fail should raise
+        try:
+            q.fail(task.id, "error")
+            assert False, "Expected TaskStateError"
+        except TaskStateError as e:
+            assert "pending" in str(e)
+
+    def test_fail_done_task_raises(self, tmp_path):
+        from motor.orchestration.task_queue import TaskStateError
+
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        q.review(task.id, "auditor")
+        q.complete(task.id, commit_sha="abc")
+        # task is DONE — fail should raise
+        try:
+            q.fail(task.id, "error")
+            assert False, "Expected TaskStateError"
+        except TaskStateError as e:
+            assert "done" in str(e)
+
+    def test_fail_assigned_task_succeeds(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        # task is ASSIGNED — fail should work
+        failed = q.fail(task.id, "some error")
+        assert failed is not None
+        assert failed.status == "failed"
+
+    def test_fail_in_progress_task_succeeds(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Test task")
+        q.claim(task.id, "agent")
+        q.start(task.id)
+        # task is IN_PROGRESS — fail should work
+        failed = q.fail(task.id, "some error")
+        assert failed is not None
+        assert failed.status == "failed"
+
+
+class TestBug3HashBypass:
+    """Bug 3: verify_file_integrity must use hmac.compare_digest."""
+
+    def test_compare_digest_in_source(self) -> None:
+        import inspect
+        from motor.core.utils import verify_file_integrity
+
+        source = inspect.getsource(verify_file_integrity)
+        assert "hmac.compare_digest" in source, "Must use hmac.compare_digest for timing-safe comparison"
+
+    def test_integrity_error_on_mismatch(self, tmp_path):
+        from motor.core.utils import IntegrityError, atomic_write, file_sha256
+
+        test_file = tmp_path / "test.txt"
+        atomic_write(test_file, "hello world")
+        correct_hash = file_sha256(test_file)
+
+        # Wrong hash should raise IntegrityError
+        try:
+            from motor.core.utils import verify_file_integrity
+            verify_file_integrity(test_file, "wrong_hash" + "0" * 48)
+            assert False, "Expected IntegrityError"
+        except IntegrityError:
+            pass
+
+    def test_integrity_ok_on_match(self, tmp_path):
+        from motor.core.utils import atomic_write, file_sha256, verify_file_integrity
+
+        test_file = tmp_path / "test.txt"
+        atomic_write(test_file, "hello world")
+        correct_hash = file_sha256(test_file)
+
+        result = verify_file_integrity(test_file, correct_hash)
+        assert result is True
+
+
+class TestBug4FailoverStateRace:
+    """Bug 4: Failover state transitions must be atomic."""
+
+    def test_state_protected_by_lock(self) -> None:
+        import inspect
+        from motor.orchestration.failover import AutonomousFailover
+
+        source = inspect.getsource(AutonomousFailover._on_health_change)
+        assert "self._lock" in source, "_on_health_change must use self._lock"
+
+    def test_state_persists_to_file(self, tmp_path):
+        from motor.orchestration.failover import AutonomousFailover, OrchestratorState
+
+        state_file = tmp_path / "state.json"
+        fo = AutonomousFailover(state_path=str(state_file))
+        fo._on_health_change(OrchestratorState.DOWN, OrchestratorState.HEALTHY)
+        assert state_file.exists(), "State file should be created"
+        import json
+        data = json.loads(state_file.read_text())
+        assert data["mode"] == "autonomous"

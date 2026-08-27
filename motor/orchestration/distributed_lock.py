@@ -107,8 +107,9 @@ class AuditLock:
 
     @contextmanager  # type: ignore[type-arg]
     def exclusive(self, timeout: float = 10.0) -> Any:
-        """Ejecuta una auditoria exclusiva."""
-        with self._lock.locked(timeout=timeout) as acquired:
+        """Ejecuta una auditoria exclusiva. Garantiza liberación en excepción."""
+        acquired = self._lock.acquire(timeout=timeout)
+        try:
             if not acquired:
                 log.warning("[AUDIT_LOCK] Another auditor is active, skipping")
                 yield False
@@ -116,3 +117,5 @@ class AuditLock:
             log.info("[AUDIT_LOCK] Exclusive audit started")
             yield True
             log.info("[AUDIT_LOCK] Exclusive audit completed")
+        finally:
+            self._lock.release()

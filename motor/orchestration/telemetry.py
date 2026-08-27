@@ -224,19 +224,21 @@ class TelemetryStore:
 
 
 def dashboard_html(stats: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
-    """Genera HTML del dashboard de telemetria."""
+    """Genera HTML del dashboard de telemetria (XSS-safe via html.escape)."""
+    import html
+
     event_rows = ""
     for event, count in stats.get("by_event", {}).items():
-        event_rows += f"<tr><td>{event}</td><td>{count}</td></tr>\n"
+        event_rows += f"<tr><td>{html.escape(str(event))}</td><td>{count}</td></tr>\n"
 
     task_rows = ""
     for t in tasks:
         color = {"done": "#2ea043", "failed": "#da3633", "in_progress": "#d29922"}.get(t["status"], "#8b949e")
         task_rows += (
-            f"<tr><td><code>{t['task_id']}</code></td>"
-            f'<td style="color:{color};font-weight:bold">{t["status"]}</td>'
-            f"<td>{t.get('started_at', '-') or '-'}</td>"
-            f"<td>{t.get('completed_at', '-') or '-'}</td></tr>\n"
+            f"<tr><td><code>{html.escape(t['task_id'])}</code></td>"
+            f'<td style="color:{color};font-weight:bold">{html.escape(t["status"])}</td>'
+            f"<td>{html.escape(str(t.get('started_at', '-') or '-'))}</td>"
+            f"<td>{html.escape(str(t.get('completed_at', '-') or '-'))}</td></tr>\n"
         )
 
     return f"""<!DOCTYPE html>

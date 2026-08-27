@@ -24,7 +24,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 # Add parent to path for imports
@@ -35,9 +36,26 @@ from motor.orchestration.telemetry import TelemetryStore, dashboard_html
 
 log = logging.getLogger(__name__)
 
+# API Key authentication
+_API_KEY = os.environ.get("URA_API_KEY", "")
+_EXEMPT_PATHS = {"/health", "/readiness", "/liveness", "/dashboard"}
+
 app = FastAPI(title="URA Task Queue", version="1.0.0")
 _queue = TaskQueue()
 _telemetry = TelemetryStore()
+
+
+@app.middleware("http")
+async def api_key_auth(request: Request, call_next):
+    """Valida X-API-Key en requests (exento: health, liveness, dashboard)."""
+    if request.url.path in _EXEMPT_PATHS:
+        return await call_next(request)
+    if not _API_KEY:
+        return await call_next(request)  # No auth configured = open (dev mode)
+    api_key = request.headers.get("X-API-Key", "")
+    if api_key != _API_KEY:
+        return JSONResponse(status_code=401, content={"detail": "Invalid or missing X-API-Key"})
+    return await call_next(request)
 
 
 # ---------------------------------------------------------------------------
@@ -276,6 +294,62 @@ def recover_stale_auto():
     if stale:
         _telemetry.record("auto_stale_recovery", details={"count": len(stale)})
     return {"recovered": len(stale), "tasks": [t.to_dict() for t in stale]}
+
+
+@app.get("/parallel/status")
+def parallel_status():
+    """Estado del trabajo paralelo: nodo, branch, behind, conflictos."""
+    import subprocess
+
+    node_id = os.environ.get("URA_NODE_ID", "unknown")
+    branch = "unknown"
+    behind_main = 0
+    has_conflicts = False
+    other_branches: dict[str, dict] = {}
+
+    try:
+        result = subprocess.run(
+            ["git", "branch", "--show-current"],
+            capture_output=True, text=True, timeout=5,
+        )
+        branch = result.stdout.strip() or "unknown"
+    except Exception:
+        pass
+
+    try:
+        result = subprocess.run(
+            ["git", "rev-list", "HEAD..origin/main", "--count"],
+            capture_output=True, text=True, timeout=5,
+        )
+        behind_main = int(result.stdout.strip() or "0")
+    except Exception:
+        pass
+
+    # Verificar conflictos
+    conflict_log = Path("CONFLICT.log")
+    has_conflicts = conflict_log.exists()
+
+    # Últimos commits de otras ramas
+    for other in ("feature/opencode-gx10", "feature/opencode-web", "feature/opencode-mac"):
+        if other == branch:
+            continue
+        try:
+            result = subprocess.run(
+                ["git", "log", f"origin/{other}", "--oneline", "-3"],
+                capture_output=True, text=True, timeout=5,
+            )
+            commits = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
+            other_branches[other] = {"commits": commits}
+        except Exception:
+            other_branches[other] = {"commits": []}
+
+    return {
+        "node_id": node_id,
+        "branch": branch,
+        "behind_main": behind_main,
+        "has_conflicts": has_conflicts,
+        "other_branches": other_branches,
+    }
 
 
 def main():
