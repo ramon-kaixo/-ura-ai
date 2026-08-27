@@ -819,6 +819,89 @@ class TestAntiFlapping:
 
 
 # ---------------------------------------------------------------------------
+# Node Registry Tests — Sprint 0.2
+# ---------------------------------------------------------------------------
+
+
+class TestNodeRegistry:
+    """Tests for multi-node registry and health checking."""
+
+    def test_register_and_list(self, tmp_path: Any) -> None:
+        """Register nodes and list them."""
+        from motor.orchestration.node_registry import NodeRegistry
+
+        reg = NodeRegistry(registry_file=tmp_path / "reg.json")
+        reg.register("mac", "Mac Mini", "100.123.81.101")
+        reg.register("gx10", "GX10", "100.72.103.12")
+
+        nodes = reg.list_all()
+        assert len(nodes) == 2
+        ids = {n.node_id for n in nodes}
+        assert ids == {"mac", "gx10"}
+
+    def test_unregister(self, tmp_path: Any) -> None:
+        """Unregister a node."""
+        from motor.orchestration.node_registry import NodeRegistry
+
+        reg = NodeRegistry(registry_file=tmp_path / "reg.json")
+        reg.register("mac", "Mac Mini", "100.123.81.101")
+        assert reg.unregister("mac") is True
+        assert reg.get("mac") is None
+        assert reg.unregister("mac") is False
+
+    def test_persistence(self, tmp_path: Any) -> None:
+        """Registry persists to disk and reloads."""
+        from motor.orchestration.node_registry import NodeRegistry
+
+        path = tmp_path / "reg.json"
+        reg1 = NodeRegistry(registry_file=path)
+        reg1.register("gx10", "GX10", "100.72.103.12", tags=["desktop"])
+
+        reg2 = NodeRegistry(registry_file=path)
+        node = reg2.get("gx10")
+        assert node is not None
+        assert node.hostname == "GX10"
+        assert node.tags == ["desktop"]
+
+    def test_api_url_property(self, tmp_path: Any) -> None:
+        """NodeInfo.api_url returns correct URL."""
+        from motor.orchestration.node_registry import NodeInfo, NodeStatus
+
+        node = NodeInfo(
+            node_id="gx10", hostname="GX10",
+            tailscale_ip="100.72.103.12", api_port=4097,
+            status=NodeStatus.UNKNOWN,
+        )
+        assert node.api_url == "http://100.72.103.12:4097"
+
+    def test_to_dict(self, tmp_path: Any) -> None:
+        """NodeInfo.to_dict returns serializable dict."""
+        from motor.orchestration.node_registry import NodeInfo, NodeStatus
+
+        node = NodeInfo(
+            node_id="mac", hostname="Mac Mini",
+            tailscale_ip="100.123.81.101", api_port=4097,
+            status=NodeStatus.ONLINE, last_seen=1000.0,
+            last_latency_ms=12.5, tags=["m4"],
+        )
+        d = node.to_dict()
+        assert d["node_id"] == "mac"
+        assert d["status"] == "online"
+        assert d["tags"] == ["m4"]
+
+    def test_check_health_unreachable(self, tmp_path: Any) -> None:
+        """Health check on unreachable node marks it as degraded/offline."""
+        from motor.orchestration.node_registry import NodeRegistry, NodeStatus
+
+        reg = NodeRegistry(registry_file=tmp_path / "reg.json", check_timeout_s=1)
+        reg.register("fake", "Fake Node", "192.0.2.1", api_port=19999)  # RFC 5737 TEST-NET
+
+        results = reg.check_health("fake")
+        assert results["fake"]["status"] in ("degraded", "offline")
+        assert results["fake"]["consecutive_failures"] >= 1
+
+
+# ---------------------------------------------------------------------------
 # Bug Fix Tests — Sprint 0.1
 # ---------------------------------------------------------------------------
 
