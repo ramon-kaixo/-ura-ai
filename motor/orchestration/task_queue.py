@@ -118,6 +118,69 @@ def _open_db(db_path: Path):
         conn.close()
 
 
+class _PersistentConnection:
+    """Long-lived SQLite connection with WAL mode and auto-reconnect."""
+
+    def __init__(self, db_path: Path) -> None:
+        self._db_path = db_path
+        self._conn: sqlite3.Connection | None = None
+        self._lock = threading.Lock()
+        self._connect()
+
+    def _connect(self) -> None:
+        self._db_path.parent.mkdir(parents=True, exist_ok=True)
+        self._conn = sqlite3.connect(str(self._db_path), timeout=10)
+        self._conn.execute("PRAGMA journal_mode=WAL")
+        self._conn.execute("PRAGMA busy_timeout=5000")
+        self._conn.execute("PRAGMA foreign_keys=ON")
+        self._conn.execute("PRAGMA synchronous=NORMAL")
+        self._conn.row_factory = sqlite3.Row
+
+    def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
+        with self._lock:
+            try:
+                return self._conn.execute(sql, params)
+            except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
+                log.warning("[DB] Reconnecting: %s", e)
+                self._connect()
+                return self._conn.execute(sql, params)
+
+    def executescript(self, script: str) -> None:
+        with self._lock:
+            try:
+                self._conn.executescript(script)
+            except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
+                log.warning("[DB] Reconnecting: %s", e)
+                self._connect()
+                self._conn.executescript(script)
+
+    def commit(self) -> None:
+        with self._lock:
+            if self._conn:
+                self._conn.commit()
+
+    def rollback(self) -> None:
+        with self._lock:
+            if self._conn:
+                self._conn.rollback()
+
+    def close(self) -> None:
+        with self._lock:
+            if self._conn:
+                self._conn.close()
+                self._conn = None
+
+    def is_alive(self) -> bool:
+        try:
+            with self._lock:
+                if self._conn:
+                    self._conn.execute("SELECT 1")
+                    return True
+        except Exception:
+            pass
+        return False
+
+
 def init_db(db_path: Path | None = None) -> None:
     """Inicializa el schema de la cola de tareas."""
     path = db_path or _DEFAULT_DB
@@ -187,6 +250,8 @@ class TaskQueue:
         self._db_path = db_path or _DEFAULT_DB
         init_db(self._db_path)
         self._lock = threading.Lock()
+        self._db = _PersistentConnection(self._db_path)
+        self._db = _PersistentConnection(self._db_path)
 
     def _now(self) -> str:
         return datetime.now(UTC).isoformat()
