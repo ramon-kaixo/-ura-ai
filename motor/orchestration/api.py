@@ -10,10 +10,15 @@ Endpoints:
   POST   /tasks/{id}/fail    — Marcar como fallida
   POST   /tasks/{id}/review  — Marcar para revisión
   POST   /tasks/{id}/heartbeat — Actualizar heartbeat
+  POST   /tasks/{id}/pause    — Pausar tarea en progreso (reservada al nodo)
+  POST   /tasks/{id}/resume   — Reanudar tarea pausada
   GET    /tasks/{id}/events  — Historial de eventos
   GET    /stats              — Estadísticas de la cola
   GET    /health             — Health check
   POST   /recover-stale      — Recuperar tareas stale
+  GET    /worker/status      — Estado del pool (work-stealing / rebalanceo)
+  POST   /nodes/{id}/pause   — Detener un nodo (libera assigned, pausa in_progress)
+  POST   /nodes/{id}/resume  — Reanudar un nodo
 """
 
 from __future__ import annotations
@@ -25,7 +30,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 # Add parent to path for imports
@@ -92,6 +97,7 @@ class ReviewTask(BaseModel):
 
 class SyncTask(BaseModel):
     """Task received from a remote node for sync."""
+
     description: str
     plan_phase: str = ""
     priority: int = 0
@@ -184,6 +190,30 @@ def heartbeat_task(task_id: str):
     return {"status": "ok"}
 
 
+class PauseTask(BaseModel):
+    node_id: str = ""
+
+
+@app.post("/tasks/{task_id}/pause")
+def pause_task(task_id: str, req: PauseTask | None = None):
+    """Pausa una tarea en progreso. Queda reservada al nodo (no se roba)."""
+    node_id = req.node_id if req else ""
+    task = _queue.pause(task_id, node_id)
+    if not task:
+        raise HTTPException(409, "Task not in 'assigned' or 'in_progress' state")
+    return task.to_dict()
+
+
+@app.post("/tasks/{task_id}/resume")
+def resume_task(task_id: str, req: PauseTask | None = None):
+    """Reanuda una tarea pausada para el nodo indicado (o el que la pausó)."""
+    node_id = req.node_id if req else ""
+    task = _queue.resume(task_id, node_id)
+    if not task:
+        raise HTTPException(409, "Task not in 'paused' state")
+    return task.to_dict()
+
+
 @app.get("/tasks/{task_id}/events")
 def get_events(task_id: str):
     events = _queue.get_events(task_id)
@@ -239,10 +269,8 @@ def telemetry_query(event: str | None = None, task_id: str | None = None, limit:
     }
 
 
-@app.get("/dashboard", response_class=None)
+@app.get("/dashboard", response_class=HTMLResponse)
 def dashboard():
-    from fastapi.responses import HTMLResponse
-
     stats = _telemetry.stats(since_minutes=60)
     tasks = _telemetry.recent_tasks()
     return HTMLResponse(dashboard_html(stats, tasks))
@@ -333,20 +361,26 @@ def parallel_status():
     try:
         result = subprocess.run(
             ["git", "branch", "--show-current"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         branch = result.stdout.strip() or "unknown"
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("git branch --show-current fallo: %s", e)
 
     try:
         result = subprocess.run(
             ["git", "rev-list", "HEAD..origin/main", "--count"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         behind_main = int(result.stdout.strip() or "0")
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("git rev-list fallo: %s", e)
 
     # Verificar conflictos
     conflict_log = Path("CONFLICT.log")
@@ -359,7 +393,10 @@ def parallel_status():
         try:
             result = subprocess.run(
                 ["git", "log", f"origin/{other}", "--oneline", "-3"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             commits = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
             other_branches[other] = {"commits": commits}
@@ -380,7 +417,6 @@ def parallel_status():
 # ---------------------------------------------------------------------------
 
 _registry: Any = None
-
 
 
 @app.post("/tasks/sync")
@@ -412,6 +448,7 @@ def sync_task(req: SyncTask):
     )
     return {"status": "synced", "task_id": task.id}
 
+
 def _get_registry() -> Any:
     global _registry  # noqa: PLW0603
     if _registry is None:
@@ -419,6 +456,73 @@ def _get_registry() -> Any:
 
         _registry = NodeRegistry()
     return _registry
+
+
+# ---------------------------------------------------------------------------
+# Work-Stealing pool — rebalanceo por ociosidad
+# ---------------------------------------------------------------------------
+
+_stealer: Any = None
+
+
+def _get_stealer() -> Any:
+    global _stealer  # noqa: PLW0603
+    if _stealer is None:
+        from motor.orchestration.worksteal import WorkStealer
+
+        _stealer = WorkStealer(_queue, _get_registry())
+    return _stealer
+
+
+class PauseNode(BaseModel):
+    force_release_paused: bool = False
+
+
+@app.post("/nodes/{node_id}/pause")
+def pause_node(node_id: str, req: PauseNode | None = None):
+    """Detiene un nodo del pool.
+
+    Libera a la cola común sus tareas ``assigned`` y pausa sus ``in_progress``
+    (Opción C: el trabajo a medias queda reservado al nodo). Si
+    ``force_release_paused`` es True, además libera las ``paused``.
+    """
+    stealer = _get_stealer()
+    stealer.release(node_id)
+    result: dict[str, Any] = {"node_id": node_id, "status": "paused"}
+    if req and req.force_release_paused:
+        result["released_paused"] = _queue.release_all_paused(node_id)
+    return result
+
+
+@app.post("/nodes/{node_id}/resume")
+def resume_node(node_id: str):
+    """Reanuda un nodo del pool (marca presencia activa)."""
+    stealer = _get_stealer()
+    stealer.acquire(node_id)
+    resumable = _queue.list_resumable(node_id)
+    return {
+        "node_id": node_id,
+        "status": "resumed",
+        "resumable": len(resumable),
+        "resumable_ids": [t.id for t in resumable],
+    }
+
+
+@app.get("/worker/status")
+def worker_status():
+    """Estado del pool de trabajo (work-stealing)."""
+    stealer = _get_stealer()
+    status = stealer.status()
+    status["queue"] = _queue.stats()
+    return status
+
+
+@app.post("/worker/rebalance")
+def worker_rebalance(force: bool = False):
+    """Fuerza un barrido de rebalanceo del pool."""
+    stealer = _get_stealer()
+    counts = stealer.rebalance(force=force)
+    return {"rebalance": counts, "status": stealer.status()}
 
 
 class RegisterNode(BaseModel):
