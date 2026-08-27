@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""parse_plan_to_tasks.py — Parsea un plan markdown y crea tareas en el orquestador.
+
+Uso:
+    python3 parse_plan_to_tasks.py <plan_file.md> [--node NODE] [--dry-run]
+    echo "### Tarea 1\n..." | python3 parse_plan_to_tasks.py -
+
+Formato esperado del plan (markdown):
+    ## Título del plan
+
+    ### Sprint 1 — Nombre
+    - [ ] Tarea 1: descripción
+    - [ ] Tarea 2: descripción
+
+    ### Sprint 2 — Nombre
+    1. Tarea 3: descripción
+    2. Tarea 4: descripción
+
+    O también:
+    ## Tarea: Nombre
+    Prioridad: alta
+    Nodo: gx10
+    Descripción: ...
+
+Reglas de parsing:
+    - ## o ### = separador de fase/bloque
+    - - [ ] o número + punto = tarea individual
+    - Líneas con "Prioridad:", "Nodo:", "Timeout:" = metadatos de la tarea anterior
+    - Líneas vacías separan tareas
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import re
+import sys
+import urllib.request
+from dataclasses import dataclass, field
+from urllib.error import URLError
+
+
+@dataclass
+class TaskSpec:
+    """Especificación de una tarea parseada del plan."""
+    title: str
+    description: str = ""
+    phase: str = ""
+    priority: int = 0
+    node_id: str = ""
+    timeout_seconds: int = 1800
+    context_json: str = "{}"
+
+
+PRIORITY_MAP = {
+    "alta": 10, "high": 10, "critica": 10, "critical": 10,
+    "media": 5, "medium": 5,
+    "baja": 0, "low": 0,
+}
+
+
+def parse_plan(content: str) -> list[TaskSpec]:
+    """Parsea markdown del plan en lista de TaskSpec."""
+    tasks: list[TaskSpec] = []
+    current_phase = ""
+    current_task: TaskSpec | None = None
+    description_lines: list[str] = []
+
+    for line in content.splitlines():
+        stripped = line.strip()
+
+        # Phase headers (## or ###)
+        if re.match(r"^#{2,3}\s+", stripped):
+            if current_task:
+                if description_lines:
+                    current_task.description = "\n".join(description_lines).strip()
+                elif not current_task.description:
+                    current_task.description = current_task.title
+                tasks.append(current_task)
+                current_task = None
+                description_lines = []
+            current_phase = re.sub(r"^#{2,3}\s+", "", stripped)
+            continue
+
+        # Task items: - [ ] or 1. or - 
+        task_match = re.match(r"^(?:-\s*\[.\]\s*|\d+\.\s+)(.+)", stripped)
+        if task_match:
+            if current_task:
+                if description_lines:
+                    current_task.description = "\n".join(description_lines).strip()
+                elif not current_task.description:
+                    current_task.description = current_task.title
+                tasks.append(current_task)
+                description_lines = []
+
+            title = task_match.group(1).strip()
+            # Remove trailing colon if present
+            title = title.rstrip(":")
+            current_task = TaskSpec(title=title, phase=current_phase)
+            continue
+
+        # Metadata lines
+        if current_task and stripped:
+            meta_match = re.match(r"^(Prioridad|Priority|Nodo|Node|Timeout|Tiempo):\s*(.+)", stripped, re.IGNORECASE)
+            if meta_match:
+                key, value = meta_match.group(1).lower(), meta_match.group(2).strip()
+                if key in ("prioridad", "priority"):
+                    current_task.priority = PRIORITY_MAP.get(value.lower(), 5)
+                elif key in ("nodo", "node"):
+                    current_task.node_id = value
+                elif key in ("timeout", "tiempo"):
+                    try:
+                        current_task.timeout_seconds = int(value)
+                    except ValueError:
+                        pass
+                continue
+
+        # Description continuation
+        if current_task and stripped:
+            description_lines.append(stripped)
+
+    # Last task
+    if current_task:
+        if description_lines:
+            current_task.description = "\n".join(description_lines).strip()
+        if not current_task.description:
+            current_task.description = current_task.title
+        tasks.append(current_task)
+
+    return tasks
+
+
+def create_task(api_url: str, task: TaskSpec, dry_run: bool = False) -> dict | None:
+    """Crea una tarea en el orquestador via API."""
+    payload = {
+        "description": f"[{task.phase}] {task.title}" if task.phase else task.title,
+        "plan_phase": task.phase,
+        "priority": task.priority,
+        "timeout_seconds": task.timeout_seconds,
+        "node_id": task.node_id,
+        "context_json": json.dumps({"plan_task": task.title, "plan_phase": task.phase}),
+    }
+
+    if dry_run:
+        print(f"  [DRY-RUN] Would create: {task.title}")
+        print(f"    Phase: {task.phase}")
+        print(f"    Priority: {task.priority}")
+        print(f"    Node: {task.node_id or 'any'}")
+        print(f"    Timeout: {task.timeout_seconds}s")
+        return None
+
+    try:
+        body = json.dumps(payload).encode()
+        req = urllib.request.Request(
+            f"{api_url}/tasks",
+            data=body,
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = json.loads(resp.read())
+            return result
+    except (URLError, OSError, json.JSONDecodeError) as e:
+        print(f"  [ERROR] Failed to create task '{task.title}': {e}", file=sys.stderr)
+        return None
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Parse plan and create tasks in orchestrator")
+    parser.add_argument("plan", help="Plan file (markdown) or - for stdin")
+    parser.add_argument("--url", default=os.environ.get("URA_ORCHESTRATOR_URL", "http://localhost:4097"),
+                       help="Orchestrator API URL")
+    parser.add_argument("--node", default="", help="Default node for tasks without explicit node")
+    parser.add_argument("--dry-run", action="store_true", help="Show tasks without creating them")
+    parser.add_argument("--json", action="store_true", help="Output results as JSON")
+    args = parser.parse_args()
+
+    # Read plan
+    if args.plan == "-":
+        content = sys.stdin.read()
+    else:
+        with open(args.plan) as f:
+            content = f.read()
+
+    # Parse
+    tasks = parse_plan(content)
+    if not tasks:
+        print("No tasks found in plan.", file=sys.stderr)
+        sys.exit(1)
+
+    # Apply default node
+    for t in tasks:
+        if not t.node_id:
+            t.node_id = args.node
+
+    print(f"Found {len(tasks)} tasks in plan.\n")
+
+    # Create tasks
+    results = []
+    for i, task in enumerate(tasks, 1):
+        print(f"{i}/{len(tasks)}: {task.title}")
+        result = create_task(args.url, task, args.dry_run)
+        if result:
+            print(f"  -> Created: {result['id']} (status: {result['status']})")
+            results.append(result)
+        elif not args.dry_run:
+            print(f"  -> FAILED")
+    
+    print(f"\nDone. {len(results)}/{len(tasks)} tasks created.")
+
+    if args.json:
+        print(json.dumps({"created": len(results), "total": len(tasks), "tasks": results}, indent=2))
+
+
+if __name__ == "__main__":
+    main()
