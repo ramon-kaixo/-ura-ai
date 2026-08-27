@@ -1,5 +1,5 @@
 {
-  "modo": "secuencial",
+  "modo": "paralelo",
   "colas": {
     "pendientes": [],
     "en_progreso": [],
@@ -58,11 +58,21 @@
   "agentes": {
     "TERM": {
       "estado": "libre",
-      "rol_actual": null
+      "rol_actual": null,
+      "nodo": "gx10-desktop",
+      "rama": "feature/opencode-gx10"
     },
     "WEB": {
       "estado": "libre",
-      "rol_actual": null
+      "rol_actual": null,
+      "nodo": "gx10-web",
+      "rama": "feature/opencode-web"
+    },
+    "MAC": {
+      "estado": "libre",
+      "rol_actual": null,
+      "nodo": "mac",
+      "rama": "feature/opencode-mac"
     }
   },
   "tareas": {
@@ -664,7 +674,63 @@
       "nota": "DONE 2026-08-18."
     }
   },
-  "ultima_ejecucion_despertador": "2026-08-25T04:54:52Z",
+    "TASK-20260826-019": {
+      "task_id": "TASK-20260826-019",
+      "descripcion": "Sprint 0.2: API dual-node — GX10 y Mac se hablan entre sí via Tailscale",
+      "ejecutor": "TERM",
+      "revisor": "MAC",
+      "estado": "en_progreso",
+      "prioridad": "alta",
+      "rama": "feature/opencode-gx10",
+      "archivos": ["motor/orchestration/api.py", "motor/orchestration/failover.py"],
+      "nota": "Cross-node health check cada 30s. NODE_ID en .env. IP virtual Tailscale para orquestador."
+    },
+    "TASK-20260826-020": {
+      "task_id": "TASK-20260826-020",
+      "descripcion": "Sprint 0.3: Distributed Lock real — SQLite BEGIN IMMEDIATE + timeout 30s",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "pendiente",
+      "prioridad": "alta",
+      "rama": "feature/opencode-web",
+      "archivos": ["motor/orchestration/distributed_lock.py"],
+      "nota": "Reemplazar fcntl por SQLite BEGIN IMMEDIATE. Verificar SQLite >= 3.35 en GX10."
+    },
+    "TASK-20260826-021": {
+      "task_id": "TASK-20260826-021",
+      "descripcion": "Sprint 0.4: Stale configurable — timeout_seconds en payload, default 1800s",
+      "ejecutor": "MAC",
+      "revisor": "WEB",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "rama": "feature/opencode-mac",
+      "archivos": ["motor/orchestration/task_queue.py"],
+      "nota": "Heartbeat cada min(10, timeout_seconds/10). Campo nuevo en task payload."
+    },
+    "TASK-20260826-022": {
+      "task_id": "TASK-20260826-022",
+      "descripcion": "Sprint 0.5: Anti-flapping — 5 fallos en 60s → DOWN, 3 éxitos en 30s → NORMAL",
+      "ejecutor": "TERM",
+      "revisor": "MAC",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "rama": "feature/opencode-gx10",
+      "archivos": ["motor/orchestration/failover.py"],
+      "nota": "HealthChecker: configurable thresholds. Limpieza worktrees solo al entrar AUTONOMOUS."
+    },
+    "TASK-20260826-023": {
+      "task_id": "TASK-20260826-023",
+      "descripcion": "Sprint 0.6: Tests E2E contra nodos reales (GX10 + Mac via Tailscale)",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "pendiente",
+      "prioridad": "media",
+      "rama": "feature/opencode-web",
+      "archivos": ["tests/test_e2e.py"],
+      "nota": "@pytest.mark.e2e. Skip si no hay conectividad. Flujo: POST /tasks → claim → start → complete."
+    }
+  },
+  "ultima_ejecucion_despertador": "2026-08-27T10:00:00Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
