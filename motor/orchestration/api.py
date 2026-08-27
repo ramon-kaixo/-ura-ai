@@ -70,6 +70,7 @@ class CreateTask(BaseModel):
     max_retries: int = 3
     timeout_seconds: int = 1800
     context_json: str = "{}"
+    node_id: str = ""
 
 
 class ClaimTask(BaseModel):
@@ -103,6 +104,7 @@ def create_task(req: CreateTask):
         max_retries=req.max_retries,
         timeout_seconds=req.timeout_seconds,
         context_json=req.context_json,
+        node_id=req.node_id,
     )
     return task.to_dict()
 
@@ -173,6 +175,12 @@ def heartbeat_task(task_id: str):
 def get_events(task_id: str):
     events = _queue.get_events(task_id)
     return {"events": events, "count": len(events)}
+
+
+@app.get("/tasks/node/{node_id}")
+def list_tasks_by_node(node_id: str, status: str | None = None, limit: int = 50):
+    tasks = _queue.list_by_node(node_id, status, limit)
+    return {"tasks": [t.to_dict() for t in tasks], "count": len(tasks), "node_id": node_id}
 
 
 @app.get("/stats")

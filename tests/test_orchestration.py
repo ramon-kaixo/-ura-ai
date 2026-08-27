@@ -1066,3 +1066,46 @@ class TestSSHControlMaster:
         status = executor.connection_status(host="ramon@192.0.2.1")
         assert status["alive"] is False
         assert "host" in status
+
+class TestShardedQueues:
+    """Tests for sharded task queues by node."""
+
+    def test_create_with_node_id(self, tmp_path):
+        from motor.orchestration.task_queue import TaskQueue
+        queue = TaskQueue(tmp_path / "test.db")
+        task = queue.create("Test task", node_id="gx10")
+        assert task.node_id == "gx10"
+
+    def test_list_by_node(self, tmp_path):
+        from motor.orchestration.task_queue import TaskQueue
+        queue = TaskQueue(tmp_path / "test.db")
+        queue.create("GX10 task", node_id="gx10")
+        queue.create("Mac task", node_id="mac")
+        queue.create("GX10 task 2", node_id="gx10")
+
+        gx10_tasks = queue.list_by_node("gx10")
+        assert len(gx10_tasks) == 2
+        mac_tasks = queue.list_by_node("mac")
+        assert len(mac_tasks) == 1
+
+    def test_list_by_node_and_status(self, tmp_path):
+        from motor.orchestration.task_queue import TaskQueue
+        queue = TaskQueue(tmp_path / "test.db")
+        queue.create("GX10 pending", node_id="gx10")
+        t2 = queue.create("GX10 done", node_id="gx10")
+        queue.claim(t2.id, "agent-1")
+        queue.start(t2.id)
+        queue.complete(t2.id)
+
+        pending = queue.list_by_node("gx10", status="pending")
+        assert len(pending) == 1
+        done = queue.list_by_node("gx10", status="done")
+        assert len(done) == 1
+
+    def test_node_id_in_stats(self, tmp_path):
+        from motor.orchestration.task_queue import TaskQueue
+        queue = TaskQueue(tmp_path / "test.db")
+        queue.create("Task 1", node_id="gx10")
+        queue.create("Task 2", node_id="mac")
+        stats = queue.stats()
+        assert stats["total"] == 2

@@ -123,6 +123,12 @@ def init_db(db_path: Path | None = None) -> None:
     path = db_path or _DEFAULT_DB
     with _open_db(path) as conn:
         conn.executescript(_SCHEMA)
+        # Migration: add node_id if missing
+        try:
+            conn.execute("SELECT node_id FROM tasks LIMIT 1")
+        except sqlite3.OperationalError:
+            conn.execute("ALTER TABLE tasks ADD COLUMN node_id TEXT DEFAULT ''")
+            log.info("[TASK_QUEUE] Migrated: added node_id column")
     log.info("[TASK_QUEUE] DB inicializada: %s", path)
 
 
@@ -151,6 +157,7 @@ class Task:
     error_log: str = ""
     commit_sha: str = ""
     reviewer: str = ""
+    node_id: str = ""
 
     @property
     def heartbeat_interval_s(self) -> int:
@@ -192,6 +199,7 @@ class TaskQueue:
         max_retries: int = 3,
         timeout_seconds: int = _DEFAULT_TASK_TIMEOUT_S,
         context_json: str = "{}",
+        node_id: str = "",
     ) -> Task:
         """Crea una tarea nueva."""
         task_id = f"TASK-{datetime.now(UTC).strftime('%Y%m%d')}-{uuid.uuid4().hex[:6]}"
@@ -200,10 +208,10 @@ class TaskQueue:
             conn.execute(
                 """INSERT INTO tasks
                    (id, description, plan_phase, priority, max_retries,
-                    timeout_seconds, context_json, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    timeout_seconds, context_json, created_at, updated_at, node_id)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                 (task_id, description, plan_phase, priority, max_retries,
-                 timeout_seconds, context_json, now, now),
+                 timeout_seconds, context_json, now, now, node_id),
             )
             conn.execute(
                 """INSERT INTO task_events (task_id, event, details, timestamp)
@@ -421,6 +429,21 @@ class TaskQueue:
                 (task_id,),
             ).fetchall()
             return [dict(r) for r in rows]
+
+    def list_by_node(self, node_id: str, status: str | None = None, limit: int = 50) -> list[Task]:
+        """Lista tareas filtradas por nodo."""
+        with _open_db(self._db_path) as conn:
+            if status:
+                rows = conn.execute(
+                    "SELECT * FROM tasks WHERE node_id = ? AND status = ? ORDER BY priority DESC, created_at ASC LIMIT ?",
+                    (node_id, status, limit),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM tasks WHERE node_id = ? ORDER BY priority DESC, created_at ASC LIMIT ?",
+                    (node_id, limit),
+                ).fetchall()
+            return [Task(**dict(r)) for r in rows]
 
     def stats(self) -> dict[str, Any]:
         """Estadísticas de la cola."""
