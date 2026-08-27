@@ -108,6 +108,7 @@ markers = [
     "gx10: tests que solo se ejecutan en GX10 (servidor 24/7)",
     "mac: tests que solo se ejecutan en Mac (estacion de trabajo)",
     "anywhere: tests que se ejecutan en cualquier maquina",
+    "e2e: end-to-end tests against real nodes via Tailscale",
 ]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
