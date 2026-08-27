@@ -131,6 +131,32 @@ def parse_plan(content: str) -> list[TaskSpec]:
     return tasks
 
 
+
+def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> str:
+    """Resolve a node_id to its API URL using the node registry."""
+    if not node_id or node_id == "any":
+        return default_url
+    # Try to get registry from the default URL's node
+    if registry_url:
+        try:
+            body = json.dumps({}).encode()
+            req = urllib.request.Request(f"{registry_url}/nodes/{node_id}", headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                node = json.loads(resp.read())
+                return f"http://{node['tailscale_ip']}:{node['api_port']}"
+        except (URLError, OSError, json.JSONDecodeError, KeyError):
+            pass
+    # Fallback: try GX10 as known registry
+    for known_url in ["http://100.72.103.12:4097", "http://localhost:4097"]:
+        try:
+            req = urllib.request.Request(f"{known_url}/nodes/{node_id}")
+            with urllib.request.urlopen(req, timeout=3) as resp:
+                node = json.loads(resp.read())
+                return f"http://{node['tailscale_ip']}:{node['api_port']}"
+        except (URLError, OSError, json.JSONDecodeError, KeyError):
+            continue
+    return default_url
+
 def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
                 api_key: str = "", source_node: str = "") -> dict | None:
     """Crea una tarea en el orquestador via API."""
@@ -156,8 +182,9 @@ def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
     if api_key:
         headers["X-API-Key"] = api_key
 
-    if source_node and task.node_id and task.node_id != source_node:
-        # Remote task — use sync endpoint
+    is_remote = source_node and task.node_id and task.node_id != source_node
+    if is_remote:
+        # Remote task — use sync endpoint (don't create locally)
         endpoint = f"{api_url}/tasks/sync"
         payload["source_node"] = source_node
         payload["source_task_id"] = f"{source_node}-{task.title[:20]}"
@@ -220,12 +247,16 @@ def main():
     results = []
     for i, task in enumerate(tasks, 1):
         print(f"{i}/{len(tasks)}: {task.title}")
-        result = create_task(args.url, task, args.dry_run,
+        # Resolve the target URL based on node_id
+        target_url = resolve_node_url(task.node_id, args.url, args.url)
+        result = create_task(target_url, task, args.dry_run,
                            api_key=args.api_key, source_node=source_node)
         if result:
             status = result.get("status", "unknown")
             task_id = result.get("task_id", result.get("id", "?"))
-            print(f"  -> {status}: {task_id}")
+            is_remote = source_node and task.node_id and task.node_id != source_node
+            label = "synced" if is_remote else "local"
+            print(f"  -> {status} ({label}): {task_id} [→{task.node_id or 'any'}]")
             results.append(result)
         elif not args.dry_run:
             print(f"  -> FAILED")
