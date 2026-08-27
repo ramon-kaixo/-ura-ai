@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 # ---------------------------------------------------------------------------
@@ -501,7 +502,7 @@ class TestDistributedLock:
     def test_acquire_release(self, tmp_path: Path) -> None:
         from motor.orchestration.distributed_lock import DistributedLock
 
-        lock = DistributedLock("test-lock", tmp_path / "locks")
+        lock = DistributedLock("test-lock", tmp_path / "locks.db")
         assert lock.acquire(timeout=1.0)
         assert lock.is_locked()
         lock.release()
@@ -510,7 +511,7 @@ class TestDistributedLock:
     def test_context_manager(self, tmp_path: Path) -> None:
         from motor.orchestration.distributed_lock import DistributedLock
 
-        lock = DistributedLock("test-ctx", tmp_path / "locks")
+        lock = DistributedLock("test-ctx", tmp_path / "locks.db")
         with lock.locked() as acquired:
             assert acquired
             assert lock.is_locked()
@@ -519,18 +520,28 @@ class TestDistributedLock:
     def test_double_lock_fails(self, tmp_path: Path) -> None:
         from motor.orchestration.distributed_lock import DistributedLock
 
-        lock1 = DistributedLock("test-double", tmp_path / "locks")
-        lock2 = DistributedLock("test-double", tmp_path / "locks")
+        lock1 = DistributedLock("test-double", tmp_path / "locks.db")
+        lock2 = DistributedLock("test-double", tmp_path / "locks.db")
 
         assert lock1.acquire(timeout=1.0)
         assert not lock2.acquire(timeout=0.5)
         lock1.release()
 
-    def test_audit_lock(self, tmp_path: Path) -> None:
-        from motor.orchestration.distributed_lock import AuditLock
-        from motor.orchestration.distributed_lock import _DEFAULT_LOCK_DIR
+    def test_owner_info(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import DistributedLock
 
-        # Override default lock dir for test
+        lock = DistributedLock("test-owner", tmp_path / "locks")
+        assert lock.owner_info() is None
+        lock.acquire(timeout=1.0)
+        info = lock.owner_info()
+        assert info is not None
+        assert "pid=" in info["owner"]
+        assert info["age_s"] >= 0
+        lock.release()
+
+    def test_audit_lock(self, tmp_path: Path) -> None:
+        from motor.orchestration.distributed_lock import AuditLock, _DEFAULT_LOCK_DIR
+
         import motor.orchestration.distributed_lock as dl_mod
 
         original = dl_mod._DEFAULT_LOCK_DIR
