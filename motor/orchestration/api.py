@@ -68,6 +68,7 @@ class CreateTask(BaseModel):
     plan_phase: str = ""
     priority: int = 0
     max_retries: int = 3
+    timeout_seconds: int = 1800
     context_json: str = "{}"
 
 
@@ -100,6 +101,7 @@ def create_task(req: CreateTask):
         plan_phase=req.plan_phase,
         priority=req.priority,
         max_retries=req.max_retries,
+        timeout_seconds=req.timeout_seconds,
         context_json=req.context_json,
     )
     return task.to_dict()
