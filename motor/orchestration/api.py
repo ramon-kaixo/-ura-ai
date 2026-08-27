@@ -354,6 +354,100 @@ def parallel_status():
     }
 
 
+# ---------------------------------------------------------------------------
+# Node Registry — multi-node discovery
+# ---------------------------------------------------------------------------
+
+_registry: Any = None
+
+
+def _get_registry() -> Any:
+    global _registry  # noqa: PLW0603
+    if _registry is None:
+        from motor.orchestration.node_registry import NodeRegistry
+
+        _registry = NodeRegistry()
+    return _registry
+
+
+class RegisterNode(BaseModel):
+    node_id: str
+    hostname: str
+    tailscale_ip: str
+    api_port: int = 4097
+    tags: list[str] = []
+
+
+@app.get("/nodes")
+def list_nodes():
+    """List all known peer nodes and their health status."""
+    reg = _get_registry()
+    nodes = reg.list_all()
+    return {
+        "nodes": [n.to_dict() for n in nodes],
+        "count": len(nodes),
+        "self": os.environ.get("URA_NODE_ID", "unknown"),
+    }
+
+
+@app.post("/nodes/register")
+def register_node(req: RegisterNode):
+    """Register or update a peer node."""
+    reg = _get_registry()
+    node = reg.register(
+        node_id=req.node_id,
+        hostname=req.hostname,
+        tailscale_ip=req.tailscale_ip,
+        api_port=req.api_port,
+        tags=req.tags,
+    )
+    return node.to_dict()
+
+
+@app.delete("/nodes/{node_id}")
+def unregister_node(node_id: str):
+    """Remove a node from the registry."""
+    reg = _get_registry()
+    removed = reg.unregister(node_id)
+    if not removed:
+        raise HTTPException(404, "Node not found")
+    return {"removed": node_id}
+
+
+@app.get("/nodes/{node_id}")
+def get_node(node_id: str):
+    """Get info about a specific peer node."""
+    reg = _get_registry()
+    node = reg.get(node_id)
+    if not node:
+        raise HTTPException(404, "Node not found")
+    return node.to_dict()
+
+
+@app.post("/nodes/check")
+def check_nodes(node_id: str | None = None):
+    """Trigger health check for one or all nodes."""
+    reg = _get_registry()
+    results = reg.check_health(node_id)
+    return {"results": results}
+
+
+@app.post("/nodes/start-checker")
+def start_node_checker():
+    """Start background health checker for all nodes."""
+    reg = _get_registry()
+    reg.start_checker()
+    return {"status": "started"}
+
+
+@app.post("/nodes/stop-checker")
+def stop_node_checker():
+    """Stop background health checker."""
+    reg = _get_registry()
+    reg.stop_checker()
+    return {"status": "stopped"}
+
+
 def main():
     import uvicorn
 
