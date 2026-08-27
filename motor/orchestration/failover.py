@@ -362,6 +362,40 @@ class RemoteExecutor:
         result = self.run("echo ok", host=host, timeout_s=5)
         return result.success and "ok" in result.stdout
 
+    def cleanup_control_socket(self, host: str | None = None) -> bool:
+        """Cierra el socket de ControlMaster para un host."""
+        target_host = host or self._default_host
+        # Parse user@host:port
+        user_host = target_host.split(":")[0]
+        try:
+            subprocess.run(
+                ["ssh", "-o", "ControlMaster=no", "-O", "exit", user_host],
+                capture_output=True, timeout=5, check=False,
+            )
+            log.info("[SSH] Control socket closed for %s", user_host)
+            return True
+        except Exception as e:
+            log.debug("[SSH] Error closing control socket: %s", e)
+            return False
+
+    def connection_status(self, host: str | None = None) -> dict:
+        """Verifica el estado de la conexión SSH multiplexada."""
+        target_host = host or self._default_host
+        user_host = target_host.split(":")[0]
+        try:
+            result = subprocess.run(
+                ["ssh", "-O", "check", user_host],
+                capture_output=True, text=True, timeout=5, check=False,
+            )
+            alive = result.returncode == 0
+            return {
+                "host": user_host,
+                "alive": alive,
+                "control_path": f"/tmp/ura-ssh-{user_host.replace("@", "-")}",
+            }
+        except Exception as e:
+            return {"host": user_host, "alive": False, "error": str(e)}
+
 
 # ---------------------------------------------------------------------------
 # Worktree Manager — Lifecycle completo

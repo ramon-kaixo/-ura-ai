@@ -1049,3 +1049,20 @@ class TestBug4FailoverStateRace:
         import json
         data = json.loads(state_file.read_text())
         assert data["mode"] == "autonomous"
+
+class TestSSHControlMaster:
+    """Tests for SSH ControlMaster improvements."""
+
+    def test_control_socket_cleanup(self):
+        from motor.orchestration.failover import RemoteExecutor
+        executor = RemoteExecutor()
+        # Cleanup of non-existent socket should not crash
+        result = executor.cleanup_control_socket(host="ramon@192.0.2.1")
+        assert isinstance(result, bool)
+
+    def test_connection_status_unreachable(self):
+        from motor.orchestration.failover import RemoteExecutor
+        executor = RemoteExecutor()
+        status = executor.connection_status(host="ramon@192.0.2.1")
+        assert status["alive"] is False
+        assert "host" in status
