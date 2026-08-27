@@ -14,7 +14,7 @@ if [[ -n "${URA_NODE_ID:-}" ]]; then
 else
     HOSTNAME_SHORT=$(hostname -s 2>/dev/null || echo "unknown")
     case "$HOSTNAME_SHORT" in
-        gx10*|ramon-gx10*) NODE_ID="gx10-desktop" ;;
+        gx10*|ramon-gx10*) NODE_ID="gx10" ;;
         gx10-web*)         NODE_ID="gx10-web" ;;
         mac*|ramones*)     NODE_ID="mac" ;;
         *)                 NODE_ID="$HOSTNAME_SHORT" ;;
