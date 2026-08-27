@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import hmac
 import json
 import os
 import tempfile
@@ -11,6 +12,10 @@ from pathlib import Path
 from typing import Any
 
 from motor.core.utils.anonymizer import sanitize_text
+
+
+class IntegrityError(Exception):
+    """Lanzada cuando la verificación de integridad de un archivo falla."""
 
 
 def atomic_write(
@@ -66,11 +71,22 @@ def file_sha256(path: Path | str) -> str:
 
 
 def verify_file_integrity(path: Path | str, expected_sha256: str) -> bool:
-    """Verifica integridad de archivo via SHA-256."""
-    return file_sha256(path) == expected_sha256
+    """Verifica integridad de archivo via SHA-256 con comparación constante en tiempo.
+
+    Raises:
+        IntegrityError: Si el hash no coincide.
+    """
+    actual = file_sha256(path)
+    if not hmac.compare_digest(actual, expected_sha256):
+        raise IntegrityError(
+            f"Integrity check failed for {path}: "
+            f"expected={expected_sha256[:16]}..., actual={actual[:16]}..."
+        )
+    return True
 
 
 __all__ = [
+    "IntegrityError",
     "atomic_write",
     "atomic_write_json",
     "file_sha256",

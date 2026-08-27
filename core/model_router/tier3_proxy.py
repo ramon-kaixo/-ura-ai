@@ -430,6 +430,7 @@ class Tier3Proxy:
         last_status = 503
         last_headers: dict = {}
         last_body = b'{"error": "all providers failed"}'
+        body_to_send = body  # Initialize with original body
 
         for tier_num in sorted(tiers.keys()):
             providers = tiers[tier_num]
