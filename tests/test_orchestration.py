@@ -135,6 +135,47 @@ class TestTaskQueue:
         assert len(error_lines) <= 50
 
 
+class TestTaskTimeoutSeconds:
+    """Tests for per-task timeout_seconds."""
+
+    def _make_queue(self, tmp_path: Path):
+        from motor.orchestration.task_queue import TaskQueue
+        return TaskQueue(db_path=tmp_path / "test_queue.db")
+
+    def test_create_with_timeout(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Fast task", timeout_seconds=60)
+        assert task.timeout_seconds == 60
+        assert task.heartbeat_interval_s == 6  # min(10, 60/10)
+        assert task.stale_timeout_s == 60
+
+    def test_default_timeout(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Normal task")
+        assert task.timeout_seconds == 1800
+        assert task.heartbeat_interval_s == 10  # min(10, 1800/10)
+
+    def test_short_timeout_heartbeat(self, tmp_path):
+        q = self._make_queue(tmp_path)
+        task = q.create("Very fast task", timeout_seconds=30)
+        assert task.heartbeat_interval_s == 3  # min(10, 30/10)
+
+    def test_stale_uses_per_task_timeout(self, tmp_path):
+        """Tasks with different timeouts have different stale thresholds."""
+        import time
+
+        q = self._make_queue(tmp_path)
+        task = q.create("Fast task", timeout_seconds=2)
+        q.claim(task.id, "agent")
+        q.start(task.id)
+
+        time.sleep(2.5)
+
+        stale = q.recover_stale()
+        stale_ids = [t.id for t in stale]
+        assert task.id in stale_ids
+
+
 # ---------------------------------------------------------------------------
 # Tier-3 Proxy Tests
 # ---------------------------------------------------------------------------

@@ -26,8 +26,9 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 _DEFAULT_DB = Path(__file__).parent.parent.parent / "data" / "task_queue.db"
-_STALE_TIMEOUT_S = 300  # 5 min
+_STALE_TIMEOUT_S = 300  # 5 min (default si no se especifica timeout_seconds)
 _HEARTBEAT_TIMEOUT_S = 60
+_DEFAULT_TASK_TIMEOUT_S = 1800  # 30 min
 
 
 class TaskStatus(StrEnum):
@@ -71,6 +72,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     priority INTEGER DEFAULT 0,
     retries INTEGER DEFAULT 0,
     max_retries INTEGER DEFAULT 3,
+    timeout_seconds INTEGER DEFAULT 1800,
     context_json TEXT DEFAULT '{}',
     worktree_path TEXT DEFAULT '',
     created_at TEXT NOT NULL,
@@ -139,6 +141,7 @@ class Task:
     priority: int = 0
     retries: int = 0
     max_retries: int = 3
+    timeout_seconds: int = _DEFAULT_TASK_TIMEOUT_S
     context_json: str = "{}"
     worktree_path: str = ""
     created_at: str = ""
@@ -149,8 +152,20 @@ class Task:
     commit_sha: str = ""
     reviewer: str = ""
 
+    @property
+    def heartbeat_interval_s(self) -> int:
+        """Heartbeat interval: min(10, timeout_seconds/10)."""
+        return min(10, max(1, self.timeout_seconds // 10))
+
+    @property
+    def stale_timeout_s(self) -> int:
+        """Stale timeout for this task."""
+        return self.timeout_seconds
+
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        d = asdict(self)
+        d["heartbeat_interval_s"] = self.heartbeat_interval_s
+        return d
 
 
 # ---------------------------------------------------------------------------
@@ -175,6 +190,7 @@ class TaskQueue:
         plan_phase: str = "",
         priority: int = 0,
         max_retries: int = 3,
+        timeout_seconds: int = _DEFAULT_TASK_TIMEOUT_S,
         context_json: str = "{}",
     ) -> Task:
         """Crea una tarea nueva."""
@@ -184,9 +200,10 @@ class TaskQueue:
             conn.execute(
                 """INSERT INTO tasks
                    (id, description, plan_phase, priority, max_retries,
-                    context_json, created_at, updated_at)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                (task_id, description, plan_phase, priority, max_retries, context_json, now, now),
+                    timeout_seconds, context_json, created_at, updated_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (task_id, description, plan_phase, priority, max_retries,
+                 timeout_seconds, context_json, now, now),
             )
             conn.execute(
                 """INSERT INTO task_events (task_id, event, details, timestamp)
@@ -365,30 +382,33 @@ class TaskQueue:
             return result.rowcount > 0
 
     def recover_stale(self) -> list[Task]:
-        """Recupera tareas stale (sin heartbeat por >timeout)."""
-        cutoff = time.time() - _STALE_TIMEOUT_S
-        cutoff_iso = datetime.fromtimestamp(cutoff, tz=UTC).isoformat()
+        """Recupera tareas stale (sin heartbeat por >timeout_seconds de la tarea)."""
+        now_ts = time.time()
         stale = []
         with self._lock, _open_db(self._db_path) as conn:
             rows = conn.execute(
                 """SELECT * FROM tasks
                    WHERE status IN ('assigned', 'in_progress')
-                   AND last_heartbeat < ?""",
-                (cutoff_iso,),
+                   AND last_heartbeat != ''""",
             ).fetchall()
             for row in rows:
                 task = Task(**dict(row))
-                conn.execute(
-                    """UPDATE tasks SET status = 'pending', assigned_to = '', updated_at = ?
-                       WHERE id = ?""",
-                    (self._now(), task.id),
-                )
-                conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
-                    (task.id, TaskEvent.TIMEOUT.value, "heartbeat timeout", self._now()),
-                )
-                stale.append(task)
+                # Use per-task timeout_seconds
+                cutoff_ts = now_ts - task.stale_timeout_s
+                cutoff_iso = datetime.fromtimestamp(cutoff_ts, tz=UTC).isoformat()
+                if task.last_heartbeat < cutoff_iso:
+                    conn.execute(
+                        """UPDATE tasks SET status = 'pending', assigned_to = '', updated_at = ?
+                           WHERE id = ?""",
+                        (self._now(), task.id),
+                    )
+                    conn.execute(
+                        """INSERT INTO task_events (task_id, event, details, timestamp)
+                           VALUES (?, ?, ?, ?)""",
+                        (task.id, TaskEvent.TIMEOUT.value,
+                         f"heartbeat timeout (limit={task.stale_timeout_s}s)", self._now()),
+                    )
+                    stale.append(task)
         if stale:
             log.warning("[TASK_QUEUE] %d tareas stale recuperadas", len(stale))
         return stale
