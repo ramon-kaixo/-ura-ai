@@ -23,9 +23,9 @@ git log origin/feature/opencode-web --oneline -5 2>/dev/null || echo "rama no di
 git log origin/feature/opencode-mac --oneline -5 2>/dev/null || echo "rama no disponible"
 ```
 
-## Behind develop
+## Behind main
 ```
-git rev-list HEAD..origin/develop --count 2>/dev/null || echo "0"
+git rev-list HEAD..origin/main --count 2>/dev/null || echo "0"
 ```
 
 ## Conflictos pendientes

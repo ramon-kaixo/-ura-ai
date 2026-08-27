@@ -14,12 +14,12 @@ AUTO_MODE=false
 MERGE_ORDER=("feature/opencode-gx10" "feature/opencode-web" "feature/opencode-mac")
 RESULTS=()
 
-# Asegurar que estamos en develop
-git checkout develop 2>/dev/null || {
-    echo "[ERROR] No se puede checkout a develop"
+# Asegurar que estamos en main
+git checkout main 2>/dev/null || {
+    echo "[ERROR] No se puede checkout a main"
     exit 1
 }
-git pull origin develop 2>/dev/null || true
+git pull origin main 2>/dev/null || true
 
 for BRANCH in "${MERGE_ORDER[@]}"; do
     # Verificar si la rama existe en remoto
@@ -34,7 +34,7 @@ for BRANCH in "${MERGE_ORDER[@]}"; do
     echo "[MERGE] Integrando $BRANCH → develop"
 
     # Intentar merge
-    if git merge --no-ff -m "merge: $BRANCH → develop" "origin/$BRANCH" 2>/dev/null; then
+    if git merge --no-ff -m "merge: $BRANCH → main" "origin/$BRANCH" 2>/dev/null; then
         echo "[OK] $BRANCH mergeado sin conflictos"
         RESULTS+=("$BRANCH:OK")
     else
@@ -47,9 +47,9 @@ for BRANCH in "${MERGE_ORDER[@]}"; do
             PAYLOAD=$(cat <<EOF
 {
   "type": "CONFLICT_RESOLUTION",
-  "title": "Resolver conflictos de merge: $BRANCH → develop",
+  "title": "Resolver conflictos de merge: $BRANCH → main",
   "priority": "high",
-  "payload": {"branch": "$BRANCH", "target": "develop"}
+  "payload": {"branch": "$BRANCH", "target": "main"}
 }
 EOF
 )
@@ -69,7 +69,7 @@ for r in "${RESULTS[@]}"; do
 done
 
 if [[ $OK_COUNT -gt 0 ]]; then
-    git push origin develop 2>/dev/null || echo "[WARN] Push a develop falló"
+    git push origin main 2>/dev/null || echo "[WARN] Push a main falló"
 fi
 
 echo ""

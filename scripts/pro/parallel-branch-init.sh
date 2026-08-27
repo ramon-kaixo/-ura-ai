@@ -31,7 +31,7 @@ if [[ "$CURRENT" == "$BRANCH" ]]; then
 fi
 
 # Fetch latest
-git fetch origin develop 2>/dev/null || true
+git fetch origin main 2>/dev/null || true
 
 # Crear o cambiar a la rama
 if git show-ref --verify --quiet "refs/heads/$BRANCH"; then
@@ -43,8 +43,8 @@ else
         echo "[INFO] Rama $BRANCH existe en remoto, checkout"
         git checkout -b "$BRANCH" "origin/$BRANCH"
     else
-        echo "[INFO] Creando rama nueva $BRANCH desde develop"
-        git checkout -b "$BRANCH" origin/develop 2>/dev/null || git checkout -b "$BRANCH"
+        echo "[INFO] Creando rama nueva $BRANCH desde main"
+        git checkout -b "$BRANCH" origin/main 2>/dev/null || git checkout -b "$BRANCH"
     fi
 fi
 

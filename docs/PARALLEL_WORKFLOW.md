@@ -60,7 +60,7 @@ Cuando `parallel-sync.sh` detecta conflictos:
 2. Detiene la sincronización
 3. Resuelva manualmente:
    ```bash
-   git rebase origin/develop
+   git rebase origin/main
    # Resolver conflictos en archivos
    git add .
    git rebase --continue
@@ -77,7 +77,7 @@ El hook verifica `parallel-lock.json` en `.opencode/`. Si otro nodo tiene lock s
 
 ## Merge Driver
 
-Orden de merge: `gx10` → `web` → `mac`. Cada rama se integra a `develop` con `--no-ff`.
+Orden de merge: `gx10` → `web` → `mac`. Cada rama se integra a `main` con `--no-ff`.
 
 Si falla con `--auto`, se crea tarea `CONFLICT_RESOLUTION` automáticamente.
 
@@ -88,7 +88,7 @@ Si falla con `--auto`, se crea tarea `CONFLICT_RESOLUTION` automáticamente.
 {
   "node_id": "mac",
   "branch": "feature/opencode-mac",
-  "behind_develop": 3,
+  "behind_main": 3,
   "has_conflicts": false,
   "other_branches": {
     "feature/opencode-gx10": {"commits": ["abc1234 fix: ..."]},
@@ -100,6 +100,6 @@ Si falla con `--auto`, se crea tarea `CONFLICT_RESOLUTION` automáticamente.
 ## Restricciones
 
 - **NO** hacer push directo a `main` (branch protection activo)
-- **NO** merge `develop` → `feature/*` manualmente (usar `parallel-sync.sh`)
+- **NO** merge `main` → `feature/*` manualmente (usar `parallel-sync.sh`)
 - Cada nodo solo modifica archivos en su rama
 - Si un archivo es crítico (ej. `failover.py`), crear PR en vez de merge directo

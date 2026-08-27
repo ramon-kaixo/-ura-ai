@@ -303,7 +303,7 @@ def parallel_status():
 
     node_id = os.environ.get("URA_NODE_ID", "unknown")
     branch = "unknown"
-    behind_develop = 0
+    behind_main = 0
     has_conflicts = False
     other_branches: dict[str, dict] = {}
 
@@ -318,10 +318,10 @@ def parallel_status():
 
     try:
         result = subprocess.run(
-            ["git", "rev-list", "HEAD..origin/develop", "--count"],
+            ["git", "rev-list", "HEAD..origin/main", "--count"],
             capture_output=True, text=True, timeout=5,
         )
-        behind_develop = int(result.stdout.strip() or "0")
+        behind_main = int(result.stdout.strip() or "0")
     except Exception:
         pass
 
@@ -346,7 +346,7 @@ def parallel_status():
     return {
         "node_id": node_id,
         "branch": branch,
-        "behind_develop": behind_develop,
+        "behind_main": behind_main,
         "has_conflicts": has_conflicts,
         "other_branches": other_branches,
     }

@@ -20,14 +20,14 @@ fi
 echo "[INFO] Sync de $NODE_ID en rama $CURRENT"
 
 # 1. Fetch
-git fetch origin develop 2>/dev/null || {
+git fetch origin main 2>/dev/null || {
     echo "[WARN] No se pudo hacer fetch. ¿Sin conexión?"
     exit 0
 }
 
 # 2. Verificar si hay cambios en develop
 LOCAL=$(git rev-parse HEAD)
-REMOTE=$(git rev-parse origin/develop 2>/dev/null || echo "$LOCAL")
+REMOTE=$(git rev-parse origin/main 2>/dev/null || echo "$LOCAL")
 if [[ "$LOCAL" == "$REMOTE" ]]; then
     echo "[OK] develop sin cambios, nada que sincronizar"
     exit 0
@@ -40,7 +40,7 @@ if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; th
 fi
 
 # 4. Rebase
-if ! git rebase origin/develop 2>/dev/null; then
+if ! git rebase origin/main 2>/dev/null; then
     echo "[CONFLICT] Conflictos detectados durante rebase"
     git rebase --abort 2>/dev/null || true
 
@@ -52,7 +52,7 @@ if ! git rebase origin/develop 2>/dev/null; then
 CONFLICTO DETECTADO — $(date -u +%Y-%m-%dT%H:%M:%SZ)
 Nodo: $NODE_ID
 Rama: $CURRENT
-Acción requerida: resolver conflictos manualmente y ejecutar: git rebase origin/develop
+Acción requerida: resolver conflictos manualmente y ejecutar: git rebase origin/main
 EOF
     echo "[STOP] Revisa $CONFLICT_LOG"
     exit 1
