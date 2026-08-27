@@ -1,0 +1,32 @@
+{
+  "nodes": {
+    "gx10": {
+      "node_id": "gx10",
+      "hostname": "gx10-desktop",
+      "tailscale_ip": "100.72.103.12",
+      "api_port": 4097,
+      "status": "online",
+      "last_seen": 1787798435.463451,
+      "last_latency_ms": 26.5,
+      "consecutive_failures": 0,
+      "tags": [
+        "desktop",
+        "primary"
+      ]
+    },
+    "mac": {
+      "node_id": "mac",
+      "hostname": "mac-mini",
+      "tailscale_ip": "100.123.81.101",
+      "api_port": 4097,
+      "status": "degraded",
+      "last_seen": 0.0,
+      "last_latency_ms": 0.0,
+      "consecutive_failures": 1,
+      "tags": [
+        "mac",
+        "m4"
+      ]
+    }
+  }
+}

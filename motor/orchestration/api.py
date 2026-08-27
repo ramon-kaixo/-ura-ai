@@ -90,6 +90,19 @@ class ReviewTask(BaseModel):
     reviewer: str
 
 
+class SyncTask(BaseModel):
+    """Task received from a remote node for sync."""
+    description: str
+    plan_phase: str = ""
+    priority: int = 0
+    max_retries: int = 3
+    timeout_seconds: int = 1800
+    context_json: str = "{}"
+    node_id: str = ""
+    source_node: str = ""
+    source_task_id: str = ""
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
@@ -368,6 +381,36 @@ def parallel_status():
 
 _registry: Any = None
 
+
+
+@app.post("/tasks/sync")
+def sync_task(req: SyncTask):
+    """Receive a task from a remote node and add to local queue."""
+    import json as _json
+
+    # Build context with source info for dedup
+    ctx = _json.loads(req.context_json) if req.context_json else {}
+    if req.source_task_id or req.source_node:
+        ctx["source_node"] = req.source_node
+        ctx["source_task_id"] = req.source_task_id
+
+    # Check for duplicate
+    if req.source_task_id and req.source_node:
+        for t in _queue.list_by_status(None, 1000):
+            t_ctx = _json.loads(t.context_json) if t.context_json else {}
+            if t_ctx.get("source_node") == req.source_node and t_ctx.get("source_task_id") == req.source_task_id:
+                return {"status": "already_synced", "task_id": t.id}
+
+    task = _queue.create(
+        description=req.description,
+        plan_phase=req.plan_phase,
+        priority=req.priority,
+        max_retries=req.max_retries,
+        timeout_seconds=req.timeout_seconds,
+        node_id=req.node_id,
+        context_json=_json.dumps(ctx),
+    )
+    return {"status": "synced", "task_id": task.id}
 
 def _get_registry() -> Any:
     global _registry  # noqa: PLW0603

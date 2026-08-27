@@ -131,7 +131,8 @@ def parse_plan(content: str) -> list[TaskSpec]:
     return tasks
 
 
-def create_task(api_url: str, task: TaskSpec, dry_run: bool = False) -> dict | None:
+def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
+                api_key: str = "", source_node: str = "") -> dict | None:
     """Crea una tarea en el orquestador via API."""
     payload = {
         "description": f"[{task.phase}] {task.title}" if task.phase else task.title,
@@ -150,13 +151,23 @@ def create_task(api_url: str, task: TaskSpec, dry_run: bool = False) -> dict | N
         print(f"    Timeout: {task.timeout_seconds}s")
         return None
 
+    # Determine endpoint: sync if target is remote, create if local
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["X-API-Key"] = api_key
+
+    if source_node and task.node_id and task.node_id != source_node:
+        # Remote task — use sync endpoint
+        endpoint = f"{api_url}/tasks/sync"
+        payload["source_node"] = source_node
+        payload["source_task_id"] = f"{source_node}-{task.title[:20]}"
+    else:
+        # Local task
+        endpoint = f"{api_url}/tasks"
+
     try:
         body = json.dumps(payload).encode()
-        req = urllib.request.Request(
-            f"{api_url}/tasks",
-            data=body,
-            headers={"Content-Type": "application/json"},
-        )
+        req = urllib.request.Request(endpoint, data=body, headers=headers)
         with urllib.request.urlopen(req, timeout=10) as resp:
             result = json.loads(resp.read())
             return result
@@ -173,6 +184,10 @@ def main():
     parser.add_argument("--node", default="", help="Default node for tasks without explicit node")
     parser.add_argument("--dry-run", action="store_true", help="Show tasks without creating them")
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
+    parser.add_argument("--distribute", action="store_true",
+                       help="Distribute tasks to remote nodes via sync endpoint")
+    parser.add_argument("--api-key", default=os.environ.get("URA_API_KEY", ""),
+                       help="API key for authentication")
     args = parser.parse_args()
 
     # Read plan
@@ -195,17 +210,26 @@ def main():
 
     print(f"Found {len(tasks)} tasks in plan.\n")
 
+    # Determine source node for distribution
+    source_node = ""
+    if args.distribute:
+        source_node = args.node or os.environ.get("URA_NODE_ID", "unknown")
+        print(f"Distributing from node: {source_node}\n")
+
     # Create tasks
     results = []
     for i, task in enumerate(tasks, 1):
         print(f"{i}/{len(tasks)}: {task.title}")
-        result = create_task(args.url, task, args.dry_run)
+        result = create_task(args.url, task, args.dry_run,
+                           api_key=args.api_key, source_node=source_node)
         if result:
-            print(f"  -> Created: {result['id']} (status: {result['status']})")
+            status = result.get("status", "unknown")
+            task_id = result.get("task_id", result.get("id", "?"))
+            print(f"  -> {status}: {task_id}")
             results.append(result)
         elif not args.dry_run:
             print(f"  -> FAILED")
-    
+
     print(f"\nDone. {len(results)}/{len(tasks)} tasks created.")
 
     if args.json:
