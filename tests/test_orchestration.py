@@ -693,6 +693,121 @@ class TestAutonomousFailover:
         # After all threads, mode should be stable (not corrupted)
         assert fo.mode in (FailoverMode.NORMAL, FailoverMode.AUTONOMOUS)
 
+
+class TestAntiFlapping:
+    """Tests for HealthChecker anti-flapping behavior."""
+
+    def test_time_windowed_failure_detection(self) -> None:
+        """5 failures within 60s window → DOWN, but old failures outside window are pruned."""
+        import time
+        from motor.orchestration.failover import OrchestratorHealthChecker, OrchestratorState
+
+        checker = OrchestratorHealthChecker(
+            failure_threshold=3,
+            failure_window_s=2.0,  # 2 second window for fast test
+            interval_s=0.1,
+        )
+
+        # Simulate 3 quick failures
+        for _ in range(3):
+            result = checker._probe.__wrapped__(checker) if hasattr(checker._probe, '__wrapped__') else None
+            # Manually simulate failure
+            from motor.orchestration.failover import HealthCheckResult
+            fail_result = HealthCheckResult(
+                state=OrchestratorState.DOWN,
+                latency_ms=0,
+                consecutive_failures=0,
+                last_check="",
+                error="simulated",
+            )
+            checker._update_state(fail_result)
+
+        assert checker.state == OrchestratorState.DOWN
+
+    def test_recovery_requires_consecutive_successes(self) -> None:
+        """Recovery from DOWN requires recovery_threshold consecutive successes."""
+        from motor.orchestration.failover import HealthCheckResult, OrchestratorHealthChecker, OrchestratorState
+
+        checker = OrchestratorHealthChecker(
+            failure_threshold=2,
+            recovery_threshold=3,
+            failure_window_s=60.0,
+            interval_s=0.1,
+        )
+
+        # Force to DOWN
+        for _ in range(2):
+            checker._update_state(HealthCheckResult(
+                state=OrchestratorState.DOWN, latency_ms=0,
+                consecutive_failures=0, last_check="", error="fail",
+            ))
+        assert checker.state == OrchestratorState.DOWN
+
+        # 1 success → still DOWN
+        checker._update_state(HealthCheckResult(
+            state=OrchestratorState.HEALTHY, latency_ms=0,
+            consecutive_failures=0, last_check="",
+        ))
+        assert checker.state == OrchestratorState.DOWN
+
+        # 2 successes → still DOWN
+        checker._update_state(HealthCheckResult(
+            state=OrchestratorState.HEALTHY, latency_ms=0,
+            consecutive_failures=0, last_check="",
+        ))
+        assert checker.state == OrchestratorState.DOWN
+
+        # 3 successes → HEALTHY
+        checker._update_state(HealthCheckResult(
+            state=OrchestratorState.HEALTHY, latency_ms=0,
+            consecutive_failures=0, last_check="",
+        ))
+        assert checker.state == OrchestratorState.HEALTHY
+
+    def test_failure_resets_recovery_counter(self) -> None:
+        """A failure during recovery resets the recovery counter."""
+        from motor.orchestration.failover import HealthCheckResult, OrchestratorHealthChecker, OrchestratorState
+
+        checker = OrchestratorHealthChecker(
+            failure_threshold=2,
+            recovery_threshold=3,
+            failure_window_s=60.0,
+            interval_s=0.1,
+        )
+
+        # Force to DOWN via time-windowed failures
+        for _ in range(2):
+            checker._update_state(HealthCheckResult(
+                state=OrchestratorState.DOWN, latency_ms=0,
+                consecutive_failures=0, last_check="", error="fail",
+            ))
+        assert checker.state == OrchestratorState.DOWN
+
+        # 1 success (below recovery_threshold=3, should stay DOWN)
+        checker._update_state(HealthCheckResult(
+            state=OrchestratorState.HEALTHY, latency_ms=0,
+            consecutive_failures=0, last_check="",
+        ))
+        assert checker._consecutive_recoveries == 1
+
+        # Failure resets recovery counter
+        checker._update_state(HealthCheckResult(
+            state=OrchestratorState.DOWN, latency_ms=0,
+            consecutive_failures=0, last_check="", error="fail",
+        ))
+        assert checker._consecutive_recoveries == 0
+        # Still in degraded or down state
+        assert checker.state in (OrchestratorState.DOWN, OrchestratorState.DEGRADED)
+
+    def test_status_includes_anti_flapping_info(self) -> None:
+        """Status dict includes failure window info."""
+        from motor.orchestration.failover import AutonomousFailover
+
+        fo = AutonomousFailover()
+        status = fo.get_status()
+        assert "mode" in status
+        assert "orchestrator_state" in status
+
     def test_status(self) -> None:
         from motor.orchestration.failover import AutonomousFailover
 

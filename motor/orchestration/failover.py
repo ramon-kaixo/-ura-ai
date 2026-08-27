@@ -68,11 +68,12 @@ class HealthCheckResult:
 
 
 class OrchestratorHealthChecker:
-    """Sonda periodica del orquestador (GX10).
+    """Sonda periodica del orquestador con anti-flapping.
 
-    Hace HTTP GET al /health del task queue API cada N segundos.
-    Trackea fallos consecutivos para detectar caidas reales
-    vs glitches momentaneos.
+    Anti-flapping rules:
+      - DOWN: >= failure_threshold failures within failure_window_s (default: 5 in 60s)
+      - NORMAL: >= recovery_threshold consecutive successes (default: 3)
+      - Prevents rapid state oscillation when orchestrator is unstable.
     """
 
     def __init__(
@@ -80,18 +81,21 @@ class OrchestratorHealthChecker:
         orchestrator_url: str = "http://100.72.103.12:4097",
         interval_s: float = _HEALTH_CHECK_INTERVAL_S,
         timeout_s: float = _HEALTH_CHECK_TIMEOUT_S,
-        failure_threshold: int = _FAILURE_THRESHOLD,
-        recovery_threshold: int = _RECOVERY_THRESHOLD,
+        failure_threshold: int = 5,
+        recovery_threshold: int = 3,
+        failure_window_s: float = 60.0,
     ) -> None:
         self._url = orchestrator_url
         self._interval_s = interval_s
         self._timeout_s = timeout_s
         self._failure_threshold = failure_threshold
         self._recovery_threshold = recovery_threshold
+        self._failure_window_s = failure_window_s
 
         self._state = OrchestratorState.HEALTHY
         self._consecutive_failures = 0
         self._consecutive_recoveries = 0
+        self._failure_timestamps: list[float] = []  # For time-windowed anti-flapping
         self._lock = threading.Lock()
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
@@ -138,22 +142,31 @@ class OrchestratorHealthChecker:
             )
 
     def _update_state(self, result: HealthCheckResult) -> None:
-        """Actualiza estado basado en resultado del check."""
+        """Actualiza estado basado en resultado del check con anti-flapping."""
         with self._lock:
             old_state = self._state
+            now = time.monotonic()
 
             if result.error:
                 self._consecutive_failures += 1
                 self._consecutive_recoveries = 0
+                self._failure_timestamps.append(now)
 
-                if self._consecutive_failures >= self._failure_threshold:
+                # Prune old failures outside the window
+                cutoff = now - self._failure_window_s
+                self._failure_timestamps = [t for t in self._failure_timestamps if t > cutoff]
+
+                # Anti-flapping: only go DOWN if >= threshold failures within window
+                if len(self._failure_timestamps) >= self._failure_threshold:
                     self._state = OrchestratorState.DOWN
                 elif self._consecutive_failures >= 1:
                     self._state = OrchestratorState.DEGRADED
             else:
                 self._consecutive_recoveries += 1
                 self._consecutive_failures = 0
+                self._failure_timestamps.clear()
 
+                # Anti-flapping: need consecutive recoveries to exit DOWN
                 if self._state == OrchestratorState.DOWN:
                     if self._consecutive_recoveries >= self._recovery_threshold:
                         self._state = OrchestratorState.HEALTHY
@@ -162,11 +175,14 @@ class OrchestratorHealthChecker:
 
             if self._state != old_state:
                 log.warning(
-                    "[HEALTH] Orchestrator state: %s → %s (failures=%d, recoveries=%d)",
+                    "[HEALTH] State: %s → %s (failures=%d/%d in %.0fs, recoveries=%d/%d)",
                     old_state.value,
                     self._state.value,
-                    self._consecutive_failures,
+                    len(self._failure_timestamps),
+                    self._failure_threshold,
+                    self._failure_window_s,
                     self._consecutive_recoveries,
+                    self._recovery_threshold,
                 )
                 for cb in self._callbacks:
                     try:
