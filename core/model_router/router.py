@@ -39,14 +39,11 @@ try:
     from core.auth_layer import validate as auth_validate
 except ImportError:
 
-    def auth_validate(*args: Any, **kwargs: Any) -> bool:
+    def auth_validate(api_key: str | None, store: Any = None) -> bool:  # type: ignore[misc]
         return True
 
-    def require_auth(*args: Any, **kwargs: Any) -> Any:
-        def decorator(f: Any) -> Any:
-            return f
-
-        return decorator
+    def require_auth() -> bool:  # type: ignore[misc]
+        return True
 
 
 from motor.core.config_manager import get_ollama_urls
