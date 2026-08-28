@@ -1,6 +1,7 @@
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import FastAPI
@@ -18,7 +19,7 @@ def create_app() -> FastAPI:
     state = build_state()
 
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> Any:
         init_guardian()
         if state.scheduler is not None:
             await state.scheduler.start_loop()

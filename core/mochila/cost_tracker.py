@@ -3,6 +3,7 @@ import os
 import time
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 TARIFAS: dict[str, float] = {
     "ollama": 0.0,
@@ -21,7 +22,7 @@ class CostTracker:
         self._cost_file = cost_file or _cost_file()
         self._cost_file.parent.mkdir(parents=True, exist_ok=True)
 
-    def registrar(self, provider: str, modelo: str, prompt_tokens: int, completion_tokens: int) -> dict:
+    def registrar(self, provider: str, modelo: str, prompt_tokens: int, completion_tokens: int) -> dict[str, Any]:
         entrada = {
             "timestamp": time.time(),
             "date": date.today().isoformat(),  # noqa: DTZ011
@@ -40,7 +41,7 @@ class CostTracker:
         tarifa = self.tarifas.get(provider, 0.0)
         return (prompt_tokens + completion_tokens) * tarifa
 
-    def resumen_hoy(self) -> dict:
+    def resumen_hoy(self) -> dict[str, Any]:
         hoy = date.today().isoformat()  # noqa: DTZ011
         total_cost = 0.0
         total_tokens = 0

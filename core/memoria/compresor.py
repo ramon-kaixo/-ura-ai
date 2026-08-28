@@ -2,6 +2,7 @@
 
 import json
 import logging
+from typing import Any
 
 import httpx
 
@@ -60,10 +61,11 @@ async def _consultar_ollama(prompt: str, modelo: str) -> str | None:
     if resp.is_error:
         log.error("Ollama error comprimiendo: %s", resp.status_code)
         return None
-    return resp.json().get("message", {}).get("content", "").strip()
+    contenido: str | None = resp.json().get("message", {}).get("content", "").strip()
+    return contenido
 
 
-def _parsear_json_ideas(content: str) -> list | None:
+def _parsear_json_ideas(content: str) -> list[dict[str, Any]] | None:
     """Parsear JSON de ideas con fallback a extracción del primer array."""
     try:
         raw = json.loads(content)

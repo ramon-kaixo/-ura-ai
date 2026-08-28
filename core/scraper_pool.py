@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from collections.abc import Awaitable, Callable
+from typing import Any
 from urllib.parse import urlparse
 
 log = logging.getLogger("ura.scraper_pool")
@@ -10,9 +11,9 @@ _MAX_QUEUE_SIZE = 1000
 
 class DomainDecoupledPool:
     def __init__(self, delay: float = 1.0) -> None:
-        self.queues: dict[str, asyncio.Queue] = {}
+        self.queues: dict[str, asyncio.Queue[Any]] = {}
         self.delay = delay
-        self._workers: set[asyncio.Task] = set()
+        self._workers: set[asyncio.Task[Any]] = set()
         self._scrape_fn: Callable[[str], Awaitable[None]] | None = None
         self._init_lock = asyncio.Lock()
 

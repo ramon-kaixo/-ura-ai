@@ -14,6 +14,7 @@ import asyncio
 import logging
 import threading
 import time
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class ConcurrentVRAMGuard:
         with self._waiting_lock:
             return self._waiting
 
-    def metricas(self) -> dict:
+    def metricas(self) -> dict[str, Any]:
         return {
             "max_concurrent": self._max_jobs,
             "slots_disponibles": self.slots_disponibles,
@@ -51,7 +52,7 @@ class ConcurrentVRAMGuard:
             "total_processed": self._total_processed,
         }
 
-    async def ejecutar_inferencia_segura(self, corrutina_inferencia, *args, **kwargs):
+    async def ejecutar_inferencia_segura(self, corrutina_inferencia: Any, *args: Any, **kwargs: Any) -> Any:
         tiempo_entrada = time.time()
         self._total_enqueue += 1
         with self._waiting_lock:

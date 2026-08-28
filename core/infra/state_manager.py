@@ -3,6 +3,7 @@ import logging
 import os
 from datetime import UTC
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger("ura.state")
 STATE_FILE = "/tmp/ura_state.json"
@@ -24,12 +25,12 @@ def save_checkpoint(task_id: str, target_file: str, content: str, attempt: int =
         logger.exception("[STATE] No se pudo guardar checkpoint: %s", e)
 
 
-def load_checkpoint() -> dict | None:
+def load_checkpoint() -> dict[str, Any] | None:
     if not Path(STATE_FILE).exists():
         return None
     try:
         with open(STATE_FILE) as f:  # noqa: PTH123
-            record = json.load(f)
+            record: dict[str, Any] = json.load(f)
         logger.info(
             "[STATE] Checkpoint recuperado: task=%s file=%s attempt=%d",
             record.get("task_id"),
