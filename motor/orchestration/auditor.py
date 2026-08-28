@@ -15,6 +15,7 @@ import logging
 import subprocess
 import urllib.request
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger(__name__)
 
@@ -42,7 +43,8 @@ class Auditor:
         req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=15) as resp:  # noqa: S310
-                return json.loads(resp.read())
+                data_resp: dict[str, Any] = json.loads(resp.read())
+                return data_resp
         except Exception as e:
             log.error("[AUDITOR] API error %s %s: %s", method, path, e)
             raise
@@ -85,7 +87,7 @@ class Auditor:
             check=False,
         )
 
-    def audit_task(self, task: dict) -> dict:
+    def audit_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Audita una tarea individual."""
         task_id = task["id"]
         commit_sha = task.get("commit_sha", "")
@@ -123,7 +125,7 @@ class Auditor:
             if wt_path.exists():
                 self._git(["worktree", "remove", "--force", str(wt_path)])
 
-    def merge_task(self, task: dict) -> dict:
+    def merge_task(self, task: dict[str, Any]) -> dict[str, Any]:
         """Merge de la tarea aprobada a main (local only, no push)."""
         task_id = task["id"]
         commit_sha = task.get("commit_sha", "")
@@ -149,7 +151,7 @@ class Auditor:
         except Exception as e:
             return {"task_id": task_id, "merged": False, "error": str(e)}
 
-    def run_cycle(self) -> dict:
+    def run_cycle(self) -> dict[str, Any]:
         """Ejecuta un ciclo completo de auditoria."""
         log.info("[AUDITOR] Iniciando ciclo de auditoria")
 
@@ -181,7 +183,7 @@ class Auditor:
         return results
 
 
-def main():
+def main() -> None:
     """Entry point for daemon mode."""
     import time
 

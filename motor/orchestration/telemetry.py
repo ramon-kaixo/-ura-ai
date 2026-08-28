@@ -65,7 +65,7 @@ class TelemetryStore:
             conn.execute("CREATE INDEX IF NOT EXISTS idx_ts ON metrics(ts)")
             conn.execute("CREATE INDEX IF NOT EXISTS idx_task ON metrics(task_id)")
 
-    @contextmanager  # type: ignore[type-arg]
+    @contextmanager
     def _open_db(self) -> Any:
         conn = sqlite3.connect(str(self._db_path), timeout=10)
         conn.execute("PRAGMA journal_mode=WAL")
@@ -220,7 +220,7 @@ class TelemetryStore:
             count = cursor.rowcount
         if count > 0:
             log.info("[TELEMETRY] Cleaned %d old metrics (> %d days)", count, days)
-        return count
+        return int(count)
 
 
 def dashboard_html(stats: dict[str, Any], tasks: list[dict[str, Any]]) -> str:

@@ -111,7 +111,7 @@ class DistributedLock:
         except Exception:
             return None
 
-    @contextmanager  # type: ignore[type-arg]
+    @contextmanager
     def locked(self, timeout: float = 5.0) -> Any:
         """Context manager que adquiere y libera el lock."""
         acquired = self.acquire(timeout=timeout)
@@ -133,7 +133,7 @@ class AuditLock:
     def __init__(self, node: str = "default") -> None:
         self._lock = DistributedLock(f"audit-{node}")
 
-    @contextmanager  # type: ignore[type-arg]
+    @contextmanager
     def exclusive(self, timeout: float = 10.0) -> Any:
         """Ejecuta una auditoria exclusiva. Garantiza liberacion en excepcion."""
         acquired = self._lock.acquire(timeout=timeout)

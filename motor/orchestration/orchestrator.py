@@ -33,7 +33,7 @@ class Orchestrator:
     def __init__(self, task_queue_url: str = _TASK_QUEUE_URL) -> None:
         self._queue_url = task_queue_url
 
-    def _post(self, path: str, data: dict) -> dict:
+    def _post(self, path: str, data: dict[str, Any]) -> dict[str, Any]:
         """POST a la API de la cola."""
         url = f"{self._queue_url}{path}"
         body = json.dumps(data).encode()
@@ -41,7 +41,8 @@ class Orchestrator:
         req.add_header("Content-Type", "application/json")
         try:
             with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
-                return json.loads(resp.read())
+                data_resp: dict[str, Any] = json.loads(resp.read())
+                return data_resp
         except Exception as e:
             log.error("[ORCHESTRATOR] Error POST %s: %s", path, e)
             raise
@@ -113,7 +114,7 @@ class Orchestrator:
 
         return phases
 
-    def publish_plan(self, plan_text: str) -> list[dict]:
+    def publish_plan(self, plan_text: str) -> list[dict[str, Any]]:
         """Parsea un plan y publica cada fase como tarea en la cola."""
         phases = self._parse_plan(plan_text)
         tasks = []
@@ -145,18 +146,20 @@ class Orchestrator:
             url = f"{self._queue_url}/stats"
             req = urllib.request.Request(url)  # noqa: S310
             with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
-                return json.loads(resp.read())
+                fases_resp: dict[str, Any] = json.loads(resp.read())
+                return fases_resp
         except Exception as e:
             log.error("[ORCHESTRATOR] Error getting status: %s", e)
             return {"error": str(e)}
 
-    def get_pending_tasks(self) -> list[dict]:
+    def get_pending_tasks(self) -> dict[str, Any]:
         """Obtiene tareas pendientes."""
         try:
             url = f"{self._queue_url}/tasks?status=pending"
             req = urllib.request.Request(url)  # noqa: S310
             with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310
-                return json.loads(resp.read())
+                pending_resp: dict[str, Any] = json.loads(resp.read())
+                return pending_resp
         except Exception as e:
             log.error("[ORCHESTRATOR] Error getting pending: %s", e)
             return {"tasks": [], "count": 0}
