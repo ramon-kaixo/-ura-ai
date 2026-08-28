@@ -168,7 +168,14 @@ Tener **dos interfaces de OpenCode trabajando en paralelo** sobre el mismo proye
    Motivo: evitar que rsync/git del árbol arrastre 139 G. El drop-in del servicio
    `ollama.service.d/models.conf` sigue apuntando a la misma ruta absoluta (se resuelve vía symlink),
    por lo que **NO hay que "arreglar" la ruta ni borrar el symlink** — verificado con 9 modelos OK tras el cambio.
-   Si un backup usa rsync sin `-L`, copiará solo el symlink (30 B), no el contenido.
+    Si un backup usa rsync sin `-L`, copiará solo el symlink (30 B), no el contenido.
+7. **El campo `npm` en `provider.ollama` ROMPE la conexión del CLI `opencode run`** (2026-08-28):
+   un `provider.ollama.npm: "@ai-sdk/openai-compatible"` (usado por la web en `opencode-web.json`)
+   hace que el CLI 1.18.x intente conectar a otro endpoint y falle con `Cannot connect to API`.
+   En las configs de máquinas donde se ejecute `opencode run` (CLI/worker), el provider Ollama
+   DEBE declararse solo con `baseURL` + `models`, SIN `npm`. Detalle del fix: `motor/orchestration/worker.py`
+   `_build_command` usa `shlex.split` para comandos con argumentos (`opencode run`) — no envolver el
+   comando completo entre comillas (exit 127).
 
 ### 12.3 Health-check del Model Router
 
