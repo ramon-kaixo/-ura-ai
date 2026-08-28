@@ -150,7 +150,9 @@ class NodeWorker:
     def _build_command(self, task: Any) -> list[str]:
         desc = task.description.strip()
         age = shlex.quote(desc[:200])
-        script = f'"{self._cmd}" "{age}"'
+        parts = shlex.split(self._cmd)
+        args = " ".join(shlex.quote(p) for p in parts)
+        script = f"{args} {age}"
         return ["/bin/sh", "-c", script]
 
     def _run_opencode(self, task: Any) -> str:
