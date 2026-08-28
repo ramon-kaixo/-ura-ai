@@ -28,7 +28,8 @@ class PromptCache:
                 cached = self.cache[key]
                 if time.time() - cached["timestamp"] < self.ttl:
                     metrics.increment("prompt_cache_hit", {"tipo": tipo})
-                    return cached["response"]
+                    resp: dict[str, Any] = cached["response"]
+                    return resp
                 del self.cache[key]
         metrics.increment("prompt_cache_miss", {"tipo": tipo})
         return None

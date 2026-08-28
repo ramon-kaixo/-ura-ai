@@ -99,7 +99,7 @@ def read_logs(
     log_dir: str | Path | None = None,
     limit: int = 1000,
     since: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Read search logs, newest first.
 
     Args:
