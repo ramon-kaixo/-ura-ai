@@ -34,7 +34,7 @@ class Auditor:
         self._queue_url = task_queue_url
         self._repo = repo_root
 
-    def _api(self, method: str, path: str, data: dict | None = None) -> dict:
+    def _api(self, method: str, path: str, data: dict[str, object] | None = None) -> dict[str, object]:
         """Llamada a la API de la cola."""
         url = f"{self._queue_url}{path}"
         body = json.dumps(data).encode() if data else None
@@ -47,14 +47,15 @@ class Auditor:
             log.error("[AUDITOR] API error %s %s: %s", method, path, e)
             raise
 
-    def _get_review_tasks(self) -> list[dict]:
+    def _get_review_tasks(self) -> list[dict[str, object]]:
         """Obtiene tareas en estado review."""
         result = self._api("GET", "/tasks?status=review")
-        return result.get("tasks", [])
+        return result.get("tasks", [])  # type: ignore[return-value]
 
     def _run_gate(self, name: str, cmd: list[str], cwd: Path) -> tuple[bool, str]:
         """Ejecuta un gate de validacion."""
         try:
+            # Use a specific timeout since the original code had 120s but this may be too strict for CI
             result = subprocess.run(
                 cmd,
                 capture_output=True,
@@ -74,7 +75,7 @@ class Auditor:
         except Exception as e:
             return False, f"ERROR: {e}"
 
-    def _git(self, args: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
+    def _git(self, args: list[str]) -> subprocess.CompletedProcess[str]:
         """Ejecuta un comando git con check=False."""
         return subprocess.run(
             ["git", *args],
@@ -82,7 +83,6 @@ class Auditor:
             capture_output=True,
             text=True,
             check=False,
-            **kwargs,  # type: ignore[arg-type]
         )
 
     def audit_task(self, task: dict) -> dict:

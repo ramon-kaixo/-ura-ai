@@ -2,42 +2,121 @@
   "$schema": "https://opencode.ai/config.json",
   "snapshot": true,
   "share": "disabled",
-  "compaction": { "auto": true, "tail_turns": 15 },
+  "compaction": {
+    "auto": true,
+    "tail_turns": 15
+  },
   "formatter": true,
   "lsp": true,
   "references": {
-    "docs": { "path": "docs", "description": "URA project documentation" },
-    "arch": { "path": "docs/architecture", "description": "Architecture docs" },
-    "udo": { "path": "docs/udo", "description": "UDO task system docs" }
+    "docs": {
+      "path": "docs",
+      "description": "URA project documentation"
+    },
+    "arch": {
+      "path": "docs/architecture",
+      "description": "Architecture docs"
+    },
+    "udo": {
+      "path": "docs/udo",
+      "description": "UDO task system docs"
+    }
   },
   "permission": {
-    "read": "allow", "edit": "allow", "glob": "allow",
-    "grep": "allow", "list": "allow", "bash": "allow",
-    "task": "allow", "external_directory": "allow",
-    "todowrite": "allow", "question": "allow",
-    "webfetch": "allow", "websearch": "allow", "skill": "allow"
+    "read": "allow",
+    "edit": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "bash": "allow",
+    "task": "allow",
+    "external_directory": "allow",
+    "todowrite": "allow",
+    "question": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": "allow"
   },
-  "experimental": { "openTelemetry": true, "batch_tool": true },
+  "experimental": {
+    "openTelemetry": true,
+    "batch_tool": true
+  },
   "mcp": {
-    "codewiki": { "type": "local", "command": ["/home/ramon/.npm-global/bin/codewiki-mcp"], "enabled": true }
+    "codewiki": {
+      "type": "local",
+      "command": [
+        "/home/ramon/.npm-global/bin/codewiki-mcp"
+      ],
+      "enabled": true
+    }
   },
   "provider": {
     "ollama": {
-      "npm": "@ai-sdk/openai-compatible",
       "name": "Ollama",
-      "options": { "baseURL": "http://100.72.103.12:11434/v1" },
+      "options": {
+        "baseURL": "http://10.164.1.247:11434/v1"
+      },
       "models": {
-        "qwen3-coder:30b": { "tools": true, "reasoning": false, "limit": { "context": 262144, "output": 8192 } },
-        "qwen3.6:27b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
-        "llama3:latest": { "tools": true, "reasoning": false, "limit": { "context": 8192, "output": 4096 } },
-        "llama3.3:70b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
-        "gemma4:26b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
-        "nemotron-3-nano:30b-a3b-q4_K_M": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
-        "nomic-embed-text:latest": { "tools": false, "reasoning": false, "limit": { "context": 2048, "output": 0 } }
+        "qwen3-coder:30b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
+        },
+        "qwen3.6:27b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "llama3:latest": {
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 8192,
+            "output": 4096
+          }
+        },
+        "llama3.3:70b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "gemma4:26b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "nemotron-3-nano:30b-a3b-q4_K_M": {
+          "tools": true,
+          "reasoning": true,
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        },
+        "nomic-embed-text:latest": {
+          "tools": false,
+          "reasoning": false,
+          "limit": {
+            "context": 2048,
+            "output": 0
+          }
+        }
       }
     }
   },
-  "model": "ollama/qwen3.6:27b",
-  "default_agent": "general",
+  "model": "ollama/qwen3-coder:30b-mejorado",
+  "default_agent": "coder",
   "username": "ramon"
 }

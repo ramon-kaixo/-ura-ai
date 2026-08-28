@@ -175,7 +175,7 @@ class NodeRegistry:
         try:
             req = urllib.request.Request(f"{node.api_url}/health")  # noqa: S310
             with urllib.request.urlopen(req, timeout=self._check_timeout_s) as resp:  # noqa: S310
-                data = json.loads(resp.read())
+                json.loads(resp.read())
                 latency = (time.monotonic() - start) * 1000
                 node.last_latency_ms = round(latency, 1)
                 node.last_seen = time.time()
@@ -203,7 +203,9 @@ class NodeRegistry:
                 if new_status != old_status:
                     log.warning(
                         "[NODE_REGISTRY] Node %s: %s → %s",
-                        node.node_id, old_status.value, new_status.value,
+                        node.node_id,
+                        old_status.value,
+                        new_status.value,
                     )
             results[node.node_id] = {
                 "status": node.status.value,

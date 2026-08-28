@@ -16,6 +16,7 @@ import sqlite3
 import threading
 import time
 import uuid
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
@@ -35,6 +36,7 @@ class TaskStatus(StrEnum):
     PENDING = "pending"
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
+    PAUSED = "paused"
     REVIEW = "review"
     DONE = "done"
     FAILED = "failed"
@@ -46,6 +48,8 @@ class TaskEvent(StrEnum):
     CREATED = "created"
     ASSIGNED = "assigned"
     STARTED = "started"
+    PAUSED = "paused"
+    RESUMED = "resumed"
     REVIEWED = "reviewed"
     MERGED = "merged"
     FAILED = "failed"
@@ -100,7 +104,7 @@ CREATE INDEX IF NOT EXISTS idx_events_task ON task_events(task_id);
 
 
 @contextmanager
-def _open_db(db_path: Path):
+def _open_db(db_path: Path) -> Iterator[sqlite3.Connection]:
     """Abre SQLite con WAL mode y busy timeout (patrón knowledge/engine)."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path), timeout=10)
@@ -136,23 +140,31 @@ class _PersistentConnection:
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.row_factory = sqlite3.Row
 
-    def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
+    def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
         with self._lock:
+            conn = self._conn
+            assert conn is not None
             try:
-                return self._conn.execute(sql, params)
+                return conn.execute(sql, params)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
-                return self._conn.execute(sql, params)
+                conn = self._conn
+                assert conn is not None
+                return conn.execute(sql, params)
 
     def executescript(self, script: str) -> None:
         with self._lock:
+            conn = self._conn
+            assert conn is not None
             try:
-                self._conn.executescript(script)
+                conn.executescript(script)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
-                self._conn.executescript(script)
+                conn = self._conn
+                assert conn is not None
+                conn.executescript(script)
 
     def commit(self) -> None:
         with self._lock:
@@ -176,8 +188,8 @@ class _PersistentConnection:
                 if self._conn:
                     self._conn.execute("SELECT 1")
                     return True
-        except Exception:
-            pass
+        except Exception as e:
+            log.warning("DB is_alive check fallo: %s", e)
         return False
 
 
@@ -275,8 +287,18 @@ class TaskQueue:
                    (id, description, plan_phase, priority, max_retries,
                     timeout_seconds, context_json, created_at, updated_at, node_id)
                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (task_id, description, plan_phase, priority, max_retries,
-                 timeout_seconds, context_json, now, now, node_id),
+                (
+                    task_id,
+                    description,
+                    plan_phase,
+                    priority,
+                    max_retries,
+                    timeout_seconds,
+                    context_json,
+                    now,
+                    now,
+                    node_id,
+                ),
             )
             conn.execute(
                 """INSERT INTO task_events (task_id, event, details, timestamp)
@@ -284,7 +306,10 @@ class TaskQueue:
                 (task_id, TaskEvent.CREATED.value, description, now),
             )
         log.info("[TASK_QUEUE] Tarea creada: %s", task_id)
-        return self.get(task_id)
+        result = self.get(task_id)
+        if result is None:
+            raise RuntimeError(f"No se pudo recuperar la tarea recién creada {task_id}")
+        return result
 
     def get(self, task_id: str) -> Task | None:
         """Obtiene una tarea por ID."""
@@ -327,6 +352,60 @@ class TaskQueue:
                 )
                 log.info("[TASK_QUEUE] %s reclamada por %s", task_id, agent)
                 row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+                if row:
+                    return Task(**dict(row))
+        return None
+
+    def claim_next(self, agent: str, node_id: str = "") -> Task | None:
+        """Reclama la siguiente tarea disponible, priorizando las del propio nodo.
+
+        Cola común con preferencia: primero las tareas cuyo ``node_id`` coincide
+        con el del worker; si no hay, toma cualquier tarea ``pending``/``timeout``
+        (work-stealing del pool). Devuelve ``None`` si no hay trabajo disponible.
+        """
+        now = self._now()
+        with self._lock, _open_db(self._db_path) as conn:
+            if node_id:
+                prefs = conn.execute(
+                    """SELECT id FROM tasks
+                       WHERE status IN ('pending', 'timeout') AND node_id = ?
+                       ORDER BY priority DESC, created_at ASC LIMIT 1""",
+                    (node_id,),
+                ).fetchall()
+                if prefs:
+                    target = prefs[0]["id"]
+                else:
+                    row = conn.execute(
+                        """SELECT id FROM tasks
+                           WHERE status IN ('pending', 'timeout')
+                           ORDER BY priority DESC, created_at ASC LIMIT 1""",
+                    ).fetchone()
+                    target = row["id"] if row else None
+            else:
+                row = conn.execute(
+                    """SELECT id FROM tasks
+                       WHERE status IN ('pending', 'timeout')
+                       ORDER BY priority DESC, created_at ASC LIMIT 1""",
+                ).fetchone()
+                target = row["id"] if row else None
+
+            if not target:
+                return None
+
+            result = conn.execute(
+                """UPDATE tasks
+                   SET status = ?, assigned_to = ?, last_heartbeat = ?, updated_at = ?
+                   WHERE id = ? AND status IN ('pending', 'timeout')""",
+                (TaskStatus.ASSIGNED.value, agent, now, now, target),
+            )
+            if result.rowcount > 0:
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, agent, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (target, TaskEvent.ASSIGNED.value, agent, now),
+                )
+                log.info("[TASK_QUEUE] %s reclamada por %s (node=%s)", target, agent, node_id or "any")
+                row = conn.execute("SELECT * FROM tasks WHERE id = ?", (target,)).fetchone()
                 if row:
                     return Task(**dict(row))
         return None
@@ -390,8 +469,7 @@ class TaskQueue:
             # Status guard: only ASSIGNED or IN_PROGRESS can be failed
             if task.status not in (TaskStatus.ASSIGNED.value, TaskStatus.IN_PROGRESS.value):
                 raise TaskStateError(
-                    f"Cannot fail task {task_id}: status={task.status}, "
-                    f"must be 'assigned' or 'in_progress'"
+                    f"Cannot fail task {task_id}: status={task.status}, must be 'assigned' or 'in_progress'"
                 )
 
             new_retries = task.retries + 1
@@ -452,7 +530,182 @@ class TaskQueue:
                 """UPDATE tasks SET last_heartbeat = ? WHERE id = ? AND status IN ('assigned', 'in_progress')""",
                 (now, task_id),
             )
-            return result.rowcount > 0
+            return bool(result.rowcount > 0)
+
+    def pause(self, task_id: str, node_id: str = "") -> Task | None:
+        """Pausa una tarea en progreso (in_progress → paused).
+
+        Queda reservada al nodo que la tenía (worksteal pausado): solo
+        ``resume`` de ese nodo la retoma, no se reparte a otros.
+        """
+        now = self._now()
+        with self._lock, _open_db(self._db_path) as conn:
+            result = conn.execute(
+                """UPDATE tasks
+                   SET status = ?, last_heartbeat = ?, updated_at = ?
+                   WHERE id = ? AND status IN ('assigned', 'in_progress')""",
+                (TaskStatus.PAUSED.value, now, now, task_id),
+            )
+            if result.rowcount > 0:
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, details, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (task_id, TaskEvent.PAUSED.value, f"node={node_id or ''}", now),
+                )
+                log.info("[TASK_QUEUE] %s pausada (node=%s)", task_id, node_id or "?")
+                row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+                if row:
+                    return Task(**dict(row))
+        return None
+
+    def resume(self, task_id: str, node_id: str = "") -> Task | None:
+        """Reanuda una tarea pausada (paused → assigned) para el nodo indicado."""
+        now = self._now()
+        assign_to = node_id
+        if not assign_to:
+            existing = self.get(task_id)
+            if existing:
+                assign_to = existing.assigned_to
+        with self._lock, _open_db(self._db_path) as conn:
+            result = conn.execute(
+                """UPDATE tasks
+                   SET status = ?, assigned_to = ?, last_heartbeat = ?, updated_at = ?
+                   WHERE id = ? AND status = 'paused'""",
+                (TaskStatus.ASSIGNED.value, assign_to, now, now, task_id),
+            )
+            if result.rowcount > 0:
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, details, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (task_id, TaskEvent.RESUMED.value, f"node={node_id or ''}", now),
+                )
+                log.info("[TASK_QUEUE] %s reanudada (node=%s)", task_id, node_id or "?")
+                row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+                if row:
+                    return Task(**dict(row))
+        return None
+
+    def list_resumable(self, node_id: str, limit: int = 20) -> list[Task]:
+        """Lista tareas pausadas reservadas al nodo dado."""
+        with _open_db(self._db_path) as conn:
+            rows = conn.execute(
+                """SELECT * FROM tasks
+                   WHERE status = 'paused' AND assigned_to = ?
+                   ORDER BY priority DESC, created_at ASC LIMIT ?""",
+                (node_id, limit),
+            ).fetchall()
+            return [Task(**dict(r)) for r in rows]
+
+    def release_pending(self, node_id: str) -> int:
+        """Libera a la cola común las tareas 'assigned'/'in_progress' de un nodo offline.
+
+        Devuelve cuántas tareas se liberaron a``pending`` (work-steal: otro nodo
+        puede cogerlas). Las tareas que estaban ``paused`` NO se tocan (Opción C:
+        quedan reservadas al nodo que las pausó).
+        """
+        now = self._now()
+        released = 0
+        with self._lock, _open_db(self._db_path) as conn:
+            rows = conn.execute(
+                """SELECT id FROM tasks
+                   WHERE status IN ('assigned','in_progress') AND assigned_to = ?""",
+                (node_id,),
+            ).fetchall()
+            for row in rows:
+                tid = row["id"]
+                conn.execute(
+                    """UPDATE tasks
+                       SET status = 'pending', assigned_to = '', last_heartbeat = '', updated_at = ?
+                       WHERE id = ?""",
+                    (now, tid),
+                )
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, details, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (tid, TaskEvent.TIMEOUT.value, f"node offline, released: {node_id}", now),
+                )
+                released += 1
+        if released:
+            log.warning("[TASK_QUEUE] %d tareas de %s liberadas a la cola común", released, node_id)
+        return released
+
+    def park_in_progress(self, node_id: str) -> int:
+        """Convierte en 'paused' las tareas in_progress de un nodo que se detiene.
+
+        Opción C: el trabajo a medias se reserva al nodo; no lo roban los demás.
+        Devuelve cuántas tareas se pausaron.
+        """
+        now = self._now()
+        parked = 0
+        with self._lock, _open_db(self._db_path) as conn:
+            rows = conn.execute(
+                """SELECT id FROM tasks
+                   WHERE status IN ('assigned','in_progress') AND assigned_to = ?""",
+                (node_id,),
+            ).fetchall()
+            for row in rows:
+                tid = row["id"]
+                conn.execute(
+                    """UPDATE tasks SET status = 'paused', updated_at = ? WHERE id = ?""",
+                    (now, tid),
+                )
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, details, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (tid, TaskEvent.PAUSED.value, f"node parked: {node_id}", now),
+                )
+                parked += 1
+        if parked:
+            log.warning("[TASK_QUEUE] %d tareas de %s pausadas (reservadas)", parked, node_id)
+        return parked
+
+    def steal_available(self, node_id: str, limit: int = 5) -> list[Task]:
+        """Robo de trabajo (work-stealing): tareas pending reclamables por este nodo.
+
+        Solo tareas ``pending``/``timeout`` de cola común (no toca ``paused``,
+        que están reservadas). Con ``limit=0`` devuelve el conteo.
+        """
+        with self._lock, _open_db(self._db_path) as conn:
+            rows = conn.execute(
+                """SELECT * FROM tasks
+                   WHERE status IN ('pending','timeout')
+                   ORDER BY priority DESC, created_at ASC LIMIT ?""",
+                (limit,),
+            ).fetchall()
+            return [Task(**dict(r)) for r in rows]
+
+    def release_all_paused(self, node_id: str) -> int:
+        """Libera a la cola común todas las tareas pausadas de un nodo.
+
+        Opción C + force: para un rebalanceo explícito, las tareas ``paused``
+        que quedaron reservadas a un nodo se vuelven ``pending`` para que otro
+        nodo del pool las absorba. Devuelve cuántas se liberaron.
+        """
+        now = self._now()
+        released = 0
+        with self._lock, _open_db(self._db_path) as conn:
+            rows = conn.execute(
+                """SELECT id FROM tasks
+                   WHERE status = 'paused' AND assigned_to = ?""",
+                (node_id,),
+            ).fetchall()
+            for row in rows:
+                tid = row["id"]
+                conn.execute(
+                    """UPDATE tasks
+                       SET status = 'pending', assigned_to = '', last_heartbeat = '', updated_at = ?
+                       WHERE id = ?""",
+                    (now, tid),
+                )
+                conn.execute(
+                    """INSERT INTO task_events (task_id, event, details, timestamp)
+                       VALUES (?, ?, ?, ?)""",
+                    (tid, TaskEvent.TIMEOUT.value, f"paused released (force): {node_id}", now),
+                )
+                released += 1
+        if released:
+            log.warning("[TASK_QUEUE] %d tareas pausadas de %s liberadas (force)", released, node_id)
+        return released
 
     def recover_stale(self) -> list[Task]:
         """Recupera tareas stale (sin heartbeat por >timeout_seconds de la tarea)."""
@@ -478,15 +731,19 @@ class TaskQueue:
                     conn.execute(
                         """INSERT INTO task_events (task_id, event, details, timestamp)
                            VALUES (?, ?, ?, ?)""",
-                        (task.id, TaskEvent.TIMEOUT.value,
-                         f"heartbeat timeout (limit={task.stale_timeout_s}s)", self._now()),
+                        (
+                            task.id,
+                            TaskEvent.TIMEOUT.value,
+                            f"heartbeat timeout (limit={task.stale_timeout_s}s)",
+                            self._now(),
+                        ),
                     )
                     stale.append(task)
         if stale:
             log.warning("[TASK_QUEUE] %d tareas stale recuperadas", len(stale))
         return stale
 
-    def get_events(self, task_id: str) -> list[dict]:
+    def get_events(self, task_id: str) -> list[dict[str, object]]:
         """Obtiene eventos de una tarea."""
         with _open_db(self._db_path) as conn:
             rows = conn.execute(

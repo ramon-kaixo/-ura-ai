@@ -10,10 +10,15 @@ Endpoints:
   POST   /tasks/{id}/fail    — Marcar como fallida
   POST   /tasks/{id}/review  — Marcar para revisión
   POST   /tasks/{id}/heartbeat — Actualizar heartbeat
+  POST   /tasks/{id}/pause    — Pausar tarea en progreso (reservada al nodo)
+  POST   /tasks/{id}/resume   — Reanudar tarea pausada
   GET    /tasks/{id}/events  — Historial de eventos
   GET    /stats              — Estadísticas de la cola
   GET    /health             — Health check
   POST   /recover-stale      — Recuperar tareas stale
+  GET    /worker/status      — Estado del pool (work-stealing / rebalanceo)
+  POST   /nodes/{id}/pause   — Detener un nodo (libera assigned, pausa in_progress)
+  POST   /nodes/{id}/resume  — Reanudar un nodo
 """
 
 from __future__ import annotations
@@ -22,10 +27,10 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 
 # Add parent to path for imports
@@ -46,7 +51,7 @@ _telemetry = TelemetryStore()
 
 
 @app.middleware("http")
-async def api_key_auth(request: Request, call_next):
+async def api_key_auth(request: Request, call_next: Any) -> Any:
     """Valida X-API-Key en requests (exento: health, liveness, dashboard)."""
     if request.url.path in _EXEMPT_PATHS:
         return await call_next(request)
@@ -92,6 +97,7 @@ class ReviewTask(BaseModel):
 
 class SyncTask(BaseModel):
     """Task received from a remote node for sync."""
+
     description: str
     plan_phase: str = ""
     priority: int = 0
@@ -109,7 +115,7 @@ class SyncTask(BaseModel):
 
 
 @app.post("/tasks")
-def create_task(req: CreateTask):
+def create_task(req: CreateTask) -> dict[str, object]:
     task = _queue.create(
         description=req.description,
         plan_phase=req.plan_phase,
@@ -123,13 +129,13 @@ def create_task(req: CreateTask):
 
 
 @app.get("/tasks")
-def list_tasks(status: str | None = None, limit: int = 50):
+def list_tasks(status: str | None = None, limit: int = 50) -> dict[str, object]:
     tasks = _queue.list_by_status(status, limit)
     return {"tasks": [t.to_dict() for t in tasks], "count": len(tasks)}
 
 
 @app.get("/tasks/{task_id}")
-def get_task(task_id: str):
+def get_task(task_id: str) -> dict[str, object]:
     task = _queue.get(task_id)
     if not task:
         raise HTTPException(404, "Task not found")
@@ -137,7 +143,7 @@ def get_task(task_id: str):
 
 
 @app.post("/tasks/{task_id}/claim")
-def claim_task(task_id: str, req: ClaimTask):
+def claim_task(task_id: str, req: ClaimTask) -> dict[str, object]:
     task = _queue.claim(task_id, req.agent)
     if not task:
         raise HTTPException(409, "Task not available for claiming")
@@ -145,7 +151,7 @@ def claim_task(task_id: str, req: ClaimTask):
 
 
 @app.post("/tasks/{task_id}/start")
-def start_task(task_id: str):
+def start_task(task_id: str) -> dict[str, object]:
     task = _queue.start(task_id)
     if not task:
         raise HTTPException(409, "Task not in 'assigned' state")
@@ -153,7 +159,7 @@ def start_task(task_id: str):
 
 
 @app.post("/tasks/{task_id}/complete")
-def complete_task(task_id: str, req: CompleteTask):
+def complete_task(task_id: str, req: CompleteTask) -> dict[str, object]:
     task = _queue.complete(task_id, req.commit_sha)
     if not task:
         raise HTTPException(409, "Task not in reviewable state")
@@ -161,7 +167,7 @@ def complete_task(task_id: str, req: CompleteTask):
 
 
 @app.post("/tasks/{task_id}/fail")
-def fail_task(task_id: str, req: FailTask):
+def fail_task(task_id: str, req: FailTask) -> dict[str, object]:
     task = _queue.fail(task_id, req.error, req.require_human)
     if not task:
         raise HTTPException(404, "Task not found")
@@ -169,7 +175,7 @@ def fail_task(task_id: str, req: FailTask):
 
 
 @app.post("/tasks/{task_id}/review")
-def review_task(task_id: str, req: ReviewTask):
+def review_task(task_id: str, req: ReviewTask) -> dict[str, object]:
     task = _queue.review(task_id, req.reviewer)
     if not task:
         raise HTTPException(409, "Task not in 'in_progress' state")
@@ -177,38 +183,62 @@ def review_task(task_id: str, req: ReviewTask):
 
 
 @app.post("/tasks/{task_id}/heartbeat")
-def heartbeat_task(task_id: str):
+def heartbeat_task(task_id: str) -> dict[str, object]:
     ok = _queue.heartbeat(task_id)
     if not ok:
         raise HTTPException(404, "Task not found or not active")
     return {"status": "ok"}
 
 
+class PauseTask(BaseModel):
+    node_id: str = ""
+
+
+@app.post("/tasks/{task_id}/pause")
+def pause_task(task_id: str, req: PauseTask | None = None) -> dict[str, object]:
+    """Pausa una tarea en progreso. Queda reservada al nodo (no se roba)."""
+    node_id = req.node_id if req else ""
+    task = _queue.pause(task_id, node_id)
+    if not task:
+        raise HTTPException(409, "Task not in 'assigned' or 'in_progress' state")
+    return task.to_dict()
+
+
+@app.post("/tasks/{task_id}/resume")
+def resume_task(task_id: str, req: PauseTask | None = None) -> dict[str, object]:
+    """Reanuda una tarea pausada para el nodo indicado (o el que la pausó)."""
+    node_id = req.node_id if req else ""
+    task = _queue.resume(task_id, node_id)
+    if not task:
+        raise HTTPException(409, "Task not in 'paused' state")
+    return task.to_dict()
+
+
 @app.get("/tasks/{task_id}/events")
-def get_events(task_id: str):
+def get_events(task_id: str) -> dict[str, object]:
     events = _queue.get_events(task_id)
     return {"events": events, "count": len(events)}
 
 
 @app.get("/tasks/node/{node_id}")
-def list_tasks_by_node(node_id: str, status: str | None = None, limit: int = 50):
+def list_tasks_by_node(node_id: str, status: str | None = None, limit: int = 50) -> dict[str, object]:
     tasks = _queue.list_by_node(node_id, status, limit)
     return {"tasks": [t.to_dict() for t in tasks], "count": len(tasks), "node_id": node_id}
 
 
 @app.get("/stats")
-def get_stats():
+def get_stats() -> dict[str, object]:
     return _queue.stats()
 
 
 @app.post("/recover-stale")
-def recover_stale():
+def recover_stale() -> dict[str, object]:
     stale = _queue.recover_stale()
     return {"recovered": len(stale), "tasks": [t.to_dict() for t in stale]}
 
 
 @app.get("/health")
-def health():
+def health() -> dict[str, object]:
     stats = _queue.stats()
     return {
         "status": "ok",
@@ -222,27 +252,25 @@ def health():
 
 
 @app.get("/telemetry/stats")
-def telemetry_stats(minutes: int = 60):
+def telemetry_stats(minutes: int = 60) -> dict[str, object]:
     return _telemetry.stats(since_minutes=minutes)
 
 
 @app.get("/telemetry/recent")
-def telemetry_recent(limit: int = 20):
+def telemetry_recent(limit: int = 20) -> dict[str, object]:
     return {"tasks": _telemetry.recent_tasks(limit)}
 
 
 @app.get("/telemetry/query")
-def telemetry_query(event: str | None = None, task_id: str | None = None, limit: int = 50):
+def telemetry_query(event: str | None = None, task_id: str | None = None, limit: int = 50) -> dict[str, object]:
     metrics = _telemetry.query(event=event, task_id=task_id, limit=limit)
     return {
         "metrics": [{"id": m.id, "ts": m.ts, "event": m.event, "task_id": m.task_id, "node": m.node} for m in metrics]
     }
 
 
-@app.get("/dashboard", response_class=None)
-def dashboard():
-    from fastapi.responses import HTMLResponse
-
+@app.get("/dashboard", response_class=HTMLResponse)
+def dashboard() -> Response:
     stats = _telemetry.stats(since_minutes=60)
     tasks = _telemetry.recent_tasks()
     return HTMLResponse(dashboard_html(stats, tasks))
@@ -265,7 +293,7 @@ def _get_failover() -> Any:
 
 
 @app.get("/readiness")
-def readiness():
+def readiness() -> dict[str, object]:
     """Kubernetes-style readiness probe."""
     stats = _queue.stats()
     pending = stats.get("by_status", {}).get("pending", 0)
@@ -282,20 +310,20 @@ def readiness():
 
 
 @app.get("/liveness")
-def liveness():
+def liveness() -> dict[str, object]:
     """Kubernetes-style liveness probe."""
     return {"alive": True, "pid": os.getpid()}
 
 
 @app.get("/failover/status")
-def failover_status():
+def failover_status() -> dict[str, object]:
     """Estado del sistema de failover."""
     fo = _get_failover()
-    return fo.get_status()
+    return cast("dict[str, object]", fo.get_status())
 
 
 @app.post("/failover/start")
-def failover_start():
+def failover_start() -> dict[str, object]:
     """Inicia el health checker del failover."""
     fo = _get_failover()
     fo.start()
@@ -303,7 +331,7 @@ def failover_start():
 
 
 @app.post("/failover/stop")
-def failover_stop():
+def failover_stop() -> dict[str, object]:
     """Detiene el health checker del failover."""
     fo = _get_failover()
     fo.stop()
@@ -311,7 +339,7 @@ def failover_stop():
 
 
 @app.post("/recover-stale-auto")
-def recover_stale_auto():
+def recover_stale_auto() -> dict[str, object]:
     """Stale recovery automatico (sin intervencion manual)."""
     stale = _queue.recover_stale()
     if stale:
@@ -320,7 +348,7 @@ def recover_stale_auto():
 
 
 @app.get("/parallel/status")
-def parallel_status():
+def parallel_status() -> dict[str, object]:
     """Estado del trabajo paralelo: nodo, branch, behind, conflictos."""
     import subprocess
 
@@ -328,25 +356,31 @@ def parallel_status():
     branch = "unknown"
     behind_main = 0
     has_conflicts = False
-    other_branches: dict[str, dict] = {}
+    other_branches: dict[str, dict[str, list[str]]] = {}
 
     try:
         result = subprocess.run(
             ["git", "branch", "--show-current"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         branch = result.stdout.strip() or "unknown"
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("git branch --show-current fallo: %s", e)
 
     try:
         result = subprocess.run(
             ["git", "rev-list", "HEAD..origin/main", "--count"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
         )
         behind_main = int(result.stdout.strip() or "0")
-    except Exception:
-        pass
+    except Exception as e:
+        log.warning("git rev-list fallo: %s", e)
 
     # Verificar conflictos
     conflict_log = Path("CONFLICT.log")
@@ -359,7 +393,10 @@ def parallel_status():
         try:
             result = subprocess.run(
                 ["git", "log", f"origin/{other}", "--oneline", "-3"],
-                capture_output=True, text=True, timeout=5,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             commits = [line.strip() for line in result.stdout.strip().split("\n") if line.strip()]
             other_branches[other] = {"commits": commits}
@@ -382,9 +419,8 @@ def parallel_status():
 _registry: Any = None
 
 
-
 @app.post("/tasks/sync")
-def sync_task(req: SyncTask):
+def sync_task(req: SyncTask) -> dict[str, object]:
     """Receive a task from a remote node and add to local queue."""
     import json as _json
 
@@ -412,6 +448,7 @@ def sync_task(req: SyncTask):
     )
     return {"status": "synced", "task_id": task.id}
 
+
 def _get_registry() -> Any:
     global _registry  # noqa: PLW0603
     if _registry is None:
@@ -419,6 +456,73 @@ def _get_registry() -> Any:
 
         _registry = NodeRegistry()
     return _registry
+
+
+# ---------------------------------------------------------------------------
+# Work-Stealing pool — rebalanceo por ociosidad
+# ---------------------------------------------------------------------------
+
+_stealer: Any = None
+
+
+def _get_stealer() -> Any:
+    global _stealer  # noqa: PLW0603
+    if _stealer is None:
+        from motor.orchestration.worksteal import WorkStealer
+
+        _stealer = WorkStealer(_queue, _get_registry())
+    return _stealer
+
+
+class PauseNode(BaseModel):
+    force_release_paused: bool = False
+
+
+@app.post("/nodes/{node_id}/pause")
+def pause_node(node_id: str, req: PauseNode | None = None) -> dict[str, object]:
+    """Detiene un nodo del pool.
+
+    Libera a la cola común sus tareas ``assigned`` y pausa sus ``in_progress``
+    (Opción C: el trabajo a medias queda reservado al nodo). Si
+    ``force_release_paused`` es True, además libera las ``paused``.
+    """
+    stealer = _get_stealer()
+    stealer.release(node_id)
+    result: dict[str, Any] = {"node_id": node_id, "status": "paused"}
+    if req and req.force_release_paused:
+        result["released_paused"] = _queue.release_all_paused(node_id)
+    return result
+
+
+@app.post("/nodes/{node_id}/resume")
+def resume_node(node_id: str) -> dict[str, object]:
+    """Reanuda un nodo del pool (marca presencia activa)."""
+    stealer = _get_stealer()
+    stealer.acquire(node_id)
+    resumable = _queue.list_resumable(node_id)
+    return {
+        "node_id": node_id,
+        "status": "resumed",
+        "resumable": len(resumable),
+        "resumable_ids": [t.id for t in resumable],
+    }
+
+
+@app.get("/worker/status")
+def worker_status() -> dict[str, object]:
+    """Estado del pool de trabajo (work-stealing)."""
+    stealer = _get_stealer()
+    status = stealer.status()
+    status["queue"] = _queue.stats()
+    return cast("dict[str, object]", status)
+
+
+@app.post("/worker/rebalance")
+def worker_rebalance(force: bool = False) -> dict[str, object]:
+    """Fuerza un barrido de rebalanceo del pool."""
+    stealer = _get_stealer()
+    counts = stealer.rebalance(force=force)
+    return {"rebalance": counts, "status": stealer.status()}
 
 
 class RegisterNode(BaseModel):
@@ -430,7 +534,7 @@ class RegisterNode(BaseModel):
 
 
 @app.get("/nodes")
-def list_nodes():
+def list_nodes() -> dict[str, object]:
     """List all known peer nodes and their health status."""
     reg = _get_registry()
     nodes = reg.list_all()
@@ -442,7 +546,7 @@ def list_nodes():
 
 
 @app.post("/nodes/register")
-def register_node(req: RegisterNode):
+def register_node(req: RegisterNode) -> dict[str, object]:
     """Register or update a peer node."""
     reg = _get_registry()
     node = reg.register(
@@ -452,11 +556,11 @@ def register_node(req: RegisterNode):
         api_port=req.api_port,
         tags=req.tags,
     )
-    return node.to_dict()
+    return cast("dict[str, object]", node.to_dict())
 
 
 @app.delete("/nodes/{node_id}")
-def unregister_node(node_id: str):
+def unregister_node(node_id: str) -> dict[str, object]:
     """Remove a node from the registry."""
     reg = _get_registry()
     removed = reg.unregister(node_id)
@@ -466,17 +570,17 @@ def unregister_node(node_id: str):
 
 
 @app.get("/nodes/{node_id}")
-def get_node(node_id: str):
+def get_node(node_id: str) -> dict[str, object]:
     """Get info about a specific peer node."""
     reg = _get_registry()
     node = reg.get(node_id)
     if not node:
         raise HTTPException(404, "Node not found")
-    return node.to_dict()
+    return cast("dict[str, object]", node.to_dict())
 
 
 @app.post("/nodes/check")
-def check_nodes(node_id: str | None = None):
+def check_nodes(node_id: str | None = None) -> dict[str, object]:
     """Trigger health check for one or all nodes."""
     reg = _get_registry()
     results = reg.check_health(node_id)
@@ -484,7 +588,7 @@ def check_nodes(node_id: str | None = None):
 
 
 @app.post("/nodes/start-checker")
-def start_node_checker():
+def start_node_checker() -> dict[str, object]:
     """Start background health checker for all nodes."""
     reg = _get_registry()
     reg.start_checker()
@@ -492,14 +596,14 @@ def start_node_checker():
 
 
 @app.post("/nodes/stop-checker")
-def stop_node_checker():
+def stop_node_checker() -> dict[str, object]:
     """Stop background health checker."""
     reg = _get_registry()
     reg.stop_checker()
     return {"status": "stopped"}
 
 
-def main():
+def main() -> None:
     import uvicorn
 
     port = int(os.environ.get("TASK_QUEUE_PORT", "4097"))
