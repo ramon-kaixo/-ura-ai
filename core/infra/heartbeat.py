@@ -14,6 +14,7 @@ import subprocess
 import time
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
@@ -45,7 +46,8 @@ def check_health() -> bool:
             headers=headers,
         )
         with urlopen(req, timeout=5) as resp:  # noqa: S310
-            return resp.status == 200
+            ok: bool = resp.status == 200
+            return ok
     except (URLError, OSError, ValueError) as e:
         logger.warning("Health check fallo: %s", e)
         return False
@@ -180,7 +182,7 @@ def check_vram_pressure() -> None:
 
 
 def check_loop_latency() -> float:
-    async def _measure():
+    async def _measure() -> float:
         import time as _t
 
         t0 = _t.monotonic()
@@ -191,7 +193,8 @@ def check_loop_latency() -> float:
     try:
         import asyncio
 
-        return asyncio.run(_measure())
+        latency: float = asyncio.run(_measure())
+        return latency
     except RuntimeError:
         return 0.0
 
@@ -250,7 +253,7 @@ def main() -> None:
 if __name__ == "__main__":
     import signal
 
-    def _handle_signal(sig, frame) -> None:
+    def _handle_signal(sig: int, frame: Any) -> None:
         global _shutdown_flag  # noqa: PLW0603
         logger.info("Recibida señal %s, parando heartbeat...", sig)
         _shutdown_flag = True

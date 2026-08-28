@@ -11,7 +11,7 @@ import subprocess
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def _ensure_patterns_dir() -> None:
 GIT_CMD = os.environ.get("URA_GIT", "git")
 
 
-def _git(*args) -> tuple[bool, str]:
+def _git(*args: str) -> tuple[bool, str]:
     result = subprocess.run([GIT_CMD, *args], capture_output=True, text=True, cwd=ROOT, check=False)
     return result.returncode == 0, result.stdout.strip() or result.stderr.strip()
 
@@ -37,10 +37,11 @@ def _get_modified_tracked_files() -> list[str]:
     return [f for f in out.splitlines() if f.strip()]
 
 
-def _load_patterns() -> list[dict]:
+def _load_patterns() -> list[dict[str, Any]]:
     if PATTERNS_FILE.exists():
         try:
-            return json.loads(PATTERNS_FILE.read_text())
+            data: list[dict[str, Any]] = json.loads(PATTERNS_FILE.read_text())
+            return data
         except Exception:
             return []
     return []
@@ -79,7 +80,7 @@ class ChangeGuardian:
         self._modified_before = _get_modified_tracked_files()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> None:
         if exc_type is not None:
             logger.error("Excepción durante '%s': %s", self.description, exc_val)
             self._rollback(reason=f"excepción: {exc_val}")
@@ -151,7 +152,7 @@ def validate_and_clean(description: str = "cambio manual") -> bool:
     return True
 
 
-def get_failure_patterns() -> list[dict]:
+def get_failure_patterns() -> list[dict[str, Any]]:
     return _load_patterns()
 
 

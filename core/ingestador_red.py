@@ -25,6 +25,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger("ura.ingestador_red")
 
@@ -37,10 +38,11 @@ TAREAS_MEDIAS = {"analizar", "comprimir", "sincronizar", "validar"}
 TAREAS_LIGERAS = {"monitorear", "reportar", "ping", "dashboard"}
 
 
-def cargar_inventario() -> dict:
+def cargar_inventario() -> dict[str, Any]:
     if INVENTARIO_PATH.exists():
         try:
-            return json.loads(INVENTARIO_PATH.read_text())
+            data: dict[str, Any] = json.loads(INVENTARIO_PATH.read_text())
+            return data
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
     return {"dispositivos": {}}
@@ -78,7 +80,7 @@ def tailscale_ssh(hostname: str, comando: str, timeout: int = 30) -> tuple[int, 
         return -1, "", str(e)
 
 
-def _seleccionar_candidato(tarea: str, dispositivos: dict) -> tuple[str, dict] | None:
+def _seleccionar_candidato(tarea: str, dispositivos: dict[str, Any]) -> tuple[str, dict[str, Any]] | None:
     """Elegir dispositivo destino según el perfil de la tarea."""
     if tarea in TAREAS_PESADAS:
         for d_id, d in dispositivos.items():
@@ -106,7 +108,7 @@ def _construir_comando(tarea: str, archivo: str | None, hostname: str) -> str:
     return comandos.get(tarea, f"echo 'Tarea {tarea} recibida en {hostname}'")
 
 
-def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
+def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict[str, Any]:
     """Distribuye una tarea al dispositivo más adecuado según su perfil.
 
     Lógica de asignación:
@@ -142,7 +144,7 @@ def distribuir_tarea(tarea: str, archivo: str | None = None) -> dict:
     }
 
 
-def estado_dispositivos() -> dict:
+def estado_dispositivos() -> dict[str, Any]:
     """Verifica estado de todos los dispositivos via ping + SSH."""
     inv = cargar_inventario()
     resultados = {}

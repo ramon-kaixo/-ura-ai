@@ -80,7 +80,7 @@ class GuardianAcciones:
         except Exception as e:
             logger.exception(f"Error registrando en audit.log: {e}")
 
-    def _consultar_policia(self, accion: str, **kwargs) -> tuple[bool, str]:
+    def _consultar_policia(self, accion: str, **kwargs: Any) -> tuple[bool, str]:
         # Stub: agente_policia_v2 no operativo en este nodo
         return True, "stub: policia desactivado"
 
@@ -121,7 +121,7 @@ class GuardianAcciones:
             logger.exception(f"Error creando backup: {e}")
             return False
 
-    def _ejecutar_sandbox(self, accion: str, **kwargs) -> tuple[bool, str]:
+    def _ejecutar_sandbox(self, accion: str, **kwargs: Any) -> tuple[bool, str]:
         """REGLA 3 - CAJA DE ARENA: Ejecutar acción en sandbox.
 
         Returns:
@@ -151,7 +151,7 @@ class GuardianAcciones:
             self.stats["sandbox_fallidos"] += 1
             return False, f"Error en sandbox: {e}"
 
-    def _simular_accion_sandbox(self, accion: str, **kwargs) -> bool:
+    def _simular_accion_sandbox(self, accion: str, **kwargs: Any) -> bool:
         """Simular acción en sandbox (implementación básica)."""
         # Por ahora, simulación básica: verificar que la acción no contiene comandos peligrosos
         accion_lower = accion.lower()
@@ -272,7 +272,7 @@ class GuardianAcciones:
             return {"success": False, "message": "Instalación denegada por el usuario"}
         return None
 
-    def _regla_copia_previa(self, accion: str, **kwargs) -> str | None:
+    def _regla_copia_previa(self, accion: str, **kwargs: Any) -> str | None:
         """REGLA 2 — backup previo para operaciones de borrado.
 
         Returns:
@@ -293,7 +293,7 @@ class GuardianAcciones:
             return "Backup falló, pero se procede con la acción"
         return None
 
-    def ejecutar(self, accion: str, **kwargs) -> dict[str, Any]:
+    def ejecutar(self, accion: str, **kwargs: Any) -> dict[str, Any]:
         """Ejecutar una acción con todas las reglas de seguridad.
 
         Args:
