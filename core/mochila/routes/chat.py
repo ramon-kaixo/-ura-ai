@@ -44,7 +44,8 @@ async def _chat_no_stream(
             max_tokens=max_tokens,
             temperature=temperature,
         ):
-            return chunk
+            resp_chunk: dict[str, Any] = chunk
+            return resp_chunk
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"provider: {e}")  # noqa: B904
     return None
