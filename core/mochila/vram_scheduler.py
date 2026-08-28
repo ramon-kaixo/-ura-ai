@@ -27,10 +27,10 @@ class VRAMAwareScheduler:
     def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0) -> None:
         self.max_mb = self._detect_max_vram(default_max_mb)
         self.queue_timeout = queue_timeout
-        self._queue: list[tuple[asyncio.Future, int, float, dict[str, Any]]] = []
+        self._queue: list[tuple[asyncio.Future[Any], int, float, dict[str, Any]]] = []
         self._active: dict[str, dict[str, Any]] = {}
         self._current_mb = 0
-        self._hot_models: set = set()
+        self._hot_models: set[str] = set()
         self._consecutive_smi_errors = 0
         self._lock = asyncio.Lock()
         self._release_tasks: set[asyncio.Task[None]] = set()
@@ -38,7 +38,7 @@ class VRAMAwareScheduler:
 
         self._ollama_client = _httpx.AsyncClient(base_url=OLLAMA_SOCKET)
         self._scheduler_log = logging.getLogger("mochila.vram")
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task[Any] | None = None
 
     @staticmethod
     def _detect_max_vram(default_mb: int) -> int:
@@ -60,7 +60,7 @@ class VRAMAwareScheduler:
         return self.max_mb - self._current_mb
 
     @staticmethod
-    def estimar_vram(body: dict) -> int:
+    def estimar_vram(body: dict[str, Any]) -> int:
         if "_vram_mb" in body:
             return int(body["_vram_mb"])
         model = body.get("model", "")
@@ -132,7 +132,7 @@ class VRAMAwareScheduler:
         except Exception as e:
             log.warning("mochila: ollama ps falló: %s", e)
 
-    async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict | None = None) -> str | None:
+    async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict[str, Any] | None = None) -> str | None:
         async with self._lock:
             if len(self._active) > 0:
                 return None
