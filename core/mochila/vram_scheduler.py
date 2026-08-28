@@ -83,7 +83,7 @@ class VRAMAwareScheduler:
         return base + kv_cache_overhead
 
     async def sync_vram(self) -> None:
-        proc = None
+        proc: asyncio.subprocess.Process | None = None
         try:
             proc = await asyncio.wait_for(
                 asyncio.create_subprocess_exec(
@@ -108,18 +108,18 @@ class VRAMAwareScheduler:
             self._scheduler_log.warning("nvidia-smi timeout (%d/3)", self._consecutive_smi_errors)
             if proc:
                 try:
-                    proc.kill()  # BUG conocido: falta await; kill async nunca se ejecuta
-                    await proc.wait()  # pragma: no cover - inalcanzable mientras kill no tenga await
-                except Exception as e:  # pragma: no cover - alcanzable solo si kill/wait fueran sync
+                    proc.kill()  # kill() es SÍNCRONO en asyncio.subprocess (devuelve None); wait() es async
+                    await proc.wait()  # pragma: no cover - inalcanzable: kill sync no lanza
+                except Exception as e:  # pragma: no cover - defensivo, kill/wait sync no lanzan
                     log.debug("mochila: kill proc falló: %s", e)
         except Exception as e:
             self._consecutive_smi_errors += 1
             self._scheduler_log.warning("nvidia-smi error (%d/3): %s", self._consecutive_smi_errors, e)
             if proc:
                 try:
-                    proc.kill()  # BUG conocido: falta await; kill async nunca se ejecuta
-                    await proc.wait()  # pragma: no cover - inalcanzable mientras kill no tenga await
-                except Exception as e2:  # pragma: no cover - alcanzable solo si kill/wait fueran sync
+                    proc.kill()  # kill() es SÍNCRONO en asyncio.subprocess (devuelve None); wait() es async
+                    await proc.wait()  # pragma: no cover - inalcanzable: kill sync no lanza
+                except Exception as e2:  # pragma: no cover - defensivo, kill/wait sync no lanzan
                     log.debug("mochila: kill proc falló: %s", e2)
         if self._consecutive_smi_errors >= 3:
             self._scheduler_log.critical("nvidia-smi caido persistentemente. Bloqueando VRAM.")
