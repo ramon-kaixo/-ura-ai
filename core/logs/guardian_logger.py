@@ -7,7 +7,7 @@ import logging
 import os
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.core.interfaces import IConfigProvider
@@ -17,13 +17,13 @@ logger = logging.getLogger("ura.guardian")
 GUARDIAN_LOG = os.getenv("GUARDIAN_LOG", "/var/log/ura/guardian.jsonl")
 
 
-def _ensure_log_dir():
+def _ensure_log_dir() -> None:
     path = Path(GUARDIAN_LOG).parent
     if path and not Path(path).exists():
         path.mkdir(parents=True, exist_ok=True)
 
 
-def _publish_to_event_bus(record: dict) -> None:
+def _publish_to_event_bus(record: dict[str, Any]) -> None:
     try:
         from core.event_bus import publish
 
@@ -40,7 +40,7 @@ def _publish_to_event_bus(record: dict) -> None:
         pass
 
 
-def _save_to_qdrant(record: dict, config: IConfigProvider | None = None) -> None:
+def _save_to_qdrant(record: dict[str, Any], config: IConfigProvider | None = None) -> None:
     try:
         if config is None:
             from motor.core.config import UraConfig
@@ -80,7 +80,7 @@ def log_event(
     complexity: int = 0,
     temperature: float = 0.0,
     result_type: str = "",
-):
+) -> None:
     _ensure_log_dir()
     record = {
         "timestamp": datetime.now(UTC).isoformat(),

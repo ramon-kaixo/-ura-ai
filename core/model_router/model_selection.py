@@ -8,7 +8,7 @@ import threading
 import urllib.error
 import urllib.request
 from collections import defaultdict
-from typing import TypedDict
+from typing import Any, TypedDict
 
 log = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ PATRONES_CLASIFICACION = {
 }
 
 
-def clasificar_peticion(messages: list) -> str:
+def clasificar_peticion(messages: list[dict[str, Any]]) -> str:
     if not messages:
         return DEFAULT_TIPO
     texto_completo = " ".join(msg.get("content", "") for msg in messages if isinstance(msg.get("content"), str)).lower()
@@ -138,7 +138,7 @@ def obtener_modelos_disponibles(url: str | None = None) -> set[str]:
         return set()
 
 
-def _get_model_params(model_name: str) -> dict:
+def _get_model_params(model_name: str) -> dict[str, Any]:
     base = model_name.split(":", maxsplit=1)[0]
     for name, params in MODEL_CONFIG.items():
         if model_name == name:
@@ -149,7 +149,7 @@ def _get_model_params(model_name: str) -> dict:
     return dict(DEFAULT_MODEL_PARAMS)
 
 
-def _apply_model_params(data: dict, model_name: str) -> dict:
+def _apply_model_params(data: dict[str, Any], model_name: str) -> dict[str, Any]:
     params = _get_model_params(model_name)
     if "options" not in data:
         data["options"] = {}
@@ -175,7 +175,7 @@ def _get_success_rate(modelo: str, tipo: str) -> float:
         return sr["ok"] / sr["total"]
 
 
-def seleccionar_modelo(tipo: str, disponibles: set) -> str:
+def seleccionar_modelo(tipo: str, disponibles: set[str]) -> str:
     route = MODELO_ROUTES.get(tipo, MODELO_ROUTES[DEFAULT_TIPO])
     candidatos: list[tuple[str, float]] = []
     for modelo in route["modelos"]:
@@ -200,6 +200,7 @@ def seleccionar_modelo(tipo: str, disponibles: set) -> str:
         metrics.increment("model_fallback", {"tipo": tipo, "fallback_model": fallback})
         return fallback
     if disponibles:
-        return next(iter(disponibles))
+        fallback_model: str = next(iter(disponibles))
+        return fallback_model
     log.warning("No hay modelos disponibles para tipo %s", tipo)
     return route["modelos"][0]
