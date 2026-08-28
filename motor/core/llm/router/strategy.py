@@ -100,7 +100,7 @@ def call_with_retry(
 def _call_provider(
     prov_obj: Any,
     method: str,
-    prompt: str,
+    prompt: Any,
     kwargs: dict[str, Any],
     monitor: Any,
     profiler: Any,

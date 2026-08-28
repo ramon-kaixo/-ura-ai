@@ -677,41 +677,51 @@ def test_timeout_handler_lanza() -> None:
 
 
 def test_watchdog_en_hilo_secundario_ok() -> None:
-    # BUG conocido: el wrapper de hilo secundario lanza TypeError por desempaquetado
+    # ADR-100 resuelto: el wrapper de hilo secundario ya no lanza TypeError
     @wd.watchdog(timeout=5, on_timeout="log")
     def suma(a: int, b: int) -> int:
         return a + b
 
-    t = threading.Thread(target=lambda: suma(2, 3))
+    out: dict[str, int] = {}
+    t = threading.Thread(target=lambda: out.update(v=suma(2, 3)))
     t.start()
     t.join(timeout=5)
-    assert t.is_alive() is False  # el hilo terminó (con TypeError capturado en el target)
+    assert out.get("v") == 5
 
 
 def test_watchdog_en_hilo_secundario_timeout() -> None:
-    # BUG conocido: TypeError inmediato, no timeout real
+    # ADR-100: en timeout real, el hilo secundario devuelve None (on_timeout log)
     @wd.watchdog(timeout=1, on_timeout="log")
     def lenta() -> str:
         time.sleep(3)
         return "nunca"
 
-    t = threading.Thread(target=lenta)
+    out: dict[str, object] = {}
+    t = threading.Thread(target=lambda: out.update(v=lenta()))
     t.start()
     t.join(timeout=5)
-    assert t.is_alive() is False
+    assert out.get("v") is None
 
 
 def test_watchdog_en_hilo_secundario_excepcion() -> None:
-    # BUG conocido: TypeError del desempaquetado, no la excepción de la función
+    # ADR-100: la excepción se propaga correctamente (ya no TypeError del desempaquetado)
     @wd.watchdog(timeout=5, on_timeout="log")
     def falla() -> None:
         msg = "boom-hilo"
         raise ValueError(msg)
 
-    t = threading.Thread(target=falla)
+    errores: list[type] = []
+
+    def correr() -> None:
+        try:
+            falla()
+        except ValueError as e:
+            errores.append(type(e))
+
+    t = threading.Thread(target=correr)
     t.start()
     t.join(timeout=5)
-    assert t.is_alive() is False
+    assert ValueError in errores
 
 
 def test_ejecutar_en_hilo_timeout() -> None:
