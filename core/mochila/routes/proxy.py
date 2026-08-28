@@ -28,7 +28,9 @@ def create_proxy_router(state: Any) -> APIRouter:
     router = APIRouter()
 
     @router.api_route("/api/{path:path}", methods=["GET", "POST"])
-    async def proxy_gateway(path: str, request: Request) -> JSONResponse | StreamingResponse:
+    async def proxy_gateway(
+        path: str, request: Request
+    ) -> Any:  # Any: evita que FastAPI genere response_model (respuestas JSON/Streaming)
         body = await _leer_body(request)
         req_id = await _adquirir_vram(state, body, path)
         if req_id is None:
