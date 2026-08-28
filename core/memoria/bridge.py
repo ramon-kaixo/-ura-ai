@@ -7,17 +7,18 @@ import asyncio
 import logging
 import time
 from pathlib import Path
+from typing import Any
 
 from core.memoria.ingesto import procesar_archivo
-from core.mochila.tools import page_read, web_search
+from core.mochila.tools import page_read, web_search  # type: ignore[attr-defined]
 
 INBOX = Path.home() / ".nervioso" / "inbox"
 log = logging.getLogger("mochila.bridge")
 
 
-async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagina: int = 30000) -> list[dict]:
+async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagina: int = 30000) -> list[dict[str, Any]]:
     """Busca en internet, descarga paginas, las guarda en inbox y las procesa."""
-    resultados: list[dict] = []
+    resultados: list[dict[str, Any]] = []
 
     search_result = await web_search(query, max_resultados)
     if "error" in search_result:
@@ -52,7 +53,7 @@ async def buscar_y_aprender(query: str, max_resultados: int = 3, max_chars_pagin
             "procesado": None,
         }
 
-        procesado = procesar_archivo(guardar) if guardar.exists() else None
+        procesado = procesar_archivo(str(guardar)) if guardar.exists() else None
         if procesado and procesado.get("extraido"):
             resultado["procesado"] = {
                 "hash": procesado["hash"],

@@ -21,7 +21,7 @@ class PromptCache:
     def _hash_content(self, content: str) -> str:
         return hashlib.sha256(content.encode()).hexdigest()
 
-    def get(self, prompt: str, tipo: str) -> dict | None:
+    def get(self, prompt: str, tipo: str) -> dict[str, Any] | None:
         key = self._hash_content(f"{tipo}:{prompt}")
         with self.lock:
             if key in self.cache:
@@ -33,7 +33,7 @@ class PromptCache:
         metrics.increment("prompt_cache_miss", {"tipo": tipo})
         return None
 
-    def set(self, prompt: str, tipo: str, response: dict) -> None:
+    def set(self, prompt: str, tipo: str, response: dict[str, Any]) -> None:
         key = self._hash_content(f"{tipo}:{prompt}")
         with self.lock:
             self.cache[key] = {"response": response, "timestamp": time.time()}

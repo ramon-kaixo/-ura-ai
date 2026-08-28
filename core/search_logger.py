@@ -13,7 +13,7 @@ import os
 import threading
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 log = logging.getLogger("ura.search_logger")
 
@@ -38,7 +38,7 @@ class _NdjsonWriter:
             self._file = open(path, "a", encoding="utf-8")  # noqa: PTH123, SIM115
             self._path = path
 
-    def write(self, record: dict) -> None:
+    def write(self, record: dict[str, Any]) -> None:
         self._ensure_file()
         if self._file is None:  # pragma: no cover - _ensure_file siempre abre (defensa)
             return
@@ -64,7 +64,7 @@ def _get_writer() -> _NdjsonWriter:
 
 def log_query(
     query_text: str,
-    results: list[dict],
+    results: list[dict[str, Any]],
     latency_ms: float,
     *,
     use_reranker: bool = False,

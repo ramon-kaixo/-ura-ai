@@ -42,7 +42,7 @@ from core.model_router.proxy import (
     _update_asus_latency,
     proxy_request,
 )
-from core.model_router.router import (
+from core.model_router.router import (  # type: ignore[attr-defined]
     CACHE_TTL,
     DEFAULT_TIPO,
     FALLBACK_MODEL,
