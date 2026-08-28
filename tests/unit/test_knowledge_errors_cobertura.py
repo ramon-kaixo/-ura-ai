@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from knowledge.engine.errors import (
+    _ALL_CODES,
     KE001,
     KE204,
     KE207,
@@ -48,6 +49,11 @@ def test_all_codes_ordenados() -> None:
 
 
 def test_register_manual() -> None:
-    nuevo = ErrorCode("KE999", Severity.INFO, "Test", "Código de prueba")
-    _register(nuevo)
-    assert lookup("KE999") is nuevo
+    _previo = dict(_ALL_CODES)
+    try:
+        nuevo = ErrorCode("KE999", Severity.INFO, "Test", "Código de prueba")
+        _register(nuevo)
+        assert lookup("KE999") is nuevo
+    finally:
+        _ALL_CODES.clear()
+        _ALL_CODES.update(_previo)
