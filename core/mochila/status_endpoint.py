@@ -67,7 +67,9 @@ async def _timer_status(name: str) -> str:
 
 async def _alemania_status() -> dict[str, Any]:
     try:
-        return json.loads(Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text())
+        raw = Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text()
+        data: dict[str, Any] = json.loads(raw)
+        return data
     except Exception:
         return {"global": "unknown", "ips": {}, "servicios": {}}
 
