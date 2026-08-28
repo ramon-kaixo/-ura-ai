@@ -84,7 +84,7 @@ class ContractGenerator:
         """Escanea un módulo y extrae funciones y tipos públicos."""
         functions = []
         data_models = []
-        exports = []
+        exports: list[Any] = []
 
         if not module_path.exists():
             return APISurface(module=module_name)

@@ -380,7 +380,7 @@ class RemoteExecutor:
             log.debug("[SSH] Error closing control socket: %s", e)
             return False
 
-    def connection_status(self, host: str | None = None) -> dict:
+    def connection_status(self, host: str | None = None) -> dict[str, Any]:
         """Verifica el estado de la conexión SSH multiplexada."""
         target_host = host or self._default_host
         user_host = target_host.split(":")[0]
