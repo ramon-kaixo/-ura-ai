@@ -160,15 +160,21 @@ Tener **dos interfaces de OpenCode trabajando en paralelo** sobre el mismo proye
    `options.baseURL` no se listan.
 3. La Mac apunta a GX10 por `10.164.1.247` (LAN, DHCP — puede cambiar). Alternativa fija: Tailscale `100.72.103.12`.
    `OLLAMA_HOST` en `~/.zshrc` afecta solo a shells; la app GUI necesita `provider.ollama.options.baseURL` en su config.
-4. `qwen3-coder:30b-mejorado` existe SOLO en el Ollama de GX10 (`/home/ramon/URA/ollama-models-0326`, 139 G).
-   El Ollama de la Mac quedó **vacío** (`{"models":[]}`) tras limpieza 2026-08-28.
+4. `qwen3-coder:30b-mejorado` existe SOLO en el Ollama de GX10. El Ollama de la Mac quedó **vacío** (`{"models":[]}`) tras limpieza 2026-08-28.
 5. Web (`:8081`) requiere login (HTTP 401 sin credenciales de `/etc/ura/secrets.env`, root-only).
+6. **`OLLAMA_MODELS` fuera del árbol de URA (2026-08-28):** el directorio de modelos de GX10
+   (`ollama-models-0326`, 139 G) se movió a `/home/ramon/ollama-models-0326` (fuera de `URA/`),
+   dejando un symlink en `/home/ramon/URA/ollama-models-0326 -> /home/ramon/ollama-models-0326`.
+   Motivo: evitar que rsync/git del árbol arrastre 139 G. El drop-in del servicio
+   `ollama.service.d/models.conf` sigue apuntando a la misma ruta absoluta (se resuelve vía symlink),
+   por lo que **NO hay que "arreglar" la ruta ni borrar el symlink** — verificado con 9 modelos OK tras el cambio.
+   Si un backup usa rsync sin `-L`, copiará solo el symlink (30 B), no el contenido.
 
 ### 12.3 Health-check del Model Router
 
 El warning cada 5 min `[DIRECT] modelo test no disponible` provenía de `motor/guard/verifier.py:55`
 (health-check del guard), que POSTeaba con `model:"test"` (inexistente). Corregido a `model:"llama3:latest"`
-(2026-08-28, commit pendiente de sync Mac→GX10 verificado por SHA).
+(2026-08-28, commit `aec122be`).
 
 ---
 
