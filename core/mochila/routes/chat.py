@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -11,7 +12,7 @@ from core.mochila.streaming import _stream_from_provider
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
 
 
-def _rechazar_si_bloqueado(provider_name: str, circuit_breaker, rate_limiter) -> None:
+def _rechazar_si_bloqueado(provider_name: str, circuit_breaker: Any, rate_limiter: Any) -> None:
     if not circuit_breaker.puede_pasar(provider_name):
         h = circuit_breaker.estado(provider_name)
         raise HTTPException(
@@ -26,7 +27,14 @@ def _rechazar_si_bloqueado(provider_name: str, circuit_breaker, rate_limiter) ->
         )
 
 
-async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, temperature) -> dict | None:
+async def _chat_no_stream(
+    provider: Any,
+    modelo: str,
+    mensajes: list[dict[str, Any]],
+    herramientas: list[dict[str, Any]] | None,
+    max_tokens: int,
+    temperature: float,
+) -> dict[str, Any] | None:
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -42,7 +50,7 @@ async def _chat_no_stream(provider, modelo, mensajes, herramientas, max_tokens, 
     return None
 
 
-def _headers_sse(provider_name: str, modelo: str, route_reason: str) -> dict:
+def _headers_sse(provider_name: str, modelo: str, route_reason: str) -> dict[str, str]:
     return {
         "X-Mochila-Provider": provider_name,
         "X-Mochila-Modelo": modelo,
@@ -52,7 +60,7 @@ def _headers_sse(provider_name: str, modelo: str, route_reason: str) -> dict:
     }
 
 
-def _headers_json(provider_name: str, modelo: str, route_reason: str) -> dict:
+def _headers_json(provider_name: str, modelo: str, route_reason: str) -> dict[str, str]:
     return {
         "X-Mochila-Provider": provider_name,
         "X-Mochila-Modelo": modelo,
@@ -61,14 +69,14 @@ def _headers_json(provider_name: str, modelo: str, route_reason: str) -> dict:
 
 
 async def _procesar_tool_calls(
-    state,
-    provider,
+    state: Any,
+    provider: Any,
     body: ChatRequest,
-    respuesta: dict,
+    respuesta: dict[str, Any],
     provider_name: str,
     modelo: str,
-    herramientas,
-) -> dict | None:
+    herramientas: list[dict[str, Any]] | None,
+) -> dict[str, Any] | None:
     """Ejecutar tool calls en cadena y devolver la respuesta final con tools."""
     mensajes_con_tool = list(body.messages)
     msg = respuesta.get("choices", [{}])[0].get("message", {})
@@ -99,7 +107,7 @@ async def _procesar_tool_calls(
     return respuesta_final
 
 
-def _tools_desde_body(body: ChatRequest) -> list | None:
+def _tools_desde_body(body: ChatRequest) -> list[dict[str, Any]] | None:
     if body.tools is True:
         return TOOL_SCHEMAS
     if isinstance(body.tools, list):
@@ -107,7 +115,7 @@ def _tools_desde_body(body: ChatRequest) -> list | None:
     return None
 
 
-def _rutar_y_rechazar(state, body: ChatRequest) -> tuple[str, str, str]:
+def _rutar_y_rechazar(state: Any, body: ChatRequest) -> tuple[str, str, str]:
     try:
         ruta = state.router.route(mensajes=body.messages, modelo_hint=body.model, task_hint=body.task)
         return ruta.provider, ruta.modelo, ruta.route_reason
@@ -115,11 +123,11 @@ def _rutar_y_rechazar(state, body: ChatRequest) -> tuple[str, str, str]:
         raise HTTPException(status_code=503, detail=str(e))  # noqa: B904
 
 
-def create_chat_router(state) -> APIRouter:
+def create_chat_router(state: Any) -> APIRouter:
     router = APIRouter()
 
     @router.post("/v1/chat/completions")
-    async def v1_chat_completions(body: ChatRequest):
+    async def v1_chat_completions(body: ChatRequest) -> Any:  # Any: evita response_model de FastAPI (Streaming/JSON)
         provider_name, modelo, route_reason = _rutar_y_rechazar(state, body)
         _rechazar_si_bloqueado(provider_name, state.circuit_breaker, state.rate_limiter)
         herramientas = _tools_desde_body(body)
