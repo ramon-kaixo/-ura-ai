@@ -1,6 +1,7 @@
 import fcntl
 import os
 from pathlib import Path
+from typing import Self
 
 LOCK_PATH = "/tmp/ura_debate.lock"
 
@@ -27,9 +28,9 @@ class DebateLock:
         if Path(self._path).exists():
             os.remove(self._path)  # noqa: PTH107
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         self.acquire()
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         self.release()

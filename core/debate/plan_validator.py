@@ -22,6 +22,7 @@ import subprocess
 log = logging.getLogger(__name__)
 import sys
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger("ura.debate.validator")
 
@@ -38,7 +39,7 @@ STATE_FILES = {
 }
 
 
-def get_service_status(service: str) -> dict:
+def get_service_status(service: str) -> dict[str, Any]:
     try:
         res = subprocess.run(
             ["systemctl", "is-active", service],
@@ -64,7 +65,7 @@ def get_service_status(service: str) -> dict:
         return {"name": service, "active": "unknown", "error": str(e)}
 
 
-def get_vram() -> dict | None:
+def get_vram() -> dict[str, Any] | None:
     try:
         res = subprocess.run(
             ["nvidia-smi", "--query-gpu=memory.total,memory.used,memory.free", "--format=csv,noheader,nounits"],
@@ -88,17 +89,18 @@ def get_vram() -> dict | None:
     return None
 
 
-def load_state_file(path: str) -> dict | None:
+def load_state_file(path: str) -> dict[str, Any] | None:
     if not Path(path).exists():
         return None
     try:
         with open(path) as f:  # noqa: PTH123
-            return json.load(f)
+            data: dict[str, Any] = json.load(f)
+            return data
     except (json.JSONDecodeError, OSError):
         return None
 
 
-def collect_context() -> dict:
+def collect_context() -> dict[str, Any]:
     services = [get_service_status(s) for s in SERVICES]
     vram = get_vram()
     hetzner = load_state_file(STATE_FILES["hetzner"])
@@ -116,7 +118,7 @@ def collect_context() -> dict:
     return context
 
 
-def format_context_for_prompt(context: dict) -> str:
+def format_context_for_prompt(context: dict[str, Any]) -> str:
     parts = []
     parts.append("=== SERVICIOS ===")
     for svc in context.get("services", []):
@@ -155,7 +157,7 @@ def main() -> None:
         from core.debate.debate_engine import run_debate
         from core.debate.lockfile import DebateLock
 
-        async def _run():
+        async def _run() -> None:
             with DebateLock():
                 return await run_debate(data.get("plan", ""), context)
 
