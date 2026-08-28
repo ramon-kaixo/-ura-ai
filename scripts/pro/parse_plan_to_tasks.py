@@ -32,18 +32,21 @@ Reglas de parsing:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import json
 import os
 import re
 import sys
 import urllib.request
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from pathlib import Path
 from urllib.error import URLError
 
 
 @dataclass
 class TaskSpec:
     """Especificación de una tarea parseada del plan."""
+
     title: str
     description: str = ""
     phase: str = ""
@@ -54,10 +57,31 @@ class TaskSpec:
 
 
 PRIORITY_MAP = {
-    "alta": 10, "high": 10, "critica": 10, "critical": 10,
-    "media": 5, "medium": 5,
-    "baja": 0, "low": 0,
+    "alta": 10,
+    "high": 10,
+    "critica": 10,
+    "critical": 10,
+    "media": 5,
+    "medium": 5,
+    "baja": 0,
+    "low": 0,
 }
+
+
+def _finalize(
+    tasks: list[TaskSpec],
+    current_task: TaskSpec | None,
+    description_lines: list[str],
+) -> TaskSpec | None:
+    """Cierra la tarea pendiente, la anexa a la lista y devuelve None."""
+    if current_task is None:
+        return None
+    if description_lines:
+        current_task.description = "\n".join(description_lines).strip()
+    elif not current_task.description:
+        current_task.description = current_task.title
+    tasks.append(current_task)
+    return None
 
 
 def parse_plan(content: str) -> list[TaskSpec]:
@@ -72,27 +96,16 @@ def parse_plan(content: str) -> list[TaskSpec]:
 
         # Phase headers (## or ###)
         if re.match(r"^#{2,3}\s+", stripped):
-            if current_task:
-                if description_lines:
-                    current_task.description = "\n".join(description_lines).strip()
-                elif not current_task.description:
-                    current_task.description = current_task.title
-                tasks.append(current_task)
-                current_task = None
-                description_lines = []
+            current_task = _finalize(tasks, current_task, description_lines)
+            description_lines = []
             current_phase = re.sub(r"^#{2,3}\s+", "", stripped)
             continue
 
-        # Task items: - [ ] or 1. or - 
+        # Task items: - [ ] or 1. or -
         task_match = re.match(r"^(?:-\s*\[.\]\s*|\d+\.\s+)(.+)", stripped)
         if task_match:
-            if current_task:
-                if description_lines:
-                    current_task.description = "\n".join(description_lines).strip()
-                elif not current_task.description:
-                    current_task.description = current_task.title
-                tasks.append(current_task)
-                description_lines = []
+            current_task = _finalize(tasks, current_task, description_lines)
+            description_lines = []
 
             title = task_match.group(1).strip()
             # Remove trailing colon if present
@@ -110,10 +123,8 @@ def parse_plan(content: str) -> list[TaskSpec]:
                 elif key in ("nodo", "node"):
                     current_task.node_id = value
                 elif key in ("timeout", "tiempo"):
-                    try:
+                    with contextlib.suppress(ValueError):
                         current_task.timeout_seconds = int(value)
-                    except ValueError:
-                        pass
                 continue
 
         # Description continuation
@@ -121,18 +132,14 @@ def parse_plan(content: str) -> list[TaskSpec]:
             description_lines.append(stripped)
 
     # Last task
-    if current_task:
-        if description_lines:
-            current_task.description = "\n".join(description_lines).strip()
-        if not current_task.description:
-            current_task.description = current_task.title
-        tasks.append(current_task)
+    _finalize(tasks, current_task, description_lines)
 
     return tasks
 
 
-def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
-                api_key: str = "", source_node: str = "") -> dict | None:
+def create_task(
+    api_url: str, task: TaskSpec, dry_run: bool = False, api_key: str = "", source_node: str = ""
+) -> dict | None:
     """Crea una tarea en el orquestador via API."""
     payload = {
         "description": f"[{task.phase}] {task.title}" if task.phase else task.title,
@@ -167,8 +174,8 @@ def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
 
     try:
         body = json.dumps(payload).encode()
-        req = urllib.request.Request(endpoint, data=body, headers=headers)
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        req = urllib.request.Request(endpoint, data=body, headers=headers)  # noqa: S310
+        with urllib.request.urlopen(req, timeout=10) as resp:  # noqa: S310
             result = json.loads(resp.read())
             return result
     except (URLError, OSError, json.JSONDecodeError) as e:
@@ -179,22 +186,21 @@ def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
 def main():
     parser = argparse.ArgumentParser(description="Parse plan and create tasks in orchestrator")
     parser.add_argument("plan", help="Plan file (markdown) or - for stdin")
-    parser.add_argument("--url", default=os.environ.get("URA_ORCHESTRATOR_URL", "http://localhost:4097"),
-                       help="Orchestrator API URL")
+    parser.add_argument(
+        "--url", default=os.environ.get("URA_ORCHESTRATOR_URL", "http://localhost:4097"), help="Orchestrator API URL"
+    )
     parser.add_argument("--node", default="", help="Default node for tasks without explicit node")
     parser.add_argument("--dry-run", action="store_true", help="Show tasks without creating them")
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
-    parser.add_argument("--distribute", action="store_true",
-                       help="Distribute tasks to remote nodes via sync endpoint")
-    parser.add_argument("--api-key", default=os.environ.get("URA_API_KEY", ""),
-                       help="API key for authentication")
+    parser.add_argument("--distribute", action="store_true", help="Distribute tasks to remote nodes via sync endpoint")
+    parser.add_argument("--api-key", default=os.environ.get("URA_API_KEY", ""), help="API key for authentication")
     args = parser.parse_args()
 
     # Read plan
     if args.plan == "-":
         content = sys.stdin.read()
     else:
-        with open(args.plan) as f:
+        with Path(args.plan).open() as f:
             content = f.read()
 
     # Parse
@@ -220,15 +226,14 @@ def main():
     results = []
     for i, task in enumerate(tasks, 1):
         print(f"{i}/{len(tasks)}: {task.title}")
-        result = create_task(args.url, task, args.dry_run,
-                           api_key=args.api_key, source_node=source_node)
+        result = create_task(args.url, task, args.dry_run, api_key=args.api_key, source_node=source_node)
         if result:
             status = result.get("status", "unknown")
             task_id = result.get("task_id", result.get("id", "?"))
             print(f"  -> {status}: {task_id}")
             results.append(result)
         elif not args.dry_run:
-            print(f"  -> FAILED")
+            print("  -> FAILED")
 
     print(f"\nDone. {len(results)}/{len(tasks)} tasks created.")
 

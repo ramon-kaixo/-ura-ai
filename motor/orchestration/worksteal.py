@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import threading
 import time
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from motor.orchestration.node_registry import NodeRegistry
@@ -130,7 +130,7 @@ class WorkStealer:
             log.info("[WORKSTEAL] Rebalance: todos los nodos sin actividad, 0 acciones")
         return counts
 
-    def steal_available(self, node_id: str, limit: int = 5) -> list:
+    def steal_available(self, node_id: str, limit: int = 5) -> list[Any]:
         """Lista tareas ``pending`` que este nodo puede reclamar (work-stealing)."""
         return self._queue.steal_available(node_id, limit)
 
@@ -161,7 +161,7 @@ class WorkStealer:
                 log.error("[WORKSTEAL] Error en rebalance: %s", e)
             self._stop.wait(timeout=interval_s)
 
-    def status(self) -> dict:
+    def status(self) -> dict[str, object]:
         """Estado del rebalanceador."""
         with self._lock:
             nodes = {n: self.is_present(n) for n in sorted(self._registered_nodes)}

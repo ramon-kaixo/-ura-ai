@@ -21,7 +21,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 log = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ CREATE INDEX IF NOT EXISTS idx_events_task ON task_events(task_id);
 
 
 @contextmanager
-def _open_db(db_path: Path):
+def _open_db(db_path: Path) -> Iterator[sqlite3.Connection]:
     """Abre SQLite con WAL mode y busy timeout (patrón knowledge/engine)."""
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path), timeout=10)
@@ -139,23 +139,31 @@ class _PersistentConnection:
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.row_factory = sqlite3.Row
 
-    def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
+    def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
         with self._lock:
+            conn = self._conn
+            assert conn is not None
             try:
-                return self._conn.execute(sql, params)
+                return conn.execute(sql, params)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
-                return self._conn.execute(sql, params)
+                conn = self._conn
+                assert conn is not None
+                return conn.execute(sql, params)
 
     def executescript(self, script: str) -> None:
         with self._lock:
+            conn = self._conn
+            assert conn is not None
             try:
-                self._conn.executescript(script)
+                conn.executescript(script)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
-                self._conn.executescript(script)
+                conn = self._conn
+                assert conn is not None
+                conn.executescript(script)
 
     def commit(self) -> None:
         with self._lock:
@@ -297,7 +305,10 @@ class TaskQueue:
                 (task_id, TaskEvent.CREATED.value, description, now),
             )
         log.info("[TASK_QUEUE] Tarea creada: %s", task_id)
-        return self.get(task_id)
+        result = self.get(task_id)
+        if result is None:
+            raise RuntimeError(f"No se pudo recuperar la tarea recién creada {task_id}")
+        return result
 
     def get(self, task_id: str) -> Task | None:
         """Obtiene una tarea por ID."""
@@ -518,7 +529,7 @@ class TaskQueue:
                 """UPDATE tasks SET last_heartbeat = ? WHERE id = ? AND status IN ('assigned', 'in_progress')""",
                 (now, task_id),
             )
-            return result.rowcount > 0
+            return bool(result.rowcount > 0)
 
     def pause(self, task_id: str, node_id: str = "") -> Task | None:
         """Pausa una tarea en progreso (in_progress → paused).
@@ -731,7 +742,7 @@ class TaskQueue:
             log.warning("[TASK_QUEUE] %d tareas stale recuperadas", len(stale))
         return stale
 
-    def get_events(self, task_id: str) -> list[dict]:
+    def get_events(self, task_id: str) -> list[dict[str, object]]:
         """Obtiene eventos de una tarea."""
         with _open_db(self._db_path) as conn:
             rows = conn.execute(
