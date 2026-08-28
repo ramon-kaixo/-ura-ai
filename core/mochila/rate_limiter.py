@@ -6,6 +6,7 @@ import time
 log = logging.getLogger(__name__)
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 
 class RateLimiter:
@@ -44,7 +45,7 @@ class RateLimiter:
     def registrar(self, provider: str) -> None:
         self._ventanas[provider].append(time.time())
 
-    def estado(self, provider: str) -> dict:
+    def estado(self, provider: str) -> dict[str, Any]:
         puede, actual, limite = self.puede_pasar(provider)
         return {
             "provider": provider,

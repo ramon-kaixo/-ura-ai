@@ -93,7 +93,7 @@ class ColdRefactor:
                 self._a(e)
                 r["reintentados"] += 1
                 continue
-            sb = await DockerOrchestrator().validar(li, e.skill_nombre)  # type: ignore[no-untyped-call]
+            sb = await DockerOrchestrator().validar(li, e.skill_nombre)
             if not sb.ok:
                 e.n_intentos += 1
                 e.ultimo_intento = self._n()

@@ -462,7 +462,7 @@ def _evaluar_guardian(
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    init_guardian()  # type: ignore[no-untyped-call]
+    init_guardian()
     await scheduler.start_loop()
     yield
     await scheduler.close()

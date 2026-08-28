@@ -7,6 +7,7 @@ log = logging.getLogger(__name__)
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from pathlib import Path
+from typing import Any
 
 
 class CircuitState(StrEnum):
@@ -113,7 +114,7 @@ class CircuitBreaker:
             h.state = CircuitState.OPEN
         self._persistir()
 
-    def estado(self, provider: str) -> dict:
+    def estado(self, provider: str) -> dict[str, Any]:
         h = self._health_por_provider(provider)
         return {
             "state": h.state.value,

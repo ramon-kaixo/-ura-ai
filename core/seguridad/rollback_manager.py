@@ -7,7 +7,7 @@ logger = logging.getLogger("ura-seguridad")
 
 
 class RollbackManager:
-    def __init__(self, repo_path="/home/ramon/URA/ura_ia_1972/") -> None:
+    def __init__(self, repo_path: str = "/home/ramon/URA/ura_ia_1972/") -> None:
         self.repo_path = repo_path
         self.temp_suffix = ".ura_tmp"
 
