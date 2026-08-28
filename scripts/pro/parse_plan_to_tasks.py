@@ -144,11 +144,10 @@ def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> 
     # Try to get registry from the default URL's node
     if registry_url:
         try:
-            body = json.dumps({}).encode()
-            req = urllib.request.Request(
+            req = urllib.request.Request(  # noqa: S310 - registry interno
                 f"{registry_url}/nodes/{node_id}", headers={"Content-Type": "application/json"}
             )
-            with urllib.request.urlopen(req, timeout=5) as resp:
+            with urllib.request.urlopen(req, timeout=5) as resp:  # noqa: S310 - registry interno
                 node = json.loads(resp.read())
                 return f"http://{node['tailscale_ip']}:{node['api_port']}"
         except (URLError, OSError, json.JSONDecodeError, KeyError):
@@ -156,8 +155,8 @@ def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> 
     # Fallback: try GX10 as known registry
     for known_url in ["http://100.72.103.12:4097", "http://localhost:4097"]:
         try:
-            req = urllib.request.Request(f"{known_url}/nodes/{node_id}")
-            with urllib.request.urlopen(req, timeout=3) as resp:
+            req = urllib.request.Request(f"{known_url}/nodes/{node_id}")  # noqa: S310 - urls internas conocidas
+            with urllib.request.urlopen(req, timeout=3) as resp:  # noqa: S310 - urls internas conocidas
                 node = json.loads(resp.read())
                 return f"http://{node['tailscale_ip']}:{node['api_port']}"
         except (URLError, OSError, json.JSONDecodeError, KeyError):
