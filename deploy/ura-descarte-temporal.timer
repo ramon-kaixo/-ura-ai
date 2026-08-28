@@ -1,0 +1,10 @@
+[Unit]
+Description=URA limpieza diaria de la carpeta temporal de descarte (>=90 dias sin uso)
+Requires=ura-descarte-temporal.service
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+
+[Install]
+WantedBy=timers.target

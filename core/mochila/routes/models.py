@@ -10,8 +10,7 @@ def create_models_router(state: Any) -> APIRouter:
     @router.get("/v1/models")
     async def v1_models() -> dict[str, Any]:
         if state.cache_models and time.time() - state.cache_models_ts < 60:
-            cached: dict[str, Any] = state.cache_models
-            return cached
+            return state.cache_models
         models = []
         for name, provider in state.providers.items():
             h = await provider.health()
@@ -24,8 +23,9 @@ def create_models_router(state: Any) -> APIRouter:
                 mid = f"{entrada['provider']}/{entrada['modelo']}"
                 if not any(m["id"] == mid for m in models):
                     models.append({"id": mid, "provider": entrada["provider"], "object": "model"})
-        state.cache_models = models
+        payload: dict[str, Any] = {"object": "list", "data": models}
+        state.cache_models = payload
         state.cache_models_ts = time.time()
-        return {"object": "list", "data": models}
+        return payload
 
     return router

@@ -1,4 +1,5 @@
 """Tests para core/model_router/router.py — URLs, auth, rate_limiter."""
+
 from __future__ import annotations
 
 from unittest import mock
@@ -60,7 +61,9 @@ class TestResolveOllamaUrl:
 
     def test_primary_conecta(self, monkeypatch) -> None:
         monkeypatch.delenv("OLLAMA_URL", raising=False)
-        monkeypatch.setattr(r, "get_urls", mock.Mock(return_value={"primary": "http://asus:11434", "fallback": "http://local:11434"}))
+        monkeypatch.setattr(
+            r, "get_urls", mock.Mock(return_value={"primary": "http://asus:11434", "fallback": "http://local:11434"})
+        )
         resp = mock.Mock()
         resp.__enter__ = mock.Mock(return_value=resp)
         resp.__exit__ = mock.Mock(return_value=False)
@@ -69,7 +72,9 @@ class TestResolveOllamaUrl:
 
     def test_primary_falla_usar_fallback(self, monkeypatch) -> None:
         monkeypatch.delenv("OLLAMA_URL", raising=False)
-        monkeypatch.setattr(r, "get_urls", mock.Mock(return_value={"primary": "http://asus:11434", "fallback": "http://local:11434"}))
+        monkeypatch.setattr(
+            r, "get_urls", mock.Mock(return_value={"primary": "http://asus:11434", "fallback": "http://local:11434"})
+        )
         monkeypatch.setattr("core.model_router.router.urllib.request.urlopen", mock.Mock(side_effect=OSError("no red")))
         assert r._resolve_ollama_url() == "http://local:11434"
 
@@ -123,5 +128,5 @@ class TestAuthFallbackReal:
         monkeypatch.setattr(builtins, "__import__", fake_import)
         importlib.reload(r)
         assert r.auth_validate("x") is True
-        assert r.require_auth()(lambda: 1) is not None
+        assert r.require_auth() is True
         importlib.reload(r)  # restaurar
