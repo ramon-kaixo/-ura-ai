@@ -72,11 +72,12 @@ async def _leer_body(request: Request) -> dict[str, Any] | None:
 
 async def _adquirir_vram(state: Any, body: dict[str, Any] | None, path: str) -> str | None:
     mb = state.scheduler.estimar_vram(body or {})
-    return await state.scheduler.acquire(
+    req_id: str | None = await state.scheduler.acquire(
         mb=mb,
         deadline_flex=15.0,
         data={"model": body.get("model", "") if body else path.split("/", maxsplit=1)[0] if "/" in path else path},
     )
+    return req_id
 
 
 def _build_headers(request: Request) -> dict[str, str]:
