@@ -33,7 +33,7 @@ class ProviderError(Exception):
         super().__init__(message)
 
 
-def _messages_to_prompt(mensajes: list) -> str:
+def _messages_to_prompt(mensajes: list[dict[str, Any]]) -> str:
     partes: list[str] = []
     for m in mensajes:
         role = m.get("role", "user")
@@ -45,7 +45,7 @@ def _messages_to_prompt(mensajes: list) -> str:
     return "\n".join(partes)
 
 
-def _extraer_tool_call(content: str) -> list | None:
+def _extraer_tool_call(content: str) -> list[dict[str, Any]] | None:
     try:
         obj = json.loads(content) if isinstance(content, str) else None
         if isinstance(obj, dict) and "name" in obj and "arguments" in obj:
@@ -69,7 +69,7 @@ def _extraer_tool_call(content: str) -> list | None:
 _FIN_ITER = object()
 
 
-def _next_trozo(iterator):
+def _next_trozo(iterator: Any) -> Any:
     try:
         return next(iterator)
     except StopIteration:
@@ -92,12 +92,12 @@ class _MotorChatAdapter:
     async def chat(
         self,
         modelo: str,
-        mensajes: list,
+        mensajes: list[dict[str, Any]],
         stream: bool = False,
-        tools: list | None = None,
+        tools: list[dict[str, Any]] | None = None,
         max_tokens: int = 4096,
         temperature: float = 0.0,
-    ) -> AsyncGenerator[dict, None]:
+    ) -> AsyncGenerator[dict[str, Any], None]:
         options = {"temperature": temperature, "num_predict": max_tokens}
         if stream:
             async for chunk in self._stream(modelo, mensajes, tools, options):
@@ -105,7 +105,13 @@ class _MotorChatAdapter:
             return
         yield await self._no_stream(modelo, mensajes, tools, options)
 
-    async def _no_stream(self, modelo: str, mensajes: list, tools: list | None, options: dict) -> dict:
+    async def _no_stream(
+        self,
+        modelo: str,
+        mensajes: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None,
+        options: dict[str, Any],
+    ) -> dict[str, Any]:
         loop = asyncio.get_running_loop()
         try:
             if tools and hasattr(self._provider, "chat_generate"):
@@ -156,14 +162,14 @@ class _MotorChatAdapter:
     async def _stream(
         self,
         modelo: str,
-        mensajes: list,
-        tools: list | None,
-        options: dict,
-    ) -> AsyncGenerator[dict, None]:
+        mensajes: list[dict[str, Any]],
+        tools: list[dict[str, Any]] | None,
+        options: dict[str, Any],
+    ) -> AsyncGenerator[dict[str, Any], None]:
         prompt = _messages_to_prompt(mensajes)
         loop = asyncio.get_running_loop()
         chunks = 0
-        usage: dict = {}
+        usage: dict[str, Any] = {}
         try:
             if tools and hasattr(self._provider, "chat_generate"):
                 result = await loop.run_in_executor(
@@ -200,11 +206,11 @@ class _MotorChatAdapter:
         except Exception as e:
             raise ProviderError(str(e), provider=self._name, status_code=502) from e
 
-    async def health(self) -> dict:
+    async def health(self) -> dict[str, Any]:
         return self._provider.health()
 
 
-def _chunk_delta(modelo: str, delta: dict, finish_reason: str | None) -> dict:
+def _chunk_delta(modelo: str, delta: dict[str, Any], finish_reason: str | None) -> dict[str, Any]:
     return {
         "id": f"mochila-{uuid.uuid4().hex[:12]}",
         "object": "chat.completion.chunk",
@@ -214,7 +220,7 @@ def _chunk_delta(modelo: str, delta: dict, finish_reason: str | None) -> dict:
     }
 
 
-def _chunk_fin(modelo: str, usage: dict) -> dict:
+def _chunk_fin(modelo: str, usage: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": f"mochila-{uuid.uuid4().hex[:12]}",
         "object": "chat.completion.chunk",
