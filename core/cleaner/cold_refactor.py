@@ -7,6 +7,7 @@ import logging
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from mochila_engine import BASE_DIR
 
@@ -37,24 +38,24 @@ class ColdRefactor:
         RD.mkdir(parents=True, exist_ok=True)
         SD.mkdir(parents=True, exist_ok=True)
 
-    def registrar_deuda(self, did, nom, cod, adv):
+    def registrar_deuda(self, did: str, nom: str, cod: str, adv: list[str]) -> Path:
         mc = f"# DEBT_ID: {did}\n" + cod
         sp = SD / f"{nom}.py"
         sp.write_text(mc, encoding="utf-8")
         self._a(E(did, nom, str(sp), mc, adv, self._n()))
         return sp
 
-    def registrar_limpio(self, nom, cod):
+    def registrar_limpio(self, nom: str, cod: str) -> Path:
         sp = SD / f"{nom}.py"
         sp.write_text(cod, encoding="utf-8")
         return sp
 
-    def _a(self, e) -> None:
+    def _a(self, e: E) -> None:
         c = [x for x in self._l() if x["debt_id"] != e.debt_id]
         c.append(asdict(e))
         DQ.write_text(json.dumps(c, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    def _l(self):
+    def _l(self) -> list[dict[str, Any]]:
         if not DQ.exists():
             return []
         try:
@@ -63,12 +64,12 @@ class ColdRefactor:
             logger.exception("Failed to load debt queue from %s", DQ)
             return []
 
-    def estado_deuda(self):
+    def estado_deuda(self) -> dict[str, Any]:
         c = self._l()
         p = [e for e in c if not e.get("resuelto")]
         return {"total": len(c), "pend": len(p), "res": len(c) - len(p), "skills": [e["skill_nombre"] for e in p]}
 
-    async def ejecutar_tuneladora(self):
+    async def ejecutar_tuneladora(self) -> dict[str, int]:
         from core.guardians.ast_sentinel import ASTSentinel
         from core.sandbox.docker_orchestrator import DockerOrchestrator
 
@@ -108,7 +109,7 @@ class ColdRefactor:
                 r["abandonados"] += 1
         return r
 
-    async def _ref(self, e):
+    async def _ref(self, e: E) -> str | None:
         try:
             import httpx
 
@@ -124,10 +125,11 @@ class ColdRefactor:
                 )
                 if resp.status_code != 200:
                     return None
-                return resp.json().get("codigo_limpio")
+                codigo: str = resp.json().get("codigo_limpio")
+                return codigo
         except Exception:
             logger.warning("Refactor: {ex}")
             return None
 
-    def _n(self):
+    def _n(self) -> str:
         return datetime.now(tz=UTC).isoformat()
