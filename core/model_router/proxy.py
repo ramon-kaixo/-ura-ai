@@ -12,6 +12,7 @@ import urllib.error
 import urllib.request
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 from core.model_router.router import CONN_TIMEOUT, READ_TIMEOUT
 
@@ -78,7 +79,9 @@ def _estimate_tokens(text: str) -> int:
     return int(len(text) / _CHARS_PER_TOKEN)
 
 
-def _check_context_size(messages: list[dict] | list | str | None) -> dict:
+def _check_context_size(
+    messages: list[dict[str, Any]] | list[str] | str | None,
+) -> dict[str, Any]:
     text = ""
     if isinstance(messages, str):
         text = messages
@@ -152,13 +155,22 @@ def _resolve_ollama_url() -> str:
         req.add_header("Connection", "close")
         with urllib.request.urlopen(req, timeout=5) as _:  # noqa: S310
             log.info("ASUS conectado: %s", get_urls()["primary"])
-            return get_urls()["primary"]
+            primary: str = get_urls()["primary"]
+            return primary
     except Exception as e:
         log.warning("ASUS no accesible en startup: %s", e)
-        return get_urls()["fallback"]
+        fallback: str = get_urls()["fallback"]
+        return fallback
 
 
-async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+async def _proxy_con_guardia_vram(
+    path: str,
+    body: bytes,
+    method: str = "POST",
+    modelo: str = "",
+    tipo: str = "",
+    client_ip: str = "",
+) -> tuple[int, dict[str, str], bytes]:
     from core.model_router.vram_guard import vram_guard
 
     return await vram_guard.ejecutar_inferencia_segura(
@@ -172,12 +184,26 @@ async def _proxy_con_guardia_vram(path, body, method="POST", modelo="", tipo="",
     )
 
 
-async def _proxy_request_async(path, body, method="POST", modelo="", tipo="", client_ip=""):
+async def _proxy_request_async(
+    path: str,
+    body: bytes,
+    method: str = "POST",
+    modelo: str = "",
+    tipo: str = "",
+    client_ip: str = "",
+) -> tuple[int, dict[str, str], bytes]:
     log.debug("[VRAM] Inferencia: modelo=%s, tipo=%s", modelo, tipo)
     return await asyncio.to_thread(proxy_request, path, body, method, modelo, tipo, client_ip)
 
 
-def _proxy_con_vram(path, body, method="POST", modelo="", tipo="", client_ip=""):
+def _proxy_con_vram(
+    path: str,
+    body: bytes,
+    method: str = "POST",
+    modelo: str = "",
+    tipo: str = "",
+    client_ip: str = "",
+) -> tuple[int, dict[str, str], bytes]:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
@@ -194,7 +220,7 @@ def proxy_request(
     modelo: str = "",
     tipo: str = "",
     client_ip: str = "",
-) -> tuple:
+) -> tuple[int, dict[str, str], bytes]:
     from core.model_router.metrics import metrics
     from core.model_router.model_selection import _record_success
     from core.model_router.router import get_urls
