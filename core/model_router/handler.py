@@ -8,16 +8,17 @@ import json
 import logging
 import time
 import urllib.parse
+from typing import Any
 
 log = logging.getLogger(__name__)
 
 
 class RouterHandler(http.server.BaseHTTPRequestHandler):
-    _modelos_cache: set | None = None
+    _modelos_cache: set[str] | None = None
     _cache_ts: float = 0
 
     @classmethod
-    def _get_modelos(cls) -> set:
+    def _get_modelos(cls) -> set[str]:
         if cls._modelos_cache is None:
             cls._modelos_cache = set()
         if time.time() - cls._cache_ts > 300:
@@ -27,7 +28,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             cls._cache_ts = time.time()
         return cls._modelos_cache
 
-    def _send_json(self, data: dict, status: int = 200) -> None:
+    def _send_json(self, data: dict[str, Any], status: int = 200) -> None:
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Access-Control-Allow-Origin", "*")
@@ -47,7 +48,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(text.encode())
 
     def _check_rate_limit(self) -> bool:
-        from core.model_router.router import rate_limiter
+        from core.model_router.router import rate_limiter  # type: ignore[attr-defined]
 
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
@@ -273,7 +274,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self._send_json({"error": "Modo invalido. Usar AUTO, TURBO o ECO."}, 400)
         return True
 
-    def _do_proxy_inference(self, data: dict, modelo: str, tipo: str) -> None:
+    def _do_proxy_inference(self, data: dict[str, Any], modelo: str, tipo: str) -> None:
         from core.model_router.model_selection import _apply_model_params
         from core.model_router.proxy import _proxy_con_vram
 
@@ -287,7 +288,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         )
         self._emitir_respuesta(status, headers, resp_body)
 
-    def _emitir_respuesta(self, status: int, headers: dict, resp_body: bytes) -> None:
+    def _emitir_respuesta(self, status: int, headers: dict[str, Any], resp_body: bytes) -> None:
         self.send_response(status)
         self.send_header("Content-Type", headers.get("Content-Type", "application/json"))
         for k in ["Transfer-Encoding"]:
@@ -297,7 +298,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(resp_body)
 
     def do_POST(self) -> None:
-        from core.model_router.router import rate_limiter
+        from core.model_router.router import rate_limiter  # type: ignore[attr-defined]
 
         if not rate_limiter.is_allowed(self.client_address[0]):
             self._send_json({"error": "Rate limit: 100 req/min por IP"}, 429)
@@ -315,7 +316,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             return
         self._rutear_proxy(data, tipo)
 
-    def _leer_body_json(self) -> dict:
+    def _leer_body_json(self) -> dict[str, Any]:
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         try:
@@ -323,7 +324,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             return {}
 
-    def _registrar_contexto(self, data: dict) -> None:
+    def _registrar_contexto(self, data: dict[str, Any]) -> None:
         from core.model_router.metrics import metrics
         from core.model_router.proxy import _check_context_size
 
@@ -334,7 +335,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             log.warning("Contexto CRITICO: %s tokens — %s", ctx["tokens"], ctx["message"])
             metrics.increment("context_critical", {"tokens": str(ctx["tokens"])})
 
-    def _clasificar_peticion(self, data: dict) -> str | None:
+    def _clasificar_peticion(self, data: dict[str, Any]) -> str | None:
         from core.model_router.metrics import metrics
         from core.model_router.model_selection import clasificar_peticion
 
@@ -359,7 +360,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             return tipo
         return clasificar_peticion(messages or [{"role": "user", "content": prompt}])
 
-    def _servir_cache(self, data: dict, tipo: str) -> bool:
+    def _servir_cache(self, data: dict[str, Any], tipo: str) -> bool:
         from core.model_router.cache import prompt_cache
         from core.model_router.metrics import metrics
 
@@ -375,7 +376,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
             return True
         return False
 
-    def _rutear_proxy(self, data: dict, tipo: str) -> None:
+    def _rutear_proxy(self, data: dict[str, Any], tipo: str) -> None:
         from core.model_router.cache import prompt_cache
         from core.model_router.metrics import metrics
         from core.model_router.model_selection import seleccionar_modelo
