@@ -2,8 +2,9 @@
 .SYNOPSIS
     URA POS Telemetry Agent — Envía métricas del sistema al Master GX10.
 .DESCRIPTION
-    Script PowerShell para caja0 (Windows). Ejecuta push asíncrono cada 30s
-    de CPU, RAM, estado del terminal de venta hacia ura-audit-api (puerto 8002).
+    Script PowerShell (legacy, sin asignación actual) para un nodo POS externo.
+    Envía CPU, RAM y estado del terminal de venta hacia ura-audit-api (puerto 8002)
+    mediante push asíncrono cada 30s.
     
     Instalación como tarea programada:
       powershell -ExecutionPolicy Bypass -File C:\URA\scripts\ura-telemetry.ps1
@@ -12,7 +13,7 @@
       Trigger: cada 1 minuto, reinicio
       Acción: powershell.exe -ExecutionPolicy Bypass -File "C:\URA\scripts\ura-telemetry.ps1" -ScheduledRun
 .NOTES
-    Node:    caja0 (100.127.217.113)
+    Node:    externo (sin asignar)
     Target:  GX10 Tailscale (100.72.103.12:8002)
     Fecha:   2026-06-20
 #>
@@ -78,7 +79,7 @@ if ($ScheduledRun) {
 }
 
 # Modo interactivo: loop perpetuo
-Write-Host "URA POS Telemetry Agent para caja0"
+Write-Host "URA POS Telemetry Agent (nodo externo)"
 Write-Host "Enviando a $MasterUrl cada ${IntervalSeconds}s"
 Write-Host "Presione Ctrl+C para detener"
 Write-Host ""
