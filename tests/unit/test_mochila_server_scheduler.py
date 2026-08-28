@@ -1,4 +1,5 @@
 """Tests cobertura mochila_server — VRAM scheduler (split)."""
+
 from __future__ import annotations
 
 from _mochila_helpers import AsyncMock, Mock, asyncio, httpx, pytest, subprocess, time
@@ -8,18 +9,14 @@ class TestVRAMScheduler:
     def test_detect_max_vram_ok(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
-        fake = Mock(
-            return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="4096\n")
-        )
+        fake = Mock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="4096\n"))
         monkeypatch.setattr(subprocess, "run", fake)
         assert VRAMAwareScheduler._detect_max_vram(100) == 4096
 
     def test_detect_max_vram_na_stdout(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
-        fake = Mock(
-            return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="N/A\n")
-        )
+        fake = Mock(return_value=subprocess.CompletedProcess(args=[], returncode=0, stdout="N/A\n"))
         monkeypatch.setattr(subprocess, "run", fake)
         assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
@@ -53,8 +50,8 @@ class TestVRAMScheduler:
     def test_estimar_vram_modelos_conocidos(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
-        assert VRAMAwareScheduler.estimar_vram({"model": "qwen2.5-coder:32b"}) == 18000
-        assert VRAMAwareScheduler.estimar_vram({"model": "llama3.2:3b"}) == 2500
+        assert VRAMAwareScheduler.estimar_vram({"model": "qwen3-coder:30b"}) == 18000
+        assert VRAMAwareScheduler.estimar_vram({"model": "llama3:latest"}) == 4700
 
     def test_estimar_vram_desconocido_con_overhead(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
@@ -515,5 +512,3 @@ class TestVRAMScheduler:
         task.cancel()
         with pytest.raises(asyncio.CancelledError):
             await task
-
-

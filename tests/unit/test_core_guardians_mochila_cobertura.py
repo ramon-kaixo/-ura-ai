@@ -1055,8 +1055,8 @@ def test_vram_estimar_overhead() -> None:
 def test_vram_estimar() -> None:
     assert VRAMAwareScheduler.estimar_vram({"_vram_mb": "5000"}) == 5000
     assert (
-        VRAMAwareScheduler.estimar_vram({"model": "qwen2.5-coder:14b", "prompt": "x" * 400}) == 9000
-    )  # overhead int(0.2)=0
+        VRAMAwareScheduler.estimar_vram({"model": "qwen3-coder:30b", "prompt": "x" * 400}) == 18000
+    )  # qwen3-coder:30b en tabla (18000) + overhead int(0.2)=0
     assert VRAMAwareScheduler.estimar_vram({"model": "otro", "messages": "m" * 400}) == 512  # overhead 0
 
 

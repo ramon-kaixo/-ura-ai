@@ -106,7 +106,7 @@ class TestReview:
         with mock.patch("requests.post", return_value=resp) as m_post:
             report = s.review("x" * 10001, "", "", 1)
         assert report.n_advertencias == 1
-        assert report.modelo == "qwen2.5-coder:14b"
+        assert report.modelo == "qwen3-coder:30b"
         assert report.duracion_ms >= 0
         m_post.assert_called_once()
         payload = m_post.call_args[1]["json"]

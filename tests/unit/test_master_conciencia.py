@@ -10,7 +10,8 @@ import scripts.pro.master_conciencia as mc
 
 class TestConfig:
     def test_gx10_default(self):
-        assert mc.GX10 == "10.164.1.99"
+        # Tailscale (100.72.103.12) — Ethernet 10.164.1.99 sin carrier desde 2026-08-24 (AGENTS.md)
+        assert mc.GX10 == "100.72.103.12"
 
     def test_log_path(self):
         assert mc.LOG.name == "master_conciencia.log"

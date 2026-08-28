@@ -1,4 +1,5 @@
 """Tests para sintetizador y analizador de memoria (LLM vía httpx mockeado)."""
+
 from __future__ import annotations
 
 import json
@@ -7,7 +8,7 @@ from unittest import mock
 import pytest
 
 from core.memoria.analizador import analizar
-from core.memoria.sintetizador import sintetizar
+from core.memoria.sintetizador import MODELO_SINTESIS, sintetizar
 
 
 class FakeCliente:
@@ -139,7 +140,7 @@ async def test_sintetizador_prompt_incluye_formato(monkeypatch) -> None:
     monkeypatch.setattr("core.memoria.sintetizador.httpx.AsyncClient", lambda *a, **k: ClienteCaptura())
     await sintetizar("mi peticion")
     body = capturado["json"]
-    assert body["model"] == "qwen2.5-coder:14b"
+    assert body["model"] == MODELO_SINTESIS
     assert "mi peticion" in body["messages"][0]["content"]
     assert "[herramienta (gratis) [Canva]]" in body["messages"][0]["content"]
     assert "fuente: f" in body["messages"][0]["content"]

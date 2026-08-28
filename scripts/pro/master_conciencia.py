@@ -22,6 +22,7 @@ try:
 except (FileNotFoundError, json.JSONDecodeError):
     GX10 = os.environ.get("ASUS_HOST", "100.72.103.12")
 LOG = Path.home() / "URA/ura_ia_1972/logs/master_conciencia.log"
+LOG.parent.mkdir(parents=True, exist_ok=True)
 
 TEST_ACTIONS = [
     ("📡 Sistema GX10", {"name": "sistema", "arguments": {}}),

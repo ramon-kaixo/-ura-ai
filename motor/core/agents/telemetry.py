@@ -65,7 +65,7 @@ class Telemetria:
                     metrics["ram_total_mb"] = (pages * page_size) // (1024 * 1024)
                 except (ValueError, OSError, AttributeError):
                     metrics["ram_total_mb"] = 0
-                metrics["ram_libre_mb"] = metrics.get("ram_total_mb", 0) or 8192
+                metrics["ram_libre_mb"] = 8192  # default fijo de fallback (libre desconocido)
         return metrics
 
     def red(self) -> dict[str, Any]:

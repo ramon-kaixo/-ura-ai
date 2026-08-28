@@ -102,15 +102,15 @@ class TestSelectModel:
 
     def test_trabajo_usa_coder(self) -> None:
         b = _bridge()
-        assert b.select_model(ConversationMode.WORK) == "qwen2.5-coder:14b"
+        assert b.select_model(ConversationMode.WORK) == "qwen3-coder:30b"
 
     def test_intent_command_usa_7b(self) -> None:
         b = _bridge()
-        assert b.select_model(ConversationMode.CONVERSATION, "command") == "qwen2.5:7b"
+        assert b.select_model(ConversationMode.CONVERSATION, "command") == "llama3:latest"
 
     def test_intent_search_usa_7b(self) -> None:
         b = _bridge()
-        assert b.select_model(ConversationMode.CONVERSATION, "search") == "qwen2.5:7b"
+        assert b.select_model(ConversationMode.CONVERSATION, "search") == "llama3:latest"
 
     def test_default_usa_fallback(self) -> None:
         b = _bridge(fallback="modelo-y")

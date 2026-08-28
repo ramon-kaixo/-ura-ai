@@ -5,8 +5,9 @@ Todo el I/O externo (ssh, urllib, disco) se simula con monkeypatch.
 
 from __future__ import annotations
 
+import http.client
 import subprocess
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pytest
@@ -50,29 +51,32 @@ class TestMeasureSshLatency:
         assert hc.measure_ssh_latency() == -1
 
 
-class _FakeUrlOpen:
-    def __init__(self, exc: Exception | None = None) -> None:
-        self.exc = exc
+class _FakeHTTPConnection:
+    exc: Exception | None = None
 
-    def __call__(self, *a: object, **k: object) -> _FakeUrlOpen:
+    def __init__(self, *a: object, **k: object) -> None:
+        pass
+
+    def request(self, *a: object, **k: object) -> None:
         if self.exc is not None:
             raise self.exc
-        return self
 
-    def __enter__(self) -> Self:
-        return self
+    def getresponse(self) -> _FakeResult:
+        return _FakeResult()
 
-    def __exit__(self, *_a: object) -> None:
+    def close(self) -> None:
         return None
 
 
 class TestMeasureHttpLatency:
     def test_returns_ms(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(hc.urllib.request, "urlopen", _FakeUrlOpen())
+        _FakeHTTPConnection.exc = None
+        monkeypatch.setattr(http.client, "HTTPConnection", _FakeHTTPConnection)
         assert hc.measure_http_latency() >= 0
 
     def test_exception_returns_minus_one(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setattr(hc.urllib.request, "urlopen", _FakeUrlOpen(OSError("conn refused")))
+        _FakeHTTPConnection.exc = OSError("conn refused")
+        monkeypatch.setattr(http.client, "HTTPConnection", _FakeHTTPConnection)
         assert hc.measure_http_latency() == -1
 
 
