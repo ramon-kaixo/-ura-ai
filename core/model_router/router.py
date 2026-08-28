@@ -6,6 +6,7 @@ import logging
 import os
 import urllib.error
 import urllib.request
+from typing import Any
 
 log = logging.getLogger("core.model_router")
 
@@ -14,16 +15,16 @@ try:
 except ImportError:
 
     class _NoOpRateLimiter:
-        def check(self, *args, **kwargs) -> bool:
+        def check(self, *args: Any, **kwargs: Any) -> bool:
             return True
 
-        def is_allowed(self, *args, **kwargs) -> bool:
+        def is_allowed(self, *args: Any, **kwargs: Any) -> bool:
             return True
 
-        def wait_if_needed(self, *args, **kwargs) -> None:
+        def wait_if_needed(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def get_metrics(self, *args, **kwargs):
+        def get_metrics(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
             return {}
 
     rate_limiter = _NoOpRateLimiter()
@@ -38,11 +39,11 @@ try:
     from core.auth_layer import validate as auth_validate
 except ImportError:
 
-    def auth_validate(*args, **kwargs) -> bool:  # type: ignore[misc]
+    def auth_validate(*args: Any, **kwargs: Any) -> bool:
         return True
 
-    def require_auth(*args, **kwargs):  # type: ignore[misc]
-        def decorator(f):
+    def require_auth(*args: Any, **kwargs: Any) -> Any:
+        def decorator(f: Any) -> Any:
             return f
 
         return decorator
@@ -51,10 +52,10 @@ except ImportError:
 from motor.core.config_manager import get_ollama_urls
 
 POWER_MODE: str = "AUTO"
-_URLS: dict | None = None
+_URLS: dict[str, str] | None = None
 
 
-def get_urls() -> dict:
+def get_urls() -> dict[str, str]:
     global _URLS  # noqa: PLW0603
     if _URLS is None:
         _URLS = get_ollama_urls()
@@ -72,10 +73,12 @@ def _resolve_ollama_url() -> str:
         req.add_header("Connection", "close")
         with urllib.request.urlopen(req, timeout=CONN_TIMEOUT) as _:  # noqa: S310
             log.info("ASUS conectado: %s", urls["primary"])
-            return urls["primary"]
+            primary: str = urls["primary"]
+            return primary
     except Exception as e:
         log.warning("ASUS no accesible en startup: %s", e)
-        return urls["fallback"]
+        fallback: str = urls["fallback"]
+        return fallback
 
 
 _OLLAMA_URL: str | None = None
