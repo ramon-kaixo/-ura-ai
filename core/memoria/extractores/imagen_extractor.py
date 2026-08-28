@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import Any
 
 import httpx
 from PIL import Image
@@ -21,8 +22,8 @@ VISION_OLLAMA = f"http://{_VISION_HOST}:{_VISION_PORT}/api/chat"
 VISION_MODEL = "qwen2-vl-7b"
 
 
-def _exif_pillow(ruta: Path) -> dict:
-    resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
+def _exif_pillow(ruta: Path) -> dict[str, Any]:
+    resultado: dict[str, Any] = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         with Image.open(ruta) as img:
             exif_data = img.getexif()
@@ -59,8 +60,8 @@ def _exif_pillow(ruta: Path) -> dict:
     return resultado
 
 
-def _exif_exiftool(ruta: Path) -> dict:
-    resultado: dict = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
+def _exif_exiftool(ruta: Path) -> dict[str, Any]:
+    resultado: dict[str, Any] = {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
     try:
         out = subprocess.run(
             [
@@ -118,7 +119,7 @@ def _paleta_colores(ruta: Path, k: int = 5) -> list[str]:
         return []
 
 
-def _describir_imagen(ruta: Path) -> dict:
+def _describir_imagen(ruta: Path) -> dict[str, Any]:
     try:
         import base64
 
@@ -148,7 +149,7 @@ def _describir_imagen(ruta: Path) -> dict:
         return {"descripcion": "", "error": str(e)}
 
 
-def _extraer_iptc(ruta: Path) -> dict:
+def _extraer_iptc(ruta: Path) -> dict[str, Any]:
     """Extrae metadatos IPTC via iptcinfo3 usando record numbers."""
     try:
         from iptcinfo3 import IPTCInfo
@@ -156,7 +157,7 @@ def _extraer_iptc(ruta: Path) -> dict:
         info = IPTCInfo(str(ruta))
         data = info._data if hasattr(info, "_data") else {}
 
-        def _bytes(val):
+        def _bytes(val: Any) -> str:
             return val.decode() if isinstance(val, bytes) else str(val) if val else ""
 
         keywords = data.get(25, []) or []
@@ -174,7 +175,7 @@ def _extraer_iptc(ruta: Path) -> dict:
         return {}
 
 
-def extraer_imagen(ruta: Path) -> dict:
+def extraer_imagen(ruta: Path) -> dict[str, Any]:
     with Image.open(ruta) as img:
         formato = img.format or "desconocido"
         dimensiones = f"{img.width}x{img.height}"
@@ -215,14 +216,14 @@ def extraer_imagen(ruta: Path) -> dict:
     }
 
 
-async def extraer_caracteristicas_imagen(ruta_imagen: str) -> dict:
+async def extraer_caracteristicas_imagen(ruta_imagen: str) -> dict[str, Any]:
     """Versión async: delega I/O de disco al pool de hilos del event-loop."""
     ruta = Path(ruta_imagen)
     if not ruta.exists():  # noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
         log.error("Archivo de imagen no encontrado: %s", ruta_imagen)
         return {"status": "error", "reason": "file_not_found"}
 
-    def _sync_extract() -> dict:
+    def _sync_extract() -> dict[str, Any]:
         return extraer_imagen(ruta)
 
     loop = asyncio.get_running_loop()
