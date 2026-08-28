@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 
 from fastapi import APIRouter, HTTPException
 
@@ -19,46 +20,46 @@ from core.mochila.models import (
 )
 
 
-def create_memoria_router(state) -> APIRouter:
+def create_memoria_router(state: Any) -> APIRouter:
     router = APIRouter()
 
     @router.post("/memoria/ingestar/video")
-    async def memoria_ingestar_video(body: VideoIngestRequest):
+    async def memoria_ingestar_video(body: VideoIngestRequest) -> Any:
         ruta = Path(body.path)
         if not ruta.exists():  # noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
             raise HTTPException(status_code=404, detail=f"No encontrado: {body.path}")
         return {"status": "stub", "detail": "pipeline_video no implementado"}
 
     @router.post("/memoria/analizar")
-    async def memoria_analizar(body: AnalizarRequest):
+    async def memoria_analizar(body: AnalizarRequest) -> Any:
         return await analizar(body.peticion)
 
     @router.post("/memoria/sintetizar")
-    async def memoria_sintetizar(body: SintesisRequest):
+    async def memoria_sintetizar(body: SintesisRequest) -> Any:
         return await sintetizar(body.peticion)
 
     @router.post("/memoria/fase/saber")
-    async def memoria_fase_saber(body: FaseRequest):
+    async def memoria_fase_saber(body: FaseRequest) -> Any:
         return await fase_saber(body.keywords)
 
     @router.post("/memoria/fase/hacer")
-    async def memoria_fase_hacer(body: FaseRequest):
+    async def memoria_fase_hacer(body: FaseRequest) -> Any:
         return await fase_hacer(body.keywords)
 
     @router.post("/memoria/fase/comprar")
-    async def memoria_fase_comprar(body: FaseRequest):
+    async def memoria_fase_comprar(body: FaseRequest) -> Any:
         return await fase_comprar(body.keywords)
 
     @router.get("/memoria/vigilancia/parte")
-    async def memoria_vigilancia_parte():
+    async def memoria_vigilancia_parte() -> Any:
         return await generar_parte()
 
     @router.post("/memoria/consultar")
-    async def memoria_consultar_endpoint(body: ConsultaRequest):
+    async def memoria_consultar_endpoint(body: ConsultaRequest) -> Any:
         return await memoria_consultar(body.query, body.forzar_web)
 
     @router.get("/memoria/health")
-    async def memoria_health():
+    async def memoria_health() -> Any:
         try:
             from core.memoria.qdrant_store import _get_client
 
@@ -74,7 +75,7 @@ def create_memoria_router(state) -> APIRouter:
             return {"status": "error", "detail": str(e)}
 
     @router.post("/memoria/ingestar")
-    async def memoria_ingestar():
+    async def memoria_ingestar() -> Any:
         return await procesar_inbox_completo()
 
     return router
