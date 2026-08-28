@@ -14,14 +14,14 @@ MIN_SCORE_MEMORIA = 0.5
 MIN_IDEAS_MEMORIA = 3
 
 
-def _es_suficiente(resultados_qdrant: list[dict]) -> bool:
+def _es_suficiente(resultados_qdrant: list[dict[str, Any]]) -> bool:
     if not resultados_qdrant:
         return False
     buenas = [r for r in resultados_qdrant if r.get("score", 0) >= MIN_SCORE_MEMORIA]
     return len(buenas) >= MIN_IDEAS_MEMORIA
 
 
-async def consultar(query: str, forzar_web: bool = False) -> dict:
+async def consultar(query: str, forzar_web: bool = False) -> dict[str, Any]:
     """Busca en memoria Qdrant. Si no hay suficientes ideas, busca en internet
     y las incorpora a la memoria antes de responder.
     """
@@ -94,13 +94,13 @@ class CPUReRanker:
     async def reordenar_resultados(
         self,
         query: str,
-        documentos: list[dict],
+        documentos: list[dict[str, Any]],
         top_n: int = 3,
-    ) -> list[dict]:
+    ) -> list[dict[str, Any]]:
         if not documentos:
             return []
 
-        def proceso_pool() -> list[dict]:
+        def proceso_pool() -> list[dict[str, Any]]:
             for doc in documentos:
                 texto = doc.get("payload", {}).get("texto", "")
                 doc["score_rerank"] = self._calcular_score_cross_encoder(query, texto)
@@ -120,8 +120,8 @@ class PipelineConsultaRAG:
         self,
         query: str,
         coleccion: str,
-        vector_denso: list,
-    ) -> list[dict]:
+        vector_denso: list[float],
+    ) -> list[dict[str, Any]]:
         candidatos_rrf = await self.qdrant.buscar_hibrido(coleccion, query, vector_denso, limite=10)
         inicio_rerank = time.time()
         contexto = await self.reranker.reordenar_resultados(query, candidatos_rrf, top_n=3)
