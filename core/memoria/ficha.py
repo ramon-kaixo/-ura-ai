@@ -18,15 +18,15 @@ class Idea:
     version: int = 1
     vigente: bool = True
     # --- v2 ---
-    datos_duros: dict = field(default_factory=dict)
-    rasgos_visuales: dict = field(default_factory=dict)
+    datos_duros: dict[str, Any] = field(default_factory=dict)
+    rasgos_visuales: dict[str, Any] = field(default_factory=dict)
     resumen_visual: str = ""
     puentes: list[str] = field(default_factory=list)
     vigilada: bool = False
     frecuencia: str = ""
     detector: str = ""
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.fecha_captura:
             self.fecha_captura = datetime.now(UTC).isoformat()
 

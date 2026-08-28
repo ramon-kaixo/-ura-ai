@@ -1,11 +1,13 @@
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
     model: str = Field(default="auto")
-    messages: list
+    messages: list[dict[str, Any]]
     stream: bool = False
-    tools: list | bool | None = None
+    tools: list[dict[str, Any]] | bool | None = None
     max_tokens: int = 4096
     temperature: float = 0.0
     task: str | None = None
@@ -17,8 +19,8 @@ class ChatResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
-    choices: list
-    usage: dict | None = None
+    choices: list[dict[str, Any]]
+    usage: dict[str, Any] | None = None
 
 
 class VideoIngestRequest(BaseModel):

@@ -6,6 +6,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 from motor.core.secrets import get_secret
 from motor.observability.logging import setup_logging
@@ -24,7 +25,7 @@ def verificar_politicas_seguridad_preflight() -> None:
         sys.exit(78)
 
 
-def _ejecutar_modo_test(clasificar_peticion, obtener_modelos_disponibles, seleccionar_modelo) -> None:
+def _ejecutar_modo_test(clasificar_peticion: Any, obtener_modelos_disponibles: Any, seleccionar_modelo: Any) -> None:
     idx = sys.argv.index("--test")
     texto = " ".join(sys.argv[idx + 1 :]) if idx + 1 < len(sys.argv) else "hola"
     messages = [{"role": "user", "content": texto}]
@@ -33,7 +34,7 @@ def _ejecutar_modo_test(clasificar_peticion, obtener_modelos_disponibles, selecc
     seleccionar_modelo(tipo, disponibles)
 
 
-def _log_inicio(disponibles: set[str], get_ollama_url, ROUTER_PORT: int) -> None:
+def _log_inicio(disponibles: set[str], get_ollama_url: Any, ROUTER_PORT: int) -> None:
     log.info("Model Router Enhanced v2.2 iniciando en puerto %s", ROUTER_PORT)
     log.info("Ollama backend: %s", get_ollama_url())
     log.info("POWER_MODE: AUTO (deteccion por IP cliente) — manual TURBO/ECO via 'mode'")
@@ -45,7 +46,7 @@ def _log_inicio(disponibles: set[str], get_ollama_url, ROUTER_PORT: int) -> None
         log.warning("Ollama no accesible en %s — se reintentara", get_ollama_url())
 
 
-def _log_rutas(modelo_routes: dict, disponibles: set[str], seleccionar_modelo) -> None:
+def _log_rutas(modelo_routes: dict[str, Any], disponibles: set[str], seleccionar_modelo: Any) -> None:
     for tipo, info in modelo_routes.items():
         modelo = seleccionar_modelo(tipo, disponibles) if disponibles else info["modelos"][0]
         fallback = info.get("fallback", "N/A")
