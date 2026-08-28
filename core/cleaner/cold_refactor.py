@@ -59,7 +59,8 @@ class ColdRefactor:
         if not DQ.exists():
             return []
         try:
-            return json.loads(DQ.read_text(encoding="utf-8"))
+            data: list[dict[str, Any]] = json.loads(DQ.read_text(encoding="utf-8"))
+            return data
         except Exception:
             logger.exception("Failed to load debt queue from %s", DQ)
             return []
@@ -92,7 +93,7 @@ class ColdRefactor:
                 self._a(e)
                 r["reintentados"] += 1
                 continue
-            sb = await DockerOrchestrator().validar(li, e.skill_nombre)
+            sb = await DockerOrchestrator().validar(li, e.skill_nombre)  # type: ignore[no-untyped-call]
             if not sb.ok:
                 e.n_intentos += 1
                 e.ultimo_intento = self._n()
@@ -104,8 +105,8 @@ class ColdRefactor:
             e.resolucion = self._n()
             self._a(e)
             r["resueltos"] += 1
-        for e in c:
-            if not e.get("resuelto") and e.get("n_intentos", 0) >= 3:
+        for item in c:
+            if not item.get("resuelto") and item.get("n_intentos", 0) >= 3:
                 r["abandonados"] += 1
         return r
 
