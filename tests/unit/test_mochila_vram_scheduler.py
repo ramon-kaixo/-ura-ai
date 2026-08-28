@@ -9,6 +9,21 @@ import pytest
 from core.mochila.vram_scheduler import VRAMAwareScheduler
 
 
+async def _esperar_cola(scheduler, max_wait: float = 2.0) -> None:
+    """Espera determinista a que la cola del scheduler tenga un elemento.
+
+    Reemplaza asyncio.sleep(0.01) (timing real frágil bajo carga): hace polling
+    hasta que el task de acquire haya encolado, sin depender de la velocidad
+    del event loop en la suite completa.
+    """
+    for _ in range(int(max_wait * 100)):
+        if scheduler._queue:
+            return
+        await asyncio.sleep(0.01)
+    msg = "el task de acquire no encolo a tiempo"
+    raise AssertionError(msg)
+
+
 @pytest.fixture
 def scheduler(monkeypatch):
     with patch.object(VRAMAwareScheduler, "_detect_max_vram", return_value=100000):
@@ -103,13 +118,15 @@ class TestAcquireRelease:
     @pytest.mark.asyncio
     async def test_encolado_resuelto_por_scheduler_loop(self, scheduler):
         scheduler._current_mb = 99990
+
         async def run():
             task = asyncio.create_task(scheduler.acquire(100, deadline_flex=5))
-            await asyncio.sleep(0.01)
+            await _esperar_cola(scheduler)
             scheduler._current_mb = 0
             scheduler._queue[0][3]["model"] = "test"
             await scheduler._scheduler_loop_once()
             return await asyncio.wait_for(task, timeout=2)
+
         req_id = await run()
         assert req_id is not None
         assert req_id in scheduler._active
@@ -173,11 +190,12 @@ class TestBootVRAM:
     async def test_adquiere_boot(self, scheduler):
         async def run():
             task = asyncio.create_task(scheduler.acquire_boot_vram(100))
-            await asyncio.sleep(0.01)
+            await _esperar_cola(scheduler)
             scheduler._current_mb = 0
             scheduler._queue[0][3]["model"] = "static_boot_service"
             await scheduler._scheduler_loop_once()
             return await asyncio.wait_for(task, timeout=2)
+
         assert await run() is True
 
     @pytest.mark.asyncio
