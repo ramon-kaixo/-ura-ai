@@ -79,8 +79,7 @@ def verify_file_integrity(path: Path | str, expected_sha256: str) -> bool:
     actual = file_sha256(path)
     if not hmac.compare_digest(actual, expected_sha256):
         raise IntegrityError(
-            f"Integrity check failed for {path}: "
-            f"expected={expected_sha256[:16]}..., actual={actual[:16]}..."
+            f"Integrity check failed for {path}: expected={expected_sha256[:16]}..., actual={actual[:16]}..."
         )
     return True
 

@@ -137,7 +137,6 @@ def parse_plan(content: str) -> list[TaskSpec]:
     return tasks
 
 
-
 def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> str:
     """Resolve a node_id to its API URL using the node registry."""
     if not node_id or node_id == "any":
@@ -146,7 +145,9 @@ def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> 
     if registry_url:
         try:
             body = json.dumps({}).encode()
-            req = urllib.request.Request(f"{registry_url}/nodes/{node_id}", headers={"Content-Type": "application/json"})
+            req = urllib.request.Request(
+                f"{registry_url}/nodes/{node_id}", headers={"Content-Type": "application/json"}
+            )
             with urllib.request.urlopen(req, timeout=5) as resp:
                 node = json.loads(resp.read())
                 return f"http://{node['tailscale_ip']}:{node['api_port']}"
@@ -163,9 +164,10 @@ def resolve_node_url(node_id: str, default_url: str, registry_url: str = "") -> 
             continue
     return default_url
 
-def create_task(api_url: str, task: TaskSpec, dry_run: bool = False,
-                api_key: str = "", source_node: str = "") -> dict | None:
 
+def create_task(
+    api_url: str, task: TaskSpec, dry_run: bool = False, api_key: str = "", source_node: str = ""
+) -> dict | None:
     """Crea una tarea en el orquestador via API."""
     payload = {
         "description": f"[{task.phase}] {task.title}" if task.phase else task.title,
@@ -255,8 +257,7 @@ def main():
         print(f"{i}/{len(tasks)}: {task.title}")
         # Resolve the target URL based on node_id
         target_url = resolve_node_url(task.node_id, args.url, args.url)
-        result = create_task(target_url, task, args.dry_run,
-                           api_key=args.api_key, source_node=source_node)
+        result = create_task(target_url, task, args.dry_run, api_key=args.api_key, source_node=source_node)
 
         if result:
             status = result.get("status", "unknown")
