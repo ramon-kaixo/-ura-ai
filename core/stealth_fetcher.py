@@ -23,7 +23,7 @@ def _random_ua() -> str:
     return random.choice(USER_AGENTS)  # noqa: S311 - UA aleatorio, no cripto
 
 
-def _default_headers() -> dict:
+def _default_headers() -> dict[str, str]:
     return {
         "User-Agent": _random_ua(),
         "Accept": "text/html,application/xhtml+xml,application/xml q=0.9,*/* q=0.8",
@@ -74,16 +74,16 @@ async def fetch_stealth(
                 try:
                     await stealth_async(page)
                     await page.goto(url, wait_until="networkidle", timeout=timeout * 1000)
-                    return await page.content()
+                    content: str | None = await page.content()
+                    return content
                 except Exception:
                     log.warning("stealth goto failed for %s, falling back", url)
                     await page.close()
                     try:
                         page = await context.new_page()
                         await page.goto(url, wait_until="domcontentloaded", timeout=timeout * 1000)
-                        return (
-                            await page.content()
-                        )  # pragma: no cover - cubierto en aislamiento; fakes de playwright colisionan en suite
+                        content2: str | None = await page.content()
+                        return content2  # pragma: no cover - cubierto en aislamiento; fakes de playwright colisionan en suite
                     except Exception:
                         log.warning("fallback goto also failed for %s", url)
                         return None
