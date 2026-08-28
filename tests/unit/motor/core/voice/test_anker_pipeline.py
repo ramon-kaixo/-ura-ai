@@ -20,6 +20,9 @@ import numpy as np
 import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[5]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
+
+import _voice_fakes as _  # noqa: F401  registra fakes de sounddevice/whisper/torch en sys.modules
 
 from motor.core.voice.anker_pipeline import AnkerDeterministicPipeline
 
