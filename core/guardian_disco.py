@@ -22,6 +22,7 @@ import logging
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger("ura.guardian_disco")
 
@@ -50,10 +51,11 @@ DEFAULT_CONFIG = {
 }
 
 
-def cargar_config() -> dict:
+def cargar_config() -> dict[str, Any]:
     if CONFIG_PATH.exists():
         try:
-            return json.loads(CONFIG_PATH.read_text())
+            cfg: dict[str, Any] = json.loads(CONFIG_PATH.read_text())
+            return cfg
         except Exception:
             log.exception("Error cargando configuración desde %s", CONFIG_PATH)
     NERVIOSO.mkdir(parents=True, exist_ok=True)
@@ -67,9 +69,9 @@ def calcular_hash(ruta: Path, truncar: int = 64) -> str:
     return h[:truncar]
 
 
-def escanear(config: dict) -> dict:
+def escanear(config: dict[str, Any]) -> dict[str, str]:
     """Escanea todos los archivos según patrones configurados."""
-    actual = {}
+    actual: dict[str, str] = {}
     for patron in config["patrones"]:
         for f in URA.rglob(patron):
             partes = set(f.parts)
@@ -83,9 +85,9 @@ def escanear(config: dict) -> dict:
     return actual
 
 
-def comparar(anterior: dict, actual: dict) -> list:
+def comparar(anterior: dict[str, str], actual: dict[str, str]) -> list[dict[str, str]]:
     """Compara snapshot anterior vs estado actual del disco."""
-    cambios = []
+    cambios: list[dict[str, str]] = []
     for f, h in actual.items():
         if f not in anterior:
             cambios.append({"file": f, "status": "NUEVO", "hash": h})
@@ -97,7 +99,7 @@ def comparar(anterior: dict, actual: dict) -> list:
     return cambios
 
 
-def verificar_escritura(archivo: str, hash_esperado: str, config: dict | None = None) -> bool:
+def verificar_escritura(archivo: str, hash_esperado: str, config: dict[str, Any] | None = None) -> bool:
     """¿El archivo realmente se escribió en disco?
     Compara el hash post-escritura con el hash que la IA dice haber generado.
 
@@ -114,7 +116,7 @@ def verificar_escritura(archivo: str, hash_esperado: str, config: dict | None = 
     return actual == hash_esperado
 
 
-def guardar_snapshot(data: dict) -> None:
+def guardar_snapshot(data: dict[str, Any]) -> None:
     """Escritura atómica: temp + rename."""
     NERVIOSO.mkdir(parents=True, exist_ok=True)
     tmp = SNAPSHOT.with_suffix(".tmp")
@@ -122,7 +124,7 @@ def guardar_snapshot(data: dict) -> None:
     tmp.replace(SNAPSHOT)
 
 
-def guardar_historial(cambios: list, total: int) -> None:
+def guardar_historial(cambios: list[dict[str, str]], total: int) -> None:
     """Añade entrada al historial JSON Lines."""
     entry = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -149,18 +151,18 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def _cmd_verify(archivo: str, hash_esp: str, config: dict) -> None:
+def _cmd_verify(archivo: str, hash_esp: str, config: dict[str, Any]) -> None:
     ok = verificar_escritura(archivo, hash_esp, config)
     sys.exit(0 if ok else 1)
 
 
-def _cmd_init(config: dict) -> None:
+def _cmd_init(config: dict[str, Any]) -> None:
     actual = escanear(config)
     snapshot = {"timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"), "total": len(actual)}
     guardar_snapshot(snapshot)
 
 
-def _cmd_scan(config: dict) -> None:
+def _cmd_scan(config: dict[str, Any]) -> None:
     anterior_snap = json.loads(SNAPSHOT.read_text()) if SNAPSHOT.exists() else {}
     actual = escanear(config)
 
