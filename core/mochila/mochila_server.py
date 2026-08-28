@@ -65,7 +65,7 @@ PROVIDER_TIMEOUTS: dict[str, float] = {
     "openrouter": 60.0,
     "gemini": 30.0,
 }
-CACHE_MODELS: list = []
+CACHE_MODELS: list[dict[str, Any]] = []
 CACHE_MODELS_TS: float = 0
 
 
@@ -73,15 +73,15 @@ class VRAMAwareScheduler:
     def __init__(self, default_max_mb: int = 100000, queue_timeout: float = 60.0) -> None:
         self.max_mb = self._detect_max_vram(default_max_mb)
         self.queue_timeout = queue_timeout
-        self._queue: list[tuple[asyncio.Future, int, float, dict[str, Any]]] = []
+        self._queue: list[tuple[asyncio.Future[Any], int, float, dict[str, Any]]] = []
         self._active: dict[str, dict[str, Any]] = {}
         self._current_mb = 0
-        self._hot_models: set = set()
+        self._hot_models: set[str] = set()
         self._consecutive_smi_errors = 0
         self._lock = asyncio.Lock()
         self._ollama_client = httpx.AsyncClient(base_url=OLLAMA_SOCKET)
         self._log = logging.getLogger("mochila.vram")
-        self._task: asyncio.Task | None = None
+        self._task: asyncio.Task[Any] | None = None
 
     @staticmethod
     def _detect_max_vram(default_mb: int) -> int:
@@ -105,7 +105,7 @@ class VRAMAwareScheduler:
         return self.max_mb - self._current_mb
 
     @staticmethod
-    def estimar_vram(body: dict) -> int:
+    def estimar_vram(body: dict[str, Any]) -> int:
         if "_vram_mb" in body:
             return int(body["_vram_mb"])
         model = body.get("model", "")
@@ -171,7 +171,7 @@ class VRAMAwareScheduler:
         except Exception as e:
             log.warning("mochila: store_event falló: %s", e)
 
-    async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict | None = None) -> str | None:
+    async def acquire(self, mb: int, deadline_flex: float = 10.0, data: dict[str, Any] | None = None) -> str | None:
         async with self._lock:
             if len(self._active) > 0:
                 return None
@@ -251,9 +251,9 @@ cost_tracker = CostTracker()
 
 class ChatRequest(BaseModel):
     model: str = Field(default="auto")
-    messages: list
+    messages: list[dict[str, Any]]
     stream: bool = False
-    tools: list | bool | None = None
+    tools: list[dict[str, Any]] | bool | None = None
     max_tokens: int = 4096
     temperature: float = 0.0
     task: str | None = None
@@ -265,8 +265,8 @@ class ChatResponse(BaseModel):
     object: str = "chat.completion"
     created: int
     model: str
-    choices: list
-    usage: dict | None = None
+    choices: list[dict[str, Any]]
+    usage: dict[str, Any] | None = None
 
 
 def _generar_id() -> str:
@@ -288,7 +288,7 @@ def _rechazar_si_bloqueado(provider_name: str) -> None:
         )
 
 
-def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> None:
+def _procesar_usage(respuesta: dict[str, Any] | None, provider_name: str, modelo: str) -> None:
     if respuesta and isinstance(respuesta, dict):
         uso = respuesta.get("usage") or {}
         cost_tracker.registrar(
@@ -300,8 +300,13 @@ def _procesar_usage(respuesta: dict | None, provider_name: str, modelo: str) -> 
 
 
 async def _chat_no_stream(
-    provider, modelo, mensajes, herramientas, max_tokens, temperature
-) -> dict | None:  # firma publica estable
+    provider: Any,
+    modelo: str,
+    mensajes: list[dict[str, Any]],
+    herramientas: list[dict[str, Any]] | None,
+    max_tokens: int,
+    temperature: float,
+) -> dict[str, Any] | None:  # firma publica estable
     try:
         async for chunk in provider.chat(
             modelo=modelo,
@@ -311,7 +316,8 @@ async def _chat_no_stream(
             max_tokens=max_tokens,
             temperature=temperature,
         ):
-            return chunk
+            resp_chunk: dict[str, Any] = chunk
+            return resp_chunk
     except ProviderError as e:
         raise HTTPException(status_code=e.status_code or 502, detail=f"{e.provider}: {e}") from e
     return None
@@ -333,8 +339,8 @@ async def _emitir_error_sse(
 
 
 async def _abortaje_guardian_sse(
-    guardian,
-    chunk: dict,
+    guardian: OpenCodeGuardian | None,
+    chunk: dict[str, Any],
     accumulated_text: str,
     modelo: str,
 ) -> tuple[bool, str, bytes]:
@@ -355,14 +361,14 @@ async def _abortaje_guardian_sse(
 
 
 async def _stream_from_provider(  # firma publica estable
-    provider_name,
-    modelo,
-    mensajes,
-    herramientas,
-    max_tokens,
-    temperature,
-    is_opencode=False,
-    guardian=None,
+    provider_name: str,
+    modelo: str,
+    mensajes: list[dict[str, Any]],
+    herramientas: list[dict[str, Any]] | None,
+    max_tokens: int,
+    temperature: float,
+    is_opencode: bool = False,
+    guardian: OpenCodeGuardian | None = None,
 ) -> AsyncGenerator[bytes, None]:
     provider = PROVIDERS[provider_name]
     timeout_val = PROVIDER_TIMEOUTS.get(provider_name, 60)
@@ -413,17 +419,17 @@ async def _stream_from_provider(  # firma publica estable
             rate_limiter.registrar(provider_name)
 
 
-def _chunk_es_fin(chunk: dict) -> bool:
+def _chunk_es_fin(chunk: dict[str, Any]) -> bool:
     return bool(
         chunk.get("choices") and chunk["choices"][0].get("delta", {}) == {} and chunk["choices"][0].get("finish_reason")
     )
 
 
-def _sse_bytes(data: dict) -> bytes:
+def _sse_bytes(data: dict[str, Any]) -> bytes:
     return b"data: " + json.dumps(data).encode() + b"\n\n"
 
 
-def _error_sse(message: str, error_type: str, penalty: dict | None = None) -> bytes:
+def _error_sse(message: str, error_type: str, penalty: dict[str, Any] | None = None) -> bytes:
     payload: dict[str, object] = {"error": {"message": message, "type": error_type}}
     if penalty:
         payload["error"] = {"message": message, "type": error_type, "penalty_context": penalty}
@@ -432,10 +438,10 @@ def _error_sse(message: str, error_type: str, penalty: dict | None = None) -> by
 
 def _evaluar_guardian(
     guardian: Any,
-    chunk: dict,
+    chunk: dict[str, Any],
     accumulated_text: str,
     modelo: str,
-) -> tuple[bool, str, dict | None]:
+) -> tuple[bool, str, dict[str, Any] | None]:
     delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
     if not delta:
         return False, accumulated_text, None
@@ -455,8 +461,8 @@ def _evaluar_guardian(
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
-    init_guardian()
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    init_guardian()  # type: ignore[no-untyped-call]
     await scheduler.start_loop()
     yield
     await scheduler.close()
@@ -470,7 +476,7 @@ app.add_middleware(GuardianMiddleware)
 
 
 @app.middleware("http")
-async def _auth_middleware(request: Request, call_next):
+async def _auth_middleware(request: Request, call_next: Any) -> Any:
     path = request.url.path
     if any(path.startswith(ex) for ex in _AUTH_EXEMPT):
         return await call_next(request)
@@ -482,12 +488,12 @@ async def _auth_middleware(request: Request, call_next):
 
 
 @app.get("/health")
-async def health():
+async def health() -> dict[str, Any]:
     return {"status": "ok", "providers": {name: await provider.health() for name, provider in PROVIDERS.items()}}
 
 
 @app.get("/v1/models")
-async def v1_models():
+async def v1_models() -> dict[str, Any]:
     global CACHE_MODELS, CACHE_MODELS_TS  # noqa: PLW0603 - cache TTL global intencional
     if CACHE_MODELS and time.time() - CACHE_MODELS_TS < 60:
         return {"object": "list", "data": CACHE_MODELS}
@@ -509,7 +515,7 @@ async def v1_models():
 
 
 @app.post("/v1/chat/completions")
-async def v1_chat_completions(body: ChatRequest):
+async def v1_chat_completions(body: ChatRequest) -> Any:  # Any: evita response_model de FastAPI
     provider_name, modelo, route_reason = _resolver_ruta(body)
     _rechazar_si_bloqueado(provider_name)
 
@@ -559,7 +565,7 @@ def _resolver_ruta(body: ChatRequest) -> tuple[str, str, str]:
         raise HTTPException(status_code=503, detail=str(e)) from e
 
 
-def _resolver_herramientas(body: ChatRequest) -> list | None:
+def _resolver_herramientas(body: ChatRequest) -> list[dict[str, Any]] | None:
     if body.tools is True:
         return TOOL_SCHEMAS
     if isinstance(body.tools, list):
@@ -572,7 +578,7 @@ def _respuesta_streaming(  # firma publica estable
     modelo: str,
     route_reason: str,
     body: ChatRequest,
-    herramientas: list | None,
+    herramientas: list[dict[str, Any]] | None,
     is_opencode: bool,
     guardian: OpenCodeGuardian | None,
 ) -> StreamingResponse:
@@ -602,9 +608,9 @@ async def _procesar_tool_calls(
     provider: Any,
     modelo: str,
     body: ChatRequest,
-    herramientas: list | None,
-    respuesta: dict,
-) -> dict | None:
+    herramientas: list[dict[str, Any]] | None,
+    respuesta: dict[str, Any],
+) -> dict[str, Any] | None:
     msg = respuesta.get("choices", [{}])[0].get("message", {})
     tool_calls = msg.get("tool_calls")
     if not tool_calls:
@@ -635,12 +641,12 @@ async def _procesar_tool_calls(
 
 
 @app.get("/breaker")
-async def breaker_status():
+async def breaker_status() -> dict[str, Any]:
     return {p: circuit_breaker.estado(p) for p in PROVIDERS}
 
 
 @app.post("/breaker/reset/{provider}")
-async def breaker_reset(provider: str):
+async def breaker_reset(provider: str) -> dict[str, Any]:
     if provider not in PROVIDERS:
         raise HTTPException(status_code=404, detail=f"Provider {provider} no encontrado")
     circuit_breaker.reset(provider)
@@ -648,25 +654,25 @@ async def breaker_reset(provider: str):
 
 
 @app.get("/metrics/rate/{provider}")
-async def rate_limit_status(provider: str):
+async def rate_limit_status(provider: str) -> Any:
     if provider not in PROVIDERS:
         raise HTTPException(status_code=404, detail=f"Provider {provider} no encontrado")
     return rate_limiter.estado(provider)
 
 
 @app.get("/metrics/cost")
-async def cost_summary():
+async def cost_summary() -> Any:
     return cost_tracker.resumen_hoy()
 
 
 @app.post("/admin/acquire_boot_vram")
-async def admin_acquire_boot_vram(mb: int):
+async def admin_acquire_boot_vram(mb: int) -> dict[str, str]:
     await scheduler.acquire_boot_vram(mb)
     return {"status": "granted"}
 
 
 @app.api_route("/api/{path:path}", methods=["GET", "POST"])
-async def proxy_gateway(path: str, request: Request):
+async def proxy_gateway(path: str, request: Request) -> Any:
     body = await _leer_body(request)
     req_id = await _adquirir_vram(body, path)
     if req_id is None:
@@ -697,7 +703,7 @@ async def proxy_gateway(path: str, request: Request):
         await scheduler.release(req_id)
 
 
-async def _adquirir_vram(body: dict | None, path: str) -> str | None:
+async def _adquirir_vram(body: dict[str, Any] | None, path: str) -> str | None:
     mb = scheduler.estimar_vram(body or {})
     return await scheduler.acquire(
         mb=mb,
@@ -711,7 +717,7 @@ class VideoIngestRequest(BaseModel):
 
 
 @app.post("/memoria/ingestar/video")
-async def memoria_ingestar_video(body: VideoIngestRequest):
+async def memoria_ingestar_video(body: VideoIngestRequest) -> Any:
     from pathlib import Path
 
     ruta = Path(body.path)
@@ -725,7 +731,7 @@ class AnalizarRequest(BaseModel):
 
 
 @app.post("/memoria/analizar")
-async def memoria_analizar(body: AnalizarRequest):
+async def memoria_analizar(body: AnalizarRequest) -> Any:
     return await analizar(body.peticion)
 
 
@@ -734,7 +740,7 @@ class SintesisRequest(BaseModel):
 
 
 @app.post("/memoria/sintetizar")
-async def memoria_sintetizar(body: SintesisRequest):
+async def memoria_sintetizar(body: SintesisRequest) -> Any:
     return await sintetizar(body.peticion)
 
 
@@ -743,32 +749,32 @@ class FaseRequest(BaseModel):
 
 
 @app.post("/memoria/fase/saber")
-async def memoria_fase_saber(body: FaseRequest):
+async def memoria_fase_saber(body: FaseRequest) -> Any:
     return await fase_saber(body.keywords)
 
 
 @app.post("/memoria/fase/hacer")
-async def memoria_fase_hacer(body: FaseRequest):
+async def memoria_fase_hacer(body: FaseRequest) -> Any:
     return await fase_hacer(body.keywords)
 
 
 @app.post("/memoria/fase/comprar")
-async def memoria_fase_comprar(body: FaseRequest):
+async def memoria_fase_comprar(body: FaseRequest) -> Any:
     return await fase_comprar(body.keywords)
 
 
 @app.get("/memoria/vigilancia/parte")
-async def memoria_vigilancia_parte():
+async def memoria_vigilancia_parte() -> Any:
     return await generar_parte()
 
 
 @app.get("/status")
-async def system_status_endpoint():
+async def system_status_endpoint() -> Any:
     return await system_status(PROVIDERS, cost_tracker, circuit_breaker, len(TOOL_SCHEMAS), router)
 
 
 @app.get("/metrics")
-async def metrics():
+async def metrics() -> dict[str, Any]:
     return {
         "providers": list(PROVIDERS.keys()),
         "timeouts": PROVIDER_TIMEOUTS,
@@ -786,12 +792,12 @@ class ConsultaRequest(BaseModel):
 
 
 @app.post("/memoria/consultar")
-async def memoria_consultar_endpoint(body: ConsultaRequest):
+async def memoria_consultar_endpoint(body: ConsultaRequest) -> Any:
     return await memoria_consultar(body.query, body.forzar_web)
 
 
 @app.get("/memoria/health")
-async def memoria_health():
+async def memoria_health() -> Any:
     try:
         from core.memoria.qdrant_store import _get_client
 
@@ -808,5 +814,5 @@ async def memoria_health():
 
 
 @app.post("/memoria/ingestar")
-async def memoria_ingestar():
+async def memoria_ingestar() -> Any:
     return await procesar_inbox_completo()
