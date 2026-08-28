@@ -9,7 +9,9 @@ EXCEPCIÓN: No se migra a motor.core.llm porque:
 
 import json
 import logging
+from collections.abc import AsyncGenerator
 from contextlib import suppress
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, Request
@@ -22,11 +24,11 @@ from core.mochila.guardian_opencode import OpenCodeGuardian
 from core.mochila.vram_scheduler import OLLAMA_SOCKET
 
 
-def create_proxy_router(state) -> APIRouter:
+def create_proxy_router(state: Any) -> APIRouter:
     router = APIRouter()
 
     @router.api_route("/api/{path:path}", methods=["GET", "POST"])
-    async def proxy_gateway(path: str, request: Request):
+    async def proxy_gateway(path: str, request: Request) -> JSONResponse | StreamingResponse:
         body = await _leer_body(request)
         req_id = await _adquirir_vram(state, body, path)
         if req_id is None:
@@ -59,14 +61,14 @@ def create_proxy_router(state) -> APIRouter:
     return router
 
 
-async def _leer_body(request: Request) -> dict | None:
+async def _leer_body(request: Request) -> dict[str, Any] | None:
     body = None
     with suppress(Exception):
         body = await request.json() if request.method in ("POST", "PUT") else None
     return body
 
 
-async def _adquirir_vram(state, body: dict | None, path: str) -> str | None:
+async def _adquirir_vram(state: Any, body: dict[str, Any] | None, path: str) -> str | None:
     mb = state.scheduler.estimar_vram(body or {})
     return await state.scheduler.acquire(
         mb=mb,
@@ -83,7 +85,7 @@ def _build_headers(request: Request) -> dict[str, str]:
     return headers
 
 
-def _es_opencode(body: dict | None) -> bool:
+def _es_opencode(body: dict[str, Any] | None) -> bool:
     return (body or {}).get("_force_guardian", False) or "opencode" in (body or {}).get("model", "").lower()
 
 
@@ -93,28 +95,29 @@ async def _get_upstream(request: Request, headers: dict[str, str]) -> JSONRespon
     return JSONResponse(content=resp.json(), status_code=resp.status_code)
 
 
-async def _post_upstream(request: Request, body: dict | None, headers: dict[str, str]) -> JSONResponse:
+async def _post_upstream(request: Request, body: dict[str, Any] | None, headers: dict[str, str]) -> JSONResponse:
     async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as client:
         resp = await client.post(request.url.path, json=body, params=dict(request.query_params), headers=headers)
     return JSONResponse(content=resp.json(), status_code=resp.status_code)
 
 
-def _token_stream(data: dict) -> str:
-    return (
+def _token_stream(data: dict[str, Any]) -> str:
+    token: str = (
         data.get("response", "")
         or data.get("message", {}).get("content", "")
         or data.get("choices", [{}])[0].get("delta", {}).get("content", "")
     )
+    return token
 
 
-def _error_guardian(penalty: str | None) -> dict:
-    err = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
+def _error_guardian(penalty: str | None) -> dict[str, Any]:
+    err: dict[str, Any] = {"error": {"message": "STREAM_ABORTED_BY_GUARDIAN", "type": "vagancy_error"}}
     if penalty:
         err["error"]["penalty_context"] = penalty
     return err
 
 
-def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None:
+def _log_stream_abort(body: dict[str, Any] | None, path: str, penalty: str | None) -> None:
     log_event(
         "stream_aborted",
         model=(body or {}).get("model", ""),
@@ -127,12 +130,12 @@ def _log_stream_abort(body: dict | None, path: str, penalty: str | None) -> None
 
 async def _proxy_stream(
     request: Request,
-    body: dict | None,
+    body: dict[str, Any] | None,
     headers: dict[str, str],
     is_opencode: bool,
     guardian: OpenCodeGuardian | None,
     path: str,
-):
+) -> AsyncGenerator[str, None]:
     acc = ""
     async with httpx.AsyncClient(timeout=180.0, base_url=OLLAMA_SOCKET) as c:  # noqa: SIM117
         async with c.stream("POST", request.url.path, json=body, headers=headers) as resp:
