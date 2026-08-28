@@ -1,20 +1,22 @@
+from typing import Any
+
 from fastapi import APIRouter
 
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS
 
 
-def create_status_router(state) -> APIRouter:
+def create_status_router(state: Any) -> APIRouter:
     router = APIRouter()
 
     @router.get("/status")
-    async def system_status_endpoint():
+    async def system_status_endpoint() -> Any:
         return await system_status(
             state.providers, state.cost_tracker, state.circuit_breaker, len(TOOL_SCHEMAS), state.router
         )
 
     @router.get("/metrics")
-    async def metrics():
+    async def metrics() -> dict[str, Any]:
         return {
             "providers": list(state.providers.keys()),
             "timeouts": state.provider_timeouts,

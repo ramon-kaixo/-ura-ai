@@ -1,6 +1,7 @@
 """Middleware del Guardian para la Mochila."""
 
 import logging
+from typing import Any
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -13,7 +14,7 @@ guardian = get_guardian()
 
 
 class GuardianMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
         path = request.url.path
         method = request.method
         if path in ("/health", "/v1/models", "/metrics", "/breaker"):
@@ -30,7 +31,7 @@ class GuardianMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def init_guardian():
+def init_guardian() -> None:
     estado = guardian.estado()
     log.info("Guardian: {len(estado.get('reglas', []))} reglas activas")
     return {"guardian": estado}

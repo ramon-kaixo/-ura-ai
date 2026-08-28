@@ -3,6 +3,7 @@
 import logging
 import threading
 import uuid
+from typing import Any
 
 import httpx
 from qdrant_client import QdrantClient
@@ -38,7 +39,8 @@ async def _embed(texto: str) -> list[float]:
             json={"model": EMBED_MODEL, "prompt": texto},
         )
         resp.raise_for_status()
-        return resp.json()["embedding"]
+        embedding: list[float] = resp.json()["embedding"]
+        return embedding
 
 
 def _make_id(idea: Idea) -> str:
@@ -155,7 +157,7 @@ async def buscar_ideas(
     tipo: str | None = None,
     coste: str | None = None,
     limit: int = 5,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     query_vec = await _embed(query)
     must = [{"key": "vigente", "match": {"value": True}}]
     if tema:
@@ -193,7 +195,7 @@ class MemoryPipelineStore:
     def __init__(self, qdrant_client: URAQdrantClient | None = None) -> None:
         self.qdrant = qdrant_client or URAQdrantClient()
 
-    async def guardar_contexto_ingestado(self, coleccion: str, puntos: list) -> bool:
+    async def guardar_contexto_ingestado(self, coleccion: str, puntos: list[dict[str, Any]]) -> bool:
         """Inserta lotes de vectores en Qdrant sin bloquear el event-loop."""
         if not puntos:
             return False
