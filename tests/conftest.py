@@ -104,11 +104,31 @@ def reset_engine_holder() -> Generator[None, None, None]:
     _rate_limiter._requests.clear()
 
 
+@pytest.fixture(autouse=True)
+def reset_searchlog_writer() -> Generator[None, None, None]:
+    """Resetea el writer cacheado de core.search_logger entre tests.
+
+    _WRITER es un singleton lazy de módulo inicializado con URA_LOG_DIR en
+    la primera llamada a _get_writer(). Si un test lo deja apuntando a un
+    tmp_path que ya fue borrado (o con env de otro test), los tests de
+    search_logger/watchdog fallan solo en suite completa (orden aleatorio).
+    """
+    import core.search_logger as _sl
+    import core.watchdog_funciones as _wd
+
+    _sl._WRITER = None
+    _wd_prev = getattr(_wd, "AUTO_DUMPS_DIR", None)
+    yield
+    _sl._WRITER = None
+    if _wd_prev is not None:
+        _wd.AUTO_DUMPS_DIR = _wd_prev
+
+
 # Perfiles de hypothesis (PLAN mutmut v5, F1/F5):
 #   dev -> commit local (pocos ejemplos, <10s) — por defecto
 #   ci  -> timer diario 06:00 (muchos ejemplos) — vía HYPOTHESIS_PROFILE=ci
 try:
-    from hypothesis import settings, Verbosity
+    from hypothesis import settings
 
     settings.register_profile("dev", max_examples=10, deadline=2000)
     settings.register_profile("ci", max_examples=200, deadline=1000)
