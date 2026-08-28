@@ -25,6 +25,7 @@ import logging
 import subprocess
 import time
 from pathlib import Path
+from typing import Any
 
 log = logging.getLogger("ura.resolver_red")
 
@@ -34,10 +35,11 @@ CABLE_LATENCY_THRESHOLD_MS = 5  # Si cable >5ms → conmutar a Tailscale
 TAILSCALE_LATENCY_THRESHOLD_MS = 50  # Si Tailscale >50ms → dispositivo DOWN
 
 
-def cargar_inventario() -> dict:
+def cargar_inventario() -> dict[str, Any]:
     if INVENTARIO_PATH.exists():
         try:
-            return json.loads(INVENTARIO_PATH.read_text())
+            data: dict[str, Any] = json.loads(INVENTARIO_PATH.read_text())
+            return data
         except Exception:
             log.exception("Error loading inventory from %s", INVENTARIO_PATH)
     return {"dispositivos": {}}
@@ -73,7 +75,8 @@ def resolver_dns(hostname: str) -> str | None:
                 if hostname in name or name in hostname:
                     ips = peer.get("TailscaleIPs", [])
                     if ips:
-                        return ips[0]
+                        ip0: str = ips[0]
+                        return ip0
     except Exception:
         log.exception("Error querying Tailscale status for %s", hostname)
 
@@ -81,7 +84,8 @@ def resolver_dns(hostname: str) -> str | None:
     inventario = cargar_inventario()
     for dev_id, dev in inventario.get("dispositivos", {}).items():
         if dev_id == hostname or dev.get("nombre_dns") == hostname:
-            return dev.get("ip_cable") or dev.get("ip_tailscale")
+            dev_ip: str = dev.get("ip_cable") or dev.get("ip_tailscale") or ""
+            return dev_ip or None
 
     return None
 
@@ -106,7 +110,7 @@ def ping_latencia(ip: str, timeout: float = 2.0) -> tuple[bool, float]:
     return False, 999
 
 
-def seleccionar_ruta(hostname: str, inventario: dict | None = None) -> dict:
+def seleccionar_ruta(hostname: str, inventario: dict[str, Any] | None = None) -> dict[str, Any]:
     """Selecciona la mejor ruta de conexión para un dispositivo.
 
     Estrategia de conmutación:
@@ -146,7 +150,7 @@ def seleccionar_ruta(hostname: str, inventario: dict | None = None) -> dict:
     return {"ruta": "down", "ip": None, "latencia_ms": 999, "metodo": "sin_conexion", "ok": False}
 
 
-def estado_red() -> dict:
+def estado_red() -> dict[str, Any]:
     """Escanea toda la red y devuelve estado de cada dispositivo."""
     inv = cargar_inventario()
     resultados = {}

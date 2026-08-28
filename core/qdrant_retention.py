@@ -10,6 +10,7 @@ import logging
 import os
 import sys
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import httpx
 
@@ -35,17 +36,18 @@ async def get_collections() -> list[str]:
         return [c["name"] for c in data.get("result", {}).get("collections", [])]
 
 
-async def get_collection_info(collection: str) -> dict:
+async def get_collection_info(collection: str) -> dict[str, Any]:
     async with httpx.AsyncClient(timeout=5) as client:
         r = await client.get(f"{QDRANT_URL}/collections/{collection}")
         r.raise_for_status()
-        return r.json()
+        data: dict[str, Any] = r.json()
+        return data
 
 
 async def count_points(collection: str) -> int:
     try:
         info = await get_collection_info(collection)
-        return info.get("result", {}).get("points_count", 0)
+        return int(info.get("result", {}).get("points_count", 0) or 0)
     except Exception:
         return 0
 
@@ -68,11 +70,11 @@ async def delete_points_before(collection: str, before_ts: str) -> int:
         )
         r.raise_for_status()
         result = r.json()
-        return result.get("result", {}).get("status", "unknown")
+        return int(result.get("result", {}).get("status", "unknown") or 0)
 
 
-async def main(dry_run: bool = True) -> dict:
-    stats: dict[str, dict] = {}
+async def main(dry_run: bool = True) -> dict[str, Any]:
+    stats: dict[str, dict[str, Any]] = {}
 
     collections = await get_collections()
     log.info("Colecciones encontradas: %s", collections)
