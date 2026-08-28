@@ -19,7 +19,7 @@ import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -94,7 +94,8 @@ CREATE TABLE IF NOT EXISTS task_events (
     event TEXT NOT NULL,
     agent TEXT DEFAULT '',
     details TEXT DEFAULT '',
-    timestamp TEXT NOT NULL
+    timestamp TEXT NOT NULL,
+    automatic INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
@@ -139,6 +140,8 @@ class _PersistentConnection:
         self._conn.execute("PRAGMA foreign_keys=ON")
         self._conn.execute("PRAGMA synchronous=NORMAL")
         self._conn.row_factory = sqlite3.Row
+        self._conn.executescript(_SCHEMA)
+        _migrate_schema(self._conn)
 
     def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
         with self._lock:
@@ -204,7 +207,115 @@ def init_db(db_path: Path | None = None) -> None:
         except sqlite3.OperationalError:
             conn.execute("ALTER TABLE tasks ADD COLUMN node_id TEXT DEFAULT ''")
             log.info("[TASK_QUEUE] Migrated: added node_id column")
+        _migrate_schema(conn)
     log.info("[TASK_QUEUE] DB inicializada: %s", path)
+
+
+def _migrate_schema(conn: sqlite3.Connection) -> None:
+    """Migraciones idempotentes de esquema (P3 auditoría 2026-08-28).
+
+    - schema_version (v1)
+    - tasks_archive (historial de tareas done/failed >30 días)
+    - task_events.automatic (trazabilidad de eventos del sistema)
+    """
+    # 1) schema_version
+    if not conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='schema_version'").fetchone():
+        conn.execute("CREATE TABLE schema_version (version INTEGER NOT NULL, applied_at TEXT NOT NULL)")
+        conn.execute(
+            "INSERT INTO schema_version (version, applied_at) VALUES (1, ?)",
+            (datetime.now(UTC).isoformat(),),
+        )
+        log.info("[TASK_QUEUE] Migrated: schema_version v1")
+
+    # 2) tasks_archive
+    if not conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks_archive'").fetchone():
+        conn.execute(
+            """
+            CREATE TABLE tasks_archive (
+                id TEXT PRIMARY KEY,
+                description TEXT NOT NULL,
+                plan_phase TEXT DEFAULT '',
+                assigned_to TEXT DEFAULT '',
+                status TEXT DEFAULT 'done',
+                priority INTEGER DEFAULT 0,
+                retries INTEGER DEFAULT 0,
+                max_retries INTEGER DEFAULT 3,
+                timeout_seconds INTEGER DEFAULT 1800,
+                context_json TEXT DEFAULT '{}',
+                worktree_path TEXT DEFAULT '',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                completed_at TEXT DEFAULT '',
+                last_heartbeat TEXT DEFAULT '',
+                error_log TEXT DEFAULT '',
+                commit_sha TEXT DEFAULT '',
+                reviewer TEXT DEFAULT '',
+                node_id TEXT DEFAULT '',
+                archived_at TEXT NOT NULL
+            )
+            """
+        )
+        log.info("[TASK_QUEUE] Migrated: tasks_archive")
+
+    # 3) task_events.automatic
+    cols = {r[1] for r in conn.execute("PRAGMA table_info(task_events)")}
+    if "automatic" not in cols:
+        conn.execute("ALTER TABLE task_events ADD COLUMN automatic INTEGER DEFAULT 0")
+        conn.execute(
+            "UPDATE task_events SET automatic=1 WHERE event IN ('retry','assigned','started','cleanup','fail_auto')"
+        )
+        log.info("[TASK_QUEUE] Migrated: task_events.automatic")
+
+    # 4) Archivar tareas done/failed con completed_at o updated_at >30 días
+    cutoff = (datetime.now(UTC) - timedelta(days=30)).isoformat()
+    rows = conn.execute(
+        """
+        SELECT id FROM tasks
+        WHERE status IN ('done','failed')
+          AND (completed_at != '' AND completed_at < ?)
+           OR (completed_at = '' AND updated_at != '' AND updated_at < ?)
+        """,
+        (cutoff, cutoff),
+    ).fetchall()
+    for (tid,) in rows:
+        row = conn.execute("SELECT * FROM tasks WHERE id=?", (tid,)).fetchone()
+        if not row:
+            continue
+        conn.execute(
+            """
+            INSERT OR IGNORE INTO tasks_archive
+                (id, description, plan_phase, assigned_to, status, priority, retries,
+                 max_retries, timeout_seconds, context_json, worktree_path, created_at,
+                 updated_at, completed_at, last_heartbeat, error_log, commit_sha,
+                 reviewer, node_id, archived_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                row["id"],
+                row["description"],
+                row["plan_phase"],
+                row["assigned_to"],
+                row["status"],
+                row["priority"],
+                row["retries"],
+                row["max_retries"],
+                row["timeout_seconds"],
+                row["context_json"],
+                row["worktree_path"],
+                row["created_at"],
+                row["updated_at"],
+                row["completed_at"],
+                row["last_heartbeat"],
+                row["error_log"],
+                row["commit_sha"],
+                row["reviewer"],
+                row["node_id"],
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+        conn.execute("DELETE FROM tasks WHERE id=?", (tid,))
+    if rows:
+        log.info("[TASK_QUEUE] Archivadas %d tareas antiguas", len(rows))
 
 
 # ---------------------------------------------------------------------------
@@ -346,8 +457,8 @@ class TaskQueue:
             )
             if result.rowcount > 0:
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, agent, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, agent, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (task_id, TaskEvent.ASSIGNED.value, agent, now),
                 )
                 log.info("[TASK_QUEUE] %s reclamada por %s", task_id, agent)
@@ -400,8 +511,8 @@ class TaskQueue:
             )
             if result.rowcount > 0:
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, agent, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, agent, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (target, TaskEvent.ASSIGNED.value, agent, now),
                 )
                 log.info("[TASK_QUEUE] %s reclamada por %s (node=%s)", target, agent, node_id or "any")
@@ -422,8 +533,8 @@ class TaskQueue:
             )
             if result.rowcount > 0:
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, timestamp)
-                       VALUES (?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, timestamp, automatic)
+                       VALUES (?, ?, ?, 1)""",
                     (task_id, TaskEvent.STARTED.value, now),
                 )
                 row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
@@ -443,8 +554,8 @@ class TaskQueue:
             )
             if result.rowcount > 0:
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (task_id, TaskEvent.MERGED.value, f"commit={commit_sha}", now),
                 )
                 log.info("[TASK_QUEUE] %s completada (commit: %s)", task_id, commit_sha)
@@ -488,8 +599,8 @@ class TaskQueue:
                 (status, new_retries, truncated_error, now, task_id),
             )
             conn.execute(
-                """INSERT INTO task_events (task_id, event, details, timestamp)
-                   VALUES (?, ?, ?, ?)""",
+                """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                   VALUES (?, ?, ?, ?, 1)""",
                 (task_id, event, truncated_error[:500], now),
             )
 
@@ -575,8 +686,8 @@ class TaskQueue:
             )
             if result.rowcount > 0:
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (task_id, TaskEvent.RESUMED.value, f"node={node_id or ''}", now),
                 )
                 log.info("[TASK_QUEUE] %s reanudada (node=%s)", task_id, node_id or "?")
@@ -620,8 +731,8 @@ class TaskQueue:
                     (now, tid),
                 )
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (tid, TaskEvent.TIMEOUT.value, f"node offline, released: {node_id}", now),
                 )
                 released += 1
@@ -650,8 +761,8 @@ class TaskQueue:
                     (now, tid),
                 )
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (tid, TaskEvent.PAUSED.value, f"node parked: {node_id}", now),
                 )
                 parked += 1
@@ -698,8 +809,8 @@ class TaskQueue:
                     (now, tid),
                 )
                 conn.execute(
-                    """INSERT INTO task_events (task_id, event, details, timestamp)
-                       VALUES (?, ?, ?, ?)""",
+                    """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                       VALUES (?, ?, ?, ?, 1)""",
                     (tid, TaskEvent.TIMEOUT.value, f"paused released (force): {node_id}", now),
                 )
                 released += 1
@@ -729,8 +840,8 @@ class TaskQueue:
                         (self._now(), task.id),
                     )
                     conn.execute(
-                        """INSERT INTO task_events (task_id, event, details, timestamp)
-                           VALUES (?, ?, ?, ?)""",
+                        """INSERT INTO task_events (task_id, event, details, timestamp, automatic)
+                           VALUES (?, ?, ?, ?, 1)""",
                         (
                             task.id,
                             TaskEvent.TIMEOUT.value,
