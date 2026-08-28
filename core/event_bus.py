@@ -10,7 +10,7 @@ import contextlib
 import json
 import logging
 import os
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -29,10 +29,10 @@ EVENTS_DIR = Path(__file__).parent.parent / "data" / "events"
 _pub_sock: Any = None
 _pub_lock = asyncio.Lock()
 _zmq_ctx: Any = None
-_suscriptores: dict[str, list[Callable]] = {}
+_suscriptores: dict[str, list[Callable[..., Any]]] = {}
 
 
-def _run_async(coro):
+def _run_async(coro: Awaitable[Any]) -> Any:
     """Puente sync→async: ejecuta una corrutina desde contexto síncrono sin bloquear el event-loop."""
     try:
         asyncio.get_running_loop()
@@ -48,7 +48,7 @@ def _journal_path() -> Path:
     return EVENTS_DIR / f"{datetime.now(UTC).strftime('%Y-%m-%d')}.jsonl"
 
 
-def _write_journal(topic: str, data: dict) -> None:
+def _write_journal(topic: str, data: dict[str, Any]) -> None:
     try:
         entry = {
             "ts": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
@@ -61,13 +61,13 @@ def _write_journal(topic: str, data: dict) -> None:
         log.debug("journal: %s", e)
 
 
-def replay_events(date: str | None = None, topic: str | None = None) -> list[dict]:
+def replay_events(date: str | None = None, topic: str | None = None) -> list[dict[str, Any]]:
     if date is None:
         date = datetime.now(UTC).strftime("%Y-%m-%d")
     p = EVENTS_DIR / f"{date}.jsonl"
     if not p.exists():
         return []
-    events = []
+    events: list[dict[str, Any]] = []
     try:
         for line in p.read_text().strip().split("\n"):
             line = line.strip()  # noqa: PLW2901
@@ -110,7 +110,7 @@ async def _ensure_publisher_async() -> None:
         log.info("event_bus: PUB en %s", IPC_PUB)
 
 
-def publish(topic: str, data: dict) -> None:
+def publish(topic: str, data: dict[str, Any]) -> None:
     ensure_publisher()
     try:
         _write_journal(topic, data)
@@ -128,7 +128,7 @@ async def _publish_async(topic: str, payload: str) -> None:
         _pub_sock.send_multipart([topic.encode(), payload.encode()])
 
 
-def _trigger_auto_dump(data: dict) -> None:
+def _trigger_auto_dump(data: dict[str, Any]) -> None:
     try:
         from core.watchdog_funciones import _auto_dump
 
@@ -182,9 +182,9 @@ class AsyncEventBus:
 
     def __init__(self) -> None:
         self._lock = asyncio.Lock()
-        self._suscriptores: dict[str, list[Callable]] = {}
+        self._suscriptores: dict[str, list[Callable[..., Any]]] = {}
 
-    async def suscribir(self, evento_tipo: str, callback: Callable) -> None:
+    async def suscribir(self, evento_tipo: str, callback: Callable[..., Any]) -> None:
         async with self._lock:
             if evento_tipo not in self._suscriptores:
                 self._suscriptores[evento_tipo] = []
