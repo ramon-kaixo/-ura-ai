@@ -68,7 +68,7 @@ class TestInit:
             mock.patch.object(ollama_mod, "get_secret", return_value=""),
         ):
             p = ollama_mod.OllamaProvider()
-        assert p._rag_model == "qwen2.5:3b"
+        assert p._rag_model == "llama3:latest"
         assert p._embedding_model == "nomic-embed-text"
 
 

@@ -20,7 +20,7 @@ import json
 import sqlite3
 import sys
 import urllib.request
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -55,7 +55,7 @@ def _sync(db_path: Path, task: dict[str, Any]) -> bool:
     if exists:
         conn.close()
         return False
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     conn.execute(
         """INSERT INTO tasks
            (id, description, plan_phase, assigned_to, status, priority, retries,
