@@ -301,6 +301,8 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - Medición: `pytest` + `coverage` con `--source` relativo al directorio del módulo (los nombres absolutos no miden). Para `scripts/pro` usar rcfile propio **sin** el `omit = scripts/*` del `.coveragerc` oficial (línea: `coverage run --rcfile=X`).
 - Excepción: scripts bash (sin marco de cobertura estándar) → verificación por smoke manual documentada.
 - Estado actual medido 2026-08-13: fusion 40%, scripts/pro 9% (7 módulos de la semana alto %), router/intelligence/extractors/web/compresor 0% (sin tests) — ver conversación y próximo cierre deuda.
+- **Hito 2026-08-28 (TASK-20260828-001)**: `motor/core/llm/router/` alcanzó **100×100** (344 stmts, 0 miss) con `tests/unit/test_motor_llm_router_capability_cobertura.py` (35 tests) + los tests existentes. `core/watchdog_funciones.py` también **100%** (115 stmts). Plantilla reutilizable: fakes `FakeProvider`/`FakeRegistry` (Structural typing) + cobertura dirigida por rama (`coverage run --source=<módulo>` + `report --include`).
+- **Lección mypy strict (ADR-099, 2026-08-28)**: NO usar `isinstance(x, str)` como parche de tipos en hot paths si altera la semántica. El commit `362dc8e4` (mypy strict) añadió `isinstance(args[0], str)` en `call_with_fallback` para complacer el checker y **rompió `router.embed`** (lista de textos → `""`). Regla: si mypy exige un tipo que el runtime no cumple, ampliar a `Any` y documentar con ADR, nunca filtrar por tipo que cambie comportamiento. Mismo patrón se aplica a `prompt: Any` en `strategy.py`.
 
 ## Key Files
 - `AGENTS.md` — This file (AI instructions)
