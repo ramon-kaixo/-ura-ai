@@ -220,6 +220,26 @@ Verificado 2026-08-28 (fix worker `shlex.split` + tarea real `TASK-20260828-4fa8
 - `resolve_node_url()` en `scripts/pro/parse_plan_to_tasks.py` resuelve el destino P2P vía registry (`/nodes/{id}`)
   con fallback a `100.72.103.12:4097`/`localhost:4097`.
 
+### 12.5 Evaluación: DB compartida vs DBs por nodo (2026-08-28)
+
+**Situación actual:** cada nodo (Mac, GX10) tiene su `data/task_queue.db` local. Para que una tarea creada en
+la API de GX10 (`:4097`) la ejecute el worker de la Mac, hubo que **replicarla manualmente** en la DB de la Mac
+(verificado en la tarea real `TASK-20260828-4fa88f`). Esto es frágil y duplica tareas.
+
+**Opciones evaluadas:**
+
+| Opción | Pros | Contras | Esfuerzo |
+|--------|------|---------|----------|
+| **A. BD compartida central** (una DB en GX10, nodos vía NFS/SQLite sobre red) | Sin duplicación; estado global único | SQLite no es multi-writer fiable por red; latencia Tailscale; bloqueos | Alto, riesgo |
+| **B. API como fuente de verdad** (los workers consultan `:4097` en vez de DB local) | El worker ya usa la API para claim/start/complete; la DB local pasa a ser caché | Refactor del worker (hoy lee SQLite directo); requiere que los workers apunten al orquestador | Medio |
+| **C. Sincronización bidireccional** (mejorar `POST /tasks/sync`: el orquestador propaga tareas nuevas a los nodos destino) | Conserva DBs locales (offline-capable); solo añade propagación | Complejidad de consenso/conflictos; requiere detector de cambios | Medio-alto |
+| **D. Manual/status quo** (replicar a mano como hoy) | Cero código | Frágil, propenso a duplicados | 0 |
+
+**Recomendación:** la **opción C** es la más alineada con la arquitectura actual (los nodos ya usan `POST /tasks/sync`
+para dedup). Implementar un paso de "propagación" en el worker: al crear una tarea con `node_id` remoto, la API la
+encola en su DB **y** la propaga a la DB del nodo destino. Queda como **decisión del humano** (es cambio de diseño
+del núcleo del orquestador; requiere TASK UDO + análisis de impacto). No se implementa en esta sesión.
+
 ---
 
 *Documento descriptivo de la arquitectura ya implementada. No introduce cambios — registra el estado real verificado el 2026-08-09 y actualizado el 2026-08-28 (incl. §12.4 modelo de tareas multi-nodo).*
