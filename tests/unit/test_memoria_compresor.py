@@ -3,12 +3,14 @@
 Cubre: texto vacío, éxito, error HTTP, JSON inválido, JSON embebido,
 lista no-dict, items sin "idea", parseo de etiquetas/tipo/herramienta.
 """
+
 from __future__ import annotations
 
 import json
 
 import pytest
 
+from core.memoria import compresor
 from core.memoria.compresor import (
     MAX_CHARS_TEXTO,
     PROMPT_COMPRESOR,
@@ -52,7 +54,14 @@ async def test_error_http_retorna_vacio(monkeypatch) -> None:
 @pytest.mark.asyncio
 async def test_respuesta_ok_parsea_ideas(monkeypatch) -> None:
     items = [
-        {"idea": "Usa Canva para menus", "tema": "diseno", "etiquetas": ["gratis"], "tipo": "herramienta", "herramienta": "Canva", "coste": "gratis"},
+        {
+            "idea": "Usa Canva para menus",
+            "tema": "diseno",
+            "etiquetas": ["gratis"],
+            "tipo": "herramienta",
+            "herramienta": "Canva",
+            "coste": "gratis",
+        },
         {"idea": "Automatiza con n8n", "tema": "ia"},
     ]
     content = json.dumps(items)
@@ -288,7 +297,7 @@ async def test_modelo_default_qwen(monkeypatch) -> None:
 
     monkeypatch.setattr("core.memoria.compresor.httpx.AsyncClient", ClienteFake)
     await comprimir_a_ideas("hola")
-    assert capturado["json"]["model"] == "qwen2.5-coder:14b"
+    assert capturado["json"]["model"] == compresor.MODELO_COMPRESOR
 
 
 class TestCoberturaCompresorRemanente:

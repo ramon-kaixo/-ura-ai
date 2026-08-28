@@ -59,10 +59,12 @@ class TestF821Count:
 class TestReporteCompleto:
     def test_estructura(self):
         tel = Telemetria()
-        with patch.object(tel, "hardware", return_value={"ram": 1000}), \
-             patch.object(tel, "red", return_value={"router": "ok"}), \
-             patch.object(tel, "llm_stats", return_value={"modelo": "qwen"}), \
-             patch.object(tel, "f821_count", return_value=5):
+        with (
+            patch.object(tel, "hardware", return_value={"ram": 1000}),
+            patch.object(tel, "red", return_value={"router": "ok"}),
+            patch.object(tel, "llm_stats", return_value={"modelo": "qwen"}),
+            patch.object(tel, "f821_count", return_value=5),
+        ):
             result = tel.reporte_completo()
             assert "hardware" in result
             assert "red" in result
@@ -77,7 +79,14 @@ class TestHardware:
         fake_vm.total = 16 * 1024 * 1024 * 1024
         fake_vm.available = 8 * 1024 * 1024 * 1024
         fake_vm.percent = 50.0
-        with patch.dict("sys.modules", {"psutil": MagicMock(virtual_memory=MagicMock(return_value=fake_vm), cpu_percent=MagicMock(return_value=20.0))}):
+        with patch.dict(
+            "sys.modules",
+            {
+                "psutil": MagicMock(
+                    virtual_memory=MagicMock(return_value=fake_vm), cpu_percent=MagicMock(return_value=20.0)
+                )
+            },
+        ):
             result = Telemetria.hardware()
         assert result["ram_total_mb"] == 16384
         assert result["ram_pct"] == 50.0
@@ -95,12 +104,15 @@ class TestHardware:
         assert result["ram_libre_mb"] == 64
 
     def test_sin_psutil_exception(self, monkeypatch):
+        import os
         import sys
 
         monkeypatch.setitem(sys.modules, "psutil", None)
         with patch("builtins.open", side_effect=OSError("no /proc")):
             result = Telemetria.hardware()
-        assert result["ram_total_mb"] == 121920
+        # El fallback detecta la RAM real del host (no hardcode) — debe ser > 0.
+        expected = (os.sysconf("SC_PHYS_PAGES") * os.sysconf("SC_PAGE_SIZE")) // (1024 * 1024)
+        assert result["ram_total_mb"] == expected
 
 
 class TestRed:
@@ -108,8 +120,10 @@ class TestRed:
         fake_r = MagicMock()
         fake_r.status_code = 200
         fake_r.text = "ok"
-        with patch("httpx.get", return_value=fake_r) as mock_get, \
-             patch.object(Telemetria, "_check_ollama", return_value="3 modelos"):
+        with (
+            patch("httpx.get", return_value=fake_r) as mock_get,
+            patch.object(Telemetria, "_check_ollama", return_value="3 modelos"),
+        ):
             tel = Telemetria()
             result = tel.red()
         assert result["model_router"] == "ok"
@@ -117,8 +131,10 @@ class TestRed:
         mock_get.assert_called_once()
 
     def test_router_error(self):
-        with patch("httpx.get", side_effect=Exception("conn")), \
-             patch.object(Telemetria, "_check_ollama", return_value="down"):
+        with (
+            patch("httpx.get", side_effect=Exception("conn")),
+            patch.object(Telemetria, "_check_ollama", return_value="down"),
+        ):
             tel = Telemetria()
             result = tel.red()
         assert result["model_router"] == "down"
@@ -127,8 +143,10 @@ class TestRed:
         fake_r = MagicMock()
         fake_r.status_code = 200
         fake_r.text = "ok"
-        with patch("httpx.get", return_value=fake_r), \
-             patch.object(Telemetria, "_check_ollama", side_effect=Exception("boom")):
+        with (
+            patch("httpx.get", return_value=fake_r),
+            patch.object(Telemetria, "_check_ollama", side_effect=Exception("boom")),
+        ):
             tel = Telemetria()
             result = tel.red()
         assert result["ollama"] == "down"

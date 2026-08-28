@@ -57,8 +57,15 @@ class Telemetria:
                             metrics["ram_total_mb"] = int(line.split()[1]) // 1024
             except Exception as e:
                 log.warning("Error leyendo /proc/meminfo: %s", e)
-                metrics["ram_libre_mb"] = 8192
-                metrics["ram_total_mb"] = 121920
+                # Fallback portable: detecta la RAM real del host via sysconf
+                # (no hardcode — antes fijaba 121920 = RAM del GX10, incorrecto en otros hosts).
+                try:
+                    pages = os.sysconf("SC_PHYS_PAGES")
+                    page_size = os.sysconf("SC_PAGE_SIZE")
+                    metrics["ram_total_mb"] = (pages * page_size) // (1024 * 1024)
+                except (ValueError, OSError, AttributeError):
+                    metrics["ram_total_mb"] = 0
+                metrics["ram_libre_mb"] = metrics.get("ram_total_mb", 0) or 8192
         return metrics
 
     def red(self) -> dict[str, Any]:

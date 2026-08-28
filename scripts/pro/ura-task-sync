@@ -1,0 +1,20 @@
+#!/bin/bash
+# Wrapper de ura-task-sync.py — usa el python correcto de cada nodo.
+# En Mac: /opt/homebrew/bin/python3.14 (el de homebrew; el python3 CLT 3.9
+#   falla con "cannot import UTC" y no tiene el repo en el path).
+# En GX10/Linux: .venv/bin/python3 del repo.
+set -u
+DIR="$(cd "$(dirname "$0")" && pwd)"
+SCRIPT="$DIR/ura-task-sync.py"
+
+if [ -x /opt/homebrew/bin/python3.14 ]; then
+    PY=/opt/homebrew/bin/python3.14
+elif [ -x /opt/homebrew/bin/python3 ]; then
+    PY=/opt/homebrew/bin/python3
+elif [ -x "$DIR/../../.venv/bin/python3" ]; then
+    PY="$DIR/../../.venv/bin/python3"
+else
+    PY=python3
+fi
+
+exec "$PY" "$SCRIPT" "$@"
