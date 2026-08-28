@@ -4,13 +4,14 @@ import asyncio
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 import httpx
 
 
-async def _ram_info() -> dict:
+async def _ram_info() -> dict[str, Any]:
     try:
         proc = await asyncio.create_subprocess_exec(
             "free",
@@ -34,7 +35,7 @@ async def _ram_info() -> dict:
     return {"error": "free -g not available"}
 
 
-def _fs_bug_status() -> dict:
+def _fs_bug_status() -> dict[str, Any]:
     repo = Path("/home/ramon/URA/ura_ia_1972")
     critical = [
         "core/mochila/mochila_server.py",
@@ -64,14 +65,14 @@ async def _timer_status(name: str) -> str:
         return "unknown"
 
 
-async def _alemania_status() -> dict:
+async def _alemania_status() -> dict[str, Any]:
     try:
         return json.loads(Path.home().joinpath(".nervioso/alertas/estado_alemania.json").read_text())
     except Exception:
         return {"global": "unknown", "ips": {}, "servicios": {}}
 
 
-async def _tunnel_status() -> dict:
+async def _tunnel_status() -> dict[str, Any]:
     active = False
     try:
         proc = await asyncio.create_subprocess_exec(
@@ -95,7 +96,13 @@ async def _tunnel_status() -> dict:
     return {"tunnel_active": active, "searxng_accessible": searxng_ok}
 
 
-async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_count: int, router) -> dict:
+async def system_status(
+    providers: dict[str, Any],
+    cost_tracker: Any,
+    circuit_breaker: Any,
+    tools_count: int,
+    router: Any,
+) -> dict[str, Any]:
     ram, alem, tunnel, timers_list = await asyncio.gather(
         _ram_info(),
         _alemania_status(),
@@ -111,7 +118,7 @@ async def system_status(providers: dict, cost_tracker, circuit_breaker, tools_co
         return_exceptions=True,
     )
 
-    def _to(r):
+    def _to(r: Any) -> Any:
         return r if not isinstance(r, BaseException) else {"ok": False, "detalle": str(r)}
 
     return {
