@@ -40,7 +40,7 @@ class ResultadoSandbox:
     error: str | None
     ts: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
 
-    def resumen(self):
+    def resumen(self) -> str:
         e = "OK" if self.ok else "FAIL"
         r = [f"[Sandbox] {e}"] + [f"  Tests: {self.pasados} OK, {self.fallidos} FAIL"] + [f"  {t}" for t in self.fallos]
         if self.error:
@@ -49,10 +49,10 @@ class ResultadoSandbox:
 
 
 class DockerOrchestrator:
-    def __init__(self, td=TD) -> None:
+    def __init__(self, td: Path = TD) -> None:
         self._td = td
 
-    async def validar(self, codigo, nombre):
+    async def validar(self, codigo: str, nombre: str) -> ResultadoSandbox:
         if not self._docker():
             return ResultadoSandbox(False, False, 0, 0, [], "", "", 0, 0, "Docker no disponible")
         with tempfile.TemporaryDirectory() as d:
@@ -91,7 +91,7 @@ class DockerOrchestrator:
             )
         return None
 
-    async def _run(self, d, cod, nom):
+    async def _run(self, d: Path, cod: str, nom: str) -> ResultadoSandbox:
         t0 = asyncio.get_event_loop().time()
         tag = self._stage(d, cod, nom)
         try:
@@ -144,7 +144,7 @@ class DockerOrchestrator:
             subprocess.run(["docker", "rmi", "-f", tag], capture_output=True, check=False)  # noqa: ASYNC221
 
     @staticmethod
-    def _df(c, n):
+    def _df(c: str, n: str) -> str:
         return textwrap.dedent(f"""FROM {IMG}
 RUN pip install -q pydantic httpx pytest pytest-asyncio
 WORKDIR /ura
@@ -154,7 +154,7 @@ COPY rv.py /ura/rv.py
 CMD ["python","-u","rv.py"]""")
 
     @staticmethod
-    def _rv(n):
+    def _rv(n: str) -> str:
         return textwrap.dedent(f"""import sys,json,subprocess,importlib.util
 r={{"ejecuto":False,"pasados":0,"fallidos":0,"fallos_nombres":[],"error":None}}
 try:
@@ -179,7 +179,7 @@ sys.exit(0 if r["fallidos"]==0 else 1)
 """)
 
     @staticmethod
-    def _docker():
+    def _docker() -> bool:
         try:
             return subprocess.run(["docker", "info"], capture_output=True, timeout=5, check=False).returncode == 0
         except:  # noqa: E722
