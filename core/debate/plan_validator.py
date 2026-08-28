@@ -157,7 +157,7 @@ def main() -> None:
         from core.debate.debate_engine import run_debate
         from core.debate.lockfile import DebateLock
 
-        async def _run() -> None:
+        async def _run() -> dict[str, Any]:
             with DebateLock():
                 return await run_debate(data.get("plan", ""), context)
 
