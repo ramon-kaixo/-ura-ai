@@ -42,7 +42,7 @@ except ImportError:
     def auth_validate(api_key: str | None, store: Any = None) -> bool:  # type: ignore[misc]
         return True
 
-    def require_auth() -> bool:  # type: ignore[misc]
+    def require_auth() -> bool:
         return True
 
 
