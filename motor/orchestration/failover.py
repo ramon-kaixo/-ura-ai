@@ -370,7 +370,9 @@ class RemoteExecutor:
         try:
             subprocess.run(
                 ["ssh", "-o", "ControlMaster=no", "-O", "exit", user_host],
-                capture_output=True, timeout=5, check=False,
+                capture_output=True,
+                timeout=5,
+                check=False,
             )
             log.info("[SSH] Control socket closed for %s", user_host)
             return True
@@ -385,13 +387,16 @@ class RemoteExecutor:
         try:
             result = subprocess.run(
                 ["ssh", "-O", "check", user_host],
-                capture_output=True, text=True, timeout=5, check=False,
+                capture_output=True,
+                text=True,
+                timeout=5,
+                check=False,
             )
             alive = result.returncode == 0
             return {
                 "host": user_host,
                 "alive": alive,
-                "control_path": f"/tmp/ura-ssh-{user_host.replace("@", "-")}",
+                "control_path": f"/tmp/ura-ssh-{user_host.replace('@', '-')}",
             }
         except Exception as e:
             return {"host": user_host, "alive": False, "error": str(e)}

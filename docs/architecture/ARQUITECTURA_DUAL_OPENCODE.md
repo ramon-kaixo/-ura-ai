@@ -138,4 +138,51 @@ Tener **dos interfaces de OpenCode trabajando en paralelo** sobre el mismo proye
 
 ---
 
-*Documento descriptivo de la arquitectura ya implementada. No introduce cambios — registra el estado real verificado el 2026-08-09.*
+## 12. ANEXO — Configuración real actualizada (2026-08-28)
+
+> El documento original refleja el estado de 2026-08-09. Este anexo documenta la topología
+> **verificada el 2026-08-28** que causó confusión sobre dónde se configura cada interfaz.
+
+### 12.1 Archivos de configuración (y quién usa cada uno)
+
+| Archivo | Máquina | Usado por | `baseURL` | Modelo default |
+|---------|---------|-----------|-----------|----------------|
+| `~/.config/opencode/opencode.json` | GX10 | app desktop (`ai.opencode.desktop`) | `http://localhost:11434/v1` | `ollama/qwen3-coder:30b-mejorado` (agent coder) |
+| `~/.config/opencode/opencode-web.json` | GX10 | **servicio web `opencode.service`** (vía `OPENCODE_CONFIG` en `web-config.conf`) | `http://localhost:11434/v1` | `ollama/qwen3-coder:30b-mejorado` (agents general/coder/build/orchestrator) |
+| `~/.config/opencode/opencode.json` | Mac | app GUI desktop (Electron) | `http://10.164.1.247:11434/v1` (GX10 vía LAN) | `ollama/qwen3-coder:30b-mejorado` (agent coder) |
+| `/home/ramon/URA/ura_ia_1972/opencode.json` | GX10 | proyecto (mergea si WorkingDirectory = repo) | `http://100.72.103.12:11434/v1` (Tailscale) | `ollama/qwen3.6:27b` (agent general) |
+
+### 12.2 Reglas clave (para no repetir la confusión)
+
+1. **El servicio web NO usa `~/.config/opencode/opencode.json`** — usa `opencode-web.json` porque el drop-in
+   `/etc/systemd/system/opencode.service.d/web-config.conf` define `OPENCODE_CONFIG=/home/ramon/.config/opencode/opencode-web.json`.
+2. El proveedor Ollama en la config **debe declarar `models`** para que aparezcan en el selector; con solo
+   `options.baseURL` no se listan.
+3. La Mac apunta a GX10 por `10.164.1.247` (LAN, DHCP — puede cambiar). Alternativa fija: Tailscale `100.72.103.12`.
+   `OLLAMA_HOST` en `~/.zshrc` afecta solo a shells; la app GUI necesita `provider.ollama.options.baseURL` en su config.
+4. `qwen3-coder:30b-mejorado` existe SOLO en el Ollama de GX10. El Ollama de la Mac quedó **vacío** (`{"models":[]}`) tras limpieza 2026-08-28.
+5. Web (`:8081`) requiere login (HTTP 401 sin credenciales de `/etc/ura/secrets.env`, root-only).
+6. **`OLLAMA_MODELS` fuera del árbol de URA (2026-08-28):** el directorio de modelos de GX10
+   (`ollama-models-0326`, 139 G) se movió a `/home/ramon/ollama-models-0326` (fuera de `URA/`),
+   dejando un symlink en `/home/ramon/URA/ollama-models-0326 -> /home/ramon/ollama-models-0326`.
+   Motivo: evitar que rsync/git del árbol arrastre 139 G. El drop-in del servicio
+   `ollama.service.d/models.conf` sigue apuntando a la misma ruta absoluta (se resuelve vía symlink),
+   por lo que **NO hay que "arreglar" la ruta ni borrar el symlink** — verificado con 9 modelos OK tras el cambio.
+    Si un backup usa rsync sin `-L`, copiará solo el symlink (30 B), no el contenido.
+7. **El campo `npm` en `provider.ollama` ROMPE la conexión del CLI `opencode run`** (2026-08-28):
+   un `provider.ollama.npm: "@ai-sdk/openai-compatible"` (usado por la web en `opencode-web.json`)
+   hace que el CLI 1.18.x intente conectar a otro endpoint y falle con `Cannot connect to API`.
+   En las configs de máquinas donde se ejecute `opencode run` (CLI/worker), el provider Ollama
+   DEBE declararse solo con `baseURL` + `models`, SIN `npm`. Detalle del fix: `motor/orchestration/worker.py`
+   `_build_command` usa `shlex.split` para comandos con argumentos (`opencode run`) — no envolver el
+   comando completo entre comillas (exit 127).
+
+### 12.3 Health-check del Model Router
+
+El warning cada 5 min `[DIRECT] modelo test no disponible` provenía de `motor/guard/verifier.py:55`
+(health-check del guard), que POSTeaba con `model:"test"` (inexistente). Corregido a `model:"llama3:latest"`
+(2026-08-28, commit `aec122be`).
+
+---
+
+*Documento descriptivo de la arquitectura ya implementada. No introduce cambios — registra el estado real verificado el 2026-08-09 y actualizado el 2026-08-28.*

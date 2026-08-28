@@ -52,7 +52,7 @@ def _test_ollama() -> str:
                 "-H",
                 "Content-Type: application/json",
                 "-d",
-                '{"model":"test","messages":[{"role":"user","content":"ping"}]}',
+                '{"model":"llama3:latest","messages":[{"role":"user","content":"ping"}]}',
             ],
             timeout=10,
         )

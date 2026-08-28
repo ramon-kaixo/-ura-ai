@@ -317,6 +317,7 @@ class ContractValidator:
                 sig_line = line.strip()
                 # Extract: def name(params) -> return_type:
                 import re as _re
+
                 match = _re.match(
                     r"(?:async\s+)?def\s+(\w+)\s*\(([^)]*)\)(?:\s*->\s*(\S+))?",
                     sig_line,
