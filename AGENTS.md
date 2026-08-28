@@ -309,6 +309,7 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - Causas raíz comunes ya resueltas: registro global de errorcodes (`_ALL_CODES`), singleton lazy `_WRITER` de `core/search_logger`, fakes de módulo en `sys.modules` (`_voice_fakes`), benchmarks con umbral de ms fijo (relajar a valor realista), `asyncio.sleep(0.01)` frágil (usar polling determinista `_esperar_cola`).
 - **Patrón de corrección**: identificar el estado global mutado → restaurarlo tras el test. Ver ejemplos: `tests/unit/test_knowledge_errors_cobertura.py`, `tests/conftest.py` (`reset_searchlog_writer`), `tests/unit/test_mochila_vram_scheduler.py` (`_esperar_cola`).
 - Los flaky de orden sin causa determinista (conjunto variable entre corridas en la suite de ~9700 tests) se documentan como deuda y se persiguen en TASK de tuneladora, no en sesiones de feature.
+- **Lección secretos (TASK-20260828-002)**: un test que falla solo en GX10 (no en Mac) puede ser por `get_secret` con fallback al archivo `RUTA_SECRETOS` (`/etc/ura/secrets.env`). Borrar el env var con `monkeypatch.delenv` NO basta — hay que aislar el archivo: `monkeypatch.setattr(_sec, "RUTA_SECRETOS", "/tmp/no-existe.env")` + `_sec._clear_cache()`. Ejemplo: `tests/integration/test_assistant_auth.py::test_auth_disabled_by_default`. Patrón pre-existente en `tests/unit/test_agents_gate_telemetry_cobertura.py`.
 
 ## Key Files
 - `AGENTS.md` — This file (AI instructions)
