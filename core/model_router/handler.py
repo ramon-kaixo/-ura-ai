@@ -286,7 +286,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         from core.model_router.proxy import _proxy_con_vram
 
         data = _apply_model_params(data, modelo)
-        status, headers, resp_body = _proxy_con_vram(  # type: ignore[no-untyped-call]
+        status, headers, resp_body = _proxy_con_vram(
             self.path,
             json.dumps(data).encode(),
             modelo=modelo,
@@ -399,7 +399,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         metrics.increment("model_selection", {"tipo": tipo, "modelo": selected, "mode": "routed"})
         data["model"] = selected
         new_body = json.dumps(data).encode()
-        status, headers, resp_body = _proxy_con_vram(  # type: ignore[no-untyped-call]
+        status, headers, resp_body = _proxy_con_vram(
             self.path,
             new_body,
             modelo=selected,
