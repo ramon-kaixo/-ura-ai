@@ -25,6 +25,13 @@ class TestConfig:
     def test_auth_disabled_by_default(self, monkeypatch):
         monkeypatch.delenv("URA_API_KEY", raising=False)
         monkeypatch.delenv("URA_AUTH_ENABLED", raising=False)
+        # get_secret tiene fallback al archivo de secrets (RUTA_SECRETOS, p.ej.
+        # /etc/ura/secrets.env en GX10). Aislarlo apuntando a una ruta inexistente
+        # para que el test no dependa del entorno del servidor.
+        import motor.core.secrets as _sec
+
+        monkeypatch.setattr(_sec, "RUTA_SECRETOS", "/tmp/no-existe-secrets.env")
+        _sec._clear_cache()
         cfg = AssistantConfig()
         assert cfg.auth_enabled is False
 
