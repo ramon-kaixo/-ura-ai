@@ -167,6 +167,9 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `ura-backup.timer`, `ura-audit-extra.timer`, `ura-harden.timer`, `ura-cleanup.timer`,
   `ura-consolidate.timer`, `ura-fix.timer`
 - `ura-cleanup-auto.timer` → `ura-cleanup-auto.service` (diario, último SUCCESS)
+- Log de cleanup: **`/home/ramon/URA/logs/ura_cleanup.log`** (NO `/var/log/ura-cleanup.log`,
+  que no existe — ruta documentada por auditoría 2026-08-28; `ura-cleanup.sh` escribe
+  `LOG="/home/ramon/URA/logs/ura_cleanup.log"`; última ejecución OK 2026-08-27 04:27).
 - ⚠️ `ura-consolidate.timer` está enabled pero su servicio está failed (falso servicio — Tramo B F7)
 - ✅ `ura-fix.timer` **DESACTIVADO** (2026-08-07) — ejecutaba `sanear_codigo.py` que corrompía strings (`;`→`\n`); culpable neutralizado y script tokenizado (commit `e83dbd4f`)
 - ⚠️ `deploy/timers/ura-mutmut.*` existe en repo pero NO está instalado (decisión: integrar o retirar)
