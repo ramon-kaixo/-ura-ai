@@ -12,6 +12,7 @@ import shutil
 import tempfile
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ class Sandbox:
         except Exception as e:
             logger.exception(f"Error registrando en sandbox.log: {e}")
 
-    async def _ejecutar_test(self, test_file: str, module_name: str) -> dict:
+    async def _ejecutar_test(self, test_file: str, module_name: str) -> dict[str, Any]:
         """Ejecutar archivo de prueba en subproceso aislado con timeout."""
         try:
             process = await asyncio.create_subprocess_exec(
@@ -75,7 +76,7 @@ class Sandbox:
             self._log("TEST_ERROR", f"Módulo: {module_name}, Error: {e!s}")
             return result
 
-    async def test_improvement(self, module_name: str, test_code: str) -> dict:
+    async def test_improvement(self, module_name: str, test_code: str) -> dict[str, Any]:
         """Ejecutar código de prueba en subproceso aislado con timeout.
 
         Args:
@@ -119,16 +120,16 @@ class Sandbox:
         self._log("IMPORT_START", f"Importando módulo: {module_name}")
 
         try:
-            import importlib
+            import importlib.util as importlib_util
 
-            spec = importlib.util.find_spec(module_name)
+            spec = importlib_util.find_spec(module_name)
 
             if spec is None:
                 self._log("IMPORT_FAIL", f"Módulo no encontrado: {module_name}")
                 return False
 
             # Cargar módulo sin ejecutar
-            module = importlib.util.module_from_spec(spec)
+            module = importlib_util.module_from_spec(spec)
             if spec.loader is None:
                 self._log("IMPORT_FAIL", f"Loader no disponible para: {module_name}")
                 return False
@@ -253,7 +254,10 @@ log.info(f'1 + 1 = {x}')
 
         # Test 4: rollback
         test_file.write_text("contenido modificado")  # noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
-        sandbox.rollback(str(test_file), backup)
+        if backup is not None:
+            sandbox.rollback(str(test_file), backup)
+        else:
+            print("backup None, se omite rollback (demo)")
 
         # Limpiar
         test_file.unlink()  # noqa: ASYNC240  # pathlib en async: refactor a anyio.Path pendiente (deuda documentada)
