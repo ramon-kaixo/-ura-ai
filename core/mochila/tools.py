@@ -21,7 +21,7 @@ WEBSEARCH_TIMEOUT = int(os.environ.get("MOCHILA_WEBSEARCH_TIMEOUT", "15"))
 PAGEREAD_TIMEOUT = int(os.environ.get("MOCHILA_PAGEREAD_TIMEOUT", "20"))
 PAGEREAD_MAX_SIZE = int(os.environ.get("MOCHILA_PAGEREAD_MAX_SIZE", "50000"))
 
-TOOL_SCHEMAS: list[dict] = [
+TOOL_SCHEMAS: list[dict[str, Any]] = [
     {
         "type": "function",
         "function": {
@@ -106,7 +106,7 @@ def _extraer_texto(html: str, max_chars: int = 50000) -> str:
     return text[:max_chars]
 
 
-async def page_read(url: str, max_chars: int = 50000) -> dict:
+async def page_read(url: str, max_chars: int = 50000) -> dict[str, Any]:
     max_chars = min(max_chars, PAGEREAD_MAX_SIZE)
     headers = {
         "User-Agent": "Mozilla/5.0 (compatible; URA/1.0)",
@@ -134,7 +134,7 @@ async def page_read(url: str, max_chars: int = 50000) -> dict:
         return {"error": str(e), "url": url}
 
 
-async def file_read(path: str, max_lines: int = 200) -> dict:
+async def file_read(path: str, max_lines: int = 200) -> dict[str, Any]:
     ruta = Path(path)
     if not ruta.is_absolute():
         ruta = Path("/home/ramon/URA/ura_ia_1972") / ruta
@@ -169,14 +169,15 @@ TOOL_HANDLERS: dict[str, Any] = {
 }
 
 
-async def ejecutar_tool(name: str, arguments: dict) -> dict:
+async def ejecutar_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
     handler = TOOL_HANDLERS.get(name)
     if not handler:
         return {"error": f"Tool desconocida: {name}"}
-    return await handler(**arguments)
+    result: dict[str, Any] = await handler(**arguments)
+    return result
 
 
-async def crawl_web(url: str, max_chars: int = 50000) -> dict:
+async def crawl_web(url: str, max_chars: int = 50000) -> dict[str, Any]:
     try:
         from crawl4ai import AsyncWebCrawler
 

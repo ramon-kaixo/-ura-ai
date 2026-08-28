@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Any, Protocol
 
 
 @dataclass
@@ -9,7 +9,7 @@ class RouteResult:
     route_reason: str
 
 
-RUTAS_POR_DEFECTO: dict[str, list[dict]] = {
+RUTAS_POR_DEFECTO: dict[str, list[dict[str, Any]]] = {
     "codigo": [
         {"provider": "ollama", "modelo": "qwen3-coder:30b"},
         {"provider": "ollama", "modelo": "qwen3.6:27b"},
@@ -68,14 +68,14 @@ PATRONES_CLASIFICACION: dict[str, list[str]] = {
 
 
 class Clasificador(Protocol):
-    def clasificar(self, mensajes: list, task_hint: str | None = None) -> str: ...
+    def clasificar(self, mensajes: list[dict[str, Any]], task_hint: str | None = None) -> str: ...
 
 
 class ClasificadorKeyword:
     def __init__(self, patrones: dict[str, list[str]] | None = None) -> None:
         self.patrones = patrones or PATRONES_CLASIFICACION
 
-    def clasificar(self, mensajes: list, task_hint: str | None = None) -> str:
+    def clasificar(self, mensajes: list[dict[str, Any]], task_hint: str | None = None) -> str:
         if task_hint and task_hint in ("codigo", "razonamiento", "rapido"):
             return task_hint
 
@@ -98,8 +98,8 @@ class NoProviderAvailable(Exception): ...
 class Router:
     def __init__(
         self,
-        providers: dict,
-        rutas: dict[str, list[dict]] | None = None,
+        providers: dict[str, Any],
+        rutas: dict[str, list[dict[str, Any]]] | None = None,
         clasificador: Clasificador | None = None,
     ) -> None:
         self.providers = providers
@@ -133,7 +133,7 @@ class Router:
 
     def route(
         self,
-        mensajes: list,
+        mensajes: list[dict[str, Any]],
         modelo_hint: str | None = None,
         task_hint: str | None = None,
     ) -> RouteResult:

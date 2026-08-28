@@ -1,6 +1,7 @@
 import json
 import logging
 from collections.abc import AsyncGenerator
+from typing import Any
 
 from core.logs.guardian_logger import log_event
 from core.mochila.helpers import _procesar_usage
@@ -8,18 +9,18 @@ from core.mochila.helpers import _procesar_usage
 log = logging.getLogger(__name__)
 
 
-def _chunk_es_fin(chunk: dict) -> bool:
+def _chunk_es_fin(chunk: dict[str, Any]) -> bool:
     return bool(
         chunk.get("choices") and chunk["choices"][0].get("delta", {}) == {} and chunk["choices"][0].get("finish_reason")
     )
 
 
 def _abortar_por_guardian(
-    guardian,
-    chunk: dict,
+    guardian: Any,
+    chunk: dict[str, Any],
     accumulated_text: str,
     modelo: str,
-) -> tuple[bool, str, dict]:
+) -> tuple[bool, str, dict[str, Any]]:
     """Evaluar chunk contra el guardián; abortar el stream si procede."""
     delta = chunk.get("choices", [{}])[0].get("delta", {}).get("content", "")
     if not delta:
@@ -43,7 +44,7 @@ def _abortar_por_guardian(
 
 
 async def _emitir_error_sse(
-    state,
+    state: Any,
     provider_name: str,
     message: str,
     error_type: str,
@@ -59,15 +60,15 @@ async def _emitir_error_sse(
 
 
 async def _stream_from_provider(
-    provider_name,
-    modelo,
-    mensajes,
-    herramientas,
-    max_tokens,
-    temperature,
-    state,
-    is_opencode=False,
-    guardian=None,
+    provider_name: str,
+    modelo: str,
+    mensajes: list[dict[str, Any]],
+    herramientas: list[dict[str, Any]] | None,
+    max_tokens: int,
+    temperature: float,
+    state: Any,
+    is_opencode: bool = False,
+    guardian: Any = None,
 ) -> AsyncGenerator[bytes, None]:
     provider = state.providers[provider_name]
     timeout_val = state.provider_timeouts.get(provider_name, 60)
