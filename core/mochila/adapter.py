@@ -207,7 +207,8 @@ class _MotorChatAdapter:
             raise ProviderError(str(e), provider=self._name, status_code=502) from e
 
     async def health(self) -> dict[str, Any]:
-        return self._provider.health()
+        result: dict[str, Any] = self._provider.health()
+        return result
 
 
 def _chunk_delta(modelo: str, delta: dict[str, Any], finish_reason: str | None) -> dict[str, Any]:
