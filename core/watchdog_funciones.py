@@ -174,16 +174,19 @@ def watchdog(
                     signal.signal(signal.SIGALRM, old_handler)
             else:
                 # Hilo secundario: usar threading.Timer
-                # BUG conocido: _ejecutar_en_hilo devuelve ((t,res), excepcion_valor) pero
-                # aqui se desempaqueta (t,res), (excepcion,) -> TypeError siempre.
-                # Hallazgo documentado en docs/udo/hallazgos-fondo.md (no corregido: core requiere ADR).
-                (t, resultado), (excepcion,) = _ejecutar_en_hilo(func, args, kwargs, timeout)  # pragma: no cover
+                # Fix 2026-08-28 (ADR-100): _ejecutar_en_hilo devuelve
+                # ((t, res), excepcion_valor) — el segundo elemento es el valor
+                # de excepción directo (None si éxito), NO una tupla de 1.
+                # Antes se desempaquetaba (excepcion,) -> TypeError SIEMPRE
+                # cuando excepcion es None (éxito). Watchdog en hilos
+                # secundarios estaba roto desde su creación.
+                (t, resultado), excepcion = _ejecutar_en_hilo(func, args, kwargs, timeout)
                 if t.is_alive():  # pragma: no cover
                     _on_timeout(func.__name__, timeout, extra_context)  # pragma: no cover
                     return None  # pragma: no cover
-                if excepcion:  # pragma: no cover
-                    raise excepcion  # pragma: no cover
-                return resultado  # pragma: no cover
+                if excepcion:
+                    raise excepcion
+                return resultado
 
         @functools.wraps(func)
         async def wrapper_async(*args, **kwargs):

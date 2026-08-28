@@ -222,7 +222,9 @@ def test_raise_error_mapping() -> None:
     ]
     for tipo, cls in casos:
         with pytest.raises(cls):
-            AgentToolRunner._raise_error(ToolResult(execution_id="x", tool_name="t", success=False, error="e", error_type=tipo))
+            AgentToolRunner._raise_error(
+                ToolResult(execution_id="x", tool_name="t", success=False, error="e", error_type=tipo)
+            )
 
 
 # ── runner: _execute directo ──────────────────────────────────
@@ -293,7 +295,13 @@ def test_execute_reintentos_y_resultado_final() -> None:
 def test_log_query_y_read(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_LOG_DIR", str(tmp_path))
     monkeypatch.setattr(sl, "_WRITER", None)
-    log_query("hola mundo", [{"source": "a", "similarity": 0.9, "total_chunks_meta": 3, "idioma": "es"}], 12.5, use_reranker=True, top_k=8)
+    log_query(
+        "hola mundo",
+        [{"source": "a", "similarity": 0.9, "total_chunks_meta": 3, "idioma": "es"}],
+        12.5,
+        use_reranker=True,
+        top_k=8,
+    )
     records = read_logs(str(tmp_path))
     assert len(records) == 1
     r = records[0]
@@ -570,6 +578,50 @@ def test_watchdog_sync_raise_en_hilo() -> None:
 
     with pytest.raises(ValueError):
         falla()
+
+
+def test_watchdog_hilo_secundario_ok() -> None:
+    """Regresión ADR-100: watchdog en hilo secundario lanzaba TypeError.
+
+    _ejecutar_en_hilo devuelve ((t, res), excepcion_valor) y el wrapper
+    desempaquetaba (excepcion,) -> TypeError SIEMPRE cuando excepcion es None.
+    """
+
+    @wd.watchdog(timeout=5, on_timeout="log")
+    def suma(a: int, b: int) -> int:
+        return a + b
+
+    resultado: dict[str, int] = {}
+
+    def correr() -> None:
+        resultado["v"] = suma(2, 3)
+
+    t = threading.Thread(target=correr)
+    t.start()
+    t.join(10)
+    assert resultado.get("v") == 5
+
+
+def test_watchdog_hilo_secundario_excepcion() -> None:
+    """Regresión ADR-100: la excepción se propaga en hilo secundario."""
+
+    @wd.watchdog(timeout=5, on_timeout="raise")
+    def falla() -> None:
+        msg = "boom"
+        raise ValueError(msg)
+
+    errores: list[type] = []
+
+    def correr() -> None:
+        try:
+            falla()
+        except ValueError as e:
+            errores.append(type(e))
+
+    t = threading.Thread(target=correr)
+    t.start()
+    t.join(10)
+    assert ValueError in errores
 
 
 def test_watchdog_async_ok() -> None:
