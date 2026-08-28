@@ -93,7 +93,11 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
     def _handle_health(self) -> None:
         from core.model_router import router as _main
         from core.model_router.cache import prompt_cache
-        from core.model_router.router import auth_validate, get_ollama_url, require_auth
+        from core.model_router.router import (  # type: ignore[attr-defined]
+            auth_validate,
+            get_ollama_url,
+            require_auth,
+        )
 
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden"}, 403)
@@ -119,7 +123,10 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         self._send_text(metrics.get_prometheus_format())
 
     def _handle_supervisor(self) -> None:
-        from core.model_router.router import auth_validate, require_auth
+        from core.model_router.router import (  # type: ignore[attr-defined]
+            auth_validate,
+            require_auth,
+        )
 
         if require_auth() and not auth_validate(self.headers.get("X-API-KEY")):
             self._send_json({"error": "Forbidden: X-API-KEY inválido o faltante"}, 403)
@@ -279,7 +286,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         from core.model_router.proxy import _proxy_con_vram
 
         data = _apply_model_params(data, modelo)
-        status, headers, resp_body = _proxy_con_vram(
+        status, headers, resp_body = _proxy_con_vram(  # type: ignore[no-untyped-call]
             self.path,
             json.dumps(data).encode(),
             modelo=modelo,
@@ -392,7 +399,7 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
         metrics.increment("model_selection", {"tipo": tipo, "modelo": selected, "mode": "routed"})
         data["model"] = selected
         new_body = json.dumps(data).encode()
-        status, headers, resp_body = _proxy_con_vram(
+        status, headers, resp_body = _proxy_con_vram(  # type: ignore[no-untyped-call]
             self.path,
             new_body,
             modelo=selected,
@@ -407,5 +414,5 @@ class RouterHandler(http.server.BaseHTTPRequestHandler):
                 log.debug("No se pudo cachear respuesta")
         self._emitir_respuesta(status, headers, resp_body)
 
-    def log_message(self, fmt, *args) -> None:
-        log.debug("%s - %s", self.client_address[0], fmt % args)
+    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002  # firma heredada de BaseHTTPRequestHandler
+        log.debug("%s - %s", self.client_address[0], format % args)
