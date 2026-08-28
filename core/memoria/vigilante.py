@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from core.mochila.tools import page_read
 
@@ -13,25 +14,27 @@ log = logging.getLogger("memoria.vigilante")
 FUENTES_FILE = Path.home() / ".nervioso" / "fuentes_vigiladas.json"
 
 
-def cargar_fuentes() -> list[dict]:
+def cargar_fuentes() -> list[dict[str, Any]]:
     if not FUENTES_FILE.exists():
         return []
-    return json.loads(FUENTES_FILE.read_text())
+    data: list[dict[str, Any]] = json.loads(FUENTES_FILE.read_text())
+    return data
 
 
-def guardar_fuentes(fuentes: list[dict]) -> None:
+def guardar_fuentes(fuentes: list[dict[str, Any]]) -> None:
     FUENTES_FILE.parent.mkdir(parents=True, exist_ok=True)
     FUENTES_FILE.write_text(json.dumps(fuentes, indent=2, ensure_ascii=False))
 
 
-def fuente_a_texto(pagina: dict) -> str:
+def fuente_a_texto(pagina: dict[str, Any]) -> str:
     """Extrae el texto completo de una pagina leida con page_read."""
     if "content" in pagina:
-        return pagina["content"]
+        content: str = pagina["content"]
+        return content
     return ""
 
 
-async def revisar_fuente(fuente: dict) -> dict:
+async def revisar_fuente(fuente: dict[str, Any]) -> dict[str, Any]:
     """Revisa una fuente. Si cambio, extrae texto nuevo. Si no, retorna estado."""
     import blake3
 
@@ -84,7 +87,7 @@ async def revisar_fuente(fuente: dict) -> dict:
     return resultado
 
 
-async def procesar_cambios() -> list[dict]:
+async def procesar_cambios() -> list[dict[str, Any]]:
     """Revisa todas las fuentes vigiladas. Para las que cambiaron,
     comprime y versiona las ideas via Qdrant.
     """
@@ -95,7 +98,7 @@ async def procesar_cambios() -> list[dict]:
     if not fuentes:
         return []
 
-    cambios: list[dict] = []
+    cambios: list[dict[str, Any]] = []
     for fuente in fuentes:
         result = await revisar_fuente(fuente)
         if result.get("cambio"):
@@ -124,7 +127,7 @@ async def procesar_cambios() -> list[dict]:
     return cambios
 
 
-async def generar_parte() -> dict:
+async def generar_parte() -> dict[str, Any]:
     """Genera el parte de la ultima pasada de actualizacion."""
     from qdrant_client import models
 
