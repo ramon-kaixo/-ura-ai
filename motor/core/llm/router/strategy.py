@@ -40,7 +40,7 @@ def call_with_retry(
     provider_name: str,
     registry: Any,
     circuit_breakers: dict[str, Any],
-    prompt: str = "",
+    prompt: Any = "",
     *,
     retry_enabled: bool = True,
     retry_max_attempts: int = 3,
@@ -230,7 +230,7 @@ def call_with_fallback(
     **kwargs: object,
 ) -> tuple[Any, str | None]:
     retry_kw: dict[str, Any] = {k: kwargs.pop(k) for k in _RETRY_KWARGS if k in kwargs}
-    prompt_arg: str = args[0] if args and isinstance(args[0], str) else ""
+    prompt_arg: Any = args[0] if args else ""
     result = call_with_retry(
         prov_obj,
         method,
