@@ -31,7 +31,7 @@ class GuardianMiddleware(BaseHTTPMiddleware):
         return await call_next(request)
 
 
-def init_guardian() -> None:
+def init_guardian() -> dict[str, Any]:
     estado = guardian.estado()
     log.info("Guardian: {len(estado.get('reglas', []))} reglas activas")
     return {"guardian": estado}
