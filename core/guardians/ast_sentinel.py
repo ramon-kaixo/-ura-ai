@@ -26,7 +26,7 @@ class V:
     m: dict[str, Any]
     ts: str = field(default_factory=lambda: datetime.now(tz=UTC).isoformat())
 
-    def resumen(self):
+    def resumen(self) -> str:
         e = "OK" if self.ok else "FAIL"
         r = [f"[AST] {e}"] + [f"  - {x}" for x in self.errs] + [f"  D {w}" for w in self.warns]
         if self.debt:
@@ -38,38 +38,38 @@ class _CV(ast.NodeVisitor):
     def __init__(self) -> None:
         self.c = 1
 
-    def visit_If(self, n) -> None:
+    def visit_If(self, node: ast.If) -> None:
         self.c += 1
-        self.generic_visit(n)
+        self.generic_visit(node)
 
-    def visit_For(self, n) -> None:
+    def visit_For(self, node: ast.For) -> None:
         self.c += 1
-        self.generic_visit(n)
+        self.generic_visit(node)
 
-    def visit_While(self, n) -> None:
+    def visit_While(self, node: ast.While) -> None:
         self.c += 1
-        self.generic_visit(n)
+        self.generic_visit(node)
 
-    def visit_ExceptHandler(self, n) -> None:
+    def visit_ExceptHandler(self, node: ast.ExceptHandler) -> None:
         self.c += 1
-        self.generic_visit(n)
+        self.generic_visit(node)
 
-    def visit_BoolOp(self, n) -> None:
-        self.c += len(n.values) - 1
-        self.generic_visit(n)
+    def visit_BoolOp(self, node: ast.BoolOp) -> None:
+        self.c += len(node.values) - 1
+        self.generic_visit(node)
 
 
-def _cc(f):
+def _cc(f: ast.AST) -> int:
     v = _CV()
     v.visit(f)
     return v.c
 
 
 class ASTSentinel:
-    def analizar(self, codigo, nombre="skill", prod=True):
-        e = []
-        w = []
-        m = {}
+    def analizar(self, codigo: str, nombre: str = "skill", prod: bool = True) -> V:
+        e: list[str] = []
+        w: list[str] = []
+        m: dict[str, Any] = {}
         try:
             t = ast.parse(codigo)
         except SyntaxError as ex:
@@ -86,7 +86,13 @@ class ASTSentinel:
             d = f"0x{hashlib.sha256((codigo + ''.join(w)).encode()).hexdigest()[:8]}"
         return V(len(e) == 0, d, e, w, m)
 
-    def _analizar_funciones(self, fs, prod, e, w) -> int:
+    def _analizar_funciones(
+        self,
+        fs: list[ast.FunctionDef | ast.AsyncFunctionDef],
+        prod: bool,
+        e: list[str],
+        w: list[str],
+    ) -> int:
         mx = 0
         for f in fs:
             c = _cc(f)
@@ -102,7 +108,7 @@ class ASTSentinel:
                     e.append(f"'{f.name}': arg '{a.arg}' sin tipo")
         return mx
 
-    def _analizar_estructuras(self, t, e) -> None:
+    def _analizar_estructuras(self, t: ast.AST, e: list[str]) -> None:
         for n in ast.walk(t):
             if isinstance(n, ast.Try):
                 for h in n.handlers:
@@ -121,13 +127,13 @@ class ASTSentinel:
                     if f"{n.module or ''}.{a.name}" in PROH:
                         e.append(f"import: '{n.module}.{a.name}'")
 
-    def _analizar_lineas(self, codigo, w) -> None:
+    def _analizar_lineas(self, codigo: str, w: list[str]) -> None:
         for i, l in enumerate(codigo.splitlines(), 1):
             for p, ti in DP:
                 if p.search(l):
                     w.append(f"L{i}: {ti}")
 
-    def _detectar_magic_numbers(self, t, w) -> None:
+    def _detectar_magic_numbers(self, t: ast.AST, w: list[str]) -> None:
         for n in ast.walk(t):
             if (
                 isinstance(n, ast.Constant)
