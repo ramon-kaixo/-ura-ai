@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from core.mochila.adapter import _MotorChatAdapter
 from core.mochila.circuit_breaker import CircuitBreaker
@@ -12,7 +13,7 @@ from core.mochila.vram_scheduler import VRAMAwareScheduler
 class MochilaState:
     providers: dict[str, _MotorChatAdapter]
     provider_timeouts: dict[str, float]
-    cache_models: list = field(default_factory=list)
+    cache_models: list[dict[str, Any]] = field(default_factory=list)
     cache_models_ts: float = 0.0
     scheduler: VRAMAwareScheduler | None = None
     router: Router | None = None

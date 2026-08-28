@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import time
+from typing import Any
 
 _DASHBOARD_HTML = """<!DOCTYPE html>
 <html lang="es">
@@ -219,7 +220,7 @@ def _dashboard_json(client_ip: str = "") -> str:
         lat = _asus_latency_ms
         lat_updated = time.strftime("%H:%M:%S", time.localtime(_asus_latency_updated)) if _asus_latency_updated else ""
     disponibles = obtener_modelos_disponibles()
-    models_info: list[dict] = []
+    models_info: list[dict[str, Any]] = []
     for m in sorted(disponibles)[:50]:
         tasks = [k for k, v in MODELO_ROUTES.items() if m in v["modelos"]]
         models_info.append({"name": m, "tasks": tasks or ["disponible"]})

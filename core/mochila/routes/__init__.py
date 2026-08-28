@@ -1,3 +1,5 @@
+from typing import Any
+
 from fastapi import APIRouter
 
 from core.mochila.routes.breaker import create_breaker_router
@@ -10,7 +12,7 @@ from core.mochila.routes.proxy import create_proxy_router
 from core.mochila.routes.status import create_status_router
 
 
-def create_api_router(state) -> APIRouter:
+def create_api_router(state: Any) -> APIRouter:
     router = APIRouter()
     router.include_router(create_health_router(state))
     router.include_router(create_models_router(state))

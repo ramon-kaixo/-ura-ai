@@ -23,7 +23,7 @@ class InferenciaStreamEngine:
     async def ejecutar_inferencia_RAG(
         self,
         modelo: str,
-        payload_seguro: dict,
+        payload_seguro: dict[str, Any],
     ) -> AsyncGenerator[str, None]:
         """Consume el payload del ensamblador y transmite tokens.
         Garantiza liberación del slot VRAM mediante captura de CancelledError.

@@ -3,6 +3,7 @@
 import json
 import logging
 import os
+from typing import Any
 
 import httpx
 
@@ -38,7 +39,7 @@ DECIDE y responde UNICAMENTE con JSON:
 JSON:"""
 
 
-async def analizar(peticion: str) -> dict:
+async def analizar(peticion: str) -> dict[str, Any]:
     ideas = await buscar_ideas(peticion, limit=10)
     n_ideas = len(ideas)
     temas = list({i.get("tema", "") for i in ideas if i.get("tema")})

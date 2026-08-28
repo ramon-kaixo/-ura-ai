@@ -2,6 +2,7 @@
 
 import logging
 import os
+from typing import Any
 
 import httpx
 
@@ -38,7 +39,7 @@ Ideas en memoria:
 Informe:"""
 
 
-async def sintetizar(peticion: str) -> dict:
+async def sintetizar(peticion: str) -> dict[str, Any]:
     ideas = await buscar_ideas(peticion, limit=15)
     if not ideas:
         return {
