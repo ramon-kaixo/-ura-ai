@@ -10,7 +10,7 @@ import contextlib
 import json
 import logging
 import os
-from collections.abc import Awaitable, Callable
+from collections.abc import Callable, Coroutine
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from pathlib import Path
@@ -32,14 +32,14 @@ _zmq_ctx: Any = None
 _suscriptores: dict[str, list[Callable[..., Any]]] = {}
 
 
-def _run_async(coro: Awaitable[Any]) -> Any:
+def _run_async(coro: Coroutine[Any, Any, Any]) -> Any:
     """Puente sync→async: ejecuta una corrutina desde contexto síncrono sin bloquear el event-loop."""
     try:
         asyncio.get_running_loop()
     except RuntimeError:
         return asyncio.run(coro)
     with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(asyncio.run, coro)
+        future: Any = executor.submit(asyncio.run, coro)
         return future.result()
 
 
