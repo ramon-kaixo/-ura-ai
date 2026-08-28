@@ -173,7 +173,7 @@ async def _proxy_con_guardia_vram(
 ) -> tuple[int, dict[str, str], bytes]:
     from core.model_router.vram_guard import vram_guard
 
-    return await vram_guard.ejecutar_inferencia_segura(  # type: ignore[no-any-return,no-untyped-call]
+    return await vram_guard.ejecutar_inferencia_segura(
         _proxy_request_async,
         path,
         body,
