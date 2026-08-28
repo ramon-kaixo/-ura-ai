@@ -143,9 +143,9 @@ def _estimate_tokens(text: str) -> int:
 def _build_context_header(
     prev_model: str,
     new_model: str,
-    messages: list[dict],
+    messages: list[dict[str, Any]],
     max_tokens: int = 8000,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Construye un header de contexto para el nuevo modelo.
 
     Serializa el historial previo en un formato neutro (texto plano)
@@ -317,7 +317,7 @@ class Tier3Proxy:
 
     def _try_provider(
         self, provider: ProviderConfig, path: str, body: bytes | None, method: str = "POST"
-    ) -> tuple[int, dict, bytes]:
+    ) -> tuple[int, dict[str, Any], bytes]:
         """Intenta una petición a un provider específico."""
         url = f"{provider.url}{path}"
         headers = {"Content-Type": "application/json"}
@@ -376,7 +376,7 @@ class Tier3Proxy:
             log.warning("[TIER3] %s → %s", provider.name, type(e).__name__)
             return 503, {}, json.dumps({"error": str(e)}).encode()
 
-    def _inject_context_if_needed(self, data: dict, prev_model: str, new_model: str) -> dict:
+    def _inject_context_if_needed(self, data: dict[str, Any], prev_model: str, new_model: str) -> dict[str, Any]:
         """Inyecta context bridge si hubo cambio de modelo."""
         if not prev_model or prev_model == new_model:
             return data
@@ -413,9 +413,9 @@ class Tier3Proxy:
             return "nemotron"
         return "unknown"
 
-    def proxy(self, path: str, body: bytes | None, method: str = "POST") -> tuple[int, dict, bytes]:
+    def proxy(self, path: str, body: bytes | None, method: str = "POST") -> tuple[int, dict[str, Any], bytes]:
         """Envía petición con cascada tier-3. Retorna (status, headers, body)."""
-        data = {}
+        data: dict[str, Any] = {}
         if body:
             with contextlib.suppress(json.JSONDecodeError, UnicodeDecodeError):
                 data = json.loads(body)
@@ -428,7 +428,7 @@ class Tier3Proxy:
             tiers.setdefault(p.tier, []).append(p)
 
         last_status = 503
-        last_headers: dict = {}
+        last_headers: dict[str, Any] = {}
         last_body = b'{"error": "all providers failed"}'
         body_to_send = body  # Initialize with original body
 
