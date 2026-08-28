@@ -319,7 +319,7 @@ def liveness() -> dict[str, object]:
 def failover_status() -> dict[str, object]:
     """Estado del sistema de failover."""
     fo = _get_failover()
-    return cast(dict[str, object], fo.get_status())
+    return cast("dict[str, object]", fo.get_status())
 
 
 @app.post("/failover/start")
@@ -514,7 +514,7 @@ def worker_status() -> dict[str, object]:
     stealer = _get_stealer()
     status = stealer.status()
     status["queue"] = _queue.stats()
-    return cast(dict[str, object], status)
+    return cast("dict[str, object]", status)
 
 
 @app.post("/worker/rebalance")
@@ -556,7 +556,7 @@ def register_node(req: RegisterNode) -> dict[str, object]:
         api_port=req.api_port,
         tags=req.tags,
     )
-    return cast(dict[str, object], node.to_dict())
+    return cast("dict[str, object]", node.to_dict())
 
 
 @app.delete("/nodes/{node_id}")
@@ -576,7 +576,7 @@ def get_node(node_id: str) -> dict[str, object]:
     node = reg.get(node_id)
     if not node:
         raise HTTPException(404, "Node not found")
-    return cast(dict[str, object], node.to_dict())
+    return cast("dict[str, object]", node.to_dict())
 
 
 @app.post("/nodes/check")

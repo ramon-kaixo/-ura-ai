@@ -6,8 +6,8 @@
       "tailscale_ip": "100.72.103.12",
       "api_port": 4097,
       "status": "online",
-      "last_seen": 1787798435.463451,
-      "last_latency_ms": 26.5,
+      "last_seen": 1787837307.637399,
+      "last_latency_ms": 7.3,
       "consecutive_failures": 0,
       "tags": [
         "desktop",
@@ -19,10 +19,10 @@
       "hostname": "mac-mini",
       "tailscale_ip": "100.123.81.101",
       "api_port": 4097,
-      "status": "degraded",
-      "last_seen": 0.0,
-      "last_latency_ms": 0.0,
-      "consecutive_failures": 1,
+      "status": "online",
+      "last_seen": 1787837307.643317,
+      "last_latency_ms": 5.9,
+      "consecutive_failures": 0,
       "tags": [
         "mac",
         "m4"
