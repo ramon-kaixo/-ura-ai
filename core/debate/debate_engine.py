@@ -9,7 +9,7 @@ import logging
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from core.debate.lockfile import DebateLock
 from core.logs.guardian_logger import log_event
@@ -22,12 +22,13 @@ logger = logging.getLogger("ura.debate")
 CONFIG_PATH = Path(__file__).parent / "committee_config.json"
 
 
-def load_config() -> dict:
+def load_config() -> dict[str, Any]:
     with open(CONFIG_PATH) as f:  # noqa: PTH123
-        return json.load(f)
+        data: dict[str, Any] = json.load(f)
+        return data
 
 
-def validar_esquema_salida(raw_output: str, schema_dict: dict | None = None) -> bool:
+def validar_esquema_salida(raw_output: str, schema_dict: dict[str, Any] | None = None) -> bool:
     if not schema_dict:
         return True
     try:
@@ -83,7 +84,7 @@ def validar_esquema_salida(raw_output: str, schema_dict: dict | None = None) -> 
         return False
 
 
-def build_primary_prompt(plan_text: str, context: dict | None = None) -> str:
+def build_primary_prompt(plan_text: str, context: dict[str, Any] | None = None) -> str:
     ctx = json.dumps(context, indent=2) if context else "No disponible"
     return f"""Eres un arquitecto de software senior. Analiza el siguiente plan técnico.
 
@@ -104,7 +105,7 @@ Responde EXACTAMENTE en JSON:
 """
 
 
-def build_auditor_prompt(plan_text: str, context: dict | None = None) -> str:
+def build_auditor_prompt(plan_text: str, context: dict[str, Any] | None = None) -> str:
     ctx = json.dumps(context, indent=2) if context else "No disponible"
     return f"""Eres un ABOGADO DEL DIABLO. Tu trabajo es encontrar fallos en el plan.
 
@@ -135,7 +136,7 @@ async def call_ollama(
     temperature: float = 0.1,
     max_tokens: int = 2048,
     llm: ILLMClient | None = None,
-) -> dict | None:
+) -> dict[str, Any] | None:
     _gen: Callable[..., str]
     if llm is not None:
         _gen = lambda p, **kw: llm.generate(p, **kw)  # noqa: E731
@@ -158,7 +159,7 @@ async def call_ollama(
         if cleaned.endswith("```"):
             cleaned = cleaned.rsplit("\n", 1)[0] if "\n" in cleaned else cleaned[:-3]
         cleaned = cleaned.strip()
-        parsed = json.loads(cleaned)
+        parsed: dict[str, Any] = json.loads(cleaned)
         default_schema = {"score": float, "reason": str, "risks": list}
         if not validar_esquema_salida(cleaned, default_schema):
             logger.warning("[DEBATE] Schema validation failed for %s", model)
@@ -169,7 +170,7 @@ async def call_ollama(
         return None
 
 
-def _resultado_seguro(result: object) -> dict | None:
+def _resultado_seguro(result: object) -> dict[str, Any] | None:
     """Normalizar el resultado de un modelo: excepciones y timeouts a None."""
     if isinstance(result, BaseException):
         return None
@@ -180,8 +181,8 @@ def _resultado_seguro(result: object) -> dict | None:
 
 def _decidir_veredicto(
     plan_text: str,
-    primary: dict | None,
-    auditor: dict | None,
+    primary: dict[str, Any] | None,
+    auditor: dict[str, Any] | None,
     consensus: float,
     threshold: float,
 ) -> tuple[str, str]:
@@ -198,9 +199,9 @@ def _decidir_veredicto(
 
 async def run_debate(
     plan_text: str,
-    context: dict | None = None,
-    config: dict | None = None,
-) -> dict:
+    context: dict[str, Any] | None = None,
+    config: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     if config is None:
         config = load_config()
 
