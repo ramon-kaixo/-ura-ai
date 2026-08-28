@@ -23,16 +23,17 @@ import signal
 import threading
 import time
 import traceback
+from collections.abc import Callable
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Never
+from typing import Any, Never
 
 logger = logging.getLogger("ura.watchdog")
 
 AUTO_DUMPS_DIR = Path(__file__).parent.parent / "data" / "auto_dumps"
 
 
-def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) -> dict:
+def _auto_dump(function_name: str, timeout: float, extra: dict[str, Any] | None = None) -> dict[str, Any]:
     """Captura estado del sistema + traceback al detectar anomalía.
 
     Guarda en data/auto_dumps/{timestamp}.json
@@ -86,7 +87,7 @@ def _auto_dump(function_name: str, timeout: float, extra: dict | None = None) ->
     return dump
 
 
-def _trigger_rescue(function_name: str, timeout: float, extra: dict | None = None) -> None:
+def _trigger_rescue(function_name: str, timeout: float, extra: dict[str, Any] | None = None) -> None:
     """Publica alerta en event_bus + guarda dump.
 
     Intenta importar event_bus
@@ -113,12 +114,17 @@ class _TimeoutError(Exception):
     """Lanzada cuando una función excede su timeout."""
 
 
-def _timeout_handler(signum, frame) -> Never:
+def _timeout_handler(signum: int, frame: object) -> Never:
     msg = "Function timed out"
     raise _TimeoutError(msg)
 
 
-def _ejecutar_en_hilo(func, args, kwargs, timeout: float):
+def _ejecutar_en_hilo(
+    func: Callable[..., Any],
+    args: tuple[Any, ...],
+    kwargs: dict[str, Any],
+    timeout: float,
+) -> tuple[tuple[threading.Thread, Any], BaseException | None]:
     """Ejecutar función en hilo daemon con timeout: devuelve (result, exception)."""
     result: list[object] = [None]
     exception: list[BaseException | None] = [None]
@@ -142,8 +148,8 @@ def _ejecutar_en_hilo(func, args, kwargs, timeout: float):
 def watchdog(
     timeout: float = 30.0,
     on_timeout: str = "log",
-    extra_context: dict | None = None,
-):
+    extra_context: dict[str, Any] | None = None,
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorador para monitorear tiempo de ejecución.
 
     Args:
@@ -157,9 +163,9 @@ def watchdog(
 
     """
 
-    def decorator(func):
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
         @functools.wraps(func)
-        def wrapper_sync(*args, **kwargs):
+        def wrapper_sync(*args: Any, **kwargs: Any) -> Any:
             # Señal solo funciona en el hilo principal
             if threading.current_thread() is threading.main_thread():
                 old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
@@ -189,7 +195,7 @@ def watchdog(
                 return resultado
 
         @functools.wraps(func)
-        async def wrapper_async(*args, **kwargs):
+        async def wrapper_async(*args: Any, **kwargs: Any) -> Any:
             try:
                 return await asyncio.wait_for(
                     func(*args, **kwargs),
@@ -206,7 +212,7 @@ def watchdog(
     return decorator
 
 
-def _on_timeout(function_name: str, timeout: float, extra: dict | None = None) -> None:
+def _on_timeout(function_name: str, timeout: float, extra: dict[str, Any] | None = None) -> None:
     """Maneja el timeout de una función."""
     logger.warning(
         "WATCHDOG TIMEOUT: %s excedio %ds",
@@ -227,7 +233,7 @@ def check_loop_latency(sample_ms: float = 0) -> float:
 
     """
 
-    async def _measure():
+    async def _measure() -> float:
         t0 = time.monotonic()
         await asyncio.sleep(sample_ms / 1000 if sample_ms > 0 else 0)
         t1 = time.monotonic()
