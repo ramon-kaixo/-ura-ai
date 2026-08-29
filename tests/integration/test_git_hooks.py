@@ -1,8 +1,10 @@
 """Tests para la infraestructura de hooks de git (Módulo 4)."""
 
 from __future__ import annotations
+import pytest
 
 import os
+import sys
 import subprocess
 from pathlib import Path
 
@@ -46,6 +48,7 @@ class TestPostCommitHook:
         assert r.returncode == 0
         assert (repo / "triggered").exists()
 
+    @pytest.mark.skipif(sys.platform == "darwin", reason="GNU timeout no disponible en macOS")
     def test_hook_no_bloquea(self) -> None:
         # El hook real termina rápido (no espera a la tuneladora)
         hook = _project_root() / "scripts" / "pro" / "hooks" / "post-commit"

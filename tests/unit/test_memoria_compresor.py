@@ -11,6 +11,7 @@ import json
 import pytest
 
 from core.memoria import compresor
+from motor.core.config_manager import get_ollama_urls
 from core.memoria.compresor import (
     MAX_CHARS_TEXTO,
     PROMPT_COMPRESOR,
@@ -265,7 +266,7 @@ async def test_prompt_usa_modelo_y_truca_texto(monkeypatch) -> None:
     monkeypatch.setattr("core.memoria.compresor.httpx.AsyncClient", ClienteFake)
     texto_largo = "a" * (MAX_CHARS_TEXTO + 100)
     await comprimir_a_ideas(texto_largo, modelo="mi-modelo")
-    assert capturado["url"] == "http://127.0.0.1:11434/api/chat"
+    assert capturado["url"] == f"{get_ollama_urls()["primary"]}/api/chat"
     assert capturado["json"]["model"] == "mi-modelo"
     assert capturado["json"]["stream"] is False
     assert len(capturado["json"]["messages"][0]["content"]) == len(PROMPT_COMPRESOR.format(texto="a" * MAX_CHARS_TEXTO))

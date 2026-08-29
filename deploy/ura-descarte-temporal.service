@@ -1,0 +1,14 @@
+[Unit]
+Description=URA limpieza de la carpeta temporal de descarte (90 dias sin uso)
+Documentation=https://github.com/anomalyco/ura docs/descarte_temporal.md
+
+[Service]
+Type=oneshot
+User=ramon
+WorkingDirectory=/home/ramon/URA/ura_ia_1972
+ExecStart=/usr/bin/bash /home/ramon/URA/ura_ia_1972/scripts/pro/limpiar_descarte_temporal.sh
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

@@ -52,8 +52,13 @@ async def count_points(collection: str) -> int:
         return 0
 
 
-async def delete_points_before(collection: str, before_ts: str) -> int:
-    """Elimina puntos con fecha_publicacion anterior a before_ts."""
+async def delete_points_before(collection: str, before_ts: str) -> str:
+    """Elimina puntos con fecha_publicacion anterior a before_ts.
+
+    La API de Qdrant devuelve un estado textual ("completed"/"acknowledged").
+    Se retorna ese estado sin convertirlo a int (antes se llamaba a
+    ``int(status)``, que fallaba con ``"completed"``).
+    """
     async with httpx.AsyncClient(timeout=30) as client:
         r = await client.post(
             f"{QDRANT_URL}/collections/{collection}/points/delete",
@@ -70,7 +75,8 @@ async def delete_points_before(collection: str, before_ts: str) -> int:
         )
         r.raise_for_status()
         result = r.json()
-        return int(result.get("result", {}).get("status", "unknown") or 0)
+        status = result.get("result", {}).get("status", "unknown")
+        return status if status is not None else "unknown"
 
 
 async def main(dry_run: bool = True) -> dict[str, Any]:

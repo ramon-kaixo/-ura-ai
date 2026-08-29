@@ -41,82 +41,60 @@
     "openTelemetry": true,
     "batch_tool": true
   },
-  "mcp": {
-    "codewiki": {
-      "type": "local",
-      "command": [
-        "/home/ramon/.npm-global/bin/codewiki-mcp"
-      ],
-      "enabled": true
-    }
-  },
   "provider": {
     "ollama": {
-      "name": "Ollama",
+      "name": "Ollama (ASUS/GX10)",
       "options": {
-        "baseURL": "http://10.164.1.247:11434/v1"
+        "baseURL": "http://100.72.103.12:11434/v1"
       },
       "models": {
+        "qwen3-coder:30b-mejorado": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 262144, "output": 8192 }
+        },
         "qwen3-coder:30b": {
           "tools": true,
           "reasoning": false,
-          "limit": {
-            "context": 262144,
-            "output": 8192
-          }
+          "limit": { "context": 262144, "output": 8192 }
         },
         "qwen3.6:27b": {
           "tools": true,
           "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
-        "llama3:latest": {
-          "tools": true,
-          "reasoning": false,
-          "limit": {
-            "context": 8192,
-            "output": 4096
-          }
-        },
-        "llama3.3:70b": {
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
+          "limit": { "context": 131072, "output": 8192 }
         },
         "gemma4:26b": {
           "tools": true,
           "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
+          "limit": { "context": 131072, "output": 8192 }
         },
-        "nemotron-3-nano:30b-a3b-q4_K_M": {
+        "nemotron-3-nano:30b": {
           "tools": true,
           "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
+          "limit": { "context": 131072, "output": 8192 }
         },
-        "nomic-embed-text:latest": {
+        "llama3.3:70b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "llama3": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "llava:7b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "nomic-embed-text": {
           "tools": false,
           "reasoning": false,
-          "limit": {
-            "context": 2048,
-            "output": 0
-          }
+          "limit": { "context": 2048, "output": 0 }
         }
       }
     }
   },
-  "model": "ollama/qwen3-coder:30b-mejorado",
-  "default_agent": "coder",
-  "username": "ramon"
+  "model": "ollama/qwen3-coder:30b-mejorado"
 }

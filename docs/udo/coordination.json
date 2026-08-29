@@ -2,7 +2,9 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [],
-    "en_progreso": [],
+    "en_progreso": [
+      "TASK-20260828-003"
+    ],
     "en_revision": [],
     "aprobadas": [
       "TASK-20260817-014",
@@ -662,6 +664,19 @@
         "2026-08-18: SOURCE_DIR corregido a repo; 10+ dudas investigadas en DUDAS_INVESTIGACION.md."
       ],
       "nota": "DONE 2026-08-18."
+    },
+    "TASK-20260828-003": {
+      "task_id": "TASK-20260828-003",
+      "descripcion": "Corregir 29 tests flaky de la suite completa (9797 tests) — A benchmarks, B async subprocess, C audit ReDoS, D aislados. + Parte 2: carpeta descarte_temporal con auto-borrado 90 dias; Parte 3: documentacion",
+      "ejecutor": "TERM",
+      "revisor": "WEB",
+      "estado": "en_progreso",
+      "prioridad": "ALTA",
+      "modo": "secuencial",
+      "nota": "Suite completa reproducida (7m26s, 29 fallos). Aislamiento en conftest + relajar umbrales de benchmark. Parte 2/3 en curso.",
+      "historial": [
+        "2026-08-28: suite completa reproducida en GX10: 29 fallos (varios pasan aislados = flaky de orden/concurrencia; benchmarks con umbral de ms fijo). 4 tests obsoletos que importaban providers v1 eliminados (rompian coleccion). Descarte temporal creado."
+      ]
     }
   },
   "ultima_ejecucion_despertador": "2026-08-27T00:56:09Z",

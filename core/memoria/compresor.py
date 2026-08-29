@@ -7,10 +7,13 @@ from typing import Any
 import httpx
 
 from core.memoria.ficha import Idea
+from motor.core.config_manager import get_ollama_urls
 
 log = logging.getLogger("memoria.compresor")
 
-OLLAMA_URL = "http://127.0.0.1:11434/api/chat"
+# Usar config manager unificado (Fase 17) - usa ASUS en Mac, localhost en GX10
+_OLLAMA_URLS = get_ollama_urls()
+OLLAMA_URL = f"{_OLLAMA_URLS['primary']}/api/chat"
 MODELO_COMPRESOR = "qwen3-coder:30b"
 MAX_CHARS_TEXTO = 8000
 

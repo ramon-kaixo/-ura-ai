@@ -20,6 +20,7 @@ Generado el 2026-08-17. Fuentes: docs/audit/baseline, coordination.json, hallazg
 | B014 | Cambios ajenos sin commitear | P1 | git status | RESUELTO (guardados en rama ia/TASK-20260817-B014-ajenos) | RAMÓN |
 | B015 | TASK-025 clasificación mypy en revisión | P2 | TASK-025 | EN_REVISION | WEB |
 | B016 | TASK-027 correcciones mypy alto riesgo en revisión | P1 | TASK-027 | EN_REVISION | WEB |
+| B017 | Carpeta descarte_temporal (respaldos no versionados/código obsoleto, auto-borrado 90 días, timer systemd diario) | P2 | TASK-20260828-003 | RESUELTO | TERM/WEB |
 
 ## Notas
 - Los pendientes P0 activos son pocos y controlados.

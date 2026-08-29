@@ -1,5 +1,6 @@
 """Tests para detección de anomalías en SNC (monitor/snc.py)."""
 
+import pytest
 import signal
 import sys
 from pathlib import Path
@@ -24,11 +25,13 @@ from monitor.snc import (
 )
 
 
+@pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
 class TestCheckZombies:
     def test_returns_empty_when_no_zombies(self, tmp_path) -> None:
         result = check_zombies()
         assert isinstance(result, list)
 
+    @pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
     def test_detects_zombie(self, tmp_path) -> None:
         fake_proc = tmp_path / "12345"
         fake_proc.mkdir()
@@ -38,6 +41,7 @@ class TestCheckZombies:
                 zombies = check_zombies()
                 assert 12345 in zombies
 
+    @pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
     def test_skips_non_digit(self, tmp_path) -> None:
         fake = tmp_path / "abc"
         fake.mkdir()

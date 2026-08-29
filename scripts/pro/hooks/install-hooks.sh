@@ -1,7 +1,8 @@
 #!/bin/bash
 # install-hooks.sh — instala los hooks de URA en .git/hooks/
 set -e
-PROJECT_ROOT=$(dirname "$(dirname "$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)")")
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+PROJECT_ROOT=$(dirname "$(dirname "$(dirname "$SCRIPT_DIR")")")
 HOOKS_DIR="$PROJECT_ROOT/scripts/pro/hooks"
 
 for hook in post-commit; do

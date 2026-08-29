@@ -178,6 +178,7 @@ ura/
 - **vector_memory.py deadlock**: ✅ ARREGLADO (da1ceda: _embed() fuera del lock).
 
 ### Infraestructura
+- **Carpeta temporal de descarte** (`/home/ramon/URA/descarte_temporal/`): respaldos no versionados/código obsoleto con auto-borrado a 90 días sin uso (timer systemd `ura-descarte-temporal.timer`, diario). Ver [docs/descarte_temporal.md](docs/descarte_temporal.md).
 - **Rootfs RO → RW**: ✅ ARREGLADO. / y /run RW via Docker privilegiado + nsenter. GRUB configurado con rw en GRUB_CMDLINE_LINUX_DEFAULT. Próximo boot arrancará RW automáticamente.
 - **model-router caído**: ✅ ARREGLADO. secrets.conf drop-in con EnvironmentFile=/etc/ura/secrets.env. Daemon-reload + restart. Active (running).
 - **ura-detector**: ✅ ARREGLADO. ProtectHome=tmpfs → read-only (cv2 estaba en ~/.local/). Active (running).
