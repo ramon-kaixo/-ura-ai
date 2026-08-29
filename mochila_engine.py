@@ -75,7 +75,9 @@ class MochilaEngine:
         self._p: Path | None = None
 
     @classmethod
-    def nueva(cls, url: str, tipo: Any = TipoPipeline.IMAGEN, pid: str | None = None, nc: str = "sin_nombre") -> MochilaEngine:
+    def nueva(
+        cls, url: str, tipo: Any = TipoPipeline.IMAGEN, pid: str | None = None, nc: str = "sin_nombre"
+    ) -> MochilaEngine:
         i = str(uuid.uuid4())
         e: dict[str, Any] = {
             "v": "4.3",
