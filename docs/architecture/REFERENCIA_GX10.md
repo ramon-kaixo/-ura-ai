@@ -93,8 +93,8 @@
   - `POST /api/v1/telemetry` — Ingesta de telemetría POS (Bearer token, Pydantic validated)
   - `GET /metrics` — Exposición Prometheus OpenMetrics nativo
 - **Autenticación**: Bearer token `URA_SECRET_NODE_TOKEN_HASH_XYZ` en cabecera Authorization
-- **Flujo de datos**: `PowerShell (caja0) → Bearer → proxy_contraste:8002 → Prometheus scrape → alert.rules`
-- **Dependencias**: `tailscaled.service` (resolución MagicDNS para caja0)
+- **Flujo de datos**: `PowerShell (POS externo) → Bearer → proxy_contraste:8002 → Prometheus scrape → alert.rules`
+- **Dependencias**: `tailscaled.service` (resolución MagicDNS)
 - **Deploy**: `scripts/deploy/ura-contraste.service` + `scripts/deploy/fix-path.conf` + `scripts/deploy/transition_contraste.sh`
 
 ### Prometheus + Alertas (Docker)

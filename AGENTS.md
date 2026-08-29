@@ -329,7 +329,7 @@ NO deben contener lógica de negocio ni convertirse en coordinadores del sistema
 - `scripts/pro/gpu_health.py` — Detector power cap GB10 (15W/650MHz)
 - `scripts/pro/gpu_recovery.sh` — Recuperación automática de drivers NVIDIA (regex `^P(0|2|8|12)$`)
 - `scripts/pro/tailscale-acls.json` — Política de aislamiento perimetral Tailscale
-- `scripts/pro/ura-telemetry-pos.ps1` — Agente de telemetría para caja0 (Windows POS)
+- `scripts/pro/ura-telemetry-pos.ps1` — (ARCHIVADO en /home/ramon/URA/descarte_temporal/) Agente telemetría para caja0 (Windows POS)
 - `scripts/pro/crontab_gpu_health.txt` — Crontab de auditoría GPU cada 30 min
 - `scripts/deploy/fix-path.conf` — Environment file para ura-contraste.service
 - `scripts/deploy/ura-contraste.service` — Unidad systemd oficial del proxy de contraste

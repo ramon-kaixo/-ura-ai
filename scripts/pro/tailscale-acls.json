@@ -22,29 +22,5 @@
         "tag:master:11435"
       ]
     },
-    {
-      "//": "POS (caja0, caja1...): búnker unidireccional, solo reportan telemetría",
-      "action": "accept",
-      "src": ["tag:pos"],
-      "dst": ["tag:master:8002"]
-    }
-  ],
-
-  "tagOwners": {
-    "tag:master": ["barkaixo@gmail.com"],
-    "tag:worker": ["barkaixo@gmail.com"],
-    "tag:pos":    ["barkaixo@gmail.com"]
-  },
-
-  "//_nodos": {
-    "master": ["gx10-64c3-1 (100.72.103.12)"],
-    "worker": [
-      "hetzner-escudo (100.78.49.106)",
-      "mac-mini-de-ramon (100.123.81.101)",
-      "mac-mini-san-gregorio (100.90.99.76)"
-    ],
-    "pos": [
-      "caja0 (100.127.217.113)"
     ]
-  }
 }
