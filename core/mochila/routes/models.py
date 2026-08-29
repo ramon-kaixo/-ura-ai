@@ -1,5 +1,5 @@
 import time
-from typing import Any
+from typing import Any, cast
 
 from fastapi import APIRouter
 
@@ -10,7 +10,7 @@ def create_models_router(state: Any) -> APIRouter:
     @router.get("/v1/models")
     async def v1_models() -> dict[str, Any]:
         if state.cache_models and time.time() - state.cache_models_ts < 60:
-            return state.cache_models
+            return cast("dict[str, Any]", state.cache_models)
         models = []
         for name, provider in state.providers.items():
             h = await provider.health()
