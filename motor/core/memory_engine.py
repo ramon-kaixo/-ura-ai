@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from motor.core.config import UraConfig
-from motor.core.config_manager import CONFIG
+from motor.core.config_manager import CONFIG, get_ollama_urls
 from motor.core.llm import generate as llm_generate
 from motor.core.qdrant_client import QdrantClient
 
@@ -27,7 +27,9 @@ CHUNK_SIZE = RAG_CONFIG.get("chunk_size", 500)
 CHUNK_OVERLAP = RAG_CONFIG.get("chunk_overlap", 50)
 TOP_K = RAG_CONFIG.get("top_k", 5)
 SIMILARITY_THRESHOLD = RAG_CONFIG.get("threshold", 0.7)
-OLLAMA_URL = CONFIG.get("ollama", {}).get("url", "http://localhost:11434")
+# Usar config manager unificado (Fase 17) - darwin_mac → ASUS, linux_asus → localhost
+_OLLAMA_URLS = get_ollama_urls()
+OLLAMA_URL = _OLLAMA_URLS["primary"]
 RAG_MODEL = RAG_CONFIG.get("model", "nomic-embed-text")
 TEMPERATURE = RAG_CONFIG.get("temperature", 0.7)
 MAX_TOKENS = RAG_CONFIG.get("max_tokens", 2048)
