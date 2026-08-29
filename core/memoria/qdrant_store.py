@@ -9,6 +9,7 @@ import httpx
 from qdrant_client import QdrantClient
 
 from core.memoria.ficha import Idea
+from motor.core.config_manager import get_ollama_urls
 from motor.core.qdrant_client import URAQdrantClient
 
 log = logging.getLogger("memoria.qdrant")
@@ -20,6 +21,10 @@ EMBED_MODEL = "nomic-embed-text:latest"
 
 _client: QdrantClient | None = None
 _init_lock = threading.Lock()
+
+# URL de Ollama desde config manager (Fase 17) - usa ASUS en Mac, localhost en GX10
+_OLLAMA_URLS = get_ollama_urls()
+_OLLAMA_EMBED_URL = f"{_OLLAMA_URLS['primary']}/api/embeddings"
 
 
 def _get_client() -> QdrantClient:
@@ -35,7 +40,7 @@ def _get_client() -> QdrantClient:
 async def _embed(texto: str) -> list[float]:
     async with httpx.AsyncClient(timeout=30) as client:
         resp = await client.post(
-            "http://127.0.0.1:11434/api/embeddings",
+            _OLLAMA_EMBED_URL,
             json={"model": EMBED_MODEL, "prompt": texto},
         )
         resp.raise_for_status()

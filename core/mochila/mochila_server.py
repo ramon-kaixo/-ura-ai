@@ -41,6 +41,7 @@ from core.mochila.routes.proxy import (
 )
 from core.mochila.status_endpoint import system_status
 from core.mochila.tools import TOOL_SCHEMAS, ejecutar_tool
+from motor.core.config_manager import get_ollama_urls
 from motor.core.llm.gemini import GeminiProvider as MotorGeminiProvider
 from motor.core.llm.ollama import OllamaProvider as MotorOllamaProvider
 from motor.core.llm.openrouter import OpenRouterProvider as MotorOpenRouterProvider
@@ -53,7 +54,10 @@ load_dotenv(Path("~/URA/.env").expanduser())
 _API_KEY = _require_secret("URA_API_KEY")
 _AUTH_EXEMPT = frozenset({"/health", "/metrics", "/openapi.json", "/docs", "/redoc"})
 
-OLLAMA_SOCKET = "http://127.0.0.1:11434"
+# Usar config manager unificado (Fase 17) en lugar de hardcoded localhost
+# darwin_mac profile → host=100.72.103.12 (ASUS), linux_asus profile → host=localhost
+_OLLAMA_URLS = get_ollama_urls()
+OLLAMA_SOCKET = _OLLAMA_URLS["primary"]
 
 PROVIDERS: dict[str, Any] = {
     "ollama": _MotorChatAdapter("ollama", MotorOllamaProvider()),
