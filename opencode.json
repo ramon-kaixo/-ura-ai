@@ -45,69 +45,19 @@
     "ollama": {
       "name": "Ollama",
       "options": {
-        "baseURL": "http://10.164.1.247:11434/v1"
+        "baseURL": "http://localhost:11434/v1"
       },
       "models": {
-        "qwen3-coder:30b": {
+        "qwen2.5-coder:7b": {
           "tools": true,
           "reasoning": false,
           "limit": {
-            "context": 262144,
+            "context": 32768,
             "output": 8192
-          }
-        },
-        "qwen3.6:27b": {
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
-        "llama3:latest": {
-          "tools": true,
-          "reasoning": false,
-          "limit": {
-            "context": 8192,
-            "output": 4096
-          }
-        },
-        "llama3.3:70b": {
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
-        "gemma4:26b": {
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
-        "nemotron-3-nano:30b-a3b-q4_K_M": {
-          "tools": true,
-          "reasoning": true,
-          "limit": {
-            "context": 131072,
-            "output": 8192
-          }
-        },
-        "nomic-embed-text:latest": {
-          "tools": false,
-          "reasoning": false,
-          "limit": {
-            "context": 2048,
-            "output": 0
           }
         }
       }
     }
   },
-  "model": "ollama/qwen3-coder:30b-mejorado",
-  "default_agent": "general",
-  "username": "ramon"
+  "model": "ollama/qwen2.5-coder:7b"
 }
