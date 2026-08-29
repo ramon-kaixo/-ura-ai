@@ -1,0 +1,28 @@
+# ============================================================
+# MARCA OBLIGATORIA: NO HAY OLLAMA LOCAL EN ESTA MÁQUINA (Mac)
+# ============================================================
+#
+# Esta Mac (16 GB RAM) NO puede ejecutar modelos LLM grandes.
+# TODO OpenCode / agente DEBE conectarse a Ollama en ASUS/GX10.
+#
+# ASUS/GX10 (servidor de mejora continua):
+#   - IP Tailscale: 100.72.103.12
+#   - Puerto Ollama: 11434
+#   - Modelos disponibles: qwen3-coder:30b-mejorado, qwen3-coder:30b, 
+#     qwen3.6:27b, gemma4:26b, nemotron-3-nano:30b, llama3.3:70b,
+#     llama3, llava:7b, nomic-embed-text
+#
+# CONFIGURACIÓN REQUERIDA en todos los opencode.json:
+#   "provider": {
+#     "ollama": {
+#       "options": {
+#         "baseURL": "http://100.72.103.12:11434/v1"
+#       }
+#     }
+#   }
+#
+# Si ASUS no está accesible (Tailscale down), el trabajo se BLOQUEA.
+# NO instalar Ollama local como workaround.
+#
+# Fecha: 2026-08-29 | Autor: Build Agent (rama ia/build-entorno-20260829)
+# ============================================================

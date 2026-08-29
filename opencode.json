@@ -43,21 +43,58 @@
   },
   "provider": {
     "ollama": {
-      "name": "Ollama",
+      "name": "Ollama (ASUS/GX10)",
       "options": {
-        "baseURL": "http://localhost:11434/v1"
+        "baseURL": "http://100.72.103.12:11434/v1"
       },
       "models": {
-        "qwen2.5-coder:7b": {
+        "qwen3-coder:30b-mejorado": {
           "tools": true,
           "reasoning": false,
-          "limit": {
-            "context": 32768,
-            "output": 8192
-          }
+          "limit": { "context": 262144, "output": 8192 }
+        },
+        "qwen3-coder:30b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 262144, "output": 8192 }
+        },
+        "qwen3.6:27b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "gemma4:26b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "nemotron-3-nano:30b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "llama3.3:70b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "llama3": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "llava:7b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "nomic-embed-text": {
+          "tools": false,
+          "reasoning": false,
+          "limit": { "context": 2048, "output": 0 }
         }
       }
     }
   },
-  "model": "ollama/qwen2.5-coder:7b"
+  "model": "ollama/qwen3-coder:30b-mejorado"
 }
