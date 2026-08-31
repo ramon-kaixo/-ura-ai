@@ -216,7 +216,7 @@ class _FC:
         return self._c
 
     async def __aexit__(self, t: object, v: object, b: object) -> bool:
-        assert self._c is not None  # noqa: S101 - invariante: __aenter__ siempre lo setea
+        assert self._c is not None
         if t:
             self._c.fin(False, str(v))
             self._m._rc(self._c)

@@ -146,27 +146,27 @@ class _PersistentConnection:
     def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
         with self._lock:
             conn = self._conn
-            assert conn is not None  # noqa: S101 - invariante de conexion
+            assert conn is not None
             try:
                 return conn.execute(sql, params)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
                 conn = self._conn
-                assert conn is not None  # noqa: S101 - invariante de conexion
+                assert conn is not None
                 return conn.execute(sql, params)
 
     def executescript(self, script: str) -> None:
         with self._lock:
             conn = self._conn
-            assert conn is not None  # noqa: S101 - invariante de conexion
+            assert conn is not None
             try:
                 conn.executescript(script)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
                 conn = self._conn
-                assert conn is not None  # noqa: S101 - invariante de conexion
+                assert conn is not None
                 conn.executescript(script)
 
     def commit(self) -> None:
