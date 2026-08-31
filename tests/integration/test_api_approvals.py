@@ -63,7 +63,7 @@ def test_approval_health():
 @pytest.mark.integration
 def test_approval_chat_completions():
     payload = {
-        "model": "qwen2.5-coder:14b",
+        "model": "llama3:latest",
         "messages": [{"role": "user", "content": "hola"}],
     }
     r = _post_endpoint(f"{MODEL_ROUTER}/v1/chat/completions", payload)

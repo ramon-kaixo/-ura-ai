@@ -85,6 +85,8 @@ def _save_restart_to_qdrant() -> None:
                     "exit_code": -1,
                 },
             )
+    except (ImportError, AttributeError) as e:
+        logger.warning("Qdrant client no disponible o mal configurado: %s", str(e))
     except Exception:
         logger.exception("Error guardando incidente de reinicio en Qdrant")
 
