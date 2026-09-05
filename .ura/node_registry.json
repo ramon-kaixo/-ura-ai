@@ -6,8 +6,8 @@
       "tailscale_ip": "100.72.103.12",
       "api_port": 4097,
       "status": "online",
-      "last_seen": 1787837307.637399,
-      "last_latency_ms": 7.3,
+      "last_seen": 1787798907.185861,
+      "last_latency_ms": 27.0,
       "consecutive_failures": 0,
       "tags": [
         "desktop",
@@ -16,16 +16,29 @@
     },
     "mac": {
       "node_id": "mac",
-      "hostname": "mac-mini",
+      "hostname": "mac-mini-m4",
       "tailscale_ip": "100.123.81.101",
       "api_port": 4097,
       "status": "online",
-      "last_seen": 1787837307.643317,
-      "last_latency_ms": 5.9,
+      "last_seen": 1787798907.2024722,
+      "last_latency_ms": 16.6,
       "consecutive_failures": 0,
       "tags": [
         "mac",
         "m4"
+      ]
+    },
+    "e2e-test": {
+      "node_id": "e2e-test",
+      "hostname": "e2e-test-host",
+      "tailscale_ip": "192.0.2.1",
+      "api_port": 4097,
+      "status": "unknown",
+      "last_seen": 0.0,
+      "last_latency_ms": 0.0,
+      "consecutive_failures": 0,
+      "tags": [
+        "e2e"
       ]
     }
   }

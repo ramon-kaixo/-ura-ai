@@ -103,7 +103,7 @@ def test_request_compile_ok(tmp_path) -> None:
     db = tmp_path / "k.db"
     from knowledge.engine.sqlite_writer import init_db
 
-    init_db(db, Path("schemas/knowledge_graph.sql"))
+    init_db(db, Path("/home/ramon/URA/ura_ia_1972/schemas/knowledge_graph.sql"))
     n = request_compile("test-ok", db_path=db, source_dir=src)
     assert n == 1
     conn = sqlite3.connect(db)

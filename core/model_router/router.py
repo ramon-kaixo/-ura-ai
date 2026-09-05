@@ -92,5 +92,5 @@ ROUTER_PORT = 11435
 
 
 DEFAULT_TIPO = "respuesta_rapida"
-FALLBACK_MODEL = "llama3:latest"
+FALLBACK_MODEL = "qwen3-coder:30b-mejorado"
 CACHE_TTL = 7200

@@ -354,7 +354,6 @@ def test_cmd_agent_list_y_run(monkeypatch, capsys, tmp_path) -> None:
 def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
     import os
     import sys
-
     calls = []
 
     def _fake_uvicorn(app: str, **kw: object) -> None:
@@ -362,7 +361,17 @@ def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
 
     fake_uv = type("U", (), {"run": staticmethod(_fake_uvicorn)})()
     monkeypatch.setitem(sys.modules, "uvicorn", fake_uv)
-    monkeypatch.setattr("motor.core.secrets.get_secret", lambda name: "S3CRET")
+    
+    # Custom get_secret mock that respects env var priority
+    original_get_secret = None
+    def mock_get_secret(name: str):
+        if name == "URA_API_KEY":
+            env_val = os.environ.get("URA_API_KEY")
+            if env_val:
+                return env_val
+        return "S3CRET"
+    
+    monkeypatch.setattr("motor.core.secrets.get_secret", mock_get_secret)
     monkeypatch.delenv("URA_API_KEY", raising=False)
     assert _run(monkeypatch, capsys, _args(tmp_path, "api", "--port", "4097", "--host", "127.0.0.1", "--auth", "clave")) == 0
     assert calls[0][1]["port"] == 4097
@@ -373,6 +382,7 @@ def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
     assert os.environ["URA_API_KEY"] == "env-key"
     monkeypatch.setattr("motor.core.secrets.get_secret", lambda name: None)
     assert _run(monkeypatch, capsys, _args(tmp_path, "api", "--host", "0.0.0.0")) == 0  # noqa: S104
+    assert calls[2][1]["host"] == "0.0.0.0"  # noqa: S104
     assert calls[2][1]["host"] == "0.0.0.0"  # noqa: S104
 
 

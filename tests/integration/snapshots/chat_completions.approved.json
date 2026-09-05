@@ -11,7 +11,7 @@
   ],
   "created": 1785371092,
   "id": "chatcmpl-74",
-  "model": "llama3:latest",
+  "model": "qwen3-coder:30b-mejorado",
   "object": "chat.completion",
   "system_fingerprint": "fp_ollama",
   "usage": {
