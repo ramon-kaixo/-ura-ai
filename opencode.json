@@ -45,7 +45,7 @@
     "ollama": {
       "name": "Ollama (ASUS/GX10)",
       "options": {
-        "baseURL": "http://100.72.103.12:11434/v1"
+        "baseURL": "http://10.164.1.99:11434/v1"
       },
       "models": {
         "qwen3-coder:30b-mejorado": {

@@ -6,8 +6,8 @@
 
 - **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
 - **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
-- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@100.72.103.12`
-- Para trabajar directamente en ASUS: usar `ssh ramon@100.72.103.12 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
+- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@gx10` (alias ssh → LAN 10.164.1.99; `gx10-ts` para Tailscale 100.72.103.12)
+- Para trabajar directamente en ASUS: usar `ssh gx10 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
 
 ### Flujo de Trabajo Obligatorio
 1. **Desarrollar** en Mac (edithores, tests locales)
@@ -232,7 +232,7 @@ Organizados por función en las siguientes categorías:
 - **Hardware**: NVIDIA GB10 Grace Blackwell, 20 núcleos ARM, GPU Blackwell FP4/FP8, 128 GB memoria unificada.
 - **Servicios críticos**: ollama (11434), ura-api (8000), ura-audit-api (8080), ura-mochila, ura-metrics (8888), ura-watcher, ura-detector (YOLOv8), ura-voice, ura-contraste (8002), model-router (11435). Detalles y estados en la referencia.
 - **Rootfs**: puede estar montado RO (ver REFERENCIA_GX10.md y `ura-engineering-check --env`).
-- **Red**: GX10 Ethernet 10.164.1.99 (sin carrier desde 2026-08-24; usar WiFi o Tailscale) / WiFi 10.164.1.247 / Tailscale 100.72.103.12.
+- **Red** (verificado 2026-09-08): GX10 Ethernet 10.164.1.99 **activa** (usar esta vía preferente) / WiFi 192.168.1.140 (antes 10.164.1.247, obsoleta) / Tailscale 100.72.103.12 (puede estar caída; usar `gx10-ts` con verificación). Alias ssh en la Mac: `gx10`→LAN 10.164.1.99, `gx10-lan`, `gx10-ts`→Tailscale.
 - **Model Router**: `motor/` + Ollama; rutas razonamiento/codigo/vision/embeddings (detalle en referencia).
 
 ## Core Modification Rule (ADR-007)
