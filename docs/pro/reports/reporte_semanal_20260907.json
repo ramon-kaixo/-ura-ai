@@ -1,0 +1,22 @@
+{
+  "tuneladora": "mantenimiento_profundo",
+  "fecha": "2026-09-07T04:00:39.898426+00:00",
+  "health": {
+    "ram_usada_mb": 19509,
+    "zombies": 0,
+    "disco_libre_gb": 1163.2
+  },
+  "alertas": [],
+  "dispositivos": {
+    "gx10_principal": "OK",
+    "gx10_wifi": "DOWN",
+    "gx10_tailscale": "OK",
+    "mac_ethernet": "OK",
+    "mac_tailscale": "OK"
+  },
+  "models_disponibles": 8,
+  "refactor_ok": 0,
+  "refactor_err": 0,
+  "f821_final": 0,
+  "git": "blocked_by_auditor"
+}
