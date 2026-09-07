@@ -11,12 +11,33 @@ PROJECT_CONFIG="$(dirname "$0")/../../opencode.json"
 
 MODELS='{
   "qwen3-coder:30b": { "tools": true, "reasoning": false, "limit": { "context": 262144, "output": 8192 } },
+  "qwen3-coder:30b-mejorado": { "tools": true, "reasoning": false, "limit": { "context": 262144, "output": 8192 } },
   "qwen3.6:27b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
   "llama3:latest": { "tools": true, "reasoning": false, "limit": { "context": 8192, "output": 4096 } },
   "llama3.3:70b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
   "gemma4:26b": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
   "nemotron-3-nano:30b-a3b-q4_K_M": { "tools": true, "reasoning": true, "limit": { "context": 131072, "output": 8192 } },
   "nomic-embed-text:latest": { "tools": false, "reasoning": false, "limit": { "context": 2048, "output": 0 } }
+}'
+
+# Conjunto canonico de agentes (TASK-20260828-unificacion-agentes)
+AGENTS='{
+  "general": {
+    "model": "ollama/qwen3-coder:30b-mejorado",
+    "tools": { "read": true, "write": true, "edit": true, "bash": true, "grep": true, "glob": true, "task": true, "webfetch": true, "websearch": true }
+  },
+  "coder": {
+    "model": "ollama/qwen3-coder:30b-mejorado",
+    "tools": { "read": true, "write": true, "edit": true, "bash": true, "grep": true, "glob": true, "task": true, "webfetch": true, "websearch": true }
+  },
+  "orchestrator": {
+    "model": "ollama/qwen3-coder:30b-mejorado",
+    "tools": { "read": true, "write": false, "edit": false, "bash": true, "grep": true, "glob": true, "task": true, "webfetch": false, "websearch": false }
+  },
+  "build": {
+    "model": "ollama/qwen3-coder:30b-mejorado",
+    "tools": { "read": true, "write": true, "edit": true, "bash": true, "grep": true, "glob": true, "task": true, "webfetch": true, "websearch": true }
+  }
 }'
 
 PERMISSIONS='{
@@ -37,9 +58,9 @@ FEATURES='{
 }'
 
 REFS_MAC='{
-  "docs": {"path": "/Users/ramonesnaola/URA/ura_ia_1972/docs", "description": "URA project documentation"},
-  "arch": {"path": "/Users/ramonesnaola/URA/ura_ia_1972/docs/architecture", "description": "Architecture docs"},
-  "udo": {"path": "/Users/ramonesnaola/URA/ura_ia_1972/docs/udo", "description": "UDO task system docs"}
+  "docs": {"path": "/Users/ramonesnaola/URA/docs", "description": "URA project documentation"},
+  "arch": {"path": "/Users/ramonesnaola/URA/docs/architecture", "description": "Architecture docs"},
+  "udo": {"path": "/Users/ramonesnaola/URA/docs/udo", "description": "UDO task system docs"}
 }'
 
 REFS_GX10='{
@@ -69,9 +90,13 @@ cfg = {
             'models': json.loads('''$MODELS''')
         }
     },
-    'model': 'ollama/qwen3.6:27b',
+    'model': 'ollama/qwen3-coder:30b-mejorado',
     'default_agent': 'general',
-    'username': 'ramon'
+    'username': 'ramon',
+    'agent': json.loads('''$AGENTS'''),
+    'mcp': {
+        'codewiki': {'type': 'local', 'command': ['/Users/ramonesnaola/.npm-global/bin/codewiki-mcp'], 'enabled': True}
+    }
 }
 with open('$MAC_CONFIG', 'w') as f:
     json.dump(cfg, f, indent=2)
@@ -89,9 +114,13 @@ cfg['permission'] = json.loads('''$PERMISSIONS''')
 cfg['references'] = json.loads('''$REFS_GX10''')
 cfg.update(json.loads('''$FEATURES'''))
 cfg['provider']['ollama']['models'] = json.loads('''$MODELS''')
-cfg['model'] = 'ollama/qwen3.6:27b'
+cfg['model'] = 'ollama/qwen3-coder:30b-mejorado'
 cfg['default_agent'] = 'general'
 cfg['username'] = 'ramon'
+cfg['agent'] = json.loads('''$AGENTS''')
+cfg['mcp'] = {
+    'codewiki': {'type': 'local', 'command': ['/home/ramon/.npm-global/bin/codewiki-mcp'], 'enabled': True}
+}
 with open('$GX10_DESKTOP', 'w') as f:
     json.dump(cfg, f, indent=2)
 print('OK')
@@ -117,9 +146,10 @@ cfg = {
         },
         'gemini': {'npm': '@ai-sdk/google', 'options': {'apiKey': '\$GEMINI_API_KEY'}, 'models': {'gemini-2.0-flash': {}}}
     },
-    'model': 'ollama/qwen3-coder:30b',
+    'model': 'ollama/qwen3-coder:30b-mejorado',
     'default_agent': 'general',
     'username': 'ramon',
+    'agent': json.loads('''$AGENTS'''),
     'mcp': {
         'codewiki': {'type': 'local', 'command': ['/home/ramon/.npm-global/bin/codewiki-mcp'], 'enabled': True}
     }
