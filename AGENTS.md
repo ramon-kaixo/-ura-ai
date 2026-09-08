@@ -232,7 +232,7 @@ Organizados por función en las siguientes categorías:
 - **Hardware**: NVIDIA GB10 Grace Blackwell, 20 núcleos ARM, GPU Blackwell FP4/FP8, 128 GB memoria unificada.
 - **Servicios críticos**: ollama (11434), ura-api (8000), ura-audit-api (8080), ura-mochila, ura-metrics (8888), ura-watcher, ura-detector (YOLOv8), ura-voice, ura-contraste (8002), model-router (11435). Detalles y estados en la referencia.
 - **Rootfs**: puede estar montado RO (ver REFERENCIA_GX10.md y `ura-engineering-check --env`).
-- **Red** (verificado 2026-09-08): GX10 Ethernet 10.164.1.99 **activa** (usar esta vía preferente) / WiFi 192.168.1.140 (antes 10.164.1.247, obsoleta) / Tailscale 100.72.103.12 (puede estar caída; usar `gx10-ts` con verificación). Alias ssh en la Mac: `gx10`→LAN 10.164.1.99, `gx10-lan`, `gx10-ts`→Tailscale.
+- **Red** (verificado 2026-09-08): GX10 Ethernet 10.164.1.99 **activa** (usar esta vía preferente) / WiFi 192.168.1.140 (antes 10.164.1.247, obsoleta) / Tailscale **activo** (100.72.103.12, ping directo ~1ms). Alias ssh en la Mac: `gx10`→LAN 10.164.1.99, `gx10-lan`, `gx10-ts`→Tailscale. En la Mac, Tailscale lo gestiona la app GUI (IPNExtension); el CLI brew (`tailscale`) es solo cliente. El servicio brew `homebrew.mxcl.tailscale` está desactivado (redundante, requiere root).
 - **Model Router**: `motor/` + Ollama; rutas razonamiento/codigo/vision/embeddings (detalle en referencia).
 
 ## Core Modification Rule (ADR-007)
