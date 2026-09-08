@@ -44,16 +44,15 @@
       "TASK-20260818-023",
       "TASK-20260828-003"
     ],
-    "bloqueadas": [
-      "TASK-20260817-020"
-    ],
+    "bloqueadas": [],
     "cerradas": [
       "TASK-20260816-003",
       "TASK-20260816-004",
       "TASK-20260816-007",
       "TASK-20260816-005",
       "TASK-20260816-008",
-      "TASK-20260816-010"
+      "TASK-20260816-010",
+      "TASK-20260817-020"
     ]
   },
   "agentes": {
@@ -693,7 +692,7 @@
       ]
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-07T23:12:38Z",
+  "ultima_ejecucion_despertador": "2026-09-08T02:24:31Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",

@@ -21,6 +21,11 @@
   - Decisión: mantener documentada (igual que pylint/flake8/black). Si no se usa safety, desinstalar safety+nltk.
 - safety 3.8.1 + nltk 3.10.3: herramientas dev, no están en requirements del proyecto.
 
+## Actualización 2026-09-08 04:30 — DECISIÓN EJECUTADA
+- safety + nltk DESINSTALADOS del venv (no se usaban en ningún script del proyecto).
+- Vulnerabilidad nltk PYSEC-2026-3740 ELIMINADA (pip-audit ya no la reporta).
+- Backup de la lista de paquetes: /tmp/venv-before-safety-removal.txt
+
 ## Decisión (pendiente de Ramón)
 - [ ] Opción A: desinstalar del venv (pip uninstall) — limpio pero irreversible sin reinstalar
 - [ ] Opción B: documentar como tooling personal (estado actual) — no molesta
