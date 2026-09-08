@@ -21,3 +21,10 @@ La policy activa en la consola Tailscale es la **DEFAULT abierta**:
 ## Archivos de referencia
 - `scripts/pro/tailscale-policy-paste.json` — policy JSON puro lista para pegar
 - `scripts/pro/tailscale-acls.json` — versión documentada con comentarios
+
+## Verificación 2026-09-08 04:05 (segunda ronda)
+- El tag:worker SÍ está aplicado a mac-mini-de-ramon (confirmado local y desde GX10).
+- PERO la policy de ACLs sigue siendo la DEFAULT abierta (1 regla: *:0-65535).
+- Los puertos NO permitidos (9090, 8003, 3080, 2222...) SIGUEN accesibles.
+- Conclusión: se aplicó el tag pero NO se reemplazó la policy en la consola.
+  En Tailscale, un tag sin reglas restrictivas NO limita nada (default = permitir todo entre nodos del tailnet).
