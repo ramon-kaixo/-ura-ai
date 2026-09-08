@@ -1,0 +1,49 @@
+{
+  "acls": [
+    {
+      "action": "accept",
+      "src": [
+        "tag:master"
+      ],
+      "dst": [
+        "*:*"
+      ]
+    },
+    {
+      "action": "accept",
+      "src": [
+        "tag:worker"
+      ],
+      "dst": [
+        "tag:master:22",
+        "tag:master:443",
+        "tag:master:8002",
+        "tag:master:8081",
+        "tag:master:18789",
+        "tag:master:11434",
+        "tag:master:11435",
+        "tag:master:4097"
+      ]
+    },
+    {
+      "action": "accept",
+      "src": [
+        "tag:pos"
+      ],
+      "dst": [
+        "tag:master:8002"
+      ]
+    }
+  ],
+  "tagOwners": {
+    "tag:master": [
+      "barkaixo@gmail.com"
+    ],
+    "tag:worker": [
+      "barkaixo@gmail.com"
+    ],
+    "tag:pos": [
+      "barkaixo@gmail.com"
+    ]
+  }
+}
