@@ -28,3 +28,12 @@ La policy activa en la consola Tailscale es la **DEFAULT abierta**:
 - Los puertos NO permitidos (9090, 8003, 3080, 2222...) SIGUEN accesibles.
 - Conclusión: se aplicó el tag pero NO se reemplazó la policy en la consola.
   En Tailscale, un tag sin reglas restrictivas NO limita nada (default = permitir todo entre nodos del tailnet).
+
+## VERIFICACION FINAL 2026-09-08 04:20 — POLICY APLICADA ✅
+- La policy restrictiva se aplico correctamente en la consola.
+- Prueba funcional (desde Mac con tag:worker, via Tailscale utun5):
+  - Puertos NO permitidos (9090, 9092, 2222, 8003): BLOQUEADOS ✅
+  - Puertos permitidos (22, 443, 8081, 11434, 11435, 4097): ACCESIBLES ✅
+- SSH por Tailscale OK, SSH por LAN OK, sync automatico OK (6/7 items).
+- Aislamiento perimetral ACTIVO. Ningun flujo roto.
+- Nota: el netmap local puede mostrar 1 entrada resumida; la prueba funcional es la evidencia real.
