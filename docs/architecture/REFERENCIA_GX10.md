@@ -133,7 +133,7 @@ Cámaras (RTSP/HTTP) → YOLOv8-Nano + ByteTrack → Qwen2-VL → Dashboard :909
 - `qwen2.5-coder:q8_0` (código complejo) - 34 GB
 
 ### Red (verificado 2026-09-08)
-- GX10: Ethernet 10.164.1.99 **activa** (vía preferente) / WiFi 192.168.1.140 / Tailscale 100.72.103.12 (puede estar caída)
+- GX10: Ethernet 10.164.1.99 **activa** (vía preferente) / WiFi 192.168.1.140 / Tailscale 100.72.103.12 **activo** (ping Mac-GX10 ~1ms directo)
 - Mac: Ethernet 10.164.1.26, Tailscale 100.123.81.101
 - Alias ssh (Mac): gx10 -> 10.164.1.99 (LAN, preferente), gx10-ts -> 100.72.103.12 (Tailscale), gx10-lan legacy obsoleto
 - Linksys Velop MX4200: 10.164.1.1 (lighttpd+JNAP API, cloud-managed)
