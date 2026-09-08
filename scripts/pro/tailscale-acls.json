@@ -2,7 +2,7 @@
   "//": "URA Tailscale ACLs — Aislamiento perimetral multi-nodo",
   "//_fecha": "2026-09-08 (revisado; original 2026-06-20)",
   "//_instrucciones": "Copiar en Tailscale Console (https://login.tailscale.com/admin/acls) como policy file",
-  "//_nota": "Workers incluyen SSH(22) al master: la Mac ejecuta sync/rsync cada 5 min por LAN/Tailscale. mac-mini-de-ramon debe llevar tag:worker en la consola.",
+  "//_nota": "Workers incluyen SSH(22) al master: la Mac ejecuta sync/rsync cada 5 min por LAN/Tailscale. mac-mini-de-ramon lleva tag:worker (aplicado 2026-09-08).",
 
   "acls": [
     {
@@ -50,6 +50,6 @@
     "pos": [
       "caja0 (100.127.217.113)"
     ],
-    "//_pendiente": "Aplicar tag:worker a mac-mini-de-ramon en la consola Tailscale (hoy sin tag)."
+    "//_estado": "tag:worker aplicado a mac-mini-de-ramon el 2026-09-08 (verificado en consola y status local)."
   }
 }
