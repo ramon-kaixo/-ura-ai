@@ -2,9 +2,30 @@
   "$schema": "https://opencode.ai/config.json",
   "snapshot": true,
   "share": "disabled",
+  "model": "ollama/qwen3-coder:30b-mejorado",
   "compaction": {
     "auto": true,
-    "tail_turns": 15
+    "tail_turns": 10,
+    "preserve_recent_tokens": 180000,
+    "reserved": 30000,
+    "prune": true
+  },
+  "formatter": true,
+  "lsp": true,
+  "instructions": [
+    "Lee siempre el archivo .opencode/memory.md al inicio de cada sesión.",
+    "Actualiza .opencode/memory.md al completar hitos clave, cambios de arquitectura, decisiones importantes o al finalizar una tarea significativa.",
+    "Mantén el archivo actualizado con el estado actual del proyecto, decisiones de arquitectura, problemas conocidos y próximos pasos."
+  ],
+  "context_files": [
+    ".opencode/memory.md"
+  ],
+  "compaction": {
+    "auto": true,
+    "tail_turns": 10,
+    "preserve_recent_tokens": 180000,
+    "reserved": 30000,
+    "prune": true
   },
   "formatter": true,
   "lsp": true,
@@ -63,6 +84,11 @@
           "reasoning": true,
           "limit": { "context": 131072, "output": 8192 }
         },
+        "qwen3.6:27b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
         "gemma4:26b": {
           "tools": true,
           "reasoning": true,
@@ -96,5 +122,171 @@
       }
     }
   },
-  "model": "ollama/qwen3-coder:30b-mejorado"
+  "model": "ollama/qwen3-coder:30b-mejorado",
+  "compaction": {
+    "auto": true,
+    "tail_turns": 10,
+    "preserve_recent_tokens": 180000,
+    "reserved": 30000,
+    "prune": true
+  },
+  "formatter": true,
+  "lsp": true,
+  "instructions": [
+    "Lee siempre el archivo .opencode/memory.md al inicio de cada sesión.",
+    "Actualiza .opencode/memory.md al completar hitos clave, cambios de arquitectura, decisiones importantes o al finalizar una tarea significativa.",
+    "Mantén el archivo actualizado con el estado actual del proyecto, decisiones de arquitectura, problemas conocidos y próximos pasos."
+  ],
+  "context_files": [
+    ".opencode/memory.md"
+  ],
+  "compaction": {
+    "auto": true,
+    "tail_turns": 10,
+    "preserve_recent_tokens": 180000,
+    "reserved": 30000,
+    "prune": true
+  },
+  "formatter": true,
+  "lsp": true,
+  "references": {
+    "docs": {
+      "path": "docs",
+      "description": "URA project documentation"
+    },
+    "arch": {
+      "path": "docs/architecture",
+      "description": "Architecture docs"
+    },
+    "udo": {
+      "path": "docs/udo",
+      "description": "UDO task system docs"
+    }
+  },
+  "permission": {
+    "read": "allow",
+    "edit": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "bash": "allow",
+    "task": "allow",
+    "external_directory": "allow",
+    "todowrite": "allow",
+    "question": "allow",
+    "webfetch": "allow",
+    "websearch": "allow",
+    "skill": "allow"
+  },
+  "experimental": {
+    "openTelemetry": true,
+    "batch_tool": true
+  },
+  "provider": {
+    "ollama": {
+      "name": "Ollama (ASUS/GX10)",
+      "options": {
+        "baseURL": "http://10.164.1.99:11434/v1"
+      },
+      "models": {
+        "qwen3-coder:30b-mejorado": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 262144, "output": 8192 }
+        },
+        "qwen3-coder:30b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 262144, "output": 8192 }
+        },
+        "qwen3.6:27b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "qwen3.6:27b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "gemma4:26b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "nemotron-3-nano:30b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "llama3.3:70b": {
+          "tools": true,
+          "reasoning": true,
+          "limit": { "context": 131072, "output": 8192 }
+        },
+        "llama3": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "llava:7b": {
+          "tools": true,
+          "reasoning": false,
+          "limit": { "context": 8192, "output": 4096 }
+        },
+        "nomic-embed-text": {
+          "tools": false,
+          "reasoning": false,
+          "limit": { "context": 2048, "output": 0 }
+        }
+      }
+    }
+  },
+  "model": "ollama/qwen3-coder:30b-mejorado",
+  "customTools": {
+    "memory:read": {
+      "description": "Leer el contenido completo del archivo de memoria del proyecto",
+      "command": "cat .opencode/memory.md"
+    },
+    "memory:write": {
+      "description": "Sobrescribe el archivo de memoria con el contenido proporcionado",
+      "command": "cat > .opencode/memory.md"
+    },
+    "memory:append": {
+      "description": "Añade contenido al final del archivo de memoria",
+      "command": "cat >> .opencode/memory.md"
+    },
+    "memory:search": {
+      "description": "Buscar término en el archivo de memoria",
+      "command": "grep -i",
+      "args": [
+        "$1",
+        ".opencode/memory.md"
+      ]
+    },
+    "memory:compact": {
+      "description": "Fuerza compactación manual de la sesión actual",
+      "command": "opencode run -- /compact"
+    },
+    "memory:export": {
+      "description": "Exporta la sesión actual a JSON para backup",
+      "command": "opencode export"
+    },
+    "memory:import": {
+      "description": "Importa sesión desde archivo JSON",
+      "command": "opencode import"
+    },
+    "memory:stats": {
+      "description": "Muestra estadísticas de uso de tokens últimos 7 días",
+      "command": "opencode stats --days 7"
+    },
+    "memory:list": {
+      "description": "Lista todas las sesiones con sus tamaños",
+      "command": "opencode session list"
+    },
+    "memory:cleanup": {
+      "description": "Eliminar sesiones antiguas para liberar espacio",
+      "command": "opencode session delete"
+    }
+  }
 }
