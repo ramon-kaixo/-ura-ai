@@ -62,52 +62,74 @@
         "qwen3-coder:30b-mejorado": {
           "tools": true,
           "reasoning": false,
-          "limit": { "context": 262144, "output": 8192 }
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         },
         "qwen3-coder:30b": {
           "tools": true,
           "reasoning": false,
-          "limit": { "context": 262144, "output": 8192 }
+          "limit": {
+            "context": 262144,
+            "output": 8192
+          }
         },
         "qwen3.6:27b": {
           "tools": true,
           "reasoning": true,
-          "limit": { "context": 131072, "output": 8192 }
-        },
-        "qwen3.6:27b": {
-          "tools": true,
-          "reasoning": true,
-          "limit": { "context": 131072, "output": 8192 }
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         },
         "gemma4:26b": {
           "tools": true,
           "reasoning": true,
-          "limit": { "context": 131072, "output": 8192 }
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         },
         "nemotron-3-nano:30b": {
           "tools": true,
           "reasoning": true,
-          "limit": { "context": 131072, "output": 8192 }
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         },
         "llama3.3:70b": {
           "tools": true,
           "reasoning": true,
-          "limit": { "context": 131072, "output": 8192 }
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
         },
         "llama3": {
           "tools": true,
           "reasoning": false,
-          "limit": { "context": 8192, "output": 4096 }
+          "limit": {
+            "context": 8192,
+            "output": 4096
+          }
         },
         "llava:7b": {
           "tools": true,
           "reasoning": false,
-          "limit": { "context": 8192, "output": 4096 }
+          "limit": {
+            "context": 8192,
+            "output": 4096
+          }
         },
         "nomic-embed-text": {
           "tools": false,
           "reasoning": false,
-          "limit": { "context": 2048, "output": 0 }
+          "limit": {
+            "context": 2048,
+            "output": 0
+          }
         }
       }
     }
@@ -158,6 +180,15 @@
     "memory:cleanup": {
       "description": "Eliminar sesiones antiguas para liberar espacio",
       "command": "opencode session delete"
+    }
+  },
+  "mcp": {
+    "codewiki": {
+      "type": "local",
+      "command": [
+        "/home/ramon/.npm-global/bin/codewiki-mcp"
+      ],
+      "enabled": true
     }
   }
 }
