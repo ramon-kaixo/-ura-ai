@@ -118,25 +118,41 @@ def check_huerfanos() -> dict:
         stem = f.stem
         if stem in conectados:
             continue
-        refs = subprocess.run(  # noqa: PLW1510 — legacy/estable, sin cambio de comportamiento
-            [
-                "grep",
-                "-rl",
-                f"scripts.pro.{stem}",
-                "--include=*.py",
-                str(ROOT / "core"),
-                str(ROOT / "motor"),
-                str(ROOT / "knowledge"),
-                str(ROOT / "scripts"),
-                str(ROOT / "tests"),
-                str(ROOT / ".github"),
-            ],
-            capture_output=True,
-            text=True,
-            timeout=30,
-        ).stdout.splitlines()
-        refs = [r for r in refs if not r.endswith(f"/{f.name}")]
-        if not refs:
+        # Buscar referencias de múltiples formas:
+        # 1. Import estilo scripts.pro.module
+        # 2. Import relativo: from module import / import module
+        # 3. Referencias directas al archivo .py
+        patrones_busqueda = [
+            f"scripts.pro.{stem}",
+            f"from {stem} import",
+            f"import {stem}",
+            f"{stem}.py",
+        ]
+        encontrado = False
+        for patron in patrones_busqueda:
+            refs = subprocess.run(  # noqa: PLW1510
+                [
+                    "grep",
+                    "-rl",
+                    patron,
+                    "--include=*.py",
+                    str(ROOT / "core"),
+                    str(ROOT / "motor"),
+                    str(ROOT / "knowledge"),
+                    str(ROOT / "scripts"),
+                    str(ROOT / "tests"),
+                    str(ROOT / "build" / "lib"),
+                    str(ROOT / ".github"),
+                ],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            ).stdout.splitlines()
+            refs = [r for r in refs if not r.endswith(f"/{f.name}")]
+            if refs:
+                encontrado = True
+                break
+        if not encontrado:
             huerfanos.append(stem)
     return _check("huerfanos", len(huerfanos) <= 20, f"{len(huerfanos)}: {', '.join(huerfanos[:5])}")
 

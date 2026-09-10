@@ -56,6 +56,7 @@ Verificado en `descarte_temporal/` junto a contenido previo existente.
 - Test ejecutado:
   ```python
   from motor.orchestration.orchestrator import Orchestrator
+
   o = Orchestrator()
   tasks = o.publish_plan("## Fase 1: Test smoke\nTest mínima\n- Prioridad: 1\n- Horas: 0.5")
   # OK: 1 tarea creada (TASK-20260829-850990)
