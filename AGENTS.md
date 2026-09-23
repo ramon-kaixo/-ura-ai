@@ -680,3 +680,12 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 4. La rama de tarea del TERM (ej. `ia/TASK-20260816-005`) es su zona de trabajo activa: no rebasearla/force-pushearla sin autorización expresa del coordinador; su auto-push commitea cada pocos minutos.
 5. **Mover/renombrar directorios DURANTE una sesión puede romper el cwd del shell persistent** (lección 2026-08-28, al mover `ura_ia_1972/` residual a `.nervioso/descarte/`): los comandos posteriores fallan con `NotFound: FileSystem.access`. Usar **`workdir` explícito** en cada invocación hasta reiniciar la sesión. Además, el hook `pre-commit` de la Mac embebe la ruta de config al instalar: si el layout del repo cambia, regenerar con `pre-commit install`.
 6. **Archivos del TERM en staged sin commitear**: si los archivos de la zona del TERM (`motor/orchestration/*`, `scripts/pro/parse_plan_to_tasks.py`, `motor/core/utils/__init__.py`, etc.) quedan staged durante varias sesiones, es **riesgo de pérdida**. Cuando un gate (p.ej. cierre UDO) exija árbol limpio y esos archivos lleven horas staged, **commitearlos con `--no-verify`** y mensaje `chore(term): preservar cambios staged del TERM` es la acción segura (el trabajo se preserva; el TERM puede continuar sobre su commit).
+
+## TAREAS DE AUDITORÍA (PLAN C2 - 20260818)
+- [x] A1. Documental — Lecciones operativas en docs/udo/hallazgos-fondo.md
+- [x] A2. Documental — Nota operativa del flujo Mac↔ASUS
+- [x] A3. Config — Agrupar auto-push del TERM (Delegado)
+- [x] A4. Coordinación — Rama dedicada para veredictos del TERM (Delegado)
+- [x] A5. Proceso — Gate de integridad UDO en todo cierre
+- [~] A6. Deuda (TASK Futura) — Cobertura de módulos tocados por C2
+- [x] A7. Verificación — Confirmar estado de los 30 noqa PLR0917
