@@ -1,6 +1,7 @@
 """Tests para generate_index.py y block_reviewer.py."""
 
 from __future__ import annotations
+import pytest
 
 import json
 from pathlib import Path
@@ -26,6 +27,7 @@ def _cfg(tmp_path: Path) -> Configuration:
 
 
 class TestExtractFunctions:
+    @pytest.mark.integration
     def test_funciones_y_clases(self, tmp_path: Path) -> None:
         f = tmp_path / "a.py"
         f.write_text("def foo():\n    pass\nclass Bar:\n    pass\nasync def baz():\n    pass\n")
@@ -33,6 +35,7 @@ class TestExtractFunctions:
         names = {(x["name"], x["type"]) for x in funcs}
         assert names == {("foo", "function"), ("Bar", "class"), ("baz", "function")}
 
+    @pytest.mark.integration
     def test_syntax_error(self, tmp_path: Path) -> None:
         f = tmp_path / "b.py"
         f.write_text("def roto(:\n")
@@ -40,6 +43,7 @@ class TestExtractFunctions:
 
 
 class TestExtractCalls:
+    @pytest.mark.integration
     def test_atributo_y_nombre(self, tmp_path: Path) -> None:
         f = tmp_path / "c.py"
         f.write_text("config.get('a')\nprint('x')\n")
@@ -47,6 +51,7 @@ class TestExtractCalls:
         assert ("config", "get") in calls
         assert ("module", "print") in calls
 
+    @pytest.mark.integration
     def test_syntax_error(self, tmp_path: Path) -> None:
         f = tmp_path / "d.py"
         f.write_text("def roto(:\n")
@@ -54,6 +59,7 @@ class TestExtractCalls:
 
 
 class TestBuildIndex:
+    @pytest.mark.integration
     def test_con_archivos(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         src = tmp_path / "scripts" / "pro" / "tuneladora"
@@ -74,6 +80,7 @@ class TestBuildIndex:
         data = json.loads(index_file.read_text())
         assert data["stats"]["files"] == 1
 
+    @pytest.mark.integration
     def test_sin_archivos_descubre(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         src = tmp_path / "scripts" / "pro" / "tuneladora"
@@ -88,6 +95,7 @@ class TestBuildIndex:
 
 
 class TestBlockReviewer:
+    @pytest.mark.integration
     def test_review_block_lanza_thread(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         with mock.patch("scripts.pro.tuneladora.pipeline.block_reviewer._do_review") as m_do:
@@ -98,6 +106,7 @@ class TestBlockReviewer:
         assert args[2] == "abc"
         assert args[3] == ["t1"]
 
+    @pytest.mark.integration
     def test_do_review_ok(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         resp = SimpleNamespace(
@@ -123,6 +132,7 @@ class TestBlockReviewer:
         assert "+diff" in prompt
         assert "t1" in prompt
 
+    @pytest.mark.integration
     def test_do_review_llm_falla(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         with (
@@ -139,6 +149,7 @@ class TestBlockReviewer:
         files = list((cfg.tuneladora_dir / "reviews").glob("block_b2_*.md"))
         assert "Error generating review" in files[0].read_text()
 
+    @pytest.mark.integration
     def test_get_diff_con_head(self, tmp_path: Path) -> None:
         with mock.patch(
             "scripts.pro.tuneladora.pipeline.block_reviewer.subprocess.run",
@@ -148,6 +159,7 @@ class TestBlockReviewer:
         assert "diff largo" in out
         assert "HEAD..abc123" in m_run.call_args[0][0]
 
+    @pytest.mark.integration
     def test_get_diff_sin_head(self, tmp_path: Path) -> None:
         with mock.patch(
             "scripts.pro.tuneladora.pipeline.block_reviewer.subprocess.run",
@@ -155,6 +167,7 @@ class TestBlockReviewer:
         ):
             assert _get_diff(tmp_path) == "(no diff)"
 
+    @pytest.mark.integration
     def test_get_diff_error(self, tmp_path: Path) -> None:
         with mock.patch(
             "scripts.pro.tuneladora.pipeline.block_reviewer.subprocess.run",
@@ -165,6 +178,7 @@ class TestBlockReviewer:
 
 
 class TestGenerateIndexMain:
+    @pytest.mark.integration
     def test_main(self, monkeypatch, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         monkeypatch.setattr("sys.argv", ["generate_index.py"])

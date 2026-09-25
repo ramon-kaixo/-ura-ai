@@ -1,3 +1,4 @@
+import pytest
 """Hypothesis property-based tests for URA core modules."""
 
 from hypothesis import given, settings
@@ -10,6 +11,7 @@ from motor.core.query_cache import AsyncQueryCache
 
 @given(text(max_size=500))
 @settings(max_examples=50)
+@pytest.mark.unit
 def test_chunking_invariants(text_in: str) -> None:
     if not text_in.strip():
         return
@@ -20,6 +22,7 @@ def test_chunking_invariants(text_in: str) -> None:
 
 @given(text(max_size=200), booleans(), booleans(), integers(min_value=1, max_value=10))
 @settings(max_examples=30)
+@pytest.mark.unit
 def test_cache_key_properties(query: str, r: bool, h: bool, k: int) -> None:
     cache = AsyncQueryCache()
     key = cache.compute_key(query, use_reranker=r, use_hybrid=h, top_k=k)
@@ -30,6 +33,7 @@ def test_cache_key_properties(query: str, r: bool, h: bool, k: int) -> None:
 
 @given(text(max_size=300))
 @settings(max_examples=30)
+@pytest.mark.unit
 def test_language_stable(text_in: str) -> None:
     if not text_in.strip():
         return

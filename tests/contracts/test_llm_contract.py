@@ -6,6 +6,7 @@ NO verifica comportamiento funcional — solo interfaz y compatibilidad.
 
 from __future__ import annotations
 
+import pytest
 import inspect
 
 import pytest
@@ -19,23 +20,29 @@ from motor.core.llm import embed, embed_async, generate, health
 
 
 class TestAPIExportada:
+    @pytest.mark.contract
     def test_all_exporta_cuatro_funciones(self) -> None:
         assert isinstance(LLM_ALL, list)
         assert sorted(LLM_ALL) == sorted(["generate", "embed", "embed_async", "health"])
         assert len(LLM_ALL) == 4
 
+    @pytest.mark.contract
     def test_generate_importable(self) -> None:
         assert callable(generate)
 
+    @pytest.mark.contract
     def test_embed_importable(self) -> None:
         assert callable(embed)
 
+    @pytest.mark.contract
     def test_embed_async_importable(self) -> None:
         assert callable(embed_async)
 
+    @pytest.mark.contract
     def test_health_importable(self) -> None:
         assert callable(health)
 
+    @pytest.mark.contract
     def test_no_hay_imports_no_publicos(self) -> None:
         import motor.core.llm
 
@@ -86,6 +93,7 @@ class TestAPIExportada:
 
 
 class TestFirmas:
+    @pytest.mark.contract
     def test_generate_signature(self) -> None:
         sig = inspect.signature(generate)
         params = list(sig.parameters.values())
@@ -97,12 +105,14 @@ class TestFirmas:
         assert sig.return_annotation is not inspect.Parameter.empty
         assert "str" in str(sig.return_annotation)
 
+    @pytest.mark.contract
     def test_generate_parametros_opcionales(self) -> None:
         sig = inspect.signature(generate)
         params = list(sig.parameters.values())
         assert params[1].default is None
         assert params[2].default is None
 
+    @pytest.mark.contract
     def test_embed_signature(self) -> None:
         sig = inspect.signature(embed)
         params = list(sig.parameters.values())
@@ -111,6 +121,7 @@ class TestFirmas:
         assert params[1].name == "model"
         assert params[1].default is None
 
+    @pytest.mark.contract
     def test_embed_async_signature(self) -> None:
         sig = inspect.signature(embed_async)
         params = list(sig.parameters.values())
@@ -119,20 +130,24 @@ class TestFirmas:
         assert params[1].name == "model"
         assert params[1].default is None
 
+    @pytest.mark.contract
     def test_health_signature(self) -> None:
         sig = inspect.signature(health)
         # health() no tiene parámetros
         assert len(list(sig.parameters)) == 0
         assert "dict" in str(sig.return_annotation)
 
+    @pytest.mark.contract
     def test_generate_retorna_str(self) -> None:
         sig = inspect.signature(generate)
         assert "str" in str(sig.return_annotation)
 
+    @pytest.mark.contract
     def test_embed_retorna_list(self) -> None:
         sig = inspect.signature(embed)
         assert "list" in str(sig.return_annotation)
 
+    @pytest.mark.contract
     def test_embed_async_retorna_list(self) -> None:
         sig = inspect.signature(embed_async)
         assert "list" in str(sig.return_annotation)
@@ -144,11 +159,13 @@ class TestFirmas:
 
 
 class TestRegistryContract:
+    @pytest.mark.contract
     def test_registry_importable(self) -> None:
         from motor.core.llm.registry import ProviderRegistry, registry
 
         assert isinstance(registry, ProviderRegistry)
 
+    @pytest.mark.contract
     def test_registry_register_get(self) -> None:
         from motor.core.llm.registry import ProviderRegistry
 
@@ -171,6 +188,7 @@ class TestRegistryContract:
         assert "test" in reg
         assert reg.get("test") is not None
 
+    @pytest.mark.contract
     def test_registry_default(self) -> None:
         from motor.core.llm.registry import ProviderRegistry
 
@@ -193,6 +211,7 @@ class TestRegistryContract:
         reg.register("b", _Mock(), default=True)  # type: ignore
         assert reg.default_name == "b"
 
+    @pytest.mark.contract
     def test_registry_unregister(self) -> None:
         from motor.core.llm.registry import ProviderRegistry
 
@@ -215,6 +234,7 @@ class TestRegistryContract:
         reg.unregister("a")
         assert "a" not in reg
 
+    @pytest.mark.contract
     def test_registry_list(self) -> None:
         from motor.core.llm.registry import ProviderRegistry
 
@@ -245,11 +265,13 @@ class TestRegistryContract:
 
 
 class TestRouterContract:
+    @pytest.mark.contract
     def test_router_importable(self) -> None:
         from motor.core.llm.router import LLMRouter
 
         assert LLMRouter
 
+    @pytest.mark.contract
     def test_router_generate_delega(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
@@ -273,6 +295,7 @@ class TestRouterContract:
         router = LLMRouter(registry=reg)
         assert router.generate("test") == "mock:test"
 
+    @pytest.mark.contract
     def test_router_embed_delega(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
@@ -296,6 +319,7 @@ class TestRouterContract:
         router = LLMRouter(registry=reg)
         assert router.embed(["x"]) == [[1.0]]
 
+    @pytest.mark.contract
     def test_router_health_delega(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
@@ -319,6 +343,7 @@ class TestRouterContract:
         router = LLMRouter(registry=reg)
         assert router.health()["status"] == "ok"
 
+    @pytest.mark.contract
     def test_router_error_sin_provider(self) -> None:
         from motor.core.llm.registry import ProviderRegistry
         from motor.core.llm.router import LLMRouter
@@ -327,6 +352,7 @@ class TestRouterContract:
         with pytest.raises(RuntimeError, match="No provider"):
             empty.generate("test")
 
+    @pytest.mark.contract
     def test_router_provider_explicito(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.registry import ProviderRegistry
@@ -371,12 +397,14 @@ class TestRouterContract:
 
 
 class TestBaseProviderContract:
+    @pytest.mark.contract
     def test_base_es_abstracta(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
 
         with pytest.raises(TypeError):
             BaseLLMProvider()  # type: ignore
 
+    @pytest.mark.contract
     def test_base_tiene_cuatro_abstractos(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
 
@@ -386,6 +414,7 @@ class TestBaseProviderContract:
                 abstractos.append(name)
         assert sorted(abstractos) == sorted(["generate", "embed", "embed_async", "health"])
 
+    @pytest.mark.contract
     def test_subclass_debe_implementar_todos(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
 
@@ -395,6 +424,7 @@ class TestBaseProviderContract:
         with pytest.raises(TypeError):
             Incomplete()  # type: ignore
 
+    @pytest.mark.contract
     def test_subclass_completa_funciona(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
 
@@ -416,6 +446,7 @@ class TestBaseProviderContract:
         assert inst.embed(["x"]) == [[]]
         assert inst.health() == {}
 
+    @pytest.mark.contract
     def test_base_ubicacion_correcta(self) -> None:
         import motor.core.llm.base
 
@@ -429,23 +460,27 @@ class TestBaseProviderContract:
 
 @pytest.mark.skip(reason="_default no exportado de motor.core.llm (refactor pendiente)")
 class TestOllamaProviderContract:
+    @pytest.mark.contract
     def test_ollama_importable(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
 
         assert OllamaProvider
 
+    @pytest.mark.contract
     def test_ollama_implementa_base(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.ollama import OllamaProvider
 
         assert issubclass(OllamaProvider, BaseLLMProvider)
 
+    @pytest.mark.contract
     def test_ollama_instanciable(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
 
         inst = OllamaProvider()
         assert inst._provider_name == "ollama"
 
+    @pytest.mark.contract
     def test_ollama_firmas_coinciden(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.ollama import OllamaProvider
@@ -458,6 +493,7 @@ class TestOllamaProviderContract:
             base_params = [p for p in sig_base.parameters if p != "self"]
             assert impl_params == base_params, f"{method_name}: {impl_params} != {base_params}"
 
+    @pytest.mark.contract
     def test_ollama_generate_retorna_str(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
 
@@ -468,6 +504,7 @@ class TestOllamaProviderContract:
             resultado = inst.generate("test")
             assert isinstance(resultado, str)
 
+    @pytest.mark.contract
     def test_ollama_embed_retorna_lista(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
 
@@ -478,6 +515,7 @@ class TestOllamaProviderContract:
             resultado = inst.embed(["test"])
             assert isinstance(resultado, list)
 
+    @pytest.mark.contract
     def test_ollama_health_retorna_dict(self) -> None:
         from motor.core.llm.ollama import OllamaProvider
 
@@ -488,6 +526,7 @@ class TestOllamaProviderContract:
             resultado = inst.health()
             assert isinstance(resultado, dict)
 
+    @pytest.mark.contract
     def test_ollama_es_proveedor_por_defecto(self) -> None:
         from motor.core.llm import _default
         from motor.core.llm.ollama import OllamaProvider
@@ -502,23 +541,27 @@ class TestOllamaProviderContract:
 
 @pytest.mark.skip(reason="_default no exportado de motor.core.llm (refactor pendiente)")
 class TestOpenAIProviderContract:
+    @pytest.mark.contract
     def test_openai_importable(self) -> None:
         from motor.core.llm.openai import OpenAIProvider
 
         assert OpenAIProvider
 
+    @pytest.mark.contract
     def test_openai_implementa_base(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.openai import OpenAIProvider
 
         assert issubclass(OpenAIProvider, BaseLLMProvider)
 
+    @pytest.mark.contract
     def test_openai_instanciable(self) -> None:
         from motor.core.llm.openai import OpenAIProvider
 
         inst = OpenAIProvider()
         assert inst._provider_name == "openai"
 
+    @pytest.mark.contract
     def test_openai_firmas_coinciden(self) -> None:
         from motor.core.llm.base import BaseLLMProvider
         from motor.core.llm.openai import OpenAIProvider
@@ -530,6 +573,7 @@ class TestOpenAIProviderContract:
             base_params = [p for p in sig_base.parameters if p != "self"]
             assert impl_params == base_params, f"{method_name}: {impl_params} != {base_params}"
 
+    @pytest.mark.contract
     def test_openai_no_es_default(self) -> None:
         from motor.core.llm import _default
         from motor.core.llm.ollama import OllamaProvider
@@ -548,6 +592,7 @@ class TestCompatibilidadConsumidores:
     actuales son compatibles con la API pública."""
 
     # Consumidor 4: memory_engine.py — generate(prompt) solo arg posicional
+    @pytest.mark.contract
     def test_consumer_generate_only_prompt(self) -> None:
         from unittest.mock import patch
 
@@ -559,6 +604,7 @@ class TestCompatibilidadConsumidores:
             mock_gen.assert_called_once_with("solo prompt")
 
     # Consumidor 7: benchmark_llm.py — embed(texts) solo arg posicional
+    @pytest.mark.contract
     def test_consumer_embed_only_texts(self) -> None:
         from unittest.mock import patch
 
@@ -570,6 +616,7 @@ class TestCompatibilidadConsumidores:
             mock_emb.assert_called_once_with(["texto"])
 
     # Consumidor 2: reranking — generate(prompt, model, options)
+    @pytest.mark.contract
     def test_consumer_generate_with_model_and_options(self) -> None:
         from unittest.mock import patch
 
@@ -589,6 +636,7 @@ class TestCompatibilidadConsumidores:
             )
 
     # Consumidor 1: qdrant_client — embed(texts, model)
+    @pytest.mark.contract
     def test_consumer_embed_with_model(self) -> None:
         from unittest.mock import patch
 
@@ -600,6 +648,7 @@ class TestCompatibilidadConsumidores:
             mock_emb.assert_called_once_with(["texto"], model="nomic-embed-text")
 
     # Consumidor 5: debate_engine — generate via run_in_executor (to_thread)
+    @pytest.mark.contract
     def test_consumer_generate_in_thread(self) -> None:
         import asyncio
         from unittest.mock import patch
@@ -621,6 +670,7 @@ class TestCompatibilidadConsumidores:
         asyncio.run(_test())
 
     # Consumidor 6: ura_multi_agent — health() sin args
+    @pytest.mark.contract
     def test_consumer_health_no_args(self) -> None:
         from unittest.mock import patch
 
@@ -634,6 +684,7 @@ class TestCompatibilidadConsumidores:
             mock_health.assert_called_once_with()
 
     # Consumidor 8: vector_ollama — embed(texts, model) + health()
+    @pytest.mark.contract
     def test_consumer_embed_and_health(self) -> None:
         from unittest.mock import patch
 
@@ -649,6 +700,7 @@ class TestCompatibilidadConsumidores:
             assert h["status"] == "ok"
 
     # All consumer functions are importable from top-level module
+    @pytest.mark.contract
     def test_all_consumers_import_from_top_level(self) -> None:
         import motor.core.llm
 

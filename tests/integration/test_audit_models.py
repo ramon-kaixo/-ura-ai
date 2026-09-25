@@ -5,6 +5,7 @@ Exposes bugs, type-safety gaps, edge cases, and design flaws.
 
 from __future__ import annotations
 
+import pytest
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -21,6 +22,7 @@ from motor.assistant.models import (
 
 
 class TestMessageAudit:
+    @pytest.mark.integration
     def test_invalid_role_accepted(self):
         """BUG: Literal type is NOT enforced at runtime.
 
@@ -30,23 +32,27 @@ class TestMessageAudit:
         with pytest.raises(ValueError, match="Invalid role"):
             Message(role="invented_role", content="boom")
 
+    @pytest.mark.integration
     def test_empty_role_string(self):
         """Edge case: empty string role raises ValueError."""
         with pytest.raises(ValueError, match="Invalid role"):
             Message(role="", content="empty")
 
+    @pytest.mark.integration
     def test_token_estimate_zero_divisor(self):
         """chars_per_token=0 defaults to 4.0 (no ZeroDivisionError)."""
         msg = Message(role="user", content="hello")
         result = msg.token_estimate(chars_per_token=0.0)
         assert result == 1  # len(5)/4 = 1.25 -> int=1 -> max(1,1)=1
 
+    @pytest.mark.integration
     def test_token_estimate_negative_divisor(self):
         """Negative chars_per_token defaults to 4.0."""
         msg = Message(role="user", content="hello")
         result = msg.token_estimate(chars_per_token=-4.0)
         assert result == 1, f"Expected 1 for negative divisor (fallback 4.0), got {result}"
 
+    @pytest.mark.integration
     def test_token_estimate_empty_content(self):
         """Semantic edge case: empty content reports 1 token.
 
@@ -56,6 +62,7 @@ class TestMessageAudit:
         msg = Message(role="user", content="")
         assert msg.token_estimate() == 1, "Empty message reports 1 token — wasteful if many empty messages exist"
 
+    @pytest.mark.integration
     def test_token_estimate_huge_content(self):
         """Performance edge case: very long strings are handled."""
         msg = Message(role="user", content="x" * 10_000_000)
@@ -63,6 +70,7 @@ class TestMessageAudit:
         tokens = msg.token_estimate()
         assert tokens == 2_500_000  # max(1, int(10M/4)) = 2_500_000
 
+    @pytest.mark.integration
     def test_token_estimate_cjk_content(self):
         """Accuracy edge case: CJK text has ~1-2 chars/token, not 4.
 
@@ -72,11 +80,13 @@ class TestMessageAudit:
         tokens = msg.token_estimate()
         assert tokens == 1, f"CJK: 4 chars / 4 = 1 (no +1), got {tokens}"
 
+    @pytest.mark.integration
     def test_tool_message_no_tool_call_id(self):
         """Validation: tool messages require tool_call_id."""
         with pytest.raises(ValueError, match="tool_call_id"):
             Message(role="tool", content="result", tool_call_id="")
 
+    @pytest.mark.integration
     def test_metadata_independence(self):
         """Design check: default_factory protects against shared mutable dict."""
         m1 = Message(role="user", content="a")
@@ -84,11 +94,13 @@ class TestMessageAudit:
         m1.metadata["key"] = "val"
         assert "key" not in m2.metadata  # Shared reference would leak here
 
+    @pytest.mark.integration
     def test_timestamp_whitespace_not_overwritten(self):
         """Edge case: whitespace-only timestamp is overwritten (design decision)."""
         msg = Message(role="user", content="hi", timestamp="   ")
         assert msg.timestamp != "   ", "Whitespace timestamp gets overwritten by __post_init__"
 
+    @pytest.mark.integration
     def test_message_with_extra_unknown_kwarg(self):
         """BUG: unknown kwarg in Message() raises TypeError."""
         with pytest.raises(TypeError):
@@ -99,6 +111,7 @@ class TestMessageAudit:
 
 
 class TestConversationStateAudit:
+    @pytest.mark.integration
     def test_created_at_after_updated_at(self):
         """BUG: no invariant ensures updated_at >= created_at."""
         future = (datetime.now(UTC) + timedelta(days=365)).isoformat()
@@ -111,6 +124,7 @@ class TestConversationStateAudit:
             "No invariant: updated_at is before created_at when a future created_at is provided"
         )
 
+    @pytest.mark.integration
     def test_turn_count_negative(self):
         """Edge case: turn_count can be negative with no guard."""
         state = ConversationState(
@@ -119,11 +133,13 @@ class TestConversationStateAudit:
         )
         assert state.turn_count == -5, "Negative turn_count accepted"
 
+    @pytest.mark.integration
     def test_mode_is_enum_not_string(self):
         """Design: mode is strongly typed via Enum."""
         state = ConversationState(conversation_id="test")
         assert isinstance(state.mode, ConversationMode)
 
+    @pytest.mark.integration
     def test_conversation_id_empty_accepted(self):
         """Edge case: empty conversation_id passes without validation."""
         state = ConversationState(conversation_id="")
@@ -134,24 +150,28 @@ class TestConversationStateAudit:
 
 
 class TestConversationAudit:
+    @pytest.mark.integration
     def test_add_message_kwargs_role_collision(self):
         """BUG: passing role in **kwargs causes TypeError collision."""
         conv = Conversation(conversation_id="test")
         with pytest.raises(TypeError, match="multiple values for argument 'role'"):
             conv.add_message("user", "hello", role="assistant")
 
+    @pytest.mark.integration
     def test_add_message_kwargs_content_collision(self):
         """BUG: passing content in **kwargs causes TypeError collision."""
         conv = Conversation(conversation_id="test")
         with pytest.raises(TypeError, match="multiple values for argument 'content'"):
             conv.add_message("user", "hello", content="world")
 
+    @pytest.mark.integration
     def test_add_message_unknown_kwarg_bubbles(self):
         """BUG: unknown kwarg in add_message propagates TypeError from Message()."""
         conv = Conversation(conversation_id="test")
         with pytest.raises(TypeError):
             conv.add_message("user", "x", unknown_field="boom")  # type: ignore[call-arg]
 
+    @pytest.mark.integration
     def test_state_none_skips_turn_count(self):
         """Design: Conversation without state never increments turn_count."""
         conv = Conversation(conversation_id="test", state=None)
@@ -161,6 +181,7 @@ class TestConversationAudit:
         # a tracking mechanism the caller might expect.
         assert conv.state is None  # turn_count never existed
 
+    @pytest.mark.integration
     def test_turn_count_diverges_when_directly_set(self):
         """Design: turn_count can be manually set out of sync with messages."""
         conv = Conversation(
@@ -173,22 +194,26 @@ class TestConversationAudit:
         assert conv.state.turn_count == 101
         assert len(conv.messages) == 1
 
+    @pytest.mark.integration
     def test_token_count_empty(self):
         """Edge case: empty conversation returns 0 (actually 0)."""
         conv = Conversation(conversation_id="test")
         # sum() of empty list is 0, so token_count = 0.
         assert conv.token_count == 0
 
+    @pytest.mark.integration
     def test_last_user_message_empty_conversation(self):
         """Edge case: no messages returns None."""
         conv = Conversation(conversation_id="test")
         assert conv.last_user_message is None
 
+    @pytest.mark.integration
     def test_last_assistant_message_empty_conversation(self):
         """Edge case: no messages returns None."""
         conv = Conversation(conversation_id="test")
         assert conv.last_assistant_message is None
 
+    @pytest.mark.integration
     def test_last_user_message_with_only_tool_messages(self):
         """Edge case: no 'user' role messages returns None."""
         conv = Conversation(conversation_id="test")
@@ -196,12 +221,14 @@ class TestConversationAudit:
         conv.add_message("tool", "result", tool_call_id="t1")
         assert conv.last_user_message is None
 
+    @pytest.mark.integration
     def test_last_assistant_message_with_only_user_messages(self):
         """Edge case: no 'assistant' role messages returns None."""
         conv = Conversation(conversation_id="test")
         conv.add_message("user", "hello")
         assert conv.last_assistant_message is None
 
+    @pytest.mark.integration
     def test_add_message_returns_correct_message(self):
         """Contract check: returned Message matches inputs."""
         conv = Conversation(conversation_id="test")
@@ -211,6 +238,7 @@ class TestConversationAudit:
         assert msg.tool_call_id == "t1"
         assert msg.tool_name == "search"
 
+    @pytest.mark.integration
     def test_updated_at_on_each_message(self):
         """Contract check: updated_at changes after each add_message."""
         state = ConversationState(conversation_id="test")
@@ -220,6 +248,7 @@ class TestConversationAudit:
         after = state.updated_at
         assert after >= before  # could be equal in fast CI runs
 
+    @pytest.mark.integration
     def test_many_messages_linear_scan(self):
         """Performance: last_user_message / last_assistant_message are O(n).
 
@@ -235,6 +264,7 @@ class TestConversationAudit:
         assert last_user is not None
         assert last_user.content == "msg_9998"
 
+    @pytest.mark.integration
     def test_role_system_accepted(self):
         """Contract: 'system' is a valid MessageRole."""
         msg = Message(role="system", content="You are a helpful assistant.")
@@ -245,12 +275,14 @@ class TestConversationAudit:
 
 
 class TestEnumAudit:
+    @pytest.mark.integration
     def test_conversation_mode_string_values(self):
         """Design note: enum values are Spanish strings."""
         assert ConversationMode.CONVERSATION.value == "conversacion"
         assert ConversationMode.WORK.value == "trabajo"
         assert ConversationMode.EXPLANATION.value == "explicacion"
 
+    @pytest.mark.integration
     def test_user_intent_count(self):
         """Contract: all expected intents are present."""
         expected = {
@@ -270,11 +302,13 @@ class TestEnumAudit:
         actual = {e.name for e in UserIntent}
         assert actual == expected
 
+    @pytest.mark.integration
     def test_conversation_mode_from_string(self):
         """Contract: enum lookup by value works."""
         mode = ConversationMode("trabajo")
         assert mode == ConversationMode.WORK
 
+    @pytest.mark.integration
     def test_conversation_mode_invalid_string_raises(self):
         """Contract: invalid string raises ValueError."""
         with pytest.raises(ValueError):
@@ -285,6 +319,7 @@ class TestEnumAudit:
 
 
 class TestCombinedAudit:
+    @pytest.mark.integration
     def test_full_lifecycle_no_state(self):
         """Edge case: Conversation can work without ConversationState."""
         conv = Conversation(conversation_id="test")
@@ -295,6 +330,7 @@ class TestCombinedAudit:
         assert conv.last_user_message is not None
         assert conv.last_user_message.content == "hola"
 
+    @pytest.mark.integration
     def test_conversation_id_collision(self):
         """Design: no dedup on conversation_id.
 

@@ -9,6 +9,7 @@ Complementa test_ingestador_red.py cubriendo las líneas restantes:
 
 from __future__ import annotations
 
+import pytest
 import runpy
 import sys
 from types import SimpleNamespace
@@ -20,6 +21,7 @@ import core.ingestador_red as ir
 
 
 class TestMainBranches:
+    @pytest.mark.unit
     def test_distribuir_ok_con_output(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["ingestador_red.py", "--distribuir", "ping"])
         monkeypatch.setattr(
@@ -31,6 +33,7 @@ class TestMainBranches:
             ir.main()
         assert e.value.code == 0
 
+    @pytest.mark.unit
     def test_distribuir_fail_con_output(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["ingestador_red.py", "--distribuir", "ping"])
         monkeypatch.setattr(
@@ -42,6 +45,7 @@ class TestMainBranches:
             ir.main()
         assert e.value.code == 1
 
+    @pytest.mark.unit
     def test_status_json(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["ingestador_red.py", "--status", "--json"])
         monkeypatch.setattr(
@@ -51,6 +55,7 @@ class TestMainBranches:
         )
         ir.main()
 
+    @pytest.mark.unit
     def test_status_con_offline(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["ingestador_red.py", "--status"])
         monkeypatch.setattr(
@@ -85,14 +90,17 @@ class TestMainGuard:
         )
         runpy.run_path(str(ir.URA / "core" / "ingestador_red.py"), run_name="__main__")
 
+    @pytest.mark.unit
     def test_guard_distribuir_json(self, monkeypatch) -> None:
         with pytest.raises(SystemExit) as e:
             self._run_script(["ingestador_red.py", "--distribuir", "ping", "--json"], monkeypatch)
         assert e.value.code == 0
 
+    @pytest.mark.unit
     def test_guard_status(self, monkeypatch) -> None:
         self._run_script(["ingestador_red.py", "--status", "--json"], monkeypatch)
 
+    @pytest.mark.unit
     def test_guard_enviar(self, monkeypatch) -> None:
         with pytest.raises(SystemExit) as e:
             self._run_script(["ingestador_red.py", "--enviar", "backup", "gx10-64c3"], monkeypatch)

@@ -6,6 +6,7 @@ GX10: mide tiempo de respuesta de endpoints.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from tests.infra.conftest import run_cmd
 
@@ -14,6 +15,7 @@ from tests.infra.conftest import run_cmd
 class TestEndpointLatency:
     """Mide latencia basica de endpoints HTTP."""
 
+    @pytest.mark.slow
     def test_opencode_latency(self) -> None:
         rc, out, _ = run_cmd(
             "curl -s -o /dev/null -w '%{time_total}' http://localhost:8081/",
@@ -24,6 +26,7 @@ class TestEndpointLatency:
         latency = float(out.strip().strip("'"))
         assert latency < 2.0, f"OpenCode latencia太高: {latency:.2f}s (max 2s)"
 
+    @pytest.mark.slow
     def test_ollama_latency(self) -> None:
         rc, out, _ = run_cmd(
             "curl -s -o /dev/null -w '%{time_total}' http://localhost:11434/api/tags",

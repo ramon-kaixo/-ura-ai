@@ -1,6 +1,7 @@
 """Tests para scripts/pro/tuneladora/plugins/dashboard.py."""
 
 from __future__ import annotations
+import pytest
 
 import io
 from unittest import mock
@@ -19,6 +20,7 @@ def _make_handler(path: str) -> DashboardHandler:
 
 
 class TestDashboardHandler:
+    @pytest.mark.integration
     def test_root_envia_html(self) -> None:
         h = _make_handler("/")
         h._send_html()
@@ -27,6 +29,7 @@ class TestDashboardHandler:
         assert "RUNNING" in body
         h.send_response.assert_called_with(200)
 
+    @pytest.mark.integration
     def test_api_status_envia_json(self) -> None:
         h = _make_handler("/api/status")
         h._send_json()
@@ -36,29 +39,34 @@ class TestDashboardHandler:
         assert data == {"running": True, "pipelines": ["health", "cleanup", "audit"]}
         h.send_response.assert_called_with(200)
 
+    @pytest.mark.integration
     def test_do_get_root(self) -> None:
         h = _make_handler("/")
         h._send_html = mock.Mock()
         h.do_GET()
         h._send_html.assert_called_once()
 
+    @pytest.mark.integration
     def test_do_get_api(self) -> None:
         h = _make_handler("/api/status")
         h._send_json = mock.Mock()
         h.do_GET()
         h._send_json.assert_called_once()
 
+    @pytest.mark.integration
     def test_do_get_404(self) -> None:
         h = _make_handler("/no-existe")
         h.do_GET()
         h.send_response.assert_called_with(404)
 
+    @pytest.mark.integration
     def test_log_message_silencioso(self) -> None:
         h = _make_handler("/")
         h.log_message("formato %s", "arg")  # no debe lanzar
 
 
 class TestDashboardPlugin:
+    @pytest.mark.integration
     def test_start_monta_servidor(self) -> None:
         engine = mock.Mock()
         plugin = DashboardPlugin(engine, port=0)

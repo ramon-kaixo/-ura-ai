@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from argparse import Namespace
 from pathlib import Path
@@ -50,12 +51,14 @@ def _args(**overrides) -> Namespace:
     return Namespace(**base)
 
 
+@pytest.mark.unit
 def test_list_con_agentes(capsys) -> None:
     assert cmd_agent_list(_args()) == 0
     out = capsys.readouterr().out
     assert "KnowledgeGraphAgent" in out
 
 
+@pytest.mark.unit
 def test_run_audit(db_path: Path, capsys) -> None:
     rc = cmd_agent_run(_args(db_path=str(db_path)))
     assert rc == 0
@@ -64,14 +67,17 @@ def test_run_audit(db_path: Path, capsys) -> None:
     assert "Tipo: md" in out
 
 
+@pytest.mark.unit
 def test_run_agent_inexistente(db_path: Path) -> None:
     assert cmd_agent_run(_args(agent_id="NoExiste", db_path=str(db_path))) == 1
 
 
+@pytest.mark.unit
 def test_run_sin_hallazgos(db_path: Path) -> None:
     assert cmd_agent_run(_args(kind="custom", db_path=str(db_path))) == 0
 
 
+@pytest.mark.unit
 def test_run_warn_coverage(db_path: Path, capsys) -> None:
     rc = cmd_agent_run(_args(kind="coverage", db_path=str(db_path)))
     assert rc == 0
@@ -80,6 +86,7 @@ def test_run_warn_coverage(db_path: Path, capsys) -> None:
     assert "Sin documentos de tipo" in out
 
 
+@pytest.mark.unit
 def test_run_consistency(db_path: Path, capsys) -> None:
     rc = cmd_agent_run(_args(kind="consistency", db_path=str(db_path)))
     assert rc == 0

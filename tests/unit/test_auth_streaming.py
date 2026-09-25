@@ -1,6 +1,7 @@
 """Tests para core/auth_layer.py y core/mochila/streaming.py."""
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -18,25 +19,30 @@ class TestAuthLayer:
         yield
         monkeypatch.setattr(auth, "AUTH_ENABLED", True)
 
+    @pytest.mark.unit
     def test_auth_deshabilitado(self, monkeypatch) -> None:
         monkeypatch.setattr(auth, "AUTH_ENABLED", False)
         assert auth.validate(None) is True
         assert auth.require_auth() is False
 
+    @pytest.mark.unit
     def test_sin_api_key_false(self) -> None:
         assert auth.validate(None) is False
         assert auth.validate("") is False
 
+    @pytest.mark.unit
     def test_key_correcta_con_store(self, monkeypatch) -> None:
         store = mock.Mock()
         store.get_secret.return_value = "secreto"
         assert auth.validate("secreto", store) is True
 
+    @pytest.mark.unit
     def test_key_incorrecta(self, monkeypatch) -> None:
         store = mock.Mock()
         store.get_secret.return_value = "secreto"
         assert auth.validate("otra", store) is False
 
+    @pytest.mark.unit
     def test_get_api_key_store_sin_key_fallback(self, monkeypatch) -> None:
         store = mock.Mock()
         store.get_secret.return_value = None
@@ -44,6 +50,7 @@ class TestAuthLayer:
         monkeypatch.setattr("motor.core.secrets.get_secret", getter)
         assert auth._get_api_key(store) == "env_key"
 
+    @pytest.mark.unit
     def test_get_api_key_error(self, monkeypatch) -> None:
         store = mock.Mock()
         store.get_secret.return_value = None

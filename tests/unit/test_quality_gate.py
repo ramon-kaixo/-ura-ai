@@ -1,5 +1,6 @@
 """Tests para scripts/pro/quality_gate.py (del otro agente — coexiste con auditoria_continua)."""
 from __future__ import annotations
+import pytest
 
 import json
 from pathlib import Path
@@ -8,6 +9,7 @@ from scripts.pro.quality_gate import _parse_reporte, evaluar, leer_ultimo_report
 
 
 class TestParseReporte:
+    @pytest.mark.unit
     def test_formato_runner(self, tmp_path: Path) -> None:
         f = tmp_path / "r.json"
         f.write_text(json.dumps({"verdict": "OK", "mode": "check", "files": ["a.py"], "telemetry": {}}))
@@ -15,6 +17,7 @@ class TestParseReporte:
         assert data["verdict"] == "OK"
         assert data["files"] == ["a.py"]
 
+    @pytest.mark.unit
     def test_formato_snapshot(self, tmp_path: Path) -> None:
         f = tmp_path / "meta.json"
         f.write_text(json.dumps({"created": "2026-01-01", "label": "ciclo", "files": []}))
@@ -24,11 +27,13 @@ class TestParseReporte:
 
 
 class TestEvaluar:
+    @pytest.mark.unit
     def test_reporte_ok_acepta(self) -> None:
         verdict, alertas = evaluar({"verdict": "OK", "telemetry": {}})
         assert verdict == "ACCEPTED"
         assert alertas == []
 
+    @pytest.mark.unit
     def test_reporte_real_sin_cobertura_acepta(self) -> None:
         # El reporte real del runner no trae coverage — no debe rechazar
         reporte = {
@@ -39,16 +44,19 @@ class TestEvaluar:
         assert verdict == "ACCEPTED"
         assert alertas == []
 
+    @pytest.mark.unit
     def test_verdict_fail_rechaza(self) -> None:
         verdict, alertas = evaluar({"verdict": "FAIL", "telemetry": {}})
         assert verdict == "REJECTED"
         assert "PIPELINE FALLADO" in alertas
 
+    @pytest.mark.unit
     def test_cobertura_baja_rechaza(self) -> None:
         verdict, alertas = evaluar({"verdict": "OK", "telemetry": {"coverage": 40.0}})
         assert verdict == "REJECTED"
         assert any("COBERTURA" in a for a in alertas)
 
+    @pytest.mark.unit
     def test_tests_fallados_rechaza(self) -> None:
         verdict, alertas = evaluar({"verdict": "OK", "telemetry": {"tests_failed": 3}})
         assert verdict == "REJECTED"
@@ -56,10 +64,12 @@ class TestEvaluar:
 
 
 class TestLeerUltimo:
+    @pytest.mark.unit
     def test_sin_reportes(self, tmp_path: Path, monkeypatch) -> None:
         monkeypatch.chdir(tmp_path)
         assert leer_ultimo_reporte() is None
 
+    @pytest.mark.unit
     def test_lee_el_ultimo(self, tmp_path: Path, monkeypatch) -> None:
         d = tmp_path / "data" / "tuneladora_reports"
         d.mkdir(parents=True)
@@ -70,6 +80,7 @@ class TestLeerUltimo:
 
 
 class TestEvaluarNuevoFormato:
+    @pytest.mark.unit
     def test_coverage_a_nivel_raiz(self) -> None:
         # El reporte del runner ahora incluye coverage a nivel raiz
         reporte = {"verdict": "OK", "coverage": {"global": 40.0}}
@@ -77,11 +88,13 @@ class TestEvaluarNuevoFormato:
         assert verdict == "REJECTED"
         assert any("COBERTURA" in a for a in alertas)
 
+    @pytest.mark.unit
     def test_tests_failed_a_nivel_raiz(self) -> None:
         reporte = {"verdict": "OK", "coverage": {"tests_failed": 3}}
         verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
+    @pytest.mark.unit
     def test_formato_antiguo_telemetry(self) -> None:
         reporte = {"verdict": "OK", "telemetry": {"coverage": 50.0, "tests_failed": 1}}
         verdict, _alertas = evaluar(reporte)
@@ -89,6 +102,7 @@ class TestEvaluarNuevoFormato:
 
 
 class TestFailSafe:
+    @pytest.mark.unit
     def test_coverage_cero_no_rechaza(self) -> None:
         # Sin datos de coverage (0) el gate NO debe bloquear
         reporte = {"verdict": "OK", "coverage": {"global": 0}}
@@ -96,11 +110,13 @@ class TestFailSafe:
         assert verdict == "ACCEPTED"
         assert alertas == []
 
+    @pytest.mark.unit
     def test_coverage_ausente_no_rechaza(self) -> None:
         reporte = {"verdict": "OK"}
         verdict, _alertas = evaluar(reporte)
         assert verdict == "ACCEPTED"
 
+    @pytest.mark.unit
     def test_coverage_real_bajo_rechaza(self) -> None:
         reporte = {"verdict": "OK", "coverage": {"global": 50.0}}
         verdict, _alertas = evaluar(reporte)
@@ -108,17 +124,20 @@ class TestFailSafe:
 
 
 class TestModoCheck:
+    @pytest.mark.unit
     def test_qg_omite_coverage_en_modo_check(self) -> None:
         # Reproduce B-21: coverage 0.6% en modo check NO debe rechazar
         reporte = {"verdict": "OK", "mode": "check", "coverage": {"global": 0.6}}
         verdict, _alertas = evaluar(reporte)
         assert verdict == "ACCEPTED"
 
+    @pytest.mark.unit
     def test_qg_aplica_coverage_en_modo_full(self) -> None:
         reporte = {"verdict": "OK", "mode": "full", "coverage": {"global": 0.6}}
         verdict, _alertas = evaluar(reporte)
         assert verdict == "REJECTED"
 
+    @pytest.mark.unit
     def test_qg_sin_mode_aplica_coverage(self) -> None:
         # Sin campo mode, se aplica el threshold (comportamiento previo)
         reporte = {"verdict": "OK", "coverage": {"global": 50.0}}

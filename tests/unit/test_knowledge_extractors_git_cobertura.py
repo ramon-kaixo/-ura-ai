@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import subprocess
 from pathlib import Path
 
@@ -46,6 +47,7 @@ def extractor() -> GitExtractor:
 # ── extract() E2E ───────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_extract_repo_local(repo_dir: Path, extractor) -> None:
     source = AssetSource(kind="filesystem", location=str(repo_dir), fetched_at="")
     result = extractor.extract(source)
@@ -62,6 +64,7 @@ def test_extract_repo_local(repo_dir: Path, extractor) -> None:
     assert result.duration_ms >= 0
 
 
+@pytest.mark.unit
 def test_extract_location_no_existe(extractor) -> None:
     source = AssetSource(kind="filesystem", location="/no/existe", fetched_at="")
     result = extractor.extract(source)
@@ -69,6 +72,7 @@ def test_extract_location_no_existe(extractor) -> None:
     assert result.asset is None
 
 
+@pytest.mark.unit
 def test_extract_sin_git_dir(tmp_path, extractor) -> None:
     d = tmp_path / "sin_git"
     d.mkdir()
@@ -77,12 +81,14 @@ def test_extract_sin_git_dir(tmp_path, extractor) -> None:
     assert result.errors == [f"Not a git repository: {d}"]
 
 
+@pytest.mark.unit
 def test_extract_location_vacia(extractor) -> None:
     source = AssetSource(kind="filesystem", location="", fetched_at="")
     result = extractor.extract(source)
     assert result.errors == ["Empty location"]
 
 
+@pytest.mark.unit
 def test_extract_sin_git_cli(extractor, monkeypatch) -> None:
     monkeypatch.setattr(git_mod, "_HAS_GIT", False)
     source = AssetSource(kind="filesystem", location="/x", fetched_at="")
@@ -90,6 +96,7 @@ def test_extract_sin_git_cli(extractor, monkeypatch) -> None:
     assert result.errors == ["git CLI not available"]
 
 
+@pytest.mark.unit
 def test_extract_remoto_clone_falla(extractor, monkeypatch) -> None:
     def boom(url: str, target: str) -> str:
         raise RuntimeError("clone failed for x")
@@ -100,6 +107,7 @@ def test_extract_remoto_clone_falla(extractor, monkeypatch) -> None:
     assert result.errors and "Extraction error" in result.errors[0]
 
 
+@pytest.mark.unit
 def test_extract_remoto_ok(repo_dir, extractor, monkeypatch) -> None:
     def fake_clone(url: str, target: str) -> str:
         return str(repo_dir)
@@ -115,6 +123,7 @@ def test_extract_remoto_ok(repo_dir, extractor, monkeypatch) -> None:
 # ── Límites ─────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_repo_demasiado_grande(repo_dir, extractor, monkeypatch) -> None:
     monkeypatch.setattr(git_mod, "MAX_CLONE_SIZE", 0)
     source = AssetSource(kind="filesystem", location=str(repo_dir), fetched_at="")
@@ -123,6 +132,7 @@ def test_repo_demasiado_grande(repo_dir, extractor, monkeypatch) -> None:
     assert result.asset is None
 
 
+@pytest.mark.unit
 def test_git_limit_error_es_valueerror() -> None:
     assert issubclass(GitLimitError, ValueError)
 
@@ -130,6 +140,7 @@ def test_git_limit_error_es_valueerror() -> None:
 # ── Helpers ─────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_resolve_work_dir_remoto(extractor, monkeypatch, repo_dir) -> None:
     monkeypatch.setattr(extractor, "_clone_repo", lambda url, target: str(repo_dir))
     source = AssetSource(kind="github", location="https://github.com/u/r", fetched_at="")
@@ -138,6 +149,7 @@ def test_resolve_work_dir_remoto(extractor, monkeypatch, repo_dir) -> None:
     assert work == str(repo_dir)
 
 
+@pytest.mark.unit
 def test_resolve_work_dir_local(repo_dir, extractor) -> None:
     source = AssetSource(kind="filesystem", location=str(repo_dir), fetched_at="")
     work, is_temp = extractor._resolve_work_dir(source, str(repo_dir))
@@ -145,12 +157,14 @@ def test_resolve_work_dir_local(repo_dir, extractor) -> None:
     assert Path(work) == repo_dir
 
 
+@pytest.mark.unit
 def test_find_git_dir(repo_dir, extractor) -> None:
     assert extractor._find_git_dir(str(repo_dir)) == str(repo_dir / ".git")
     assert extractor._find_git_dir(str(repo_dir / ".git")) == str(repo_dir / ".git")
     assert extractor._find_git_dir("/no/existe") is None
 
 
+@pytest.mark.unit
 def test_sanitize_git_url() -> None:
     assert _sanitize_git_url("git@github.com:u/r.git") == "git@github.com:u/r.git"
     assert _sanitize_git_url("http://x") == "http://x"
@@ -158,6 +172,7 @@ def test_sanitize_git_url() -> None:
     assert _sanitize_git_url("ftp://x") == "ftp://x"
 
 
+@pytest.mark.unit
 def test_find_readme(repo_dir) -> None:
     content = _find_readme(str(repo_dir))
     assert content is not None
@@ -165,6 +180,7 @@ def test_find_readme(repo_dir) -> None:
     assert _find_readme("/no/existe") is None
 
 
+@pytest.mark.unit
 def test_compute_git_quality() -> None:
     assert _compute_git_quality({}) == 0.3
     q = _compute_git_quality(
@@ -173,6 +189,7 @@ def test_compute_git_quality() -> None:
     assert q == pytest.approx(1.0)
 
 
+@pytest.mark.unit
 def test_hash_git_repo() -> None:
     h1 = GitExtractor._hash_git_repo({"commits": [{"hash": "a", "message": "m"}], "origin_url": "x", "tag_count": 1, "branch_count": 1})
     h2 = GitExtractor._hash_git_repo({"commits": [{"hash": "b", "message": "m"}], "origin_url": "x", "tag_count": 1, "branch_count": 1})
@@ -180,21 +197,25 @@ def test_hash_git_repo() -> None:
     assert h1 != h2
 
 
+@pytest.mark.unit
 def test_repo_size(repo_dir, extractor) -> None:
     size = extractor._repo_size(str(repo_dir))
     assert size > 0
 
 
+@pytest.mark.unit
 def test_git_cmd_ok(repo_dir) -> None:
     out = git_mod._git_cmd(str(repo_dir), ["config", "--get", "user.email"])
     assert out is not None
     assert out.strip() == "t@t.es"
 
 
+@pytest.mark.unit
 def test_git_cmd_fallo() -> None:
     assert git_mod._git_cmd("/no/existe", ["status"]) is None
 
 
+@pytest.mark.unit
 def test_metadata_git_cmd_directo(repo_dir) -> None:
     meta = GitExtractor._extract_git_metadata(str(repo_dir))
     assert meta["commit_count"] == 3
@@ -202,6 +223,7 @@ def test_metadata_git_cmd_directo(repo_dir) -> None:
     assert meta["tags"] == ["v1.0.0"]
 
 
+@pytest.mark.unit
 def test_registro_registry() -> None:
     reg = git_mod.get_registry()
     assert reg.get("git") is not None

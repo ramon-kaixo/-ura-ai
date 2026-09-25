@@ -6,6 +6,7 @@ blake3 en test_memoria_bridge_vigilante).
 """
 from __future__ import annotations
 
+import pytest
 import sys
 from pathlib import Path
 from types import SimpleNamespace
@@ -65,6 +66,7 @@ def ie(monkeypatch):
 
 
 class TestExifPillow:
+    @pytest.mark.unit
     def test_sin_exif(self, ie, monkeypatch, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"x")
@@ -72,6 +74,7 @@ class TestExifPillow:
             out = ie._exif_pillow(ruta)
         assert out == {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
 
+    @pytest.mark.unit
     def test_exif_completo_gps(self, ie, monkeypatch, tmp_path) -> None:
         """Documenta bug real: GPSInfo dict se convierte a str por el else
         antes de iterar -> el branch GPSInfo (linea 46) es inalcanzable."""
@@ -91,6 +94,7 @@ class TestExifPillow:
         assert out["gps"] is None
         assert "GPSInfo" in out["exif_raw"]
 
+    @pytest.mark.unit
     def test_exif_bytes_y_otros(self, ie, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"x")
@@ -99,6 +103,7 @@ class TestExifPillow:
             out = ie._exif_pillow(ruta)
         assert out["exif_raw"]
 
+    @pytest.mark.unit
     def test_error_lectura(self, ie, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         with mock.patch.object(ie.Image, "open", side_effect=OSError("corrupto")):
@@ -107,6 +112,7 @@ class TestExifPillow:
 
 
 class TestExifExiftool:
+    @pytest.mark.unit
     def test_ok(self, ie, monkeypatch) -> None:
         import json
 
@@ -118,11 +124,13 @@ class TestExifExiftool:
         assert out["gps"] == "40, -3"
         assert "SourceFile" not in out["exif_raw"]
 
+    @pytest.mark.unit
     def test_returncode_error(self, ie) -> None:
         with mock.patch.object(ie.subprocess, "run", return_value=SimpleNamespace(returncode=1, stdout="")):
             out = ie._exif_exiftool(Path("/tmp/x.jpg"))
         assert out == {"fecha": "", "camara": "", "gps": None, "exif_raw": {}}
 
+    @pytest.mark.unit
     def test_solo_latitud(self, ie) -> None:
         import json
 
@@ -131,6 +139,7 @@ class TestExifExiftool:
             out = ie._exif_exiftool(Path("/tmp/x.jpg"))
         assert out["gps"] == "40"
 
+    @pytest.mark.unit
     def test_excepcion(self, ie) -> None:
         with mock.patch.object(ie.subprocess, "run", side_effect=OSError("no exiftool")):
             out = ie._exif_exiftool(Path("/tmp/x.jpg"))
@@ -138,6 +147,7 @@ class TestExifExiftool:
 
 
 class TestPaletaColores:
+    @pytest.mark.unit
     def test_ok(self, ie, monkeypatch) -> None:
         import numpy as np
 
@@ -149,12 +159,14 @@ class TestPaletaColores:
         assert len(out) == 1  # todos los pixeles iguales -> 1 color
         assert out[0] == "#000000"
 
+    @pytest.mark.unit
     def test_error(self, ie) -> None:
         with mock.patch.object(ie.Image, "open", side_effect=OSError("no")):
             assert ie._paleta_colores(Path("/tmp/x.jpg")) == []
 
 
 class TestDescribirImagen:
+    @pytest.mark.unit
     def test_ok(self, ie, monkeypatch, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"img")
@@ -164,6 +176,7 @@ class TestDescribirImagen:
         assert out["descripcion"] == "una foto"
         assert out["modelo"] == "qwen2-vl-7b"
 
+    @pytest.mark.unit
     def test_error_http(self, ie, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"x")
@@ -172,6 +185,7 @@ class TestDescribirImagen:
             out = ie._describir_imagen(ruta)
         assert out["error"] == "Ollama 500"
 
+    @pytest.mark.unit
     def test_excepcion(self, ie, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"x")
@@ -181,6 +195,7 @@ class TestDescribirImagen:
 
 
 class TestExtraerIptc:
+    @pytest.mark.unit
     def test_ok(self, ie) -> None:
         data = {5: b"titulo", 120: b"desc", 80: b"autor", 25: [b"k1", b"k2"], 90: b"ciudad", 101: b"pais", 116: b"(c)"}
         info = SimpleNamespace(_data=data)
@@ -190,6 +205,7 @@ class TestExtraerIptc:
         assert out["keywords"] == ["k1", "k2"]
         assert out["ciudad"] == "ciudad"
 
+    @pytest.mark.unit
     def test_error(self, ie) -> None:
         with mock.patch.dict(sys.modules, {"iptcinfo3": SimpleNamespace(IPTCInfo=lambda *a: (_ for _ in ()).throw(OSError("no")))}):
             out = ie._extraer_iptc(Path("/tmp/x.jpg"))
@@ -197,6 +213,7 @@ class TestExtraerIptc:
 
 
 class TestExtraerImagen:
+    @pytest.mark.unit
     def test_extraer_imagen_completo(self, ie, monkeypatch, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"img")
@@ -213,6 +230,7 @@ class TestExtraerImagen:
         assert out["resumen_visual"] == "d"
         assert out["paleta"] == ["#fff"]
 
+    @pytest.mark.unit
     def test_extraer_imagen_fallback_exiftool(self, ie, monkeypatch, tmp_path) -> None:
         ruta = tmp_path / "a.jpg"
         ruta.write_bytes(b"img")

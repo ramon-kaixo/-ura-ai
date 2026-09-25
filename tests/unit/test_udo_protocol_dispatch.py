@@ -6,6 +6,7 @@ del auto-dispatcher (prioridad, agentes libres, conflicto de zonas, flock).
 
 from __future__ import annotations
 
+import pytest
 import json
 import subprocess
 import sys
@@ -56,6 +57,7 @@ def _tarea(**kw: Any) -> dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_verify_json_invalido_sale_1(tmp_path: Path) -> None:
     f = tmp_path / "coordination.json"
     f.write_text("{no json")
@@ -63,12 +65,14 @@ def test_verify_json_invalido_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_archivo_ausente_sale_1(tmp_path: Path) -> None:
     f = tmp_path / "no_existe.json"
     res = subprocess.run([sys.executable, str(VERIFY), "--file", str(f)], capture_output=True, text=True, check=False)
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_protocolo_integro_sale_0(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="aprobada", veredicto="APROBADO — ok")
@@ -79,6 +83,7 @@ def test_verify_protocolo_integro_sale_0(tmp_path: Path) -> None:
     assert res.returncode == 0, res.stderr
 
 
+@pytest.mark.unit
 def test_verify_aprobada_sin_veredicto_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="aprobada", veredicto="")
@@ -90,6 +95,7 @@ def test_verify_aprobada_sin_veredicto_sale_1(tmp_path: Path) -> None:
     assert "sin veredicto" in res.stderr
 
 
+@pytest.mark.unit
 def test_verify_tarea_sin_campos_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = {"estado": "pendiente"}
@@ -100,6 +106,7 @@ def test_verify_tarea_sin_campos_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_tarea_duplicada_en_colas_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea()
@@ -111,6 +118,7 @@ def test_verify_tarea_duplicada_en_colas_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_tarea_fuera_de_colas_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea()
@@ -120,6 +128,7 @@ def test_verify_tarea_fuera_de_colas_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_en_revision_sin_evidencia_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="en_revision", nota="", veredicto="")
@@ -130,6 +139,7 @@ def test_verify_en_revision_sin_evidencia_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_cola_con_tarea_desconocida_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["colas"]["pendientes"] = ["T-FANTASMA"]
@@ -139,6 +149,7 @@ def test_verify_cola_con_tarea_desconocida_sale_1(tmp_path: Path) -> None:
     assert res.returncode == 1
 
 
+@pytest.mark.unit
 def test_verify_modo_invalido_sale_1(tmp_path: Path) -> None:
     datos = _base()
     datos["modo"] = "random"
@@ -153,6 +164,7 @@ def test_verify_modo_invalido_sale_1(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_verificar_funcion_integro() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="aprobada", veredicto="APROBADO — ok")
@@ -160,15 +172,18 @@ def test_verificar_funcion_integro() -> None:
     assert vfy.verificar(datos) == []
 
 
+@pytest.mark.unit
 def test_verificar_funcion_raiz_no_dict() -> None:
     assert vfy.verificar(["no", "dict"]) == ["raíz no es objeto JSON"]
 
 
+@pytest.mark.unit
 def test_verificar_funcion_sin_colas_corta() -> None:
     viol = vfy.verificar({"modo": "secuencial"})
     assert any("colas" in v for v in viol)
 
 
+@pytest.mark.unit
 def test_verificar_funcion_aprobada_sin_veredicto() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="aprobada", veredicto="")
@@ -177,6 +192,7 @@ def test_verificar_funcion_aprobada_sin_veredicto() -> None:
     assert any("APROBADA sin veredicto" in v for v in viol)
 
 
+@pytest.mark.unit
 def test_verificar_funcion_en_revision_sin_evidencia() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="en_revision", veredicto="", nota="")
@@ -185,12 +201,14 @@ def test_verificar_funcion_en_revision_sin_evidencia() -> None:
     assert any("sin evidencia de revisión" in v for v in viol)
 
 
+@pytest.mark.unit
 def test_cargar_json_valido(tmp_path: Path) -> None:
     f = tmp_path / "c.json"
     f.write_text(json.dumps(_base()))
     assert vfy.cargar(f)["modo"] == "secuencial"
 
 
+@pytest.mark.unit
 def test_cargar_json_invalido_lanza(tmp_path: Path) -> None:
     f = tmp_path / "c.json"
     f.write_text("{nope")
@@ -198,6 +216,7 @@ def test_cargar_json_invalido_lanza(tmp_path: Path) -> None:
         vfy.cargar(f)
 
 
+@pytest.mark.unit
 def test_main_ok_retorna_0(tmp_path: Path) -> None:
     datos = _base()
     f = tmp_path / "c.json"
@@ -205,6 +224,7 @@ def test_main_ok_retorna_0(tmp_path: Path) -> None:
     assert vfy.main(["--file", str(f)]) == 0
 
 
+@pytest.mark.unit
 def test_main_violacion_retorna_1(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(estado="aprobada", veredicto="")
@@ -214,6 +234,7 @@ def test_main_violacion_retorna_1(tmp_path: Path) -> None:
     assert vfy.main(["--file", str(f)]) == 1
 
 
+@pytest.mark.unit
 def test_main_archivo_ausente_retorna_1(tmp_path: Path) -> None:
     assert vfy.main(["--file", str(tmp_path / "nope.json")]) == 1
 
@@ -227,11 +248,13 @@ import dispatcher as dsp
 import verify_protocol as vfy
 
 
+@pytest.mark.unit
 def test_asignar_sin_pendientes_devuelve_none() -> None:
     datos = _base()
     assert dsp.asignar(datos) == (None, None)
 
 
+@pytest.mark.unit
 def test_asignar_prioridad_alta_gana() -> None:
     datos = _base()
     datos["tareas"]["T-LOW"] = _tarea(prioridad="baja")
@@ -242,6 +265,7 @@ def test_asignar_prioridad_alta_gana() -> None:
     assert agente == "TERM"
 
 
+@pytest.mark.unit
 def test_asignar_sin_agentes_libres_devuelve_none() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea()
@@ -251,6 +275,7 @@ def test_asignar_sin_agentes_libres_devuelve_none() -> None:
     assert dsp.asignar(datos) == (None, None)
 
 
+@pytest.mark.unit
 def test_asignar_conflicto_de_zonas_devuelve_none() -> None:
     datos = _base()
     datos["tareas"]["T-ACTIVA"] = _tarea(estado="en_progreso")
@@ -262,6 +287,7 @@ def test_asignar_conflicto_de_zonas_devuelve_none() -> None:
     assert dsp.asignar(datos) == (None, None)
 
 
+@pytest.mark.unit
 def test_asignar_sin_conflicto_ok() -> None:
     datos = _base()
     datos["tareas"]["T-ACTIVA"] = _tarea(estado="en_progreso")
@@ -275,6 +301,7 @@ def test_asignar_sin_conflicto_ok() -> None:
     assert agente == "TERM"
 
 
+@pytest.mark.unit
 def test_asignar_respeta_ejecutor_en_modo_secuencial() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="WEB", revisor="TERM")
@@ -285,6 +312,7 @@ def test_asignar_respeta_ejecutor_en_modo_secuencial() -> None:
     assert agente == "WEB"
 
 
+@pytest.mark.unit
 def test_actualizar_asignacion_mueve_colas_y_marca_agente() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")
@@ -297,6 +325,7 @@ def test_actualizar_asignacion_mueve_colas_y_marca_agente() -> None:
     assert datos["agentes"]["TERM"]["rol_actual"] == "TERM"
 
 
+@pytest.mark.unit
 def test_prompt_para_agente_contiene_protocolo() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")
@@ -306,6 +335,7 @@ def test_prompt_para_agente_contiene_protocolo() -> None:
     assert "gates" in prompt
 
 
+@pytest.mark.unit
 def test_dispatcher_dry_run_no_escribe(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea()
@@ -323,6 +353,7 @@ def test_dispatcher_dry_run_no_escribe(tmp_path: Path) -> None:
     assert despues["tareas"]["T-1"]["estado"] == "pendiente"
 
 
+@pytest.mark.unit
 def test_dispatcher_escribe_asignacion(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")
@@ -342,6 +373,7 @@ def test_dispatcher_escribe_asignacion(tmp_path: Path) -> None:
     assert despues["agentes"]["TERM"]["estado"] == "ocupado"
 
 
+@pytest.mark.unit
 def test_dispatcher_archivo_ausente_sale_1(tmp_path: Path) -> None:
     res = subprocess.run(
         [sys.executable, str(DISPATCHER), "--file", str(tmp_path / "nope.json")],
@@ -357,6 +389,7 @@ def test_dispatcher_archivo_ausente_sale_1(tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_guardar_y_cargar_roundtrip(tmp_path: Path) -> None:
     datos = _base()
     f = tmp_path / "coordination.json"
@@ -364,15 +397,18 @@ def test_guardar_y_cargar_roundtrip(tmp_path: Path) -> None:
     assert dsp.cargar(f)["modo"] == "secuencial"
 
 
+@pytest.mark.unit
 def test_zonas_conflictivas_desconocida_vacia() -> None:
     assert dsp.zonas_conflictivas("T-DESCONOCIDA") == set()
 
 
+@pytest.mark.unit
 def test_zonas_conflictivas_conocida() -> None:
     dsp.ZONAS_POR_TAREA["T-Z"] = {"docs/udo/"}
     assert dsp.zonas_conflictivas("T-Z") == {"docs/udo/"}
 
 
+@pytest.mark.unit
 def test_asignar_candidato_none_continua() -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="WEB", revisor="TERM")
@@ -381,6 +417,7 @@ def test_asignar_candidato_none_continua() -> None:
     assert dsp.asignar(datos) == (None, None)
 
 
+@pytest.mark.unit
 def test_asignar_modo_paralelo_usa_revisor_como_candidato() -> None:
     datos = _base()
     datos["modo"] = "paralelo"
@@ -392,6 +429,7 @@ def test_asignar_modo_paralelo_usa_revisor_como_candidato() -> None:
     assert agente == "TERM"
 
 
+@pytest.mark.unit
 def test_main_sin_asignacion_retorna_0(tmp_path: Path) -> None:
     datos = _base()
     f = tmp_path / "c.json"
@@ -399,6 +437,7 @@ def test_main_sin_asignacion_retorna_0(tmp_path: Path) -> None:
     assert dsp.main(["--file", str(f)]) == 0
 
 
+@pytest.mark.unit
 def test_main_asigna_y_guarda(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")
@@ -410,6 +449,7 @@ def test_main_asigna_y_guarda(tmp_path: Path) -> None:
     assert despues["tareas"]["T-1"]["estado"] == "en_progreso"
 
 
+@pytest.mark.unit
 def test_main_dry_run_no_guarda(tmp_path: Path) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")
@@ -421,6 +461,7 @@ def test_main_dry_run_no_guarda(tmp_path: Path) -> None:
     assert despues["tareas"]["T-1"]["estado"] == "pendiente"
 
 
+@pytest.mark.unit
 def test_main_guardar_error_retorna_1(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     datos = _base()
     datos["tareas"]["T-1"] = _tarea(ejecutor="TERM", revisor="WEB")

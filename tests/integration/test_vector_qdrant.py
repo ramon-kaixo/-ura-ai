@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
@@ -66,6 +67,7 @@ def _collection_response(*, created: bool = True) -> MagicMock:
 class TestQdrantVectorStoreProtocol:
     """Verifica que QdrantVectorStore puede tratarse como VectorStore."""
 
+    @pytest.mark.integration
     def test_is_vector_store(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         store: VectorStore = QdrantVectorStore(collection="test")
@@ -75,6 +77,7 @@ class TestQdrantVectorStoreProtocol:
 class TestSearch:
     """Tests para search()."""
 
+    @pytest.mark.integration
     def test_search_similar(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _search_response(
@@ -90,22 +93,26 @@ class TestSearch:
         assert results[0].score == 0.95
         assert results[1].asset_id == "b"
 
+    @pytest.mark.integration
     def test_search_empty(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _search_response([])
         store = QdrantVectorStore(collection="test")
         assert store.search([1.0, 0.0]) == []
 
+    @pytest.mark.integration
     def test_search_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
         store._degraded = True
         assert store.search([1.0, 0.0]) == []
 
+    @pytest.mark.integration
     def test_search_empty_vector(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         store = QdrantVectorStore(collection="test")
         assert store.search([]) == []
 
+    @pytest.mark.integration
     def test_search_http_error(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.side_effect = httpx.HTTPError("Qdrant down")
@@ -113,6 +120,7 @@ class TestSearch:
         assert store.search([1.0, 0.0]) == []
         assert store.available is False  # degraded
 
+    @pytest.mark.integration
     def test_search_with_filter(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _search_response(
@@ -136,6 +144,7 @@ class TestSearch:
 class TestUpsert:
     """Tests para upsert()."""
 
+    @pytest.mark.integration
     def test_upsert_items(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.put.return_value = _upsert_response()
@@ -144,16 +153,19 @@ class TestUpsert:
         count = store.upsert(items)
         assert count == 1
 
+    @pytest.mark.integration
     def test_upsert_empty(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         store = QdrantVectorStore(collection="test")
         assert store.upsert([]) == 0
 
+    @pytest.mark.integration
     def test_upsert_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
         store._degraded = True
         assert store.upsert([VectorItem("a", [1.0], "x")]) == 0
 
+    @pytest.mark.integration
     def test_upsert_auto_create_collection(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         # Primera llamada PUT = create collection (200)
@@ -169,6 +181,7 @@ class TestUpsert:
         first_call = mock_client.put.call_args_list[0]
         assert "/collections/new-collection" in str(first_call)
 
+    @pytest.mark.integration
     def test_upsert_collection_already_exists(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         # 409 = collection already exists (acceptable)
@@ -180,6 +193,7 @@ class TestUpsert:
         count = store.upsert([VectorItem("a", [1.0], "x")])
         assert count == 1
 
+    @pytest.mark.integration
     def test_upsert_http_error(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.put.side_effect = httpx.HTTPError("Qdrant down")
@@ -190,6 +204,7 @@ class TestUpsert:
 class TestDelete:
     """Tests para delete()."""
 
+    @pytest.mark.integration
     def test_delete(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _upsert_response()  # delete returns similar
@@ -201,16 +216,19 @@ class TestDelete:
         body = call_args[1]["json"]
         assert body["filter"]["must"][0]["has_id"] == ["a", "b"]
 
+    @pytest.mark.integration
     def test_delete_empty(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         store = QdrantVectorStore(collection="test")
         assert store.delete([]) == 0
 
+    @pytest.mark.integration
     def test_delete_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
         store._degraded = True
         assert store.delete(["a"]) == 0
 
+    @pytest.mark.integration
     def test_delete_http_error(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.side_effect = httpx.HTTPError("Qdrant down")
@@ -222,18 +240,21 @@ class TestDelete:
 class TestCount:
     """Tests para count()."""
 
+    @pytest.mark.integration
     def test_count(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _count_response(42)
         store = QdrantVectorStore(collection="test")
         assert store.count() == 42
 
+    @pytest.mark.integration
     def test_count_empty(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.return_value = _count_response(0)
         store = QdrantVectorStore(collection="test")
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_count_not_available(self, mock_client):
         store = QdrantVectorStore(collection="test")
         store._degraded = True
@@ -243,16 +264,19 @@ class TestCount:
 class TestAvailable:
     """Tests para available property."""
 
+    @pytest.mark.integration
     def test_available_true(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         store = QdrantVectorStore(collection="test")
         assert store.available is True
 
+    @pytest.mark.integration
     def test_available_false(self, mock_client):
         store = QdrantVectorStore(collection="test")
         store._degraded = True
         assert store.available is False
 
+    @pytest.mark.integration
     def test_available_http_error(self, mock_client):
         mock_client.get.side_effect = httpx.HTTPError("Connection refused")
         store = QdrantVectorStore(collection="test")
@@ -261,6 +285,7 @@ class TestAvailable:
         # check_available does real HTTP check with backoff
         assert not store.check_available()
 
+    @pytest.mark.integration
     def test_available_after_degraded(self, mock_client):
         mock_client.get.return_value = _health_response(ok=True)
         mock_client.post.side_effect = httpx.HTTPError("Qdrant down")

@@ -1,6 +1,7 @@
 """Tests para motor.core.llm.openai (OpenAIProvider)."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import httpx
@@ -37,6 +38,7 @@ def provider(openai_mod):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_capabilities(self, provider):
         caps = provider.capabilities
         assert caps["chat"] is True
@@ -44,6 +46,7 @@ class TestInit:
         assert caps["max_context"] == 128000
         assert caps["max_output"] == 16384
 
+    @pytest.mark.unit
     def test_defaults(self, openai_mod):
         with mock.patch.object(
             openai_mod, "get_secret", side_effect=lambda name, default=None: default
@@ -56,6 +59,7 @@ class TestInit:
         assert p._temperature == 0.3
         assert p._max_tokens == 1024
 
+    @pytest.mark.unit
     def test_custom_values(self, openai_mod):
         secrets = {
             "OPENAI_API_KEY": "k",
@@ -78,6 +82,7 @@ class TestInit:
         assert p._temperature == 0.9
         assert p._max_tokens == 512
 
+    @pytest.mark.unit
     def test_headers(self, provider):
         headers = provider._headers()
         assert headers["Authorization"] == "Bearer secret-val"
@@ -94,11 +99,14 @@ class TestGenerate:
         }
         return r
 
+    @pytest.mark.unit
     def test_success(self, provider, openai_mod):
         with mock.patch.object(openai_mod.httpx, "post", return_value=self._response()):
             result = provider.generate("prompt")
         assert result == "hola"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_request_payload(self, provider, openai_mod):
         with mock.patch.object(openai_mod.httpx, "post", return_value=self._response()) as post:
             provider.generate("p", model="m1", options={"max_tokens": 99})
@@ -109,6 +117,8 @@ class TestGenerate:
         assert payload["max_tokens"] == 99
         assert post.call_args.kwargs["headers"]["Authorization"] == "Bearer secret-val"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, provider, openai_mod):
         with mock.patch.object(
             openai_mod.httpx, "post", side_effect=httpx.TimeoutException("t")
@@ -116,6 +126,7 @@ class TestGenerate:
             result = provider.generate("p")
         assert "tiempo de espera" in result
 
+    @pytest.mark.unit
     def test_http_error(self, provider, openai_mod):
         error = httpx.HTTPStatusError(
             "bad", request=mock.Mock(), response=mock.Mock(status_code=429)
@@ -124,6 +135,7 @@ class TestGenerate:
             result = provider.generate("p")
         assert "429" in result
 
+    @pytest.mark.unit
     def test_request_error(self, provider, openai_mod):
         with mock.patch.object(
             openai_mod.httpx, "post", side_effect=httpx.RequestError("conn")
@@ -131,6 +143,7 @@ class TestGenerate:
             result = provider.generate("p")
         assert "No se pudo conectar" in result
 
+    @pytest.mark.unit
     def test_unexpected_error(self, provider, openai_mod):
         with mock.patch.object(openai_mod.httpx, "post", side_effect=RuntimeError("boom")):
             result = provider.generate("p")
@@ -144,11 +157,13 @@ class TestEmbed:
         r.json.return_value = {"data": [{"embedding": [0.1]}, {"embedding": [0.2]}]}
         return r
 
+    @pytest.mark.unit
     def test_batch_success(self, provider, openai_mod):
         with mock.patch.object(openai_mod.httpx, "post", return_value=self._batch_response()):
             result = provider.embed(["a", "b"])
         assert result == [[0.1], [0.2]]
 
+    @pytest.mark.unit
     def test_fallback_individual(self, provider, openai_mod):
         individual = mock.Mock()
         individual.status_code = 200
@@ -159,6 +174,7 @@ class TestEmbed:
             result = provider.embed(["a"])
         assert result == [[0.5]]
 
+    @pytest.mark.unit
     def test_individual_failure_zero_fallback(self, provider, openai_mod):
         with mock.patch.object(
             openai_mod.httpx, "post", side_effect=httpx.RequestError("conn")
@@ -166,6 +182,7 @@ class TestEmbed:
             result = provider.embed(["a"])
         assert result == [[0.0] * 1536]
 
+    @pytest.mark.unit
     def test_custom_model_no_warning_retry(self, provider, openai_mod):
         individual = mock.Mock()
         individual.status_code = 200
@@ -226,12 +243,14 @@ class TestHealth:
         r.json.return_value = {"data": [{"id": "gpt-4o"}, {"id": "gpt-4o-mini"}]}
         return r
 
+    @pytest.mark.unit
     def test_ok(self, provider, openai_mod):
         with mock.patch.object(openai_mod.httpx, "get", return_value=self._ok_response()):
             result = provider.health()
         assert result["status"] == "ok"
         assert result["modelos_disponibles"] == ["gpt-4o", "gpt-4o-mini"]
 
+    @pytest.mark.unit
     def test_http_error(self, provider, openai_mod):
         r = mock.Mock()
         r.is_error = True
@@ -242,6 +261,7 @@ class TestHealth:
         assert result["status"] == "error"
         assert result["detail"] == "server error"
 
+    @pytest.mark.unit
     def test_exception(self, provider, openai_mod):
         with mock.patch.object(
             openai_mod.httpx, "get", side_effect=httpx.RequestError("conn")

@@ -1,6 +1,7 @@
 """Tests para core/memoria/bridge.py, vigilante.py y ingesto.py."""
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -31,6 +32,7 @@ def _patch_blake3(monkeypatch, hexdigest: str) -> mock.Mock:
 
 
 class TestGuardarEnInbox:
+    @pytest.mark.unit
     def test_guardar_crea_html(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.memoria.bridge.INBOX", tmp_path)
         ruta = _guardar_en_inbox("https://ejemplo.com/articulo?a=1", "Titulo", "contenido")
@@ -41,11 +43,13 @@ class TestGuardarEnInbox:
         assert "<title>Titulo</title>" in html
         assert "<pre>contenido</pre>" in html
 
+    @pytest.mark.unit
     def test_guardar_error_oserror(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.memoria.bridge.INBOX", tmp_path)
         with mock.patch.object(Path, "write_text", side_effect=OSError("ro")):
             assert _guardar_en_inbox("https://x.com", "t", "c") is None
 
+    @pytest.mark.unit
     def test_slug_url_vacia(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.memoria.bridge.INBOX", tmp_path)
         ruta = _guardar_en_inbox("", "", "c")
@@ -123,16 +127,19 @@ class TestBuscarYAprender:
 
 
 class TestVigilanteFuentes:
+    @pytest.mark.unit
     def test_cargar_sin_archivo(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.memoria.vigilante.FUENTES_FILE", tmp_path / "nope.json")
         assert cargar_fuentes() == []
 
+    @pytest.mark.unit
     def test_cargar_y_guardar_roundtrip(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "fuentes.json"
         monkeypatch.setattr("core.memoria.vigilante.FUENTES_FILE", f)
         guardar_fuentes([{"url": "u", "tema": "t"}])
         assert cargar_fuentes() == [{"url": "u", "tema": "t"}]
 
+    @pytest.mark.unit
     def test_guardar_corrupto(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "fuentes.json"
         f.write_text("not json")
@@ -140,6 +147,7 @@ class TestVigilanteFuentes:
         with pytest.raises(json.JSONDecodeError):
             cargar_fuentes()
 
+    @pytest.mark.unit
     def test_fuente_a_texto(self) -> None:
         assert fuente_a_texto({"content": "abc"}) == "abc"
         assert fuente_a_texto({}) == ""
@@ -282,6 +290,7 @@ class TestVigilanteParte:
 
 
 class TestIngesto:
+    @pytest.mark.unit
     def test_procesar_archivo_stub(self) -> None:
         assert procesar_archivo(Path("/tmp/x.html")) is None
 

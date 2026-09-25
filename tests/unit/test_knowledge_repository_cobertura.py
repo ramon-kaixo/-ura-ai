@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -37,11 +38,13 @@ def db(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.unit
 def test_repository_protocol_definido() -> None:
     for m in ("get_document", "search", "related", "get_node_ids", "get_relation_targets", "get_documents_for_rules", "health_check"):
         assert hasattr(KnowledgeRepository, m)
 
 
+@pytest.mark.unit
 def test_get_document_ok(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     doc = repo.get_document("0123456789a0")
@@ -49,23 +52,27 @@ def test_get_document_ok(db) -> None:
     assert doc.frontmatter.title == "Alpha"
 
 
+@pytest.mark.unit
 def test_get_document_no_existe(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     assert repo.get_document("000000000000") is None
 
 
+@pytest.mark.unit
 def test_search_ok(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     results = repo.search("Alpha")
     assert any(r.doc_id == "0123456789a0" for r in results)
 
 
+@pytest.mark.unit
 def test_search_filtros_y_limite(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     results = repo.search("Contenido", filters={"type": "doc"}, limit=1)
     assert len(results) == 1
 
 
+@pytest.mark.unit
 def test_related_ok(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     rels = repo.related("0123456789a0", depth=2)
@@ -73,6 +80,7 @@ def test_related_ok(db) -> None:
     assert rels[0].dst == "0123456789a1"
 
 
+@pytest.mark.unit
 def test_related_filtro_relation(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     rels = repo.related("0123456789a0", relation="ref", depth=2)
@@ -80,16 +88,19 @@ def test_related_filtro_relation(db) -> None:
     assert repo.related("0123456789a0", relation="otra", depth=2) == []
 
 
+@pytest.mark.unit
 def test_get_node_ids(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     assert repo.get_node_ids() == {"0123456789a0", "0123456789a1"}
 
 
+@pytest.mark.unit
 def test_get_relation_targets(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     assert repo.get_relation_targets() == {"0123456789a1"}
 
 
+@pytest.mark.unit
 def test_get_documents_for_rules(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     docs, node_ids, targets = repo.get_documents_for_rules()
@@ -102,6 +113,7 @@ def test_get_documents_for_rules(db) -> None:
     assert by_id["0123456789a1"]["relations"] == []
 
 
+@pytest.mark.unit
 def test_health_check_ok(db) -> None:
     repo = SQLiteKnowledgeRepository(db)
     health = repo.health_check()
@@ -110,6 +122,7 @@ def test_health_check_ok(db) -> None:
     assert health["integrity"] == "ok"
 
 
+@pytest.mark.unit
 def test_health_check_db_rota(tmp_path) -> None:
     repo = SQLiteKnowledgeRepository(tmp_path / "no-existe" / "k.db")
     health = repo.health_check()
@@ -117,6 +130,7 @@ def test_health_check_db_rota(tmp_path) -> None:
     assert "error" in health
 
 
+@pytest.mark.unit
 def test_health_check_integridad_rota(tmp_path) -> None:
     path = tmp_path / "corrupt.db"
     path.write_bytes(b"no es una base sqlite")

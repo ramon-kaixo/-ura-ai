@@ -6,6 +6,7 @@ unbounded message size, binary data, empty conversation_id.
 
 from __future__ import annotations
 
+import pytest
 import time
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
@@ -88,14 +89,17 @@ class TestMissingAuth:
     read/write all conversations without any token or credentials.
     """
 
+    @pytest.mark.integration
     def test_no_auth_header_required(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "hola"})
         assert resp.status_code == 200, "No auth required — open endpoint"
 
+    @pytest.mark.integration
     def test_list_conversations_no_auth(self, client: TestClient) -> None:
         resp = client.get("/api/v1/chat/conversations")
         assert resp.status_code == 200
 
+    @pytest.mark.integration
     def test_delete_conversation_no_auth(self, client: TestClient) -> None:
         resp = client.delete("/api/v1/chat/conversations/any-id")
         assert resp.status_code == 200
@@ -110,6 +114,7 @@ class TestInputValidation:
     """D2: No max_length on message field
     binary data accepted."""
 
+    @pytest.mark.integration
     def test_very_long_message(self, client: TestClient) -> None:
         huge = "A" * 1_000_000  # 1 MB
         t0 = time.monotonic()
@@ -118,6 +123,7 @@ class TestInputValidation:
         assert elapsed < 10.0, f"1 MB message took {elapsed:.2f}s"
         assert resp.status_code in (200, 422), f"Expected 200 or 422, got {resp.status_code}"
 
+    @pytest.mark.integration
     def test_extremely_long_message(self, client: TestClient) -> None:
         huge = "B" * 10_000_000  # 10 MB — unbounded growth
         t0 = time.monotonic()
@@ -126,6 +132,7 @@ class TestInputValidation:
         assert elapsed < 30.0, f"10 MB message took {elapsed:.2f}s"
         assert resp.status_code in (200, 422), f"Expected 200 or 422, got {resp.status_code}"
 
+    @pytest.mark.integration
     def test_binary_null_bytes_in_message(self, client: TestClient) -> None:
         payload = "hello\x00world\x00\x00\x00boom"
         resp = client.post("/api/v1/chat", json={"message": payload})
@@ -133,11 +140,13 @@ class TestInputValidation:
         data = resp.json()
         assert "reply" in data
 
+    @pytest.mark.integration
     def test_unicode_control_chars(self, client: TestClient) -> None:
         payload = "hello\u0000\u0001\u0002\u001fworld"
         resp = client.post("/api/v1/chat", json={"message": payload})
         assert resp.status_code == 200
 
+    @pytest.mark.integration
     def test_emoji_and_unicode_surrogates(self, client: TestClient) -> None:
         payload = "🔥🚀 " + "\ud800" * 100 + " test"
         import json as _json
@@ -150,19 +159,23 @@ class TestInputValidation:
             resp = client.post("/api/v1/chat", content=b'{"message": "test surrogate blocked by json"}')
             assert resp.status_code in (200, 422)
 
+    @pytest.mark.integration
     def test_message_with_only_whitespace(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "   \t\n  "})
         assert resp.status_code == 200
 
+    @pytest.mark.integration
     def test_message_with_only_special_chars(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "!@#$%^&*()_+"})
         assert resp.status_code == 200
 
+    @pytest.mark.integration
     def test_invalid_mode_rejected(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "hola", "mode": "invalid_mode"})
         assert resp.status_code == 400
         assert "Invalid mode" in resp.json()["detail"]
 
+    @pytest.mark.integration
     def test_empty_message_accepted(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": ""})
         assert resp.status_code == 200
@@ -176,6 +189,7 @@ class TestInputValidation:
 class TestConversationIDEdgeCases:
     """D3: Empty conversation_id is accepted but creates a new conv each time."""
 
+    @pytest.mark.integration
     def test_empty_cid_creates_conversation(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "hola", "conversation_id": ""})
         assert resp.status_code == 200
@@ -183,6 +197,7 @@ class TestConversationIDEdgeCases:
         cid = data.get("conversation_id", "")
         assert cid and len(cid) > 0, f"Expected non-empty conversation_id, got '{cid}'"
 
+    @pytest.mark.integration
     def test_empty_cid_is_not_persistent(self, client: TestClient) -> None:
         """Each request with empty cid creates a NEW conversation."""
         cids: set[str] = set()
@@ -192,10 +207,12 @@ class TestConversationIDEdgeCases:
             cids.add(resp.json()["conversation_id"])
         assert len(cids) == 5, "Empty cid creates different conversations each time"
 
+    @pytest.mark.integration
     def test_missing_cid_field_allowed(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "hola"})
         assert resp.status_code == 200
 
+    @pytest.mark.integration
     def test_none_cid_falls_back_to_empty(self, client: TestClient) -> None:
         """JSON null conversation_id is handled by Pydantic default."""
         resp = client.post("/api/v1/chat", json={"message": "hola", "conversation_id": None})
@@ -211,6 +228,7 @@ class TestConversationIDEdgeCases:
 class TestErrorHandling:
     """D4: What happens when ConversationEngine crashes mid-request."""
 
+    @pytest.mark.integration
     def test_engine_crash_on_init_retries(self, client: TestClient, tmp_path: Path) -> None:
         """If ConversationEngine() raises, get_engine retries next call."""
         import sqlite3
@@ -225,11 +243,13 @@ class TestErrorHandling:
         with pytest.raises(sqlite3.ProgrammingError):
             client.post("/api/v1/chat", json={"message": "hola"})
 
+    @pytest.mark.integration
     def test_list_conversations_empty_db(self, client: TestClient) -> None:
         resp = client.get("/api/v1/chat/conversations")
         assert resp.status_code == 200
         assert resp.json() == []
 
+    @pytest.mark.integration
     def test_delete_non_existent_conversation(self, client: TestClient) -> None:
         # BUG: routes.py:207 siempre retorna {"deleted": True},
         # incluso si el conversation_id no existe.
@@ -238,6 +258,7 @@ class TestErrorHandling:
         assert resp.status_code == 200
         assert resp.json() == {"deleted": True}
 
+    @pytest.mark.integration
     def test_delete_same_conversation_twice(self, client: TestClient) -> None:
         # Mismo bug: segunda llamada tambien retorna 200 en vez de 404.
         resp = client.post("/api/v1/chat", json={"message": "test"})
@@ -256,6 +277,7 @@ class TestErrorHandling:
 class TestRateLimiting:
     """D5: No rate limiting — sequential or concurrent abuse is unthrottled."""
 
+    @pytest.mark.integration
     def test_rapid_sequential_requests(self, client: TestClient) -> None:
         from motor.assistant.api.middleware import _rate_limiter
 
@@ -267,6 +289,8 @@ class TestRateLimiting:
         elapsed = time.monotonic() - t0
         assert elapsed < 30.0, f"50 sequential requests took {elapsed:.2f}s (no rate limit)"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_large_payload_changes_turn_count(self, client: TestClient) -> None:
         """Verify turn_count increments properly."""
         cid = "test-turns"
@@ -288,6 +312,7 @@ class TestRateLimiting:
 class TestGetEngineRace:
     """D6: get_engine() has a TOCTOU race — two threads can init simultaneously."""
 
+    @pytest.mark.integration
     def test_get_engine_singleton_race(self) -> None:
         """Under concurrent call, both threads may create an engine."""
         _reset_engine()
@@ -315,18 +340,21 @@ class TestGetEngineRace:
 
 
 class TestResponseStructure:
+    @pytest.mark.integration
     def test_greeting_response(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "hola"})
         data = resp.json()
         assert data["intent"] == "greeting"
         assert "Hola" in data["reply"]
 
+    @pytest.mark.integration
     def test_farewell_response(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "adiós"})
         data = resp.json()
         assert data["intent"] == "farewell"
         assert "Hasta luego" in data["reply"]
 
+    @pytest.mark.integration
     def test_chat_response_always_has_fields(self, client: TestClient) -> None:
         resp = client.post("/api/v1/chat", json={"message": "test"})
         data = resp.json()

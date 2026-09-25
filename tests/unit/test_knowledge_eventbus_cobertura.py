@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/eventbus.py."""
 
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.eventbus import (
     ArchiveCompleted,
@@ -17,6 +18,7 @@ from knowledge.engine.eventbus import (
 EVENT = CompileCompleted(reason="test", documents_changed=1, documents_total=2, errors=0, correlation_id="c1")
 
 
+@pytest.mark.unit
 def test_subscribe_y_publish() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -25,6 +27,7 @@ def test_subscribe_y_publish() -> None:
     assert seen == [EVENT]
 
 
+@pytest.mark.unit
 def test_no_duplicados() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -38,6 +41,7 @@ def test_no_duplicados() -> None:
     assert len(seen) == 1
 
 
+@pytest.mark.unit
 def test_unsubscribe() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -52,6 +56,7 @@ def test_unsubscribe() -> None:
     bus.unsubscribe(CompileCompleted, _h)  # no-op
 
 
+@pytest.mark.unit
 def test_tipo_distinto_no_recibe() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -60,6 +65,7 @@ def test_tipo_distinto_no_recibe() -> None:
     assert seen == []
 
 
+@pytest.mark.unit
 def test_handler_fallo_no_afecta_otros() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -73,6 +79,7 @@ def test_handler_fallo_no_afecta_otros() -> None:
     assert len(seen) == 1
 
 
+@pytest.mark.unit
 def test_clear() -> None:
     bus = EventBus()
     seen: list[Event] = []
@@ -82,6 +89,7 @@ def test_clear() -> None:
     assert seen == []
 
 
+@pytest.mark.unit
 def test_multiples_suscriptores() -> None:
     bus = EventBus()
     a: list[Event] = []
@@ -93,12 +101,14 @@ def test_multiples_suscriptores() -> None:
     assert b == [EVENT]
 
 
+@pytest.mark.unit
 def test_get_bus_singleton() -> None:
     b1 = get_bus()
     b2 = get_bus()
     assert b1 is b2
 
 
+@pytest.mark.unit
 def test_set_bus() -> None:
     nuevo = EventBus()
     previo = get_bus()
@@ -109,6 +119,7 @@ def test_set_bus() -> None:
         set_bus(previo)
 
 
+@pytest.mark.unit
 def test_eventos_restantes() -> None:
     e1 = ArchiveCompleted(kind="source", commit="c", file_count=1)
     e2 = SearchPerformed(query="q", docs_returned=3)

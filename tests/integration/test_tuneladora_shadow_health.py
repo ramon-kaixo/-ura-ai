@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -21,22 +22,26 @@ def _cfg() -> Configuration:
 
 
 class TestInit:
+    @pytest.mark.integration
     def test_defaults(self) -> None:
         sh = ShadowHealth(_cfg())
         assert sh.layers == list(range(8))
         assert sh.fail_fast is True
         assert sh._diff_hash != ""
 
+    @pytest.mark.integration
     def test_layers_personalizados(self) -> None:
         sh = ShadowHealth(_cfg(), layers=[0, 3])
         assert sh.layers == [0, 3]
 
+    @pytest.mark.integration
     def test_fail_fast_false(self) -> None:
         sh = ShadowHealth(_cfg(), fail_fast=False)
         assert sh.fail_fast is False
 
 
 class TestCacheKey:
+    @pytest.mark.integration
     def test_key_con_hash(self) -> None:
         sh = ShadowHealth(_cfg())
         k1 = sh._cache_key(1)
@@ -46,21 +51,25 @@ class TestCacheKey:
 
 
 class TestVerdict:
+    @pytest.mark.integration
     def test_ok(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "OK")]
         assert sh._verdict() == "OK"
 
+    @pytest.mark.integration
     def test_warn(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "WARN")]
         assert sh._verdict() == "WARN"
 
+    @pytest.mark.integration
     def test_fail_prioridad(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "WARN"), LayerResult(1, "s", "FAIL")]
         assert sh._verdict() == "FAIL"
 
+    @pytest.mark.integration
     def test_abort_prioridad_maxima(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "ABORT")]
@@ -68,16 +77,19 @@ class TestVerdict:
 
 
 class TestShouldRollback:
+    @pytest.mark.integration
     def test_rollback_requerido(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(1, "static", "FAIL")]
         assert sh._should_rollback() is True
 
+    @pytest.mark.integration
     def test_sin_rollback(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "FAIL")]  # layer 0 rule = none
         assert sh._should_rollback() is False
 
+    @pytest.mark.integration
     def test_warn_no_rollback(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(1, "static", "WARN")]
@@ -85,11 +97,13 @@ class TestShouldRollback:
 
 
 class TestRunLayer:
+    @pytest.mark.integration
     def test_capa_desconocida_skip(self) -> None:
         sh = ShadowHealth(_cfg())
         result = sh.run_layer(9)
         assert result.status == "SKIP"
 
+    @pytest.mark.integration
     def test_handler_ok_y_cache(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._layer0_env = mock.Mock(return_value=LayerResult(0, "env", "OK", checks=[{"a": 1}]))
@@ -98,6 +112,7 @@ class TestRunLayer:
         assert r1.status == "OK"
         assert sh._layer0_env.call_count == 1  # segundo viene de cache
 
+    @pytest.mark.integration
     def test_handler_error(self) -> None:
         sh = ShadowHealth(_cfg())
 
@@ -111,6 +126,7 @@ class TestRunLayer:
 
 
 class TestRunAll:
+    @pytest.mark.integration
     def test_todo_ok(self) -> None:
         sh = ShadowHealth(_cfg(), layers=[0, 3])
         sh.run_layer = mock.Mock(return_value=LayerResult(0, "x", "OK"))
@@ -118,12 +134,14 @@ class TestRunAll:
         assert len(results) == 2
         assert sh._duration_ms >= 0
 
+    @pytest.mark.integration
     def test_fail_fast_aborta(self) -> None:
         sh = ShadowHealth(_cfg(), layers=[0, 1, 2])
         sh.run_layer = mock.Mock(side_effect=[LayerResult(0, "env", "OK"), LayerResult(1, "static", "FAIL")])
         results = sh.run_all()
         assert len(results) == 2  # para en layer 1
 
+    @pytest.mark.integration
     def test_layer_invalido_skip(self) -> None:
         sh = ShadowHealth(_cfg(), layers=[-1, 8])
         sh.run_layer = mock.Mock(return_value=LayerResult(0, "x", "OK"))
@@ -132,6 +150,7 @@ class TestRunAll:
 
 
 class TestRender:
+    @pytest.mark.integration
     def test_json(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "OK", checks=[], duration_ms=5.0)]
@@ -143,6 +162,7 @@ class TestRender:
         assert data["rollback"] is False
         assert data["layers"][0]["layer"] == 0
 
+    @pytest.mark.integration
     def test_text(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(1, "static", "FAIL")]
@@ -152,30 +172,35 @@ class TestRender:
 
 
 class TestLayersConcretos:
+    @pytest.mark.integration
     def test_layer0_env(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._layer0_env = mock.Mock(return_value=LayerResult(0, "env", "OK"))
         r = sh.run_layer(0)
         assert r.status == "OK"
 
+    @pytest.mark.integration
     def test_layer1_sin_diff_files(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = []
         r = sh._layer1_static()
         assert r.status == "SKIP"
 
+    @pytest.mark.integration
     def test_layer2_sin_diff_files(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = []
         r = sh._layer2_runtime()
         assert r.status == "SKIP"
 
+    @pytest.mark.integration
     def test_layer3_sin_diff_files(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = []
         r = sh._layer3_shadow()
         assert r.status == "OK"
 
+    @pytest.mark.integration
     def test_layer4_chaos_ok(self) -> None:
         sh = ShadowHealth(_cfg())
         with mock.patch(
@@ -185,6 +210,7 @@ class TestLayersConcretos:
             r = sh._layer4_chaos()
         assert r.status == "OK"
 
+    @pytest.mark.integration
     def test_layer4_chaos_fail(self) -> None:
         sh = ShadowHealth(_cfg())
         with mock.patch(
@@ -194,11 +220,13 @@ class TestLayersConcretos:
             r = sh._layer4_chaos()
         assert r.status == "FAIL"
 
+    @pytest.mark.integration
     def test_layer5_y_6_skip(self) -> None:
         sh = ShadowHealth(_cfg())
         assert sh._layer5_regression().status == "SKIP"
         assert sh._layer6_trend().status == "SKIP"
 
+    @pytest.mark.integration
     def test_layer7_promotion(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._results = [LayerResult(0, "env", "OK")]
@@ -208,6 +236,7 @@ class TestLayersConcretos:
         sh._results = [LayerResult(0, "env", "FAIL")]
         assert sh._layer7_promotion().status == "FAIL"
 
+    @pytest.mark.integration
     def test_rollback_rules(self) -> None:
         assert ROLLBACK_RULES[0] == "none"
         assert ROLLBACK_RULES[1] == "full"
@@ -215,6 +244,7 @@ class TestLayersConcretos:
 
 
 class TestMain:
+    @pytest.mark.integration
     def test_all_json_exit_0(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["shadow_health.py", "--json"])
         sh = mock.Mock()
@@ -226,6 +256,7 @@ class TestMain:
             main()
         assert e.value.code == 0
 
+    @pytest.mark.integration
     def test_rango_layers(self, monkeypatch) -> None:
         capturado: dict = {}
 
@@ -253,6 +284,7 @@ class TestMain:
 
 
 class TestEnsureDiffCache:
+    @pytest.mark.integration
     def test_git_error_silencioso(self, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.shadow_health.subprocess.run",
@@ -266,6 +298,7 @@ class TestEnsureDiffCache:
         assert sh._diff_files == []
         assert sh._diff_hash == ""
 
+    @pytest.mark.integration
     def test_filtra_no_py(self, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.shadow_health.subprocess.run",
@@ -282,6 +315,7 @@ class TestEnsureDiffCache:
 
 
 class TestLayersConDiffFiles:
+    @pytest.mark.integration
     def test_layer1_static_con_archivos(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = ["a.py"]
@@ -291,6 +325,7 @@ class TestLayersConDiffFiles:
         r = sh._layer1_static()
         assert r.status == "WARN"
 
+    @pytest.mark.integration
     def test_layer2_runtime_con_archivos(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = ["a.py"]
@@ -300,6 +335,7 @@ class TestLayersConDiffFiles:
         r = sh._layer2_runtime()
         assert r.status == "FAIL"
 
+    @pytest.mark.integration
     def test_layer3_con_archivos(self) -> None:
         sh = ShadowHealth(_cfg())
         sh._diff_files = ["a.py"]
@@ -310,6 +346,8 @@ class TestLayersConDiffFiles:
             r = sh._layer3_shadow()
         assert r.status == "WARN"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_layer4_timeout(self) -> None:
         sh = ShadowHealth(_cfg())
         import subprocess as _sp

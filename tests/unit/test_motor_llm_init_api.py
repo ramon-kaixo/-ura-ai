@@ -5,6 +5,7 @@ se verifica que
 las 4 funciones delegan y que el estado se cachea.
 """
 from __future__ import annotations
+import pytest
 
 import asyncio
 from unittest import mock
@@ -28,6 +29,7 @@ class TestApiPublica:
         build.start()
         return build, state
 
+    @pytest.mark.unit
     def test_generate_delega(self) -> None:
         build, state = self._patched_build()
         try:
@@ -37,6 +39,7 @@ class TestApiPublica:
         assert result == "gen"
         state.generate.assert_called_with("p", "m", {"x": 1})
 
+    @pytest.mark.unit
     def test_embed_delega(self) -> None:
         build, state = self._patched_build()
         try:
@@ -46,6 +49,7 @@ class TestApiPublica:
         assert result == [[0.1]]
         state.embed.assert_called_with(["a"], None)
 
+    @pytest.mark.unit
     def test_embed_async_delega(self) -> None:
         build, state = self._patched_build()
         try:
@@ -55,6 +59,7 @@ class TestApiPublica:
         assert result == [[0.2]]
         state.embed_async.assert_called_with(["a"], None)
 
+    @pytest.mark.unit
     def test_health_delega(self) -> None:
         build, state = self._patched_build()
         try:
@@ -64,6 +69,7 @@ class TestApiPublica:
         assert result == {"status": "ok"}
         state.health.assert_called_once()
 
+    @pytest.mark.unit
     def test_estado_cacheado(self) -> None:
         llm_api._LLM_STATE = None
         state = self._fake_state()
@@ -73,5 +79,6 @@ class TestApiPublica:
             llm_api.health()
         assert build.call_count == 1
 
+    @pytest.mark.unit
     def test_all(self) -> None:
         assert set(llm_api.__all__) == {"embed", "embed_async", "generate", "health"}

@@ -22,6 +22,7 @@ def config(tmp_path: Path) -> mock.Mock:
 
 
 class TestHistory:
+    @pytest.mark.unit
     def test_no_disponible(self, config: mock.Mock) -> None:
         fake_qdrant = mock.Mock()
         fake_qdrant.disponible = False
@@ -30,6 +31,7 @@ class TestHistory:
                 cmd_diag.cmd_history(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock) -> None:
         fake_qdrant = mock.Mock()
         fake_qdrant.disponible = True
@@ -39,6 +41,7 @@ class TestHistory:
 
 
 class TestCheck:
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock) -> None:
         fake_pre = mock.Mock()
         fake_pre.ok = True
@@ -47,6 +50,7 @@ class TestCheck:
                 cmd_diag.cmd_check(config)
         assert exc.value.code == 0
 
+    @pytest.mark.unit
     def test_fail(self, config: mock.Mock) -> None:
         fake_pre = mock.Mock()
         fake_pre.ok = False
@@ -56,6 +60,7 @@ class TestCheck:
         assert exc.value.code == 1
 
 
+@pytest.mark.unit
 def test_verify(config: mock.Mock) -> None:
     with mock.patch("motor.cli.cmd_diag.ejecutar_verificacion") as ver:
         cmd_diag.cmd_verify(config)
@@ -63,11 +68,13 @@ def test_verify(config: mock.Mock) -> None:
 
 
 class TestDetect:
+    @pytest.mark.unit
     def test_sin_trends(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_diag.cmd_detect(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_con_trends(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_diag.ARCHIVO_TRENDS).write_text(
             json.dumps({"health": 90, "ram_pct": 30}) + "\n" +
@@ -80,23 +87,27 @@ class TestDetect:
 
 
 class TestLearn:
+    @pytest.mark.unit
     def test_sin_archivo(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_diag.cmd_learn(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_vacio(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_diag.ARCHIVO_TRENDS).write_text("")
         with pytest.raises(SystemExit) as exc:
             cmd_diag.cmd_learn(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_pocas_lineas(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_diag.ARCHIVO_TRENDS).write_text("{}\n{}\n")
         with pytest.raises(SystemExit) as exc:
             cmd_diag.cmd_learn(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_con_tendencias(self, config: mock.Mock, tmp_path: Path) -> None:
         lineas = [{"health": h, "ram_pct": r, "disk_pct": d} for h, r, d in [
             (50, 20, 30), (60, 40, 40), (70, 60, 50),
@@ -106,6 +117,7 @@ class TestLearn:
         )
         assert cmd_diag.cmd_learn(config) is None
 
+    @pytest.mark.unit
     def test_tendencia_bajando(self, config: mock.Mock, tmp_path: Path) -> None:
         lineas = [{"health": h, "ram_pct": r, "disk_pct": d} for h, r, d in [
             (90, 60, 80), (70, 50, 60), (50, 40, 40),
@@ -115,6 +127,7 @@ class TestLearn:
         )
         assert cmd_diag.cmd_learn(config) is None
 
+    @pytest.mark.unit
     def test_disk_casi_lleno(self, config: mock.Mock, tmp_path: Path) -> None:
         lineas = [{"health": 50, "disk_pct": d} for d in (80, 90, 99)]
         (tmp_path / cmd_diag.ARCHIVO_TRENDS).write_text(
@@ -124,6 +137,7 @@ class TestLearn:
 
 
 class TestAlerta:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         with mock.patch("motor.cli.cmd_diag._executor") as fake_exec:
             fake_exec.run.return_value = _res(stdout="line ALERTA\nother\nerror line\n")
@@ -131,6 +145,7 @@ class TestAlerta:
 
 
 class TestHealthCheck:
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock, tmp_path: Path) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.side_effect = lambda cmd, **kwargs: _res(stdout="active")
@@ -142,6 +157,7 @@ class TestHealthCheck:
                 mock.patch("motor.cli.cmd_diag.QdrantClient.instancia", return_value=fake_qdrant):
             assert cmd_diag.cmd_health_check(config) is None
 
+    @pytest.mark.unit
     def test_excepcion_systemctl(self, config: mock.Mock, tmp_path: Path) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.side_effect = RuntimeError("boom")
@@ -151,6 +167,7 @@ class TestHealthCheck:
                 mock.patch("motor.cli.cmd_diag.QdrantClient.instancia", return_value=fake_qdrant):
             assert cmd_diag.cmd_health_check(config) is None
 
+    @pytest.mark.unit
     def test_excepcion_docker(self, config: mock.Mock, tmp_path: Path) -> None:
         def side_effect(cmd, **kwargs):
             if "docker" in cmd:

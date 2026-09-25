@@ -63,11 +63,13 @@ def plugin_dir(tmp_path: Path) -> Path:
 
 
 class TestEntradas:
+    @pytest.mark.unit
     def test_vacio(self, reg: PluginRegistryV2) -> None:
         assert reg.count() == 0
         assert reg.entries == {}
         assert reg.loaded == []
 
+    @pytest.mark.unit
     def test_entries_copia(self, reg: PluginRegistryV2) -> None:
         reg._entries["x"] = PluginEntryV2(manifest=None, path=Path())
         copia = reg.entries
@@ -77,14 +79,17 @@ class TestEntradas:
 
 
 class TestDiscover:
+    @pytest.mark.unit
     def test_ruta_invalida(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         assert reg.discover([str(tmp_path / "no_existe")]) == 0
 
+    @pytest.mark.unit
     def test_archivo_no_py(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "x.txt"
         f.write_text("")
         assert reg.discover([str(f)]) == 0
 
+    @pytest.mark.unit
     def test_dir_con_manifest(self, reg: PluginRegistryV2, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         d = tmp_path / "pkg"
         d.mkdir()
@@ -96,6 +101,7 @@ class TestDiscover:
         assert reg.get_manifest("pkg1").name == "pkg1"  # type: ignore[union-attr]
         assert reg.discover([str(d)]) == 1  # duplicado: sobrescribe, sigue 1
 
+    @pytest.mark.unit
     def test_dir_manifest_invalido(self, reg: PluginRegistryV2, tmp_path: Path,
                                    monkeypatch: pytest.MonkeyPatch) -> None:
         d = tmp_path / "pkg"
@@ -105,6 +111,7 @@ class TestDiscover:
         monkeypatch.setattr("motor.plugin.registry_v2.parse_manifest", mock.Mock(return_value=None))
         assert reg.discover([str(d)]) == 0
 
+    @pytest.mark.unit
     def test_dir_sin_manifest_legacy(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "legacy_dir"
         d.mkdir()
@@ -117,6 +124,7 @@ class TestDiscover:
         assert reg.discover([str(d)]) == 1
         assert reg.get_manifest("uno").name == "uno"  # type: ignore[union-attr]
 
+    @pytest.mark.unit
     def test_dir_anidado(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "raiz"
         d.mkdir()
@@ -129,6 +137,7 @@ class TestDiscover:
         (sub2 / "c.py").write_text('__plugin__ = {"name": "c"}\n')
         assert reg.discover([str(d)]) == 2
 
+    @pytest.mark.unit
     def test_legacy_sin_meta(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "x.py"
         f.write_text("print(1)\n")
@@ -136,6 +145,7 @@ class TestDiscover:
         assert reg.get_manifest("x") is not None
         assert reg.discover([str(f)]) == 1  # duplicado: sobrescribe, sigue 1
 
+    @pytest.mark.unit
     def test_duplicados(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "d"
         d.mkdir()
@@ -146,14 +156,17 @@ class TestDiscover:
 
 
 class TestGetManifest:
+    @pytest.mark.unit
     def test_no_existe(self, reg: PluginRegistryV2) -> None:
         assert reg.get_manifest("nada") is None
 
+    @pytest.mark.unit
     def test_v2(self, reg: PluginRegistryV2) -> None:
         m = _manifest("p")
         reg._entries["p"] = PluginEntryV2(manifest=m, path=Path())
         assert reg.get_manifest("p") is m
 
+    @pytest.mark.unit
     def test_legacy(self, reg: PluginRegistryV2) -> None:
         meta = PluginMeta(name="l")
         reg._entries["l"] = PluginEntryV2(manifest=None, path=Path(), legacy_meta=meta)
@@ -161,6 +174,7 @@ class TestGetManifest:
 
 
 class TestLoadV2:
+    @pytest.mark.unit
     def test_ok(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         m = _manifest("mi_plugin", entry_point="MiPlugin")
         reg._entries["mi_plugin"] = PluginEntryV2(manifest=m, path=plugin_dir, manifest_path=plugin_dir / "p.yaml")
@@ -173,10 +187,12 @@ class TestLoadV2:
         assert not reg._dm.is_degraded("plugin:mi_plugin")
         assert reg.get("mi_plugin") is plugin  # cache hit
 
+    @pytest.mark.unit
     def test_manifest_nulo(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         reg._entries["p"] = PluginEntryV2(manifest=None, path=plugin_dir)
         assert reg._load_v2(reg._entries["p"]) is None
 
+    @pytest.mark.unit
     def test_api_incompatible(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         m = _manifest("p", api_version="99.0.0")
         reg._entries["p"] = PluginEntryV2(manifest=m, path=plugin_dir)
@@ -184,6 +200,7 @@ class TestLoadV2:
             assert reg.get("p") is None
         assert reg._dm.is_degraded("plugin:p")
 
+    @pytest.mark.unit
     def test_sin_init(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "sin_init"
         d.mkdir()
@@ -191,6 +208,7 @@ class TestLoadV2:
         reg._entries["p"] = PluginEntryV2(manifest=m, path=d)
         assert reg.get("p") is None
 
+    @pytest.mark.unit
     def test_sin_clase(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "sin_clase"
         d.mkdir()
@@ -199,6 +217,7 @@ class TestLoadV2:
         reg._entries["p"] = PluginEntryV2(manifest=m, path=d)
         assert reg.get("p") is None
 
+    @pytest.mark.unit
     def test_error_registrar(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "reg"
         d.mkdir()
@@ -215,6 +234,8 @@ class TestLoadV2:
             assert reg.get("r") is None
         assert reg._dm.is_degraded("plugin:r")
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_on_load_falla(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "ol"
         d.mkdir()
@@ -231,6 +252,7 @@ class TestLoadV2:
         assert plugin is not None  # on_load falló pero el plugin queda registrado
         assert not reg._dm.is_degraded("plugin:ol")
 
+    @pytest.mark.unit
     def test_error_carga(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "error"
         d.mkdir()
@@ -240,6 +262,7 @@ class TestLoadV2:
         with pytest.raises(RuntimeError):
             reg.get("p")
 
+    @pytest.mark.unit
     def test_entry_point_no_existe(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "ep"
         d.mkdir()
@@ -256,6 +279,7 @@ class TestLoadV2:
             plugin = reg.get("p")
         assert plugin is not None  # fallback scan dir()
 
+    @pytest.mark.unit
     def test_spec_invalido(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "si"
         d.mkdir()
@@ -269,6 +293,7 @@ class TestLoadV2:
             assert reg.get("si") is None
         assert reg._dm.is_degraded("plugin:si")
 
+    @pytest.mark.unit
     def test_entry_point_falla_instanciar(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "ef"
         d.mkdir()
@@ -285,6 +310,7 @@ class TestLoadV2:
         with mock.patch("motor.events.compat.check_api_compatibility", return_value=True):
             assert reg.get("ef") is None  # A() falla, sin fallback: no hay otra subclase
 
+    @pytest.mark.unit
     def test_scan_falla_instanciar(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "sf"
         d.mkdir()
@@ -301,9 +327,11 @@ class TestLoadV2:
         with mock.patch("motor.events.compat.check_api_compatibility", return_value=True):
             assert reg.get("sf") is None  # scan falla en A()
 
+    @pytest.mark.unit
     def test_no_cargado_no_encontrado(self, reg: PluginRegistryV2) -> None:
         assert reg.get("inexistente") is None
 
+    @pytest.mark.unit
     def test_carga_dependencias(self, reg: PluginRegistryV2, plugin_dir: Path, tmp_path: Path) -> None:
         dep_dir = tmp_path / "dep"
         dep_dir.mkdir()
@@ -326,6 +354,7 @@ class TestLoadV2:
 
 
 class TestLoadLegacy:
+    @pytest.mark.unit
     def test_ok(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "legacy.py"
         f.write_text(
@@ -341,6 +370,7 @@ class TestLoadLegacy:
         assert plugin is not None
         assert "legacy" in reg.loaded
 
+    @pytest.mark.unit
     def test_no_encontrado(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "l.py"
         f.write_text("x=1\n")
@@ -349,9 +379,11 @@ class TestLoadLegacy:
 
 
 class TestUnload:
+    @pytest.mark.unit
     def test_no_cargado(self, reg: PluginRegistryV2) -> None:
         assert reg.unload("nada") is False
 
+    @pytest.mark.unit
     def test_ok(self, reg: PluginRegistryV2) -> None:
         plugin = FakePlugin()
         reg._instances["p"] = plugin
@@ -359,6 +391,8 @@ class TestUnload:
         assert reg.unload("p") is True
         assert "p" not in reg.loaded
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_on_unload_falla(self, reg: PluginRegistryV2) -> None:
         plugin = FakePlugin()
         plugin.manifest = _manifest("p")
@@ -366,6 +400,7 @@ class TestUnload:
         reg._instances["p"] = plugin
         assert reg.unload("p") is True
 
+    @pytest.mark.unit
     def test_con_hooks_bus(self, reg: PluginRegistryV2) -> None:
         hooks = mock.Mock()
         bus = mock.Mock()
@@ -380,6 +415,8 @@ class TestUnload:
 
 
 class TestRegistrar:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_on_load_falla(self, reg: PluginRegistryV2) -> None:
         plugin = FakePlugin()
         plugin.on_load = mock.Mock(side_effect=RuntimeError("x"))
@@ -388,6 +425,7 @@ class TestRegistrar:
         reg._dm.mark_healthy("plugin:p")
         assert "p" in reg.loaded
 
+    @pytest.mark.unit
     def test_con_bus_y_hooks(self, reg: PluginRegistryV2) -> None:
         hooks = mock.Mock()
         bus = mock.Mock()
@@ -401,6 +439,7 @@ class TestRegistrar:
 
 
 class TestRunPhase:
+    @pytest.mark.unit
     def test_v2_match(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         m = _manifest("mi_plugin", entry_point="MiPlugin", phases=["pre"])
         reg._entries["mi_plugin"] = PluginEntryV2(manifest=m, path=plugin_dir)
@@ -409,6 +448,7 @@ class TestRunPhase:
         assert len(results) == 1
         assert results[0].ok is True
 
+    @pytest.mark.unit
     def test_legacy_match(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "l.py"
         f.write_text(
@@ -423,12 +463,14 @@ class TestRunPhase:
         results = reg.run_phase("post")
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_sin_fase_match(self, reg: PluginRegistryV2) -> None:
         m = _manifest("p", phases=["pre"])
         reg._entries["p"] = PluginEntryV2(manifest=m, path=Path())
         results = reg.run_phase("post")
         assert results == []
 
+    @pytest.mark.unit
     def test_manifest_sin_meta_always(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "x.py"
         f.write_text("__plugin__ = {'name': 'x'}\n")
@@ -437,6 +479,7 @@ class TestRunPhase:
         assert len(results) == 1
         assert results[0].ok is False  # plugin no cargado
 
+    @pytest.mark.unit
     def test_carga_fallida(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         m = _manifest("p")
         reg._entries["p"] = PluginEntryV2(manifest=m, path=tmp_path / "no")
@@ -444,6 +487,7 @@ class TestRunPhase:
         assert len(results) == 1
         assert results[0].ok is False
 
+    @pytest.mark.unit
     def test_execute_falla(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         d = plugin_dir.parent / "explota"
         d.mkdir()
@@ -464,9 +508,11 @@ class TestRunPhase:
 
 
 class TestRunOne:
+    @pytest.mark.unit
     def test_no_existe(self, reg: PluginRegistryV2) -> None:
         assert reg.run_one("nada") is None
 
+    @pytest.mark.unit
     def test_sin_resultado(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         d = tmp_path / "sr"
         d.mkdir()
@@ -483,6 +529,7 @@ class TestRunOne:
         with mock.patch.object(reg, "run_phase", return_value=[otro]):
             assert reg.run_one("sr") is None  # resultados de otro plugin -> sin resultado
 
+    @pytest.mark.unit
     def test_ok_v2(self, reg: PluginRegistryV2, plugin_dir: Path) -> None:
         m = _manifest("mi_plugin", entry_point="MiPlugin", phases=["pre"])
         reg._entries["mi_plugin"] = PluginEntryV2(manifest=m, path=plugin_dir)
@@ -491,6 +538,7 @@ class TestRunOne:
         assert r is not None
         assert r.ok is True
 
+    @pytest.mark.unit
     def test_ok_legacy(self, reg: PluginRegistryV2, tmp_path: Path) -> None:
         f = tmp_path / "l.py"
         f.write_text(
@@ -506,6 +554,7 @@ class TestRunOne:
         assert r is not None
         assert r.ok is True
 
+    @pytest.mark.unit
     def test_sin_meta(self, reg: PluginRegistryV2) -> None:
         reg._entries["x"] = PluginEntryV2(manifest=None, path=Path())
         r = reg.run_one("x")
@@ -514,12 +563,14 @@ class TestRunOne:
 
 
 class TestDependencias:
+    @pytest.mark.unit
     def test_sin_manifest(self, reg: PluginRegistryV2) -> None:
         assert reg._resolve_dependencies
         entry = PluginEntryV2(manifest=None, path=Path())
         reg._entries["x"] = entry
         assert reg._resolve_dependencies("x") == ["x"]
 
+    @pytest.mark.unit
     def test_simple(self, reg: PluginRegistryV2) -> None:
         m = _manifest("a", dependencies={"plugins": ["b"]})
         reg._entries["a"] = PluginEntryV2(manifest=m, path=Path())
@@ -527,6 +578,7 @@ class TestDependencias:
         reg._entries["b"] = PluginEntryV2(manifest=m_b, path=Path())
         assert reg._resolve_dependencies("a") == ["b", "a"]
 
+    @pytest.mark.unit
     def test_circular(self, reg: PluginRegistryV2) -> None:
         m_a = _manifest("a", dependencies={"plugins": ["b"]})
         m_b = _manifest("b", dependencies={"plugins": ["a"]})
@@ -535,6 +587,7 @@ class TestDependencias:
         with pytest.raises(ManifestError, match="circular"):
             reg._resolve_dependencies("a")
 
+    @pytest.mark.unit
     def test_diamante(self, reg: PluginRegistryV2) -> None:
         m_a = _manifest("a", dependencies={"plugins": ["b", "c"]})
         m_b = _manifest("b", dependencies={"plugins": ["c"]})
@@ -544,6 +597,7 @@ class TestDependencias:
         reg._entries["c"] = PluginEntryV2(manifest=m_c, path=Path())
         assert reg._resolve_dependencies("a") == ["c", "b", "a"]
 
+    @pytest.mark.unit
     def test_self(self, reg: PluginRegistryV2) -> None:
         m = _manifest("a", dependencies={"plugins": ["a"]})
         reg._entries["a"] = PluginEntryV2(manifest=m, path=Path())

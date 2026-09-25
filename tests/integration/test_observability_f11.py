@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 import time
 
@@ -16,6 +17,7 @@ from motor.plugin.registry_v2 import PluginRegistryV2
 
 
 class TestMetricsCounter:
+    @pytest.mark.integration
     def test_inc(self):
         c = Counter("test")
         assert c.get() == 0
@@ -24,6 +26,7 @@ class TestMetricsCounter:
         c.inc(5)
         assert c.get() == 6
 
+    @pytest.mark.integration
     def test_snapshot(self):
         c = Counter("cnt", "test counter", labels={"env": "test"})
         c.inc(3)
@@ -34,11 +37,13 @@ class TestMetricsCounter:
 
 
 class TestMetricsGauge:
+    @pytest.mark.integration
     def test_set(self):
         g = Gauge("test")
         g.set(42.5)
         assert g.get() == 42.5
 
+    @pytest.mark.integration
     def test_inc_dec(self):
         g = Gauge("test")
         g.set(10)
@@ -49,6 +54,7 @@ class TestMetricsGauge:
 
 
 class TestMetricsHistogram:
+    @pytest.mark.integration
     def test_observe(self):
         h = Histogram("test", buckets=[0.1, 0.5, 1.0])
         h.observe(0.2)
@@ -58,6 +64,7 @@ class TestMetricsHistogram:
         assert s["buckets"]["0.5"] == 1
         assert s["buckets"]["+Inf"] == 1
 
+    @pytest.mark.integration
     def test_multiple_observations(self):
         h = Histogram("test", buckets=[1, 5, 10])
         for v in [0.5, 2, 7, 12]:
@@ -68,6 +75,7 @@ class TestMetricsHistogram:
 
 
 class TestMetricsTimer:
+    @pytest.mark.integration
     def test_record(self):
         t = Timer("test")
         t.record(0.5)
@@ -75,6 +83,7 @@ class TestMetricsTimer:
         assert s["type"] == "histogram"
         assert s["count"] == 1
 
+    @pytest.mark.integration
     def test_context_manager(self):
         t = Timer("ctx")
         with t.time():
@@ -85,6 +94,7 @@ class TestMetricsTimer:
 
 
 class TestMetricsRegistry:
+    @pytest.mark.integration
     def test_counter_singleton(self):
         reg = MetricsRegistry()
         c1 = reg.counter("req", labels={"a": "1"})
@@ -93,12 +103,14 @@ class TestMetricsRegistry:
         c1.inc()
         assert c2.get() == 1
 
+    @pytest.mark.integration
     def test_gauge_singleton(self):
         reg = MetricsRegistry()
         g1 = reg.gauge("mem")
         g2 = reg.gauge("mem")
         assert g1 is g2
 
+    @pytest.mark.integration
     def test_histogram_singleton(self):
         reg = MetricsRegistry()
         h1 = reg.histogram("latency", buckets=[1, 2])
@@ -111,6 +123,7 @@ class TestMetricsRegistry:
         t2 = reg.timer("slow")
         assert t1 is t2
 
+    @pytest.mark.integration
     def test_snapshot_includes_all(self):
         reg = MetricsRegistry()
         reg.counter("c").inc()
@@ -125,11 +138,13 @@ class TestMetricsRegistry:
 
 
 class TestHealthRegistry:
+    @pytest.mark.integration
     def test_initial_healthy(self):
         h = HealthRegistry()
         h.register_component("web")
         assert h.get_status("web") == "healthy"
 
+    @pytest.mark.integration
     def test_set_degraded(self):
         h = HealthRegistry()
         h.register_component("db")
@@ -138,6 +153,7 @@ class TestHealthRegistry:
         assert s["global"] == "degraded"
         assert s["degraded_count"] == 1
 
+    @pytest.mark.integration
     def test_set_unhealthy(self):
         h = HealthRegistry()
         h.register_component("disk")
@@ -145,6 +161,7 @@ class TestHealthRegistry:
         s = h.snapshot()
         assert s["global"] == "unhealthy"
 
+    @pytest.mark.integration
     def test_healthy_takes_priority(self):
         h = HealthRegistry()
         h.register_component("a")
@@ -154,6 +171,7 @@ class TestHealthRegistry:
         s = h.snapshot()
         assert s["global"] == "healthy"
 
+    @pytest.mark.integration
     def test_unhealthy_overrides_degraded(self):
         h = HealthRegistry()
         h.register_component("a")
@@ -165,21 +183,25 @@ class TestHealthRegistry:
 
 
 class TestReadinessRegistry:
+    @pytest.mark.integration
     def test_no_deps_ready(self):
         r = ReadinessRegistry()
         assert r.is_ready() is True
 
+    @pytest.mark.integration
     def test_not_ready(self):
         r = ReadinessRegistry()
         r.register_dependency("qdrant")
         assert r.is_ready() is False
 
+    @pytest.mark.integration
     def test_ready_after_set(self):
         r = ReadinessRegistry()
         r.register_dependency("qdrant")
         r.set_ready("qdrant")
         assert r.is_ready() is True
 
+    @pytest.mark.integration
     def test_snapshot(self):
         r = ReadinessRegistry()
         r.register_dependency("db")
@@ -190,6 +212,7 @@ class TestReadinessRegistry:
 
 
 class TestInstrumentationEventBus:
+    @pytest.mark.integration
     def test_records_metrics(self):
         bus = EventBus()
         ins = Instrumentation()
@@ -207,6 +230,7 @@ class TestInstrumentationEventBus:
 
 
 class TestInstrumentationSubprocess:
+    @pytest.mark.integration
     def test_records_metrics(self):
         executor = SubprocessExecutor()
         ins = Instrumentation()
@@ -222,6 +246,7 @@ class TestInstrumentationSubprocess:
 
 
 class TestInstrumentationPipeline:
+    @pytest.mark.integration
     def test_records_pipeline_metrics(self):
         bus = EventBus()
         registry = PluginRegistryV2()
@@ -245,6 +270,7 @@ class TestInstrumentationPipeline:
 
 
 class TestInstrumentationHealth:
+    @pytest.mark.integration
     def test_only_pipeline_component_registered(self):
         """Only pipeline registers in HealthRegistry from Instrumentation."""
         ins = Instrumentation()

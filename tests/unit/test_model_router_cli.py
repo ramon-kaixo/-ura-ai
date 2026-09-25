@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -10,6 +11,7 @@ from core.model_router import cli
 
 
 class TestVerificarPoliticas:
+    @pytest.mark.unit
     def test_elimina_bypass_y_exit_sin_token(self, monkeypatch, tmp_path) -> None:
         bypass = tmp_path / "bypass_config.json"
         bypass.write_text("{}")
@@ -22,6 +24,7 @@ class TestVerificarPoliticas:
         assert not bypass.exists()
         assert cli.os.environ.get("URA_AUTH_ENABLED") == "true"
 
+    @pytest.mark.unit
     def test_con_token_no_exit(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(cli, "BYPASS_FILE", tmp_path / "nope.json")
         monkeypatch.setattr(cli, "get_secret", mock.Mock(return_value="tok"))
@@ -30,6 +33,7 @@ class TestVerificarPoliticas:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_test_flag(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["cli.py", "--test", "analizar algo"])
         monkeypatch.setattr(cli, "setup_logging", mock.Mock())
@@ -38,12 +42,14 @@ class TestMain:
         cli.main()
         seleccionar.assert_called_once()
 
+    @pytest.mark.unit
     def test_models_flag(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["cli.py", "--models"])
         monkeypatch.setattr(cli, "setup_logging", mock.Mock())
         monkeypatch.setattr("core.model_router.model_selection.obtener_modelos_disponibles", mock.Mock(return_value=[]))
         cli.main()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_sin_flags_llama_preflight(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["cli.py"])
         monkeypatch.setattr(cli, "setup_logging", mock.Mock())
@@ -64,6 +70,7 @@ class TestMain:
 
 
 class TestMainServerInterrupt:
+    @pytest.mark.unit
     def test_serve_forever_keyboard_interrupt(self, monkeypatch) -> None:
         monkeypatch.setattr("sys.argv", ["cli.py"])
         monkeypatch.setattr(cli, "setup_logging", mock.Mock())

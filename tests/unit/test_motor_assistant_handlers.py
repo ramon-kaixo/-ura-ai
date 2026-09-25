@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -33,13 +34,16 @@ def _msg(content: str, timestamp: str = "") -> SimpleNamespace:
 
 
 class TestHoursSinceLastMessage:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _hours_since_last_message(None) == 0
         assert _hours_since_last_message(_conv([])) == 0
 
+    @pytest.mark.unit
     def test_sin_timestamp(self) -> None:
         assert _hours_since_last_message(_conv([_msg("hola", "")])) == 0
 
+    @pytest.mark.unit
     def test_hace_horas(self) -> None:
         from datetime import UTC, datetime, timedelta
 
@@ -47,6 +51,7 @@ class TestHoursSinceLastMessage:
         h = _hours_since_last_message(_conv([_msg("hola", ts)]))
         assert 4.5 < h < 5.5
 
+    @pytest.mark.unit
     def test_timestamp_naive(self) -> None:
         from datetime import UTC, datetime, timedelta
 
@@ -54,21 +59,25 @@ class TestHoursSinceLastMessage:
         h = _hours_since_last_message(_conv([_msg("hola", ts)]))
         assert 1.5 < h < 2.5
 
+    @pytest.mark.unit
     def test_timestamp_invalido(self) -> None:
         h = _hours_since_last_message(_conv([_msg("hola", "no-es-fecha")]))
         assert h == 0
 
 
 class TestGetConversationSummary:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _get_conversation_summary(None) == ""
         assert _get_conversation_summary(_conv([])) == ""
 
+    @pytest.mark.unit
     def test_temas(self) -> None:
         conv = _conv([_msg("me gusta el aprendizaje profundo"), _msg("y las redes neuronales")])
         out = _get_conversation_summary(conv)
         assert out.startswith("Se hablaba de:")
 
+    @pytest.mark.unit
     def test_solo_palabras_cortas(self) -> None:
         conv = _conv([_msg("hola que tal")])
         assert _get_conversation_summary(conv) == ""
@@ -78,14 +87,17 @@ class TestAddContextSections:
     def _base(self) -> str:
         return "BASE"
 
+    @pytest.mark.unit
     def test_sentiment_es(self) -> None:
         out = _add_context_sections(self._base(), {"sentiment_action": "disculparse", "sentiment": "frustrado"}, "es")
         assert "frustrado" in out and "disculparse" in out
 
+    @pytest.mark.unit
     def test_sentiment_en(self) -> None:
         out = _add_context_sections(self._base(), {"sentiment_action": "apologize", "sentiment": "frustrated"}, "en")
         assert "frustrated" in out and "apologize" in out
 
+    @pytest.mark.unit
     def test_contextos(self) -> None:
         analysis = {
             "interruption_context": "interrumpido",
@@ -96,28 +108,34 @@ class TestAddContextSections:
         out = _add_context_sections(self._base(), analysis, "es")
         assert "interrumpido" in out and "episodios" in out and "docs" in out and "semantica" in out
 
+    @pytest.mark.unit
     def test_sin_contexto(self) -> None:
         out = _add_context_sections(self._base(), {}, "es")
         assert out.endswith("sugiere 1 pregunta de seguimiento breve.")
 
 
 class TestBuildSystemPrompt:
+    @pytest.mark.unit
     def test_modo_desconocido(self) -> None:
         out = _build_system_prompt("raro", {}, "es")
         assert "URA" in out
 
+    @pytest.mark.unit
     def test_lang_no_disponible(self) -> None:
         out = _build_system_prompt("trabajo", {}, "fr")
         assert "URA" in out  # fallback a es
 
+    @pytest.mark.unit
     def test_user_intent_str(self) -> None:
         out = _build_system_prompt("conversacion", {"intent": "PROFESIONAL"}, "es")
         assert "URA" in out
 
+    @pytest.mark.unit
     def test_language_changed(self) -> None:
         out = _build_system_prompt("conversacion", {"language_changed": True, "language": "en"}, "es")
         assert "cambió de idioma" in out
 
+    @pytest.mark.unit
     def test_conv_retorno(self) -> None:
         from datetime import UTC, datetime, timedelta
 
@@ -128,10 +146,12 @@ class TestBuildSystemPrompt:
         out = _build_system_prompt("conversacion", {"_conv": conv}, "es")
         assert "vuelve tras 3h" in out
 
+    @pytest.mark.unit
     def test_correcciones(self) -> None:
         out = _build_system_prompt("conversacion", {"relevant_corrections": 2}, "es")
         assert "corregido información" in out
 
+    @pytest.mark.unit
     def test_user_id_prefs_short(self) -> None:
         with mock.patch(
             "motor.assistant.preferences.UserPreferenceLearning.get_preferences",
@@ -140,6 +160,7 @@ class TestBuildSystemPrompt:
             out = _build_system_prompt("conversacion", {"user_id": "u1"}, "es")
         assert "breve" in out
 
+    @pytest.mark.unit
     def test_user_id_prefs_long(self) -> None:
         with mock.patch(
             "motor.assistant.preferences.UserPreferenceLearning.get_preferences",
@@ -148,10 +169,12 @@ class TestBuildSystemPrompt:
             out = _build_system_prompt("conversacion", {"user_id": "u1"}, "es")
         assert "extenderte" in out
 
+    @pytest.mark.unit
     def test_proactive_suggestion(self) -> None:
         out = _build_system_prompt("conversacion", {"proactive_suggestion": "sugerencia"}, "es")
         assert "sugerencia" in out
 
+    @pytest.mark.unit
     def test_adjustments(self) -> None:
         out = _build_system_prompt(
             "conversacion",
@@ -176,27 +199,32 @@ class TestDetectToolName:
 
         h._tool_manager._plugins = self._orig
 
+    @pytest.mark.unit
     def test_known(self) -> None:
         assert _detect_tool_name("muéstrame el status") == "git_status"
         assert _detect_tool_name("ejecuta python") == "python"
         assert _detect_tool_name("cuánto es 2+2") == "calculator"
         assert _detect_tool_name("weather hoy") == "weather"
 
+    @pytest.mark.unit
     def test_plugin(self) -> None:
         import motor.assistant.api.handlers as h
 
         h._tool_manager._plugins = {"mi_plugin": SimpleNamespace(keywords=["sueldo"])}
         assert _detect_tool_name("cómo va el sueldo") == "mi_plugin"
 
+    @pytest.mark.unit
     def test_none(self) -> None:
         assert _detect_tool_name("hola que tal") is None
 
 
 class TestFormatGitStatus:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _format_git_status("") == ""
         assert _format_git_status("   ") == "   "  # raw sin partes -> se devuelve
 
+    @pytest.mark.unit
     def test_lineas(self) -> None:
         raw = "M  a.py\n M b.py\nA  c.py\n?? d.txt\nD  e.py\nR  f.py\nlibre"
         out = _format_git_status(raw)
@@ -208,9 +236,11 @@ class TestFormatGitStatus:
         assert "RENOMBRADO: f.py" in out
         assert "libre" in out
 
+    @pytest.mark.unit
     def test_lineas_vacias(self) -> None:
         assert _format_git_status("M  a.py\n\n  \nM  b.py") == "MODIFICADO (sin commit): a.py\nMODIFICADO (sin commit): b.py"
 
+    @pytest.mark.unit
     def test_raw_unicamente(self) -> None:
         assert _format_git_status("xyz") == "xyz"
 
@@ -290,6 +320,7 @@ class TestEnrichPrompt:
 
 
 class TestGetEngine:
+    @pytest.mark.unit
     def test_lazy_init(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(_EngineHolder, "engine", None)
         with mock.patch("motor.assistant.api.handlers.ConversationEngine") as m_ce, mock.patch(
@@ -304,6 +335,7 @@ class TestGetEngine:
         assert engine is not None
         monkeypatch.setattr(_EngineHolder, "engine", None)
 
+    @pytest.mark.unit
     def test_cached(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = mock.MagicMock()
         monkeypatch.setattr(_EngineHolder, "engine", fake)
@@ -311,6 +343,7 @@ class TestGetEngine:
 
 
 class TestGetLlm:
+    @pytest.mark.unit
     def test_con_router(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(_EngineHolder, "llm", None)
         monkeypatch.setattr(_EngineHolder, "engine", mock.MagicMock())
@@ -326,6 +359,7 @@ class TestGetLlm:
         assert llm is not None
         monkeypatch.setattr(_EngineHolder, "llm", None)
 
+    @pytest.mark.unit
     def test_sin_router(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(_EngineHolder, "llm", None)
         monkeypatch.setattr(_EngineHolder, "engine", mock.MagicMock())
@@ -355,6 +389,7 @@ class TestProcess:
         }
         return eng
 
+    @pytest.mark.unit
     def test_ok(self, engine: mock.MagicMock) -> None:
         intent, mode, resolved, _prompt, conv, lang, analysis = _process(engine, None, "c1", "hola", "")
         assert intent == UserIntent.CHAT
@@ -364,18 +399,21 @@ class TestProcess:
         assert analysis["_conv"] is conv
         engine.add_message.assert_called_with("c1", "user", "mensaje resuelto")
 
+    @pytest.mark.unit
     def test_con_user_id(self, engine: mock.MagicMock) -> None:
         _process(engine, None, "c1", "hola", "", user_id="u7")
         assert True
         analysis = engine.process_user_message.return_value
         assert analysis["user_id"] == "u7"
 
+    @pytest.mark.unit
     def test_modo_valido(self, engine: mock.MagicMock) -> None:
         _process(engine, None, "c1", "hola", "trabajo")
         conv = engine.get_or_create.return_value
         conv.state.mode = ConversationMode.WORK
         assert conv.state.mode == ConversationMode.WORK
 
+    @pytest.mark.unit
     def test_modo_invalido(self, engine: mock.MagicMock) -> None:
         from fastapi import HTTPException
 

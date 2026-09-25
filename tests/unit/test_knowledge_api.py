@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/api.py — endpoints REST."""
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -32,11 +33,13 @@ def app(tmp_path, monkeypatch):
 
 
 class TestHealthStatus:
+    @pytest.mark.unit
     def test_health(self, app) -> None:
         r = app.get("/health")
         assert r.status_code == 200
         assert r.json()["status"] == "ok"
 
+    @pytest.mark.unit
     def test_status(self, app, monkeypatch) -> None:
         def _execute(sql, *a, **k):
             if "FROM kg_nodes" in sql:
@@ -55,6 +58,7 @@ class TestHealthStatus:
 
 
 class TestCompile:
+    @pytest.mark.unit
     def test_compile(self, app, monkeypatch) -> None:
 
         result = SimpleNamespace(success=True, documents_changed=3, documents_total=10)
@@ -63,6 +67,7 @@ class TestCompile:
         assert r.status_code == 202
         assert r.json()["message"] == "compile started"
 
+    @pytest.mark.unit
     def test_compile_sync(self, app, monkeypatch) -> None:
 
         request = mock.Mock()
@@ -73,6 +78,7 @@ class TestCompile:
 
 
 class TestSearch:
+    @pytest.mark.unit
     def test_search_ok(self, app, monkeypatch) -> None:
         from knowledge.engine import api
 
@@ -84,6 +90,7 @@ class TestSearch:
         assert r.status_code == 200
         assert len(r.json()["results"]) == 1
 
+    @pytest.mark.unit
     def test_search_sin_resultados(self, app, monkeypatch) -> None:
         from knowledge.engine import api
 
@@ -96,6 +103,7 @@ class TestSearch:
 
 
 class TestDocuments:
+    @pytest.mark.unit
     def test_get_document(self, app, monkeypatch) -> None:
         from knowledge.engine import api
 
@@ -113,6 +121,7 @@ class TestDocuments:
         assert r.status_code == 200
         assert r.json()["doc_id"] == "abcd1234ef01"
 
+    @pytest.mark.unit
     def test_get_document_no_existe(self, app, monkeypatch) -> None:
         from knowledge.engine import api
 
@@ -124,12 +133,14 @@ class TestDocuments:
 
 
 class TestRules:
+    @pytest.mark.unit
     def test_list_rules(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.rules.list_rules", return_value=[]):
             r = app.get("/rules")
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_evaluate_rules(self, app, monkeypatch) -> None:
         from knowledge.engine import api
 
@@ -145,12 +156,14 @@ class TestRules:
 
 
 class TestFeedback:
+    @pytest.mark.unit
     def test_record_feedback(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.feedback.record_feedback", return_value=True):
             r = app.post("/feedback/abcd1234ef01", params={"rating": 4})
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_top_rated(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.feedback.top_rated", return_value=[]):
@@ -159,6 +172,7 @@ class TestFeedback:
 
 
 class TestMetadata:
+    @pytest.mark.unit
     def test_get_lineage(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.lineage_store.SQLiteLineageStore") as Store:
@@ -174,6 +188,7 @@ class TestMetadata:
 
 
 class TestMemory:
+    @pytest.mark.unit
     def test_list_memories(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.memory_store.SQLiteMemoryStore") as Store:
@@ -183,6 +198,7 @@ class TestMemory:
             r = app.get("/memory")
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_get_memory(self, app, monkeypatch) -> None:
 
         with mock.patch("knowledge.engine.memory_store.SQLiteMemoryStore") as Store:

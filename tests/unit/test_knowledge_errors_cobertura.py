@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/errors.py."""
 
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.errors import (
     _ALL_CODES,
@@ -15,6 +16,7 @@ from knowledge.engine.errors import (
 )
 
 
+@pytest.mark.unit
 def test_severity_enum() -> None:
     assert Severity.ERROR.value == "ERROR"
     assert Severity.WARN.value == "WARN"
@@ -23,6 +25,7 @@ def test_severity_enum() -> None:
     assert str(Severity.INFO) == "INFO"
 
 
+@pytest.mark.unit
 def test_errorcode_dataclass() -> None:
     assert KE001.code == "KE001"
     assert KE001.severity == Severity.ERROR
@@ -32,22 +35,26 @@ def test_errorcode_dataclass() -> None:
     assert KE207.severity == Severity.INFO
 
 
+@pytest.mark.unit
 def test_registro_automatico() -> None:
     assert len(all_codes()) >= 20
     codes = {c.code for c in all_codes()}
     assert {"KE001", "KE010", "KE109", "KE201", "KE210"} <= codes
 
 
+@pytest.mark.unit
 def test_lookup() -> None:
     assert lookup("KE001") is KE001
     assert lookup("KE999") is None
 
 
+@pytest.mark.unit
 def test_all_codes_ordenados() -> None:
     codes = all_codes()
     assert codes == sorted(codes, key=lambda c: c.code)
 
 
+@pytest.mark.unit
 def test_register_manual() -> None:
     _previo = dict(_ALL_CODES)
     try:

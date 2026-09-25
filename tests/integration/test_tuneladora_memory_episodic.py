@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -29,6 +30,7 @@ def make_ep(ep_id: str, pipeline: str = "test", status: str = "completed") -> Ep
 
 
 class TestRecord:
+    @pytest.mark.integration
     def test_record_and_get(self, ep_mem: EpisodicMemory) -> None:
         ep = make_ep("ep1")
         ep_mem.record(ep)
@@ -37,9 +39,11 @@ class TestRecord:
         assert got.status == "completed"
         assert got.pipeline == "test"
 
+    @pytest.mark.integration
     def test_get_missing(self, ep_mem: EpisodicMemory) -> None:
         assert ep_mem.get("nope") is None
 
+    @pytest.mark.integration
     def test_record_failure(self, ep_mem: EpisodicMemory) -> None:
         ep = make_ep("fail1", status="failed")
         ep_mem.record(ep)
@@ -48,11 +52,13 @@ class TestRecord:
 
 
 class TestList:
+    @pytest.mark.integration
     def test_list_recent(self, ep_mem: EpisodicMemory) -> None:
         ep_mem.record(make_ep("a", pipeline="p1"))
         ep_mem.record(make_ep("b", pipeline="p2"))
         assert len(ep_mem.list_recent()) == 2
 
+    @pytest.mark.integration
     def test_list_recent_by_pipeline(self, ep_mem: EpisodicMemory) -> None:
         ep_mem.record(make_ep("a", pipeline="health"))
         ep_mem.record(make_ep("b", pipeline="cleanup"))
@@ -60,6 +66,7 @@ class TestList:
         assert len(results) == 1
         assert results[0].episode_id == "a"
 
+    @pytest.mark.integration
     def test_list_failures(self, ep_mem: EpisodicMemory) -> None:
         ep_mem.record(make_ep("ok1"))
         ep_mem.record(make_ep("fail1", status="failed"))
@@ -69,6 +76,7 @@ class TestList:
 
 
 class TestCleanup:
+    @pytest.mark.integration
     def test_delete_old(self, ep_mem: EpisodicMemory) -> None:
         old_early = Episode(
             episode_id="old",
@@ -84,6 +92,7 @@ class TestCleanup:
         assert deleted == 1
         assert ep_mem.get("new") is not None
 
+    @pytest.mark.integration
     def test_count_failures(self, ep_mem: EpisodicMemory) -> None:
         ep_mem.record(make_ep("a", status="failed"))
         ep_mem.record(make_ep("b", status="failed"))

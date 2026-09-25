@@ -6,6 +6,7 @@ reference resolution mutability, entity extraction blowup.
 
 from __future__ import annotations
 
+import pytest
 import re
 import time
 
@@ -40,6 +41,7 @@ class TestReDoS:
 
     LARGE = 100_000
 
+    @pytest.mark.integration
     def test_search_query_entity_regex_performance(self) -> None:
         engine = _make_engine()
         # Input with many 'a' chars forcing lazy expansion — should not hang
@@ -50,6 +52,7 @@ class TestReDoS:
         assert elapsed < 2.0, f"ReDoS candidate took {elapsed:.2f}s"
         assert result.intent == UserIntent.COMMAND
 
+    @pytest.mark.integration
     def test_question_pattern_all_input(self) -> None:
         """.*\\?$ matches ANY string ending with ? — test large."""
         engine = _make_engine()
@@ -60,6 +63,7 @@ class TestReDoS:
         assert elapsed < 2.0, f".*\\?$ backtrack on {self.LARGE} chars took {elapsed:.2f}s"
         assert result.intent == UserIntent.QUESTION
 
+    @pytest.mark.integration
     def test_url_entity_captures_unbounded(self) -> None:
         engine = _make_engine()
         long_url = "http://" + "a" * self.LARGE
@@ -70,6 +74,7 @@ class TestReDoS:
         assert "url" in result.entities
         assert len(result.entities["url"]) > self.LARGE
 
+    @pytest.mark.integration
     def test_email_entity_captures_unbounded(self) -> None:
         engine = _make_engine()
         user = "a" * self.LARGE
@@ -78,6 +83,7 @@ class TestReDoS:
         elapsed = time.monotonic() - t0
         assert elapsed < 2.0, f"Email entity took {elapsed:.2f}s"
 
+    @pytest.mark.integration
     def test_path_entity_regex_performance(self) -> None:
         engine = _make_engine()
         long_input = "ruta " + "a" * self.LARGE
@@ -86,6 +92,7 @@ class TestReDoS:
         elapsed = time.monotonic() - t0
         assert elapsed < 2.0, f"Path entity took {elapsed:.2f}s"
 
+    @pytest.mark.integration
     def test_repeat_redos_crafted_input(self) -> None:
         """Crafted to stress lazy+optional patterns simultaneously."""
         engine = _make_engine()
@@ -106,6 +113,7 @@ class TestReDoS:
             ),
         ],
     )
+    @pytest.mark.integration
     def test_dangling_start_anchor_patterns(self, pattern_src: str, trigger: str) -> None:
         """Patterns anchored only at start can match unexpectedly long strings."""
         pat = re.compile(pattern_src)
@@ -125,6 +133,7 @@ class TestReDoS:
 class TestMultiline:
     """C2: .*\\?$ does NOT match across newlines (false negative)."""
 
+    @pytest.mark.integration
     def test_multiline_question_false_negative(self) -> None:
         engine = _make_engine()
         text = "I was thinking about this\ncan you explain it?"
@@ -135,6 +144,7 @@ class TestMultiline:
             f"Multiline question classified as {result.intent} (false negative)"
         )
 
+    @pytest.mark.integration
     def test_multiline_command(self) -> None:
         engine = _make_engine()
         text = "first line\nbusca python"
@@ -143,6 +153,7 @@ class TestMultiline:
         # "first line\nbusca python" does NOT start with busca
         assert result.intent == UserIntent.COMMAND, f"Multiline command classified as {result.intent}"
 
+    @pytest.mark.integration
     def test_greeting_with_newline_prefix(self) -> None:
         engine = _make_engine()
         text = "\n\n\nhola"
@@ -150,6 +161,7 @@ class TestMultiline:
         # After strip + lower: "\n\n\nhola" -> "hola"
         assert result.intent == UserIntent.GREETING, f"Expected GREETING got {result.intent}"
 
+    @pytest.mark.integration
     def test_newline_suffix_question(self) -> None:
         engine = _make_engine()
         text = "qué es?\n"
@@ -164,40 +176,47 @@ class TestMultiline:
 
 
 class TestEmptyAndWhitespace:
+    @pytest.mark.integration
     def test_empty_string(self) -> None:
         engine = _make_engine()
         result = engine.classify("")
         assert result.intent == UserIntent.UNKNOWN
         assert result.confidence == 0.0
 
+    @pytest.mark.integration
     def test_whitespace_only(self) -> None:
         engine = _make_engine()
         result = engine.classify("   \t\n  ")
         assert result.intent == UserIntent.UNKNOWN
         assert result.confidence == 0.0
 
+    @pytest.mark.integration
     def test_only_punctuation(self) -> None:
         engine = _make_engine()
         result = engine.classify("!@#$%^&*()")
         assert result.intent != UserIntent.UNKNOWN
 
+    @pytest.mark.integration
     def test_null_byte_in_text(self) -> None:
         engine = _make_engine()
         result = engine.classify("hola\x00world")
         assert result.intent == UserIntent.GREETING
 
+    @pytest.mark.integration
     def test_unicode_accents_preserved(self) -> None:
         engine = _make_engine()
         result = engine.classify("qué es una API?")
         assert result.intent == UserIntent.QUESTION
         assert "é" in result.original_text
 
+    @pytest.mark.integration
     def test_mixed_case_preserved_in_original(self) -> None:
         engine = _make_engine()
         result = engine.classify("BUSCA Python 3.12")
         assert result.intent == UserIntent.COMMAND
         assert result.original_text == "BUSCA Python 3.12"
 
+    @pytest.mark.integration
     def test_very_long_input_classify(self) -> None:
         engine = _make_engine()
         text = "hola " + "amigo " * 10_000
@@ -214,6 +233,7 @@ class TestEmptyAndWhitespace:
 
 
 class TestClassificationBoundaries:
+    @pytest.mark.integration
     def test_question_mark_sentence_not_question(self) -> None:
         """.*\\?$ is overly broad — any sentence ending with ? is QUESTION."""
         engine = _make_engine()
@@ -222,6 +242,7 @@ class TestClassificationBoundaries:
             f"Statement ending with ? classified as {result.intent} (overbroad)"
         )
 
+    @pytest.mark.integration
     def test_greeting_with_question_mark(self) -> None:
         """'hola?' should be GREETING (higher confidence beats QUESTION)."""
         engine = _make_engine()
@@ -229,6 +250,7 @@ class TestClassificationBoundaries:
         # GREETING has 0.95 confidence; QUESTION has 0.8
         assert result.intent == UserIntent.GREETING, f"Expected GREETING got {result.intent}"
 
+    @pytest.mark.integration
     def test_question_starts_with_command_word(self) -> None:
         engine = _make_engine()
         result = engine.classify("explica qué es una API")
@@ -242,12 +264,14 @@ class TestClassificationBoundaries:
         # Wait, "explica" is not in the COMMAND pattern list.
         assert result.intent == UserIntent.QUESTION, f"Expected QUESTION got {result.intent}"
 
+    @pytest.mark.integration
     def test_chat_fallback(self) -> None:
         engine = _make_engine()
         result = engine.classify("me gusta la música")
         assert result.intent == UserIntent.CHAT
         assert result.confidence == 0.5
 
+    @pytest.mark.integration
     def test_command_matches_target_extraction(self) -> None:
         engine = _make_engine()
         action, target = engine.extract_action_and_target("busca información sobre python")
@@ -261,6 +285,7 @@ class TestClassificationBoundaries:
 
 
 class TestReferenceResolution:
+    @pytest.mark.integration
     def test_resolve_references_does_not_mutate_original(self) -> None:
         engine = _make_engine()
         original = "HAZLO DE NUEVO"
@@ -268,12 +293,14 @@ class TestReferenceResolution:
         # The original_text should not be lowercased
         assert result.original_text == "HAZLO DE NUEVO"
 
+    @pytest.mark.integration
     def test_resolve_references_sequential_application(self) -> None:
         engine = _make_engine()
         result = engine.classify("hazlo como antes")
         # "hazlo" -> "ejecuta", "como antes" -> ""
         assert "ejecuta" in result.resolved_text
 
+    @pytest.mark.integration
     def test_resolve_eso_replaces_with_empty(self) -> None:
         engine = _make_engine()
         result = engine.classify("haz eso")
@@ -283,6 +310,7 @@ class TestReferenceResolution:
         # Then classified as COMMAND
         assert result.intent == UserIntent.COMMAND
 
+    @pytest.mark.integration
     def test_resolve_references_no_match_preserves_text(self) -> None:
         engine = _make_engine()
         result = engine.classify("este texto no tiene referencias")
@@ -295,6 +323,7 @@ class TestReferenceResolution:
 
 
 class TestEntityExtraction:
+    @pytest.mark.integration
     def test_multiple_entities_same_input(self) -> None:
         engine = _make_engine()
         result = engine.classify(
@@ -303,12 +332,14 @@ class TestEntityExtraction:
         assert "search_query" in result.entities or "email" in result.entities
         # Only first match per entity type is captured
 
+    @pytest.mark.integration
     def test_entity_without_capture_group_fallback(self) -> None:
         """_extract_entities catches IndexError for missing groups."""
         engine = _make_engine()
         result = engine.classify("español")
         assert "language" in result.entities
 
+    @pytest.mark.integration
     def test_date_entity_edge_formats(self) -> None:
         engine = _make_engine()
         for date_str in ["01/01/24", "31-12-2023", "1/1/2024"]:
@@ -323,11 +354,13 @@ class TestEntityExtraction:
 
 
 class TestIntentRouterEdgeCases:
+    @pytest.mark.integration
     def test_router_unknown_maps_to_conversation(self) -> None:
         router = IntentRouter()
         result = router.route("este es un texto aleatorio sin patrón")
         assert result.entities["capability"] == "conversation"
 
+    @pytest.mark.integration
     def test_router_preserves_all_entities(self) -> None:
         router = IntentRouter()
         result = router.route("busca python en https://python.org envía a user@test.com")

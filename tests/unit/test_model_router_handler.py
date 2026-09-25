@@ -65,6 +65,7 @@ def _reset_cache(monkeypatch) -> None:
     monkeypatch.setattr(RouterHandler, "_cache_ts", 0)
 
 
+@pytest.mark.unit
 def test_get_modelos_cache_fresco(monkeypatch) -> None:
     h = _make_handler()
     _reset_cache(monkeypatch)
@@ -81,6 +82,7 @@ def test_get_modelos_cache_fresco(monkeypatch) -> None:
     assert llamadas == []
 
 
+@pytest.mark.unit
 def test_get_modelos_cache_expirado(monkeypatch) -> None:
     h = _make_handler()
     _reset_cache(monkeypatch)
@@ -97,6 +99,7 @@ def test_get_modelos_cache_expirado(monkeypatch) -> None:
     assert llamadas == [1]
 
 
+@pytest.mark.unit
 def test_get_modelos_sin_cache(monkeypatch) -> None:
     h = _make_handler()
     _reset_cache(monkeypatch)
@@ -112,6 +115,7 @@ def test_get_modelos_sin_cache(monkeypatch) -> None:
 
 
 class TestSendJson(unittest.TestCase):
+    @pytest.mark.unit
     def test_envia_json(self) -> None:
         h = _make_handler()
         h._send_json({"ok": True}, status=200)
@@ -120,6 +124,7 @@ class TestSendJson(unittest.TestCase):
         payload = h.wfile.getvalue().decode()
         self.assertIn('"ok"', payload)
 
+    @pytest.mark.unit
     def test_envia_con_status_429(self) -> None:
         h = _make_handler()
         h._send_json({"error": "limit"}, status=429)
@@ -127,12 +132,14 @@ class TestSendJson(unittest.TestCase):
 
 
 class TestCheckRateLimit(unittest.TestCase):
+    @pytest.mark.unit
     def test_rate_limit_ok(self) -> None:
         h = _make_handler()
         with patch("core.model_router.router.rate_limiter") as mock_rl:
             mock_rl.is_allowed.return_value = True
             self.assertTrue(h._check_rate_limit())
 
+    @pytest.mark.unit
     def test_rate_limit_bloquea(self) -> None:
         h = _make_handler()
         with patch("core.model_router.router.rate_limiter") as mock_rl:
@@ -148,24 +155,28 @@ class TestDoGet(unittest.TestCase):
         self.h = _make_handler()
         self.h._check_rate_limit = MagicMock(return_value=True)  # type: ignore[method-assign]
 
+    @pytest.mark.unit
     def test_api_tags(self) -> None:
         self.h.path = "/api/tags"
         with patch.object(self.h, "_handle_api_tags") as mock:
             self.h.do_GET()
         mock.assert_called_once()
 
+    @pytest.mark.unit
     def test_health(self) -> None:
         self.h.path = "/health"
         with patch.object(self.h, "_handle_health") as mock:
             self.h.do_GET()
         mock.assert_called_once()
 
+    @pytest.mark.unit
     def test_metrics(self) -> None:
         self.h.path = "/metrics"
         with patch.object(self.h, "_handle_metrics") as mock:
             self.h.do_GET()
         mock.assert_called_once()
 
+    @pytest.mark.unit
     def test_rate_limit_primero(self) -> None:
         self.h._check_rate_limit = MagicMock(return_value=False)  # type: ignore[method-assign]
         self.h.path = "/api/tags"

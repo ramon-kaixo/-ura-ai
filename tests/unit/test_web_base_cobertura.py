@@ -10,6 +10,7 @@ Sin dependencias externas: solo el paquete motor.core.web + stdlib.
 
 from __future__ import annotations
 
+import pytest
 from typing import Any
 
 import pytest
@@ -80,16 +81,20 @@ class _ConcreteValidator(SourceValidator):
 class TestSearchProvider:
     """Contrato SearchProvider."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             SearchProvider()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_name_delega_en_base(self) -> None:
         assert _ConcreteSearchProvider().name is None
 
+    @pytest.mark.unit
     def test_search_delega_en_base(self) -> None:
         assert _ConcreteSearchProvider().search("q", limit=5) is None
 
+    @pytest.mark.unit
     def test_name_default_limit(self) -> None:
         assert _ConcreteSearchProvider().search("q") is None
 
@@ -97,16 +102,21 @@ class TestSearchProvider:
 class TestCrawler:
     """Contrato Crawler."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             Crawler()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_name_delega_en_base(self) -> None:
         assert _ConcreteCrawler().name is None
 
+    @pytest.mark.unit
     def test_fetch_delega_en_base(self) -> None:
         assert _ConcreteCrawler().fetch("https://example.com") is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_fetch_timeout_explicito(self) -> None:
         assert _ConcreteCrawler().fetch("https://example.com", timeout=5) is None
 
@@ -114,16 +124,20 @@ class TestCrawler:
 class TestExtractor:
     """Contrato Extractor."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             Extractor()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_name_delega_en_base(self) -> None:
         assert _ConcreteExtractor().name is None
 
+    @pytest.mark.unit
     def test_extract_delega_en_base(self) -> None:
         assert _ConcreteExtractor().extract("<html></html>", "https://example.com") is None
 
+    @pytest.mark.unit
     def test_extract_text_delega_en_base(self) -> None:
         assert _ConcreteExtractor().extract_text("<html></html>") is None
 
@@ -131,10 +145,12 @@ class TestExtractor:
 class TestRanker:
     """Contrato Ranker."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             Ranker()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_rank_delega_en_base(self) -> None:
         assert _ConcreteRanker().rank([], "q") is None
 
@@ -142,10 +158,12 @@ class TestRanker:
 class TestSummarizer:
     """Contrato Summarizer."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             Summarizer()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_summarize_delega_en_base(self) -> None:
         assert _ConcreteSummarizer().summarize("q", []) is None
 
@@ -153,15 +171,19 @@ class TestSummarizer:
 class TestSourceValidator:
     """Contrato SourceValidator."""
 
+    @pytest.mark.unit
     def test_es_abstracta(self) -> None:
         with pytest.raises(TypeError):
             SourceValidator()  # type: ignore[abstract]
 
+    @pytest.mark.unit
     def test_validate_delega_en_base(self) -> None:
         assert _ConcreteValidator().validate("https://example.com") is None
 
+    @pytest.mark.unit
     def test_validate_con_documento(self) -> None:
         assert _ConcreteValidator().validate("https://example.com", document="doc") is None
 
+    @pytest.mark.unit
     def test_is_blocked_delega_en_base(self) -> None:
         assert _ConcreteValidator().is_blocked("https://example.com") is None

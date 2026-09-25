@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -39,12 +40,14 @@ class _FakeTimeline:
 # ── constructores / básico ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_memory_vacio() -> None:
     m = Memory()
     assert m.timeline.size == 0
     assert m._journal.path == ""
 
 
+@pytest.mark.unit
 def test_memory_append_sin_journal() -> None:
     m = Memory()
     m.append(_entry("a", 1.0))
@@ -52,6 +55,7 @@ def test_memory_append_sin_journal() -> None:
     assert m._entry_count_since_snapshot == 1
 
 
+@pytest.mark.unit
 def test_memory_append_con_journal(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     m = Memory(journal_path=path)
@@ -63,6 +67,7 @@ def test_memory_append_con_journal(tmp_path: object) -> None:
     m.close()
 
 
+@pytest.mark.unit
 def test_memory_state_at() -> None:
     m = Memory()
     m.append(_entry("a", 1.0))
@@ -71,6 +76,7 @@ def test_memory_state_at() -> None:
     assert m.state_at(99.0).entry_id == "b"
 
 
+@pytest.mark.unit
 def test_memory_append_tras_shutdown_lanza() -> None:
     m = Memory()
     m.shutdown()
@@ -78,6 +84,7 @@ def test_memory_append_tras_shutdown_lanza() -> None:
         m.append(_entry("x"))
 
 
+@pytest.mark.unit
 def test_memory_append_notifica_subscriber() -> None:
     m = Memory()
     recibidos: list[str] = []
@@ -87,6 +94,7 @@ def test_memory_append_notifica_subscriber() -> None:
     assert recibidos == ["n1", "n1"]
 
 
+@pytest.mark.unit
 def test_memory_subscriber_con_error_no_rompe() -> None:
     m = Memory()
 
@@ -102,6 +110,7 @@ def test_memory_subscriber_con_error_no_rompe() -> None:
 # ── snapshot / save / load ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_memory_snapshot_sin_path_genera_archivo() -> None:
     m = Memory()
     m.append(_entry("a", 1.0))
@@ -110,6 +119,7 @@ def test_memory_snapshot_sin_path_genera_archivo() -> None:
     assert m._entry_count_since_snapshot == 0
 
 
+@pytest.mark.unit
 def test_memory_snapshot_con_path_y_rotate(tmp_path: object) -> None:
     snap = str(tmp_path / "snap.json")
     jpath = str(tmp_path / "j.log")
@@ -120,6 +130,7 @@ def test_memory_snapshot_con_path_y_rotate(tmp_path: object) -> None:
     assert (tmp_path / "snap.json.journal.bak").exists()
 
 
+@pytest.mark.unit
 def test_memory_snapshot_sin_journal_no_rota(tmp_path: object) -> None:
     snap = str(tmp_path / "snap.json")
     m = Memory(snapshot_path=snap)
@@ -128,6 +139,7 @@ def test_memory_snapshot_sin_journal_no_rota(tmp_path: object) -> None:
     assert not (tmp_path / "snap.json.journal.bak").exists()
 
 
+@pytest.mark.unit
 def test_memory_save_devuelve_checksum(tmp_path: object) -> None:
     m = Memory()
     m.append(_entry("a", 1.0))
@@ -135,6 +147,8 @@ def test_memory_save_devuelve_checksum(tmp_path: object) -> None:
     assert len(chk) == 16
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_memory_load_roundtrip(tmp_path: object) -> None:
     path = str(tmp_path / "s.json")
     m = Memory()
@@ -146,6 +160,8 @@ def test_memory_load_roundtrip(tmp_path: object) -> None:
     assert m2.timeline.get("a").metadata.created_by == "t1"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_memory_load_con_fact_refs(tmp_path: object) -> None:
     path = str(tmp_path / "s.json")
     m = Memory()
@@ -160,6 +176,7 @@ def test_memory_load_con_fact_refs(tmp_path: object) -> None:
 # ── health / readiness / liveness ────────────────────────────
 
 
+@pytest.mark.unit
 def test_memory_health() -> None:
     m = Memory()
     h = m.health()
@@ -169,11 +186,13 @@ def test_memory_health() -> None:
     assert h["encryption"] is False
 
 
+@pytest.mark.unit
 def test_memory_readiness_sin_journal() -> None:
     m = Memory()
     assert m.readiness()["ready"] is True
 
 
+@pytest.mark.unit
 def test_memory_readiness_con_journal_inexistente(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     m = Memory(journal_path=path)
@@ -182,6 +201,7 @@ def test_memory_readiness_con_journal_inexistente(tmp_path: object) -> None:
     assert m.readiness()["ready"] is False
 
 
+@pytest.mark.unit
 def test_memory_liveness() -> None:
     m = Memory()
     assert m.liveness() == {"service": "memory", "alive": True}
@@ -190,6 +210,7 @@ def test_memory_liveness() -> None:
 # ── shutdown / close ─────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_memory_shutdown_cierra_journal(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     m = Memory(journal_path=path)
@@ -199,12 +220,14 @@ def test_memory_shutdown_cierra_journal(tmp_path: object) -> None:
     assert m._journal._file is None
 
 
+@pytest.mark.unit
 def test_memory_shutdown_sin_journal() -> None:
     m = Memory()
     m.shutdown()
     assert m._shutdown is True
 
 
+@pytest.mark.unit
 def test_memory_close_cierra_journal(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     m = Memory(journal_path=path)
@@ -215,6 +238,7 @@ def test_memory_close_cierra_journal(tmp_path: object) -> None:
 # ── recuperación ─────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_memory_recover_solo_snapshot(tmp_path: object) -> None:
     snap = str(tmp_path / "s.json")
     m = Memory()
@@ -225,6 +249,7 @@ def test_memory_recover_solo_snapshot(tmp_path: object) -> None:
     assert m2.timeline.get("a").source == "test"
 
 
+@pytest.mark.unit
 def test_memory_recover_snapshot_inexistente_y_journal(tmp_path: object) -> None:
     jpath = str(tmp_path / "j.log")
     snap = str(tmp_path / "no.json")
@@ -235,6 +260,7 @@ def test_memory_recover_snapshot_inexistente_y_journal(tmp_path: object) -> None
     assert m2.timeline.size == 1
 
 
+@pytest.mark.unit
 def test_memory_recover_replay_solo_nuevos(tmp_path: object) -> None:
     jpath = str(tmp_path / "j.log")
     snap = str(tmp_path / "s.json")
@@ -249,6 +275,7 @@ def test_memory_recover_replay_solo_nuevos(tmp_path: object) -> None:
     assert m2.timeline.size == 2  # a del snapshot + b del journal
 
 
+@pytest.mark.unit
 def test_memory_recover_snapshot_corrupto_solo_journal(tmp_path: object) -> None:
     jpath = str(tmp_path / "j.log")
     snap = str(tmp_path / "bad.json")
@@ -260,6 +287,7 @@ def test_memory_recover_snapshot_corrupto_solo_journal(tmp_path: object) -> None
     assert m2.timeline.size == 1
 
 
+@pytest.mark.unit
 def test_memory_recover_duplicados_tolerados(tmp_path: object) -> None:
     jpath = str(tmp_path / "j.log")
     snap = str(tmp_path / "s.json")
@@ -272,6 +300,7 @@ def test_memory_recover_duplicados_tolerados(tmp_path: object) -> None:
     assert m2.timeline.size == 1
 
 
+@pytest.mark.unit
 def test_memory_entry_from_data_completo() -> None:
     m = Memory()
     e = m._entry_from_data(
@@ -298,6 +327,7 @@ def test_memory_entry_from_data_completo() -> None:
     assert e.metadata.fact_count == 2
 
 
+@pytest.mark.unit
 def test_memory_entry_from_data_por_defecto() -> None:
     m = Memory()
     e = m._entry_from_data({"entry_id": "y", "timestamp": 1.0})
@@ -306,6 +336,7 @@ def test_memory_entry_from_data_por_defecto() -> None:
     assert e.fact_refs == ()
 
 
+@pytest.mark.unit
 def test_memory_recover_snapshot_con_entry_sin_key_error(tmp_path: object) -> None:
     """Snapshot con entries duplicados: KeyError se suprime en carga."""
     jpath = str(tmp_path / "j.log")
@@ -319,6 +350,8 @@ def test_memory_recover_snapshot_con_entry_sin_key_error(tmp_path: object) -> No
     assert m2.timeline.size == 2
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_memory_load_duplicados_suprimidos(tmp_path: object) -> None:
     """Carga de snapshot con entries con el mismo entry_id: KeyError suprimido."""
     path = str(tmp_path / "s.json")

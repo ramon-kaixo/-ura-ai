@@ -1,6 +1,7 @@
 """Tests para core/event_bus.py y core/qdrant_retention.py."""
 from __future__ import annotations
 
+import pytest
 import json
 from datetime import UTC, datetime
 from unittest import mock
@@ -50,6 +51,7 @@ def _reset_event_bus():
 
 
 class TestRunAsync:
+    @pytest.mark.unit
     def test_sin_event_loop_usar_run(self, monkeypatch) -> None:
         coro = mock.Mock()
         asyncio_run = mock.Mock(return_value="r")
@@ -58,6 +60,7 @@ class TestRunAsync:
         assert eb._run_async(coro) == "r"
         asyncio_run.assert_called_once_with(coro)
 
+    @pytest.mark.unit
     def test_con_event_loop_usar_pool(self, monkeypatch) -> None:
         loop = mock.Mock()
         coro = mock.Mock()
@@ -73,6 +76,7 @@ class TestRunAsync:
 
 
 class TestJournal:
+    @pytest.mark.unit
     def test_write_journal(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         with mock.patch.object(eb.Path, "open", mock.mock_open()) as m, mock.patch("builtins.open", m):
@@ -80,15 +84,18 @@ class TestJournal:
         # open se llama; verificar que no explota
         m.assert_called()
 
+    @pytest.mark.unit
     def test_write_journal_error(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         with mock.patch("builtins.open", side_effect=OSError("ro")):
             eb._write_journal("t", {"a": 1})  # no debe lanzar
 
+    @pytest.mark.unit
     def test_replay_sin_archivo(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         assert eb.replay_events("2026-01-01") == []
 
+    @pytest.mark.unit
     def test_replay_con_eventos(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         p = tmp_path / "2026-01-01.jsonl"
@@ -99,6 +106,7 @@ class TestJournal:
         assert len(filtered) == 1
         assert filtered[0]["data"] == 1
 
+    @pytest.mark.unit
     def test_replay_linea_corrupta(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         p = tmp_path / "2026-01-01.jsonl"
@@ -106,6 +114,7 @@ class TestJournal:
         events = eb.replay_events("2026-01-01")
         assert len(events) == 1
 
+    @pytest.mark.unit
     def test_replay_fecha_default(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(eb, "EVENTS_DIR", tmp_path)
         datetime.now(UTC).strftime("%Y-%m-%d")
@@ -113,10 +122,12 @@ class TestJournal:
 
 
 class TestPublisher:
+    @pytest.mark.unit
     def test_get_ctx_crea_singleton(self) -> None:
         ctx = eb._get_ctx()
         assert eb._get_ctx() is ctx
 
+    @pytest.mark.unit
     def test_ensure_publisher(self, monkeypatch) -> None:
         sock = mock.Mock()
         ctx = mock.Mock()
@@ -129,6 +140,7 @@ class TestPublisher:
         assert True
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_ensure_publisher_async(self, monkeypatch, tmp_path) -> None:
         import asyncio as _asyncio
 
@@ -143,6 +155,7 @@ class TestPublisher:
         assert eb._pub_sock is sock
         sock.bind.assert_called_once()
 
+    @pytest.mark.unit
     def test_ensure_publisher_async_ya_inicializado(self, monkeypatch) -> None:
         import asyncio as _asyncio
 
@@ -151,6 +164,7 @@ class TestPublisher:
         _asyncio.run(eb._ensure_publisher_async())
         sock.bind.assert_not_called()
 
+    @pytest.mark.unit
     def test_publish_escribe_journal_y_envia(self, monkeypatch) -> None:
         sock = mock.Mock()
         ctx = mock.Mock()
@@ -163,6 +177,7 @@ class TestPublisher:
         eb.publish("tema", {"dato": 1})
         eb._write_journal.assert_called_once_with("tema", {"dato": 1})
 
+    @pytest.mark.unit
     def test_publish_alert_trigger_dump(self, monkeypatch) -> None:
         sock = mock.Mock()
         ctx = mock.Mock()
@@ -176,12 +191,14 @@ class TestPublisher:
         eb.publish("alert", {"function": "fn", "timeout": 5})
         dump.assert_called_once_with("fn", 5, {"alert_data": {"function": "fn", "timeout": 5}})
 
+    @pytest.mark.unit
     def test_publish_error_propagado(self, monkeypatch) -> None:
         """Documenta: ensure_publisher() esta FUERA del try/except — error se propaga."""
         monkeypatch.setattr(eb, "ensure_publisher", mock.Mock(side_effect=OSError("boom")))
         with pytest.raises(OSError, match="boom"):
             eb.publish("t", {})
 
+    @pytest.mark.unit
     def test_publish_async_send(self, monkeypatch) -> None:
         import asyncio as _asyncio
 
@@ -190,6 +207,7 @@ class TestPublisher:
         _asyncio.run(eb._publish_async("topic", "payload"))
         sock.send_multipart.assert_called_once_with([b"topic", b"payload"])
 
+    @pytest.mark.unit
     def test_create_subscriber(self, monkeypatch) -> None:
         sock = mock.Mock()
         ctx = mock.Mock()
@@ -199,10 +217,12 @@ class TestPublisher:
         assert out is sock
         assert sock.setsockopt_string.call_count == 2
 
+    @pytest.mark.unit
     def test_close(self, monkeypatch) -> None:
         monkeypatch.setattr(eb, "_run_async", mock.Mock(side_effect=lambda c: None))
         eb.close()  # no debe explotar
 
+    @pytest.mark.unit
     def test_close_async(self, monkeypatch) -> None:
         import asyncio as _asyncio
 

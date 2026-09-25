@@ -1,5 +1,6 @@
 """Tests para motor.intelligence.memory.compression (MemoryCompressor, políticas)."""
 from __future__ import annotations
+import pytest
 
 from datetime import UTC, datetime, timedelta
 from unittest import mock
@@ -40,6 +41,7 @@ def _make_store(episodes: list[Episode]) -> mock.Mock:
 
 
 class TestSummaryRecord:
+    @pytest.mark.unit
     def test_defaults_generate_id_and_timestamp(self):
         rec = SummaryRecord(source_episode_ids=["a"], summary="resumen")
         assert rec.id
@@ -47,6 +49,7 @@ class TestSummaryRecord:
         assert rec.tags == []
         assert rec.metadata == {}
 
+    @pytest.mark.unit
     def test_explicit_id_and_created_at_preserved(self):
         rec = SummaryRecord(
             source_episode_ids=["a"],
@@ -59,6 +62,7 @@ class TestSummaryRecord:
 
 
 class TestCompressionResult:
+    @pytest.mark.unit
     def test_defaults(self):
         result = CompressionResult()
         assert result.summaries_created == 0
@@ -69,6 +73,7 @@ class TestCompressionResult:
 
 
 class TestNeverCompress:
+    @pytest.mark.unit
     def test_never_runs(self):
         policy = NeverCompress()
         store = mock.Mock()
@@ -78,9 +83,11 @@ class TestNeverCompress:
 
 
 class TestAgeBasedCompression:
+    @pytest.mark.unit
     def test_should_run_always_true(self):
         assert AgeBasedCompression().should_run(mock.Mock()) is True
 
+    @pytest.mark.unit
     def test_select_filters_old_episodes(self):
         old = _make_episode(id="old", timestamp=(datetime.now(UTC) - timedelta(days=30)).isoformat())
         fresh = _make_episode(id="fresh", timestamp=datetime.now(UTC).isoformat())
@@ -88,12 +95,14 @@ class TestAgeBasedCompression:
         candidates = policy.select_candidates(_make_store([old, fresh]))
         assert [c.id for c in candidates] == ["old"]
 
+    @pytest.mark.unit
     def test_delete_originals_property(self):
         assert AgeBasedCompression().delete_originals is False
         assert AgeBasedCompression(delete_after_compress=True).delete_originals is True
 
 
 class TestSizeBasedCompression:
+    @pytest.mark.unit
     def test_should_run_over_limit(self):
         store = mock.Mock()
         store.count.return_value = 5001
@@ -101,11 +110,13 @@ class TestSizeBasedCompression:
         store.count.return_value = 5000
         assert SizeBasedCompression(max_episodes=5000).should_run(store) is False
 
+    @pytest.mark.unit
     def test_select_no_excess(self):
         episodes = [_make_episode(id=f"e{i}") for i in range(3)]
         policy = SizeBasedCompression(max_episodes=5)
         assert policy.select_candidates(_make_store(episodes)) == []
 
+    @pytest.mark.unit
     def test_select_oldest_excess(self):
         episodes = [
             _make_episode(id="a", timestamp=(datetime.now(UTC) - timedelta(hours=3)).isoformat()),
@@ -116,12 +127,14 @@ class TestSizeBasedCompression:
         candidates = policy.select_candidates(_make_store(episodes))
         assert [c.id for c in candidates] == ["a", "b"]
 
+    @pytest.mark.unit
     def test_delete_originals_property(self):
         assert SizeBasedCompression().delete_originals is False
         assert SizeBasedCompression(delete_after_compress=True).delete_originals is True
 
 
 class TestHybridCompressionPolicy:
+    @pytest.mark.unit
     def test_should_run_short_circuit(self):
         policy = HybridCompressionPolicy()
         store = mock.Mock()
@@ -131,6 +144,7 @@ class TestHybridCompressionPolicy:
             assert policy.should_run(store) is True
             size_should.assert_not_called()
 
+    @pytest.mark.unit
     def test_should_run_false_when_both_false(self):
         policy = HybridCompressionPolicy(max_episodes=5000)
         store = mock.Mock()
@@ -138,6 +152,7 @@ class TestHybridCompressionPolicy:
         with mock.patch.object(policy._age_policy, "should_run", return_value=False):
             assert policy.should_run(store) is False
 
+    @pytest.mark.unit
     def test_select_dedup_and_sort(self):
         old = _make_episode(id="dup", timestamp=(datetime.now(UTC) - timedelta(days=30)).isoformat())
         fresh = _make_episode(id="fresh", timestamp=datetime.now(UTC).isoformat())
@@ -147,22 +162,26 @@ class TestHybridCompressionPolicy:
         candidates = policy.select_candidates(store)
         assert [c.id for c in candidates] == ["dup", "fresh"]
 
+    @pytest.mark.unit
     def test_delete_originals_property(self):
         assert HybridCompressionPolicy().delete_originals is False
         assert HybridCompressionPolicy(delete_after_compress=True).delete_originals is True
 
 
 class TestMemoryCompressor:
+    @pytest.mark.unit
     def test_default_policy_is_size_based(self):
         compressor = MemoryCompressor(store=mock.Mock())
         assert isinstance(compressor.policy, SizeBasedCompression)
 
+    @pytest.mark.unit
     def test_policy_setter(self):
         compressor = MemoryCompressor(store=mock.Mock())
         policy = NeverCompress()
         compressor.policy = policy
         assert compressor.policy is policy
 
+    @pytest.mark.unit
     def test_compress_skips_when_should_run_false(self):
         store = mock.Mock()
         compressor = MemoryCompressor(store=store, policy=NeverCompress())
@@ -170,6 +189,7 @@ class TestMemoryCompressor:
         assert result.summaries_created == 0
         assert result.elapsed_ms >= 0
 
+    @pytest.mark.unit
     def test_compress_skips_when_no_candidates(self):
         store = mock.Mock()
         store.get_recent.return_value = []
@@ -180,6 +200,7 @@ class TestMemoryCompressor:
         result = compressor.compress()
         assert result.summaries_created == 0
 
+    @pytest.mark.unit
     def test_compress_creates_summary(self):
         episodes = [_make_episode(id="e1", payload="mensaje uno"), _make_episode(id="e2", payload="mensaje dos")]
         store = _make_store(episodes)
@@ -195,6 +216,7 @@ class TestMemoryCompressor:
         assert summary.metadata["episode_count"] == 2
         assert summary.metadata["compression_ratio"] <= 1.0
 
+    @pytest.mark.unit
     def test_compress_groups_by_session(self):
         episodes = [
             _make_episode(id="e1", session_id="sess-a", payload="a1"),
@@ -206,6 +228,7 @@ class TestMemoryCompressor:
         assert result.summaries_created == 2
         assert compressor.count_summaries() == 2
 
+    @pytest.mark.unit
     def test_compress_no_session_group(self):
         episodes = [_make_episode(id="e1", session_id="", payload="x")]
         compressor = MemoryCompressor(store=_make_store(episodes), policy=AgeBasedCompression(max_age_days=0))
@@ -214,6 +237,7 @@ class TestMemoryCompressor:
         summary = compressor.get_summaries()[0]
         assert summary.metadata["session_id"] == "_no_session"
 
+    @pytest.mark.unit
     def test_compress_deletes_originals(self):
         episodes = [_make_episode(id="e1", payload="x"), _make_episode(id="e2", payload="y")]
         store = _make_store(episodes)
@@ -224,6 +248,7 @@ class TestMemoryCompressor:
         assert result.episodes_deleted == 2
         assert store.delete.call_count == 2
 
+    @pytest.mark.unit
     def test_compress_records_errors(self):
         policy = mock.Mock()
         policy.should_run.return_value = True
@@ -236,6 +261,7 @@ class TestMemoryCompressor:
         assert "boom" in result.errors[0]
         assert result.summaries_created == 0
 
+    @pytest.mark.unit
     def test_group_by_session_none(self):
         compressor = MemoryCompressor(store=mock.Mock())
         groups = compressor._group_by_session(
@@ -243,15 +269,19 @@ class TestMemoryCompressor:
         )
         assert set(groups) == {"s1", "_no_session"}
 
+    @pytest.mark.unit
     def test_generate_summary_empty_returns_none(self):
         compressor = MemoryCompressor(store=mock.Mock())
         assert compressor._generate_summary("sess", []) is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_generate_summary_empty_payloads_returns_none(self):
         compressor = MemoryCompressor(store=mock.Mock())
         episodes = [_make_episode(id="a", payload=""), _make_episode(id="b", payload="")]
         assert compressor._generate_summary("sess", episodes) is None
 
+    @pytest.mark.unit
     def test_generate_summary_dedup_and_truncate(self):
         compressor = MemoryCompressor(store=mock.Mock())
         payload = "x" * 500
@@ -267,6 +297,7 @@ class TestMemoryCompressor:
         assert summary.importance == 0.5
         assert summary.tags == ["t1", "t2"]
 
+    @pytest.mark.unit
     def test_get_summaries_filters_and_limits(self):
         compressor = MemoryCompressor(store=mock.Mock())
         compressor._summaries = {
@@ -285,6 +316,7 @@ class TestMemoryCompressor:
         assert len(compressor.get_summaries(k=2)) == 2
         assert len(compressor.get_summaries(k=100)) == 4
 
+    @pytest.mark.unit
     def test_get_summary_by_id(self):
         compressor = MemoryCompressor(store=mock.Mock())
         rec = SummaryRecord(source_episode_ids=["a"], summary="s", id="abc")
@@ -292,6 +324,7 @@ class TestMemoryCompressor:
         assert compressor.get_summary("abc") is rec
         assert compressor.get_summary("nope") is None
 
+    @pytest.mark.unit
     def test_clear_summaries(self):
         compressor = MemoryCompressor(store=mock.Mock())
         compressor._summaries = {
@@ -302,6 +335,7 @@ class TestMemoryCompressor:
 
 
 class TestCompressionScheduler:
+    @pytest.mark.unit
     def test_enabled_toggle(self):
         scheduler = CompressionScheduler(compressor=mock.Mock())
         assert scheduler.enabled is False
@@ -310,6 +344,7 @@ class TestCompressionScheduler:
         scheduler.disable()
         assert scheduler.enabled is False
 
+    @pytest.mark.unit
     def test_run_once_delegates(self):
         compressor = mock.Mock()
         compressor.compress.return_value = CompressionResult(summaries_created=3)

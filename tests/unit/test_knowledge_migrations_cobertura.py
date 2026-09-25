@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -49,29 +50,34 @@ def conn() -> sqlite3.Connection:
     c.close()
 
 
+@pytest.mark.unit
 def test_constantes_coherentes() -> None:
     assert SCHEMA_VERSION == MAXIMUM_SUPPORTED_SCHEMA == 15
     assert MINIMUM_SUPPORTED_SCHEMA == 5
     assert len(MIGRATIONS) == SCHEMA_VERSION - 5
 
 
+@pytest.mark.unit
 def test_migration_default_sql_file() -> None:
     m = Migration(version=99, description="d")
     assert m.sql_file is None
 
 
+@pytest.mark.unit
 def test_get_set_schema_version(conn) -> None:
     assert get_schema_version(conn) == 0
     _set_schema_version(conn, 7)
     assert get_schema_version(conn) == 7
 
 
+@pytest.mark.unit
 def test_migrate_db_noop(conn) -> None:
     _set_schema_version(conn, SCHEMA_VERSION)
     migrate_db(conn, SCHEMA_PATH)
     assert get_schema_version(conn) == SCHEMA_VERSION
 
 
+@pytest.mark.unit
 def test_migrate_db_fresh(conn) -> None:
     migrate_db(conn, SCHEMA_PATH)
     assert get_schema_version(conn) == SCHEMA_VERSION
@@ -80,6 +86,7 @@ def test_migrate_db_fresh(conn) -> None:
     assert "op_assets" in tables
 
 
+@pytest.mark.unit
 def test_migrate_db_incremental_14_a_15(conn) -> None:
     _setup_v6(conn)
     conn.executescript(
@@ -96,6 +103,7 @@ def test_migrate_db_incremental_14_a_15(conn) -> None:
     assert get_schema_version(conn) == 15
 
 
+@pytest.mark.unit
 def test_migrate_db_incremental_completo(conn) -> None:
     _setup_v6(conn)
     _set_schema_version(conn, 6)
@@ -103,17 +111,20 @@ def test_migrate_db_incremental_completo(conn) -> None:
     assert get_schema_version(conn) == 15
 
 
+@pytest.mark.unit
 def test_migrate_db_sin_migracion_definida(conn) -> None:
     _set_schema_version(conn, 15)
     with pytest.raises(ValueError, match="No migration defined"):
         migrate_db(conn, SCHEMA_PATH, target_version=16)
 
 
+@pytest.mark.unit
 def test_migrar_fresh_sin_schema(tmp_path, conn) -> None:
     with pytest.raises(FileNotFoundError):
         _migrar_fresh(conn, tmp_path / "no.sql", 15)
 
 
+@pytest.mark.unit
 def test_migrar_fresh_escribe_version(tmp_path, conn) -> None:
     schema = tmp_path / "s.sql"
     schema.write_text("CREATE TABLE t (x INTEGER);")
@@ -126,21 +137,25 @@ def test_migrar_fresh_escribe_version(tmp_path, conn) -> None:
     "current,target",
     [(4, 15), (16, 15), (17, 15)],
 )
+@pytest.mark.unit
 def test_validar_rango_rechaza(conn, current, target) -> None:
     with pytest.raises(ValueError):
         _validar_rango(current, target)
 
 
+@pytest.mark.unit
 def test_validar_rango_acepta() -> None:
     _validar_rango(5, 15)
     _validar_rango(15, 15)
 
 
+@pytest.mark.unit
 def test_validar_rango_downgrade() -> None:
     with pytest.raises(ValueError, match="Downgrade not supported"):
         _validar_rango(14, 13)
 
 
+@pytest.mark.unit
 def test_aplicar_migracion_sql(tmp_path, conn) -> None:
     mig_dir = tmp_path / "migrations"
     mig_dir.mkdir()
@@ -149,27 +164,32 @@ def test_aplicar_migracion_sql(tmp_path, conn) -> None:
     assert get_schema_version(conn) == 11
 
 
+@pytest.mark.unit
 def test_aplicar_migracion_virtual(conn) -> None:
     _aplicar_migracion(conn, 6, Path("/no/existe"))
     assert get_schema_version(conn) == 6
 
 
+@pytest.mark.unit
 def test_aplicar_migracion_archivo_faltante(tmp_path, conn) -> None:
     with pytest.raises(FileNotFoundError, match="Migration file not found"):
         _aplicar_migracion(conn, 11, tmp_path)
 
 
+@pytest.mark.unit
 def test_verify_migration_ok(conn) -> None:
     _set_schema_version(conn, SCHEMA_VERSION)
     verify_migration(conn)
 
 
+@pytest.mark.unit
 def test_verify_migration_mismatch(conn) -> None:
     _set_schema_version(conn, 10)
     with pytest.raises(RuntimeError, match="Schema version mismatch"):
         verify_migration(conn)
 
 
+@pytest.mark.unit
 def test_verify_migration_explicito(conn) -> None:
     _set_schema_version(conn, 11)
     verify_migration(conn, expected=11)

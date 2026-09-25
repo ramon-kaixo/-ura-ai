@@ -21,6 +21,7 @@ Cubre TR-01 a TR-20:
 
 from __future__ import annotations
 
+import pytest
 import time
 
 import pytest
@@ -117,6 +118,7 @@ def _make_runner() -> AgentToolRunner:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_tool_adapter_interface() -> None:
     """ToolRunner nunca ejecuta herramientas directamente (via ToolAdapter)."""
     adapter = _EchoAdapter()
@@ -129,6 +131,7 @@ def test_tool_adapter_interface() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_execution_id_unique() -> None:
     a = make_tool_execution_id("agent1", "web.search", 1000.0)
     b = make_tool_execution_id("agent1", "web.search", 1000.0)
@@ -137,6 +140,7 @@ def test_execution_id_unique() -> None:
     assert a != c  # diferente agente
 
 
+@pytest.mark.integration
 def test_tool_result_immutable() -> None:
     from motor.agents.models import ToolResult
 
@@ -150,6 +154,8 @@ def test_tool_result_immutable() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_timeout_raises() -> None:
     runner = _make_runner()
     with pytest.raises(ToolTimeoutError):
@@ -161,6 +167,7 @@ def test_timeout_raises() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_transient_retry_succeeds() -> None:
     runner = AgentToolRunner()
     adapter = _TransientAdapter(fail_count=2)
@@ -169,6 +176,7 @@ def test_transient_retry_succeeds() -> None:
     assert result == {"success": True, "attempts": 3}
 
 
+@pytest.mark.integration
 def test_permanent_error_no_retry() -> None:
     runner = _make_runner()
     with pytest.raises(ToolPermanentError):
@@ -180,6 +188,7 @@ def test_permanent_error_no_retry() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_tool_contract() -> None:
     c = ToolContract(name="web.search", timeout_seconds=15, idempotent=True, side_effects=[], expected_cost_units=2)
     assert c.name == "web.search"
@@ -187,6 +196,7 @@ def test_tool_contract() -> None:
     assert c.idempotent is True
 
 
+@pytest.mark.integration
 def test_get_contract() -> None:
     runner = _make_runner()
     c = runner.get_contract("echo")
@@ -199,6 +209,7 @@ def test_get_contract() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_no_external_dependencies() -> None:
     import inspect
 
@@ -219,6 +230,7 @@ def test_no_external_dependencies() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_request_to_result_flow() -> None:
     runner = _make_runner()
     result = runner.run("echo", {"hello": "world"})
@@ -230,6 +242,7 @@ def test_request_to_result_flow() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_parallel_execution() -> None:
     import threading
 
@@ -262,6 +275,7 @@ def test_parallel_execution() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_no_globals_or_singletons() -> None:
     import inspect
 
@@ -277,6 +291,7 @@ def test_no_globals_or_singletons() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_deterministic_tool() -> None:
     runner = _make_runner()
     r1 = runner.run("echo", {"x": 1})
@@ -289,6 +304,7 @@ def test_deterministic_tool() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_typed_exceptions() -> None:
     assert issubclass(ToolTimeoutError, ToolError)
     assert issubclass(ToolCancelledError, ToolError)
@@ -297,6 +313,7 @@ def test_typed_exceptions() -> None:
     assert issubclass(ToolNotFoundError, ToolError)
 
 
+@pytest.mark.integration
 def test_tool_not_found() -> None:
     runner = _make_runner()
     with pytest.raises(ToolNotFoundError):

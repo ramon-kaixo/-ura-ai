@@ -1,18 +1,22 @@
+import pytest
 """Tests de event_bus y notifier."""
 
 from core.event_bus import AsyncEventBus, replay_events
 
 
+@pytest.mark.integration
 def test_event_bus_imports() -> None:
     assert callable(replay_events)
 
 
+@pytest.mark.integration
 def test_async_event_bus_creates() -> None:
     bus = AsyncEventBus()
     assert bus is not None
     assert bus._suscriptores == {}
 
 
+@pytest.mark.integration
 def test_async_event_bus_suscribir() -> None:
     import asyncio
 

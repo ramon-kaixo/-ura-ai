@@ -24,10 +24,12 @@ class FakeExtractor:
         return ExtractionResult()
 
 
+@pytest.mark.unit
 def test_max_stream_chunk() -> None:
     assert MAX_STREAM_CHUNK == 64 * 1024
 
 
+@pytest.mark.unit
 def test_hash_stream(tmp_path) -> None:
     p = tmp_path / "f.bin"
     p.write_bytes(b"hola" * 10000)
@@ -36,23 +38,28 @@ def test_hash_stream(tmp_path) -> None:
     assert len(h) == 64
 
 
+@pytest.mark.unit
 def test_hash_stream_no_existe(tmp_path) -> None:
     with pytest.raises(FileNotFoundError):
         _hash_stream(tmp_path / "no.bin")
 
 
+@pytest.mark.unit
 def test_check_import_disponible() -> None:
     assert _check_import("json") is True
 
 
+@pytest.mark.unit
 def test_check_import_no_disponible() -> None:
     assert _check_import("modulo_inexistente_xyz") is False
 
 
+@pytest.mark.unit
 def test_check_import_con_package() -> None:
     assert _check_import("modulo_inexistente_xyz", package="pkg") is False
 
 
+@pytest.mark.unit
 def test_extraction_result_defaults() -> None:
     r = ExtractionResult()
     assert r.asset is None
@@ -61,6 +68,7 @@ def test_extraction_result_defaults() -> None:
     assert r.duration_ms == 0.0
 
 
+@pytest.mark.unit
 def test_extraction_result_completo() -> None:
     r = ExtractionResult(warnings=["w"], errors=["e"], duration_ms=1.5)
     assert r.warnings == ["w"]
@@ -68,6 +76,7 @@ def test_extraction_result_completo() -> None:
     assert r.duration_ms == 1.5
 
 
+@pytest.mark.unit
 def test_registry_register_y_get() -> None:
     reg = ExtractorRegistry()
     ext = FakeExtractor()
@@ -76,6 +85,7 @@ def test_registry_register_y_get() -> None:
     assert reg.get("no") is None
 
 
+@pytest.mark.unit
 def test_registry_por_mime_y_lista() -> None:
     reg = ExtractorRegistry()
     ext = FakeExtractor()
@@ -86,11 +96,13 @@ def test_registry_por_mime_y_lista() -> None:
     assert reg.count == 1
 
 
+@pytest.mark.unit
 def test_registry_singleton() -> None:
     assert get_registry() is get_registry()
     assert isinstance(get_registry(), ExtractorRegistry)
 
 
+@pytest.mark.unit
 def test_extractor_protocol_contrato() -> None:
     from knowledge.engine.extractors.base import Extractor
 

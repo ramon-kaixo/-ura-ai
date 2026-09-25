@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 
@@ -40,11 +41,13 @@ def _instalar_fake_pil(monkeypatch: pytest.MonkeyPatch, fake_image_cls) -> None:
 # ── audio ────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_audio_file_no_existe() -> None:
     r = AudioExtractor().extract(_src("/no/existe.mp3"))
     assert "File not found" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_audio_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "big.mp3"
     p.write_bytes(b"x" * 100)
@@ -53,6 +56,7 @@ def test_audio_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert "File too large" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_audio_ok_sin_ffprobe_ni_whisper(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.mp3"
     p.write_bytes(b"audio-data")
@@ -65,6 +69,7 @@ def test_audio_ok_sin_ffprobe_ni_whisper(tmp_path: object, monkeypatch: pytest.M
     assert r.asset.metadata["format"] == "mp3"
 
 
+@pytest.mark.unit
 def test_audio_con_ffprobe(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -93,6 +98,7 @@ def test_audio_con_ffprobe(tmp_path: object, monkeypatch: pytest.MonkeyPatch) ->
     assert "_degraded_ffprobe" not in m
 
 
+@pytest.mark.unit
 def test_audio_ffprobe_falla(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -109,6 +115,7 @@ def test_audio_ffprobe_falla(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert r.asset.metadata["_degraded_ffprobe"] is True
 
 
+@pytest.mark.unit
 def test_audio_ffprobe_json_invalido(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -125,6 +132,8 @@ def test_audio_ffprobe_json_invalido(tmp_path: object, monkeypatch: pytest.Monke
     assert r.asset.metadata["_degraded_ffprobe"] is True
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_audio_ffprobe_timeout(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -139,6 +148,7 @@ def test_audio_ffprobe_timeout(tmp_path: object, monkeypatch: pytest.MonkeyPatch
     assert r.asset.metadata["_degraded_ffprobe"] is True
 
 
+@pytest.mark.unit
 def test_audio_ffprobe_sin_streams_audio(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -156,6 +166,7 @@ def test_audio_ffprobe_sin_streams_audio(tmp_path: object, monkeypatch: pytest.M
     assert r.asset is not None
 
 
+@pytest.mark.unit
 def test_audio_transcripcion_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -174,6 +185,7 @@ def test_audio_transcripcion_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert m["transcription_language"] == "es"
 
 
+@pytest.mark.unit
 def test_audio_transcripcion_vacia(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -190,6 +202,7 @@ def test_audio_transcripcion_vacia(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert "transcript" not in r.asset.metadata
 
 
+@pytest.mark.unit
 def test_audio_transcripcion_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -207,6 +220,7 @@ def test_audio_transcripcion_error(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert "sin modelo" in r.asset.metadata["transcription_error"]
 
 
+@pytest.mark.unit
 def test_audio_extract_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -220,6 +234,7 @@ def test_audio_extract_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert "Extraction error" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_audio_quality() -> None:
     assert _compute_audio_quality({}) == pytest.approx(0.4)  # 0.3 base + 0.1 no-degradado
     m = {"audio_duration_sec": 1, "audio_codec": "x", "audio_sample_rate": 1, "audio_bitrate": 1, "transcription_performed": True, "transcript": "x"}
@@ -228,11 +243,13 @@ def test_audio_quality() -> None:
     assert _compute_audio_quality(m2) == pytest.approx(0.3)  # 0.3 base, degradado
 
 
+@pytest.mark.unit
 def test_audio_quality_min_1() -> None:
     m = {"audio_duration_sec": 1, "audio_codec": "x", "audio_sample_rate": 1, "audio_bitrate": 1, "transcription_performed": True, "transcript": "x" * 10}
     assert _compute_audio_quality(m) == 1.0
 
 
+@pytest.mark.unit
 def test_audio_get_whisper_model_carga(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -250,6 +267,7 @@ def test_audio_get_whisper_model_carga(monkeypatch: pytest.MonkeyPatch) -> None:
     assert hasattr(audio_mod._get_whisper_model, "model")
 
 
+@pytest.mark.unit
 def test_audio_get_whisper_model_cacheado(monkeypatch: pytest.MonkeyPatch) -> None:
     audio_mod._get_whisper_model.model = "modelo-cacheado"
     try:
@@ -258,6 +276,7 @@ def test_audio_get_whisper_model_cacheado(monkeypatch: pytest.MonkeyPatch) -> No
         audio_mod._get_whisper_model.__dict__.pop("model", None)
 
 
+@pytest.mark.unit
 def test_audio_ffprobe_valores_vacios_no_anaden(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "a.wav"
     p.write_bytes(b"wav")
@@ -286,11 +305,13 @@ def test_audio_ffprobe_valores_vacios_no_anaden(tmp_path: object, monkeypatch: p
 # ── image ────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_image_file_no_existe() -> None:
     r = ImageExtractor().extract(_src("/no/existe.png"))
     assert "File not found" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_image_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "i.png"
     p.write_bytes(b"x" * 100)
@@ -299,6 +320,7 @@ def test_image_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert "File too large" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_image_ok_sin_pillow(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "i.png"
     p.write_bytes(b"png")
@@ -310,6 +332,7 @@ def test_image_ok_sin_pillow(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert r.asset.metadata["_degraded_reason"] == "Pillow not installed"
 
 
+@pytest.mark.unit
 def test_image_extract_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "i.png"
     p.write_bytes(b"png")
@@ -323,17 +346,20 @@ def test_image_extract_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert "Extraction error" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_image_size_error_propaga() -> None:
     with pytest.raises(ImageSizeError):
         raise ImageSizeError("too big")
 
 
+@pytest.mark.unit
 def test_image_quality() -> None:
     assert _compute_image_quality({}) == 0.3
     m = {"width": 10, "height": 10, "exif_make": "x", "exif_datetimeoriginal": "y", "gps": {"lat": 1}, "thumbnail": "t", "ocr_performed": True, "ocr_text": "z"}
     assert _compute_image_quality(m) == 1.0
 
 
+@pytest.mark.unit
 def test_image_quality_solo_dimensiones() -> None:
     m = {"width": 10, "height": 10}
     assert _compute_image_quality(m) == pytest.approx(0.45)
@@ -380,6 +406,7 @@ def _fake_img_cls(size=(10, 10), fmt="PNG", mode="RGB", exif_items=None, save_ra
     return _FakeImg
 
 
+@pytest.mark.unit
 def test_image_pillow_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     from PIL import Image as RealImage
 
@@ -396,6 +423,7 @@ def test_image_pillow_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> N
     assert r.asset.metadata["thumbnail"].endswith(".thumb.jpg")
 
 
+@pytest.mark.unit
 def test_image_pillow_demasiado_ancha(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
     _instalar_fake_pil(monkeypatch, type("Image", (), {"open": lambda p: _fake_img_cls(size=(30000, 10))()}))
@@ -404,6 +432,7 @@ def test_image_pillow_demasiado_ancha(tmp_path: object, monkeypatch: pytest.Monk
     assert "Extraction error" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_image_pillow_muchos_pixeles(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
     _instalar_fake_pil(monkeypatch, type("Image", (), {"open": lambda p: _fake_img_cls(size=(15000, 15000))()}))
@@ -412,6 +441,7 @@ def test_image_pillow_muchos_pixeles(tmp_path: object, monkeypatch: pytest.Monke
     assert "Extraction error" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_image_pillow_medio_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
     _instalar_fake_pil(monkeypatch, type("Image", (), {"open": lambda p: _fake_img_cls(size=(8000, 8000))()}))
@@ -421,6 +451,7 @@ def test_image_pillow_medio_grande(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert r.asset is not None
 
 
+@pytest.mark.unit
 def test_image_pillow_abrir_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
 
@@ -439,6 +470,7 @@ def test_image_pillow_abrir_error(tmp_path: object, monkeypatch: pytest.MonkeyPa
     assert "Cannot open image" in r.asset.metadata["_degraded_reason"]
 
 
+@pytest.mark.unit
 def test_image_exif_y_gps(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
 
@@ -486,6 +518,7 @@ def test_image_exif_y_gps(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> 
     assert r.asset.metadata.get("gps") is not None
 
 
+@pytest.mark.unit
 def test_image_thumbnail_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     (Path(str(tmp_path)) / "i.png").write_bytes(b"png")
     _instalar_fake_pil(monkeypatch, type("Image", (), {"open": lambda p: _fake_img_cls(save_raises=OSError("no jpeg"))()}))
@@ -495,6 +528,7 @@ def test_image_thumbnail_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch
     assert "thumbnail" not in r.asset.metadata
 
 
+@pytest.mark.unit
 def test_image_ocr_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -517,6 +551,7 @@ def test_image_ocr_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None
     assert r.asset.metadata["ocr_performed"] is True
 
 
+@pytest.mark.unit
 def test_image_ocr_vacio() -> None:
     import types
 
@@ -541,6 +576,7 @@ def test_image_ocr_vacio() -> None:
         monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_image_ocr_error() -> None:
     import types
 
@@ -566,6 +602,7 @@ def test_image_ocr_error() -> None:
         monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_image_exif_sin_datos() -> None:
     class _SinExif:
         def getexif(self):
@@ -576,6 +613,7 @@ def test_image_exif_sin_datos() -> None:
     assert m == {}
 
 
+@pytest.mark.unit
 def test_image_exif_tag_desconocido() -> None:
     class _ExifRaro:
         def getexif(self):
@@ -592,6 +630,7 @@ def test_image_exif_tag_desconocido() -> None:
     assert m == {}
 
 
+@pytest.mark.unit
 def test_image_exif_gps_vacio() -> None:
     class _ExifSinGps:
         def getexif(self):
@@ -608,6 +647,7 @@ def test_image_exif_gps_vacio() -> None:
     assert "gps" not in m
 
 
+@pytest.mark.unit
 def test_image_exif_items_sin_gps() -> None:
     class _ExifConItems:
         def getexif(self):
@@ -625,6 +665,7 @@ def test_image_exif_items_sin_gps() -> None:
     assert "gps" not in m
 
 
+@pytest.mark.unit
 def test_image_exif_gps_info_vacio() -> None:
     class _ExifGpsVacio:
         def getexif(self):
@@ -644,11 +685,13 @@ def test_image_exif_gps_info_vacio() -> None:
 # ── pdf ──────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_pdf_file_no_existe() -> None:
     r = PdfExtractor().extract(_src("/no/existe.pdf"))
     assert "File not found" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_pdf_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "b.pdf"
     p.write_bytes(b"x" * 100)
@@ -657,6 +700,7 @@ def test_pdf_demasiado_grande(tmp_path: object, monkeypatch: pytest.MonkeyPatch)
     assert "File too large" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_pdf_sin_fitz(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "b.pdf"
     p.write_bytes(b"%PDF-1.4")
@@ -668,6 +712,7 @@ def test_pdf_sin_fitz(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None
     assert r.asset.metadata["_degraded_reason"] == "PyMuPDF not installed"
 
 
+@pytest.mark.unit
 def test_pdf_extract_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     p = Path(str(tmp_path)) / "b.pdf"
     p.write_bytes(b"%PDF")
@@ -709,6 +754,7 @@ def _fake_doc(num_pages=2, metadata=None, text="hola", is_encrypted=False, is_pd
     return _Doc()
 
 
+@pytest.mark.unit
 def test_pdf_con_fitz_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -733,6 +779,7 @@ def test_pdf_con_fitz_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> N
     assert m["text_length"] == 8
 
 
+@pytest.mark.unit
 def test_pdf_demasiadas_paginas(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -749,6 +796,7 @@ def test_pdf_demasiadas_paginas(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert "PDF has" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_pdf_metadata_vacia(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -780,6 +828,7 @@ def test_pdf_metadata_vacia(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -
     assert r.asset.metadata["ocr_performed"] is False
 
 
+@pytest.mark.unit
 def test_pdf_sin_texto_con_ocr(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -797,6 +846,7 @@ def test_pdf_sin_texto_con_ocr(tmp_path: object, monkeypatch: pytest.MonkeyPatch
     assert r.asset.metadata["ocr_performed"] is False
 
 
+@pytest.mark.unit
 def test_pdf_sin_texto_con_ocr_tesseract(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -825,6 +875,7 @@ def test_pdf_sin_texto_con_ocr_tesseract(tmp_path: object, monkeypatch: pytest.M
     assert m["ocr_text_length"] > 0
 
 
+@pytest.mark.unit
 def test_pdf_quality() -> None:
     assert _compute_pdf_quality({}) == pytest.approx(0.3)
     m = {"pages": 5, "title": "t", "author": "a", "text_length": 500, "keywords": "k", "has_text": True}
@@ -833,6 +884,7 @@ def test_pdf_quality() -> None:
     assert _compute_pdf_quality(m2) == pytest.approx(0.3)
 
 
+@pytest.mark.unit
 def test_pdf_limit_error() -> None:
     with pytest.raises(PdfLimitError):
         raise PdfLimitError("demasiadas paginas")

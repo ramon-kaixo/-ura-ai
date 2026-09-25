@@ -9,6 +9,7 @@ Sin dependencias externas: solo motor.core.web + stdlib.
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 
 import pytest
@@ -23,6 +24,7 @@ def _provider(name: str = "p") -> SimpleNamespace:
 class TestRegistrySearchers:
     """Registro de buscadores."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("ddg")
@@ -30,10 +32,12 @@ class TestRegistrySearchers:
         assert r.get_searcher("ddg") is p
         assert r.list_searchers() == ["ddg"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_searcher("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_searchers() == []
 
@@ -41,6 +45,7 @@ class TestRegistrySearchers:
 class TestRegistryCrawlers:
     """Registro de crawlers."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("httpx")
@@ -48,10 +53,12 @@ class TestRegistryCrawlers:
         assert r.get_crawler("httpx") is p
         assert r.list_crawlers() == ["httpx"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_crawler("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_crawlers() == []
 
@@ -59,6 +66,7 @@ class TestRegistryCrawlers:
 class TestRegistryExtractors:
     """Registro de extractores."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("html")
@@ -66,10 +74,12 @@ class TestRegistryExtractors:
         assert r.get_extractor("html") is p
         assert r.list_extractors() == ["html"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_extractor("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_extractors() == []
 
@@ -77,6 +87,7 @@ class TestRegistryExtractors:
 class TestRegistryRankers:
     """Registro de rankers."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("default")
@@ -84,10 +95,12 @@ class TestRegistryRankers:
         assert r.get_ranker("default") is p
         assert r.list_rankers() == ["default"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_ranker("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_rankers() == []
 
@@ -95,6 +108,7 @@ class TestRegistryRankers:
 class TestRegistrySummarizers:
     """Registro de summarizers."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("llm")
@@ -102,10 +116,12 @@ class TestRegistrySummarizers:
         assert r.get_summarizer("llm") is p
         assert r.list_summarizers() == ["llm"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_summarizer("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_summarizers() == []
 
@@ -113,6 +129,7 @@ class TestRegistrySummarizers:
 class TestRegistryValidators:
     """Registro de validadores."""
 
+    @pytest.mark.unit
     def test_register_get_list(self) -> None:
         r = Registry()
         p = _provider("v")
@@ -120,10 +137,12 @@ class TestRegistryValidators:
         assert r.get_validator("v") is p
         assert r.list_validators() == ["v"]
 
+    @pytest.mark.unit
     def test_get_inexistente_raise(self) -> None:
         with pytest.raises(KeyError):
             Registry().get_validator("nope")
 
+    @pytest.mark.unit
     def test_list_vacio(self) -> None:
         assert Registry().list_validators() == []
 
@@ -131,6 +150,7 @@ class TestRegistryValidators:
 class TestRegistrySobreescritura:
     """Sobreescritura de proveedores con el mismo nombre."""
 
+    @pytest.mark.unit
     def test_register_mismo_nombre_reemplaza(self) -> None:
         r = Registry()
         p1 = _provider("a")
@@ -140,6 +160,7 @@ class TestRegistrySobreescritura:
         assert r.get_searcher("x") is p2
         assert r.list_searchers() == ["x"]
 
+    @pytest.mark.unit
     def test_independencia_entre_tipos(self) -> None:
         """El mismo nombre puede existir en tipos distintos sin colisión."""
         r = Registry()

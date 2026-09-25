@@ -1,5 +1,6 @@
 """Tests para core/agents/ejecutor.py — AgenteEjecutor."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -7,9 +8,11 @@ from motor.core.agents.ejecutor import AgenteEjecutor
 
 
 class TestAgenteEjecutor:
+    @pytest.mark.unit
     def test_modelo_constante(self) -> None:
         assert AgenteEjecutor.MODELO is not None
 
+    @pytest.mark.unit
     def test_ejecutar_ok(self, monkeypatch) -> None:
         proc = mock.Mock()
         proc.communicate.return_value = ("linea\n✅ OK\n✅ OK\n❌ Error\n", None)
@@ -32,6 +35,8 @@ class TestAgenteEjecutor:
         assert env["MIN_LINES"] == "80"
         assert "OLLAMA_URL" in env
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_ejecutar_timeout(self, monkeypatch) -> None:
         proc = mock.Mock()
         proc.communicate.side_effect = __import__("subprocess").TimeoutExpired("cmd", 30)
@@ -46,6 +51,7 @@ class TestAgenteEjecutor:
         assert r["workers"][0]["err"] == 1
         proc.kill.assert_called()
 
+    @pytest.mark.unit
     def test_ejecutar_terminate_error(self, monkeypatch) -> None:
         proc = mock.Mock()
         proc.communicate.return_value = ("", None)
@@ -62,6 +68,7 @@ class TestAgenteEjecutor:
         assert r["ok"] == 0
         proc.kill.assert_called()
 
+    @pytest.mark.unit
     def test_ejecutar_multi_worker(self, monkeypatch) -> None:
         procs = []
         for i in range(2):

@@ -12,32 +12,39 @@ from motor.core.secrets import (
 
 
 class TestGetSecret:
+    @pytest.mark.unit
     def test_env_var_found(self, monkeypatch):
         monkeypatch.setenv("TEST_SECRET_1", "magic-value")
         assert get_secret("TEST_SECRET_1") == "magic-value"
 
+    @pytest.mark.unit
     def test_env_var_empty_falls_to_default(self, monkeypatch):
         monkeypatch.setenv("TEST_SECRET_2", "")
         assert get_secret("TEST_SECRET_2", default="fallback") == "fallback"
 
+    @pytest.mark.unit
     def test_env_var_precedence_over_default(self, monkeypatch):
         monkeypatch.setenv("TEST_SECRET_3", "from-env")
         assert get_secret("TEST_SECRET_3", default="from-default") == "from-env"
 
+    @pytest.mark.unit
     def test_no_env_no_file_returns_default(self, monkeypatch):
         monkeypatch.delenv("TEST_SECRET_NEVER_SET", raising=False)
         assert get_secret("TEST_SECRET_NEVER_SET", default="safe") == "safe"
 
+    @pytest.mark.unit
     def test_no_env_no_file_no_default_returns_none(self, monkeypatch):
         monkeypatch.delenv("TEST_SECRET_ABSENT", raising=False)
         assert get_secret("TEST_SECRET_ABSENT") is None
 
 
 class TestRequireSecret:
+    @pytest.mark.unit
     def test_returns_value_when_present(self, monkeypatch):
         monkeypatch.setenv("REQUIRED_KEY", "found-it")
         assert require_secret("REQUIRED_KEY") == "found-it"
 
+    @pytest.mark.unit
     def test_raises_keyerror_when_missing(self, monkeypatch):
         monkeypatch.delenv("MISSING_KEY", raising=False)
         _clear_cache()
@@ -46,30 +53,36 @@ class TestRequireSecret:
 
 
 class TestHasSecret:
+    @pytest.mark.unit
     def test_true_when_set(self, monkeypatch):
         monkeypatch.setenv("EXISTS", "yes")
         assert has_secret("EXISTS") is True
 
+    @pytest.mark.unit
     def test_false_when_not_set(self, monkeypatch):
         monkeypatch.delenv("DOES_NOT_EXIST", raising=False)
         assert has_secret("DOES_NOT_EXIST") is False
 
+    @pytest.mark.unit
     def test_false_when_empty(self, monkeypatch):
         monkeypatch.setenv("EMPTY_VAR", "")
         assert has_secret("EMPTY_VAR") is False
 
 
 class TestListAvailable:
+    @pytest.mark.unit
     def test_return_type(self):
         result = list_available()
         assert isinstance(result, list)
         assert result == sorted(result)
 
+    @pytest.mark.unit
     def test_includes_set_secrets(self, monkeypatch):
         monkeypatch.setenv("GROQ_API_KEY", "sk-test")
         result = list_available()
         assert "GROQ_API_KEY" in result
 
+    @pytest.mark.unit
     def test_excludes_unset_secrets(self, monkeypatch):
         monkeypatch.delenv("PYPI_TOKEN", raising=False)
         _clear_cache()
@@ -77,11 +90,13 @@ class TestListAvailable:
 
 
 class TestDefaultBackend:
+    @pytest.mark.unit
     def test_default_is_returned_for_unknown_secret(self, monkeypatch):
         monkeypatch.delenv("UNKNOWN_SECRET", raising=False)
         _clear_cache()
         assert get_secret("UNKNOWN_SECRET", default="backup") == "backup"
 
+    @pytest.mark.unit
     def test_default_none_is_implicit(self, monkeypatch):
         monkeypatch.delenv("UNKNOWN_SECRET", raising=False)
         _clear_cache()

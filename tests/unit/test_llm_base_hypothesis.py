@@ -4,6 +4,7 @@ Deterministas en CI vía derandomize=True.
 """
 
 from __future__ import annotations
+import pytest
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -17,6 +18,8 @@ class _NoEsProvider:
 
 @settings(derandomize=True, max_examples=30)
 @given(atributo=st.text(alphabet="abcdefghij", min_size=1, max_size=8))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_validate_provider_rechaza_no_providers(atributo: str) -> None:
     class _Rara:
         pass
@@ -28,6 +31,8 @@ def test_validate_provider_rechaza_no_providers(atributo: str) -> None:
 
 @settings(derandomize=True, max_examples=20)
 @given(nombre=st.text(min_size=0, max_size=5))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_validate_provider_nunca_explota(nombre: str) -> None:
     type(f"Dinamica_{nombre or 'x'}_{abs(hash(nombre))}", (_NoEsProvider,), {})
     resultado = validate_provider(_NoEsProvider)

@@ -8,6 +8,7 @@ de fallo y degradación (graceful degradation).
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -183,6 +184,7 @@ def _install_fresh_degraded_mode(monkeypatch: pytest.MonkeyPatch) -> Any:
 
 
 class TestGetQdrant:
+    @pytest.mark.unit
     def test_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dm = _install_fresh_degraded_mode(monkeypatch)
         fake = FakeQdrant()
@@ -195,6 +197,7 @@ class TestGetQdrant:
         assert result is fake
         assert not dm.is_degraded("qdrant_sync")
 
+    @pytest.mark.unit
     def test_sin_embeddings_batch(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dm = _install_fresh_degraded_mode(monkeypatch)
         FakeMotorQdrant.inst = object()
@@ -206,6 +209,7 @@ class TestGetQdrant:
         assert result is None
         assert dm.is_degraded("qdrant_sync")
 
+    @pytest.mark.unit
     def test_excepcion_import_o_instancia(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dm = _install_fresh_degraded_mode(monkeypatch)
 
@@ -222,16 +226,19 @@ class TestGetQdrant:
 
 
 class TestChunkVersion:
+    @pytest.mark.unit
     def test_con_sha(self) -> None:
         doc = _make_doc(sha="1234567890abcdef")
         assert _chunk_version(doc) == "1234567890ab"
 
+    @pytest.mark.unit
     def test_sin_sha(self) -> None:
         doc = _make_doc(sha="")
         assert _chunk_version(doc) == "0"
 
 
 class TestTrackConn:
+    @pytest.mark.unit
     def test_exito_commits_y_cierra(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         conn = TrackingConn()
         monkeypatch.setattr("knowledge.engine.qdrant_sync.open_db", lambda p: conn)
@@ -243,6 +250,7 @@ class TestTrackConn:
         assert not conn.rolled
         assert conn.closed
 
+    @pytest.mark.unit
     def test_error_hace_rollback_y_relanza(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         conn = TrackingConn()
         monkeypatch.setattr("knowledge.engine.qdrant_sync.open_db", lambda p: conn)
@@ -256,6 +264,7 @@ class TestTrackConn:
 
 
 class TestTrackOperation:
+    @pytest.mark.unit
     def test_failed_nuevo(self, db_path: Path) -> None:
         conn = sqlite3.connect(str(db_path))
         try:
@@ -271,6 +280,7 @@ class TestTrackOperation:
         assert last_error == "err"
         assert attempts == 1
 
+    @pytest.mark.unit
     def test_failed_acumula_attempts(self, db_path: Path) -> None:
         _insert_row(db_path, "d1", "upsert", "failed", attempts=1, run_id=3)
         conn = sqlite3.connect(str(db_path))
@@ -284,6 +294,7 @@ class TestTrackOperation:
         assert rows[0][3] == "failed"
         assert rows[0][5] == 2
 
+    @pytest.mark.unit
     def test_failed_convierte_a_dead_letter(self, db_path: Path) -> None:
         _insert_row(db_path, "d1", "upsert", "failed", attempts=MAX_SYNC_ATTEMPTS - 1, run_id=0)
         conn = sqlite3.connect(str(db_path))
@@ -297,6 +308,7 @@ class TestTrackOperation:
         assert rows[0][3] == "dead_letter"
         assert rows[0][5] == MAX_SYNC_ATTEMPTS
 
+    @pytest.mark.unit
     def test_ok_nuevo(self, db_path: Path) -> None:
         conn = sqlite3.connect(str(db_path))
         try:
@@ -310,6 +322,7 @@ class TestTrackOperation:
         assert rows[0][4] == ""
         assert rows[0][5] == 0
 
+    @pytest.mark.unit
     def test_ok_resetea_fila_fallida(self, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "failed", attempts=5, run_id=1)
         conn = sqlite3.connect(str(db_path))
@@ -326,6 +339,7 @@ class TestTrackOperation:
 
 
 class TestSyncUpsert:
+    @pytest.mark.unit
     def test_sin_chunks_true(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc(body="   ")
         client = FakeQdrant()
@@ -334,6 +348,7 @@ class TestSyncUpsert:
         assert _sync_upsert(client, doc) is True
         assert client.saved == []
 
+    @pytest.mark.unit
     def test_fallo_embeddings_false(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc()
         client = FakeQdrant()
@@ -345,6 +360,7 @@ class TestSyncUpsert:
 
         assert _sync_upsert(client, doc) is False
 
+    @pytest.mark.unit
     def test_dim_incorrecta_se_omite(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc()
         client = FakeQdrant()
@@ -356,6 +372,7 @@ class TestSyncUpsert:
         assert _sync_upsert(client, doc) is True
         assert client.saved == []
 
+    @pytest.mark.unit
     def test_sin_embeddings_para_chunk(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc()
         client = FakeQdrant()
@@ -368,6 +385,8 @@ class TestSyncUpsert:
         assert client.saved[0][1] == "ura_documents"
         assert client.saved[0][0][0][0] == "doc-1"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_exito_guarda_payload(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc(sha="aabbccddeeff")
         client = FakeQdrant()
@@ -391,6 +410,7 @@ class TestSyncUpsert:
         assert "doc_id" not in payload
         assert "text" not in payload
 
+    @pytest.mark.unit
     def test_fallo_batch_false(self, monkeypatch: pytest.MonkeyPatch) -> None:
         doc = _make_doc()
         client = FakeQdrant()
@@ -403,6 +423,7 @@ class TestSyncUpsert:
 
 
 class TestSyncDelete:
+    @pytest.mark.unit
     def test_exito_true(self) -> None:
         client = FakeQdrant()
         assert _sync_delete(client, "doc-9") is True
@@ -410,11 +431,13 @@ class TestSyncDelete:
         assert collection == "ura_documents"
         assert filtro == {"must": [{"key": "doc_id", "match": {"value": "doc-9"}}]}
 
+    @pytest.mark.unit
     def test_falso_false(self) -> None:
         client = FakeQdrant()
         client.delete_result = False
         assert _sync_delete(client, "doc-9") is False
 
+    @pytest.mark.unit
     def test_excepcion_false(self) -> None:
         client = FakeQdrant()
         client.fail_delete = True
@@ -422,6 +445,7 @@ class TestSyncDelete:
 
 
 class TestSyncDocuments:
+    @pytest.mark.unit
     def test_sin_client_tracking_pending(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         monkeypatch.setattr("knowledge.engine.qdrant_sync._get_qdrant", lambda: None)
         docs = [_make_doc("d1"), _make_doc("d2")]
@@ -435,6 +459,7 @@ class TestSyncDocuments:
         assert rows[1][:4] == ("d2", "upsert", 7, "pending")
         assert rows[2][:4] == ("del-1", "delete", 7, "pending")
 
+    @pytest.mark.unit
     def test_todo_ok(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         client = FakeQdrant()
         monkeypatch.setattr("knowledge.engine.qdrant_sync._get_qdrant", lambda: client)
@@ -448,6 +473,7 @@ class TestSyncDocuments:
         assert rows[1][:4] == ("d2", "upsert", 1, "done")
         assert rows[2][:4] == ("del-1", "delete", 1, "done")
 
+    @pytest.mark.unit
     def test_fallo_upsert_no_cuenta(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         client = FakeQdrant()
         client.fail_batch = True
@@ -460,6 +486,7 @@ class TestSyncDocuments:
         assert rows[0][:4] == ("d1", "upsert", 1, "failed")
         assert rows[1][:4] == ("del-1", "delete", 1, "done")
 
+    @pytest.mark.unit
     def test_fallo_delete_no_cuenta(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         client = FakeQdrant()
         client.fail_delete = True
@@ -473,6 +500,7 @@ class TestSyncDocuments:
         assert rows[1][:4] == ("del-1", "delete", 1, "failed")
         assert rows[2][:4] == ("del-2", "delete", 1, "failed")
 
+    @pytest.mark.unit
     def test_sin_docs_ni_deletes(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         client = FakeQdrant()
         monkeypatch.setattr("knowledge.engine.qdrant_sync._get_qdrant", lambda: client)
@@ -481,6 +509,7 @@ class TestSyncDocuments:
 
 
 class TestRetryFailed:
+    @pytest.mark.unit
     def test_error_abriendo_db(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         monkeypatch.setattr(
             "knowledge.engine.qdrant_sync.open_db", lambda p: (_ for _ in ()).throw(RuntimeError("lock"))
@@ -488,19 +517,23 @@ class TestRetryFailed:
 
         assert retry_failed(db_path) == 0
 
+    @pytest.mark.unit
     def test_sin_filas(self, db_path: Path) -> None:
         assert retry_failed(db_path) == 0
 
+    @pytest.mark.unit
     def test_filas_agotadas_no_se_reintentan(self, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "failed", attempts=MAX_SYNC_ATTEMPTS)
         assert retry_failed(db_path) == 0
 
+    @pytest.mark.unit
     def test_sin_client_no_recupera(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "pending", attempts=1)
         monkeypatch.setattr("knowledge.engine.qdrant_sync._get_qdrant", lambda: None)
 
         assert retry_failed(db_path) == 0
 
+    @pytest.mark.unit
     def test_recupera_deletes_y_salta_upserts(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "pending", attempts=1, run_id=1)
         _insert_row(db_path, "d2", "upsert", "failed", attempts=3, run_id=2)
@@ -517,6 +550,7 @@ class TestRetryFailed:
         assert rows[1][:4] == ("d2", "upsert", 2, "failed")
         assert rows[2][:4] == ("d3", "delete", 4, "done")
 
+    @pytest.mark.unit
     def test_delete_fallido_no_recupera(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "pending", attempts=1)
         client = FakeQdrant()
@@ -525,6 +559,7 @@ class TestRetryFailed:
 
         assert retry_failed(db_path) == 0
 
+    @pytest.mark.unit
     def test_operacion_desconocida_no_recupera(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         _insert_row(db_path, "d1", "migrate", "pending", attempts=1)
         client = FakeQdrant()
@@ -535,6 +570,7 @@ class TestRetryFailed:
 
 
 class TestGetPendingDeleteIds:
+    @pytest.mark.unit
     def test_solo_deletes_pendientes_failed(self, db_path: Path) -> None:
         _insert_row(db_path, "d1", "delete", "pending", attempts=1)
         _insert_row(db_path, "d2", "delete", "failed", attempts=2)
@@ -545,6 +581,7 @@ class TestGetPendingDeleteIds:
 
         assert set(result) == {"d1", "d2"}
 
+    @pytest.mark.unit
     def test_error_abriendo_db(self, monkeypatch: pytest.MonkeyPatch, db_path: Path) -> None:
         monkeypatch.setattr(
             "knowledge.engine.qdrant_sync.open_db", lambda p: (_ for _ in ()).throw(RuntimeError("lock"))
@@ -554,10 +591,12 @@ class TestGetPendingDeleteIds:
 
 
 class TestSearchSemantic:
+    @pytest.mark.unit
     def test_sin_client(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("knowledge.engine.qdrant_sync._get_qdrant", lambda: None)
         assert search_semantic("query") == []
 
+    @pytest.mark.unit
     def test_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         client = FakeQdrant()
         client.results = [
@@ -589,6 +628,7 @@ class TestSearchSemantic:
             {"doc_id": "d2", "chunk_index": 0, "text": "", "title": "", "score": 0.5, "chunk_version": ""},
         ]
 
+    @pytest.mark.unit
     def test_excepcion(self, monkeypatch: pytest.MonkeyPatch) -> None:
         client = FakeQdrant()
         client.fail_search = True

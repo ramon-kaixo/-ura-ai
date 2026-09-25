@@ -8,6 +8,7 @@ import core.inferencia.engine as ie
 
 
 class TestVoiceInit:
+    @pytest.mark.unit
     def test_exports_presentes(self) -> None:
         pytest.importorskip("torch")
         from motor.core import voice
@@ -15,6 +16,7 @@ class TestVoiceInit:
         assert "AnkerMacPipeline" in voice.__all__
         assert "PiperTTSMotor" in voice.__all__
 
+    @pytest.mark.unit
     def test_piper_ura_tts_alias(self) -> None:
         pytest.importorskip("torch")
         from motor.core.voice import PiperTTSMotor, PiperUraTTS
@@ -22,6 +24,7 @@ class TestVoiceInit:
 
 
 class TestMainModelRouter:
+    @pytest.mark.unit
     def test_main_estructura(self) -> None:
         """__main__ solo importa setup_path + main — cobertura por ejecucion."""
         import runpy

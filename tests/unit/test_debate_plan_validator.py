@@ -1,5 +1,6 @@
 """Tests para core/debate/plan_validator.py."""
 from __future__ import annotations
+import pytest
 
 import subprocess
 from types import SimpleNamespace
@@ -9,6 +10,7 @@ import core.debate.plan_validator as pv
 
 
 class TestGetServiceStatus:
+    @pytest.mark.unit
     def test_ok_con_pid(self, monkeypatch) -> None:
         res = SimpleNamespace(stdout="active", stderr="")
         pid = SimpleNamespace(stdout="MainPID=123\n", stderr="")
@@ -16,6 +18,7 @@ class TestGetServiceStatus:
         out = pv.get_service_status("ura-mochila.service")
         assert out == {"name": "ura-mochila.service", "active": "active", "pid": 123}
 
+    @pytest.mark.unit
     def test_pid_no_numerico(self, monkeypatch) -> None:
         res = SimpleNamespace(stdout="inactive", stderr="")
         pid = SimpleNamespace(stdout="MainPID=abc\n", stderr="")
@@ -23,12 +26,15 @@ class TestGetServiceStatus:
         out = pv.get_service_status("x.service")
         assert out["pid"] is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_error_timeout(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(side_effect=subprocess.TimeoutExpired("cmd", 5)))
         out = pv.get_service_status("x.service")
         assert out["active"] == "unknown"
         assert "error" in out
 
+    @pytest.mark.unit
     def test_error_file_not_found(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(side_effect=FileNotFoundError("no systemctl")))
         out = pv.get_service_status("x.service")
@@ -36,26 +42,31 @@ class TestGetServiceStatus:
 
 
 class TestGetVram:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="8192, 2048, 6144")
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(return_value=res))
         out = pv.get_vram()
         assert out == {"total_mb": 8192, "used_mb": 2048, "free_mb": 6144, "used_pct": 25.0}
 
+    @pytest.mark.unit
     def test_returncode_error(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=1, stdout="")
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(return_value=res))
         assert pv.get_vram() is None
 
+    @pytest.mark.unit
     def test_formato_invalido(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="solo un campo")
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(return_value=res))
         assert pv.get_vram() is None
 
+    @pytest.mark.unit
     def test_excepcion(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(side_effect=ValueError("bad")))
         assert pv.get_vram() is None
 
+    @pytest.mark.unit
     def test_total_cero(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="0, 0, 0")
         monkeypatch.setattr(pv.subprocess, "run", mock.Mock(return_value=res))
@@ -64,25 +75,30 @@ class TestGetVram:
 
 
 class TestLoadStateFile:
+    @pytest.mark.unit
     def test_no_existe(self, tmp_path) -> None:
         assert pv.load_state_file(str(tmp_path / "nope.json")) is None
 
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         f = tmp_path / "s.json"
         f.write_text('{"mode": "NORMAL"}')
         assert pv.load_state_file(str(f)) == {"mode": "NORMAL"}
 
+    @pytest.mark.unit
     def test_corrupto(self, tmp_path) -> None:
         f = tmp_path / "s.json"
         f.write_text("not json")
         assert pv.load_state_file(str(f)) is None
 
+    @pytest.mark.unit
     def test_error_os(self, tmp_path) -> None:
         with mock.patch("builtins.open", side_effect=OSError("ro")):
             assert pv.load_state_file(str(tmp_path / "s.json")) is None
 
 
 class TestCollectContext:
+    @pytest.mark.unit
     def test_completo(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(pv, "get_service_status", mock.Mock(return_value={"name": "s", "active": "active", "pid": 1}))
         monkeypatch.setattr(pv, "get_vram", mock.Mock(return_value={"total_mb": 1, "used_mb": 1, "free_mb": 1, "used_pct": 1}))
@@ -96,11 +112,13 @@ class TestCollectContext:
         assert ctx["hetzner"] == {"estado": "ok"}
         assert ctx["snc_mode"] == "SNC"
 
+    @pytest.mark.unit
     def test_vram_no_disponible(self, monkeypatch) -> None:
         monkeypatch.setattr(pv, "get_vram", mock.Mock(return_value=None))
         ctx = pv.collect_context()
         assert ctx["vram"] == {"error": "nvidia-smi no disponible"}
 
+    @pytest.mark.unit
     def test_sin_state_files(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(pv, "STATE_FILES", {"hetzner": str(tmp_path / "h"), "snc": str(tmp_path / "s")})
         ctx = pv.collect_context()
@@ -109,6 +127,7 @@ class TestCollectContext:
 
 
 class TestFormatContext:
+    @pytest.mark.unit
     def test_servicios_y_vram(self) -> None:
         ctx = {
             "services": [{"name": "s1", "active": "active", "pid": 5}, {"name": "s2", "active": "inactive", "pid": None}],
@@ -120,10 +139,12 @@ class TestFormatContext:
         assert "Total: 8 MB" in txt
         assert "Usado: 2 MB (25.0%)" in txt
 
+    @pytest.mark.unit
     def test_vram_error(self) -> None:
         txt = pv.format_context_for_prompt({"services": [], "vram": {"error": "no disponible"}})
         assert "no disponible" in txt
 
+    @pytest.mark.unit
     def test_hetzner_y_snc(self) -> None:
         ctx = {"services": [], "vram": {}, "hetzner": {"a": 1}, "snc_mode": "SNC"}
         txt = pv.format_context_for_prompt(ctx)
@@ -133,6 +154,7 @@ class TestFormatContext:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_sin_argumentos_logea_contexto(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.sys, "argv", ["plan_validator.py"])
         monkeypatch.setattr(pv, "collect_context", mock.Mock(return_value={"a": 1}))
@@ -141,6 +163,7 @@ class TestMain:
         pv.main()
         logger.info.assert_called_once()
 
+    @pytest.mark.unit
     def test_debate_consensus(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.sys, "argv", ["plan_validator.py", "--debate"])
         monkeypatch.setattr(pv.sys, "stdin", SimpleNamespace(read=lambda: '{"plan": "x"}'))
@@ -160,6 +183,7 @@ class TestMain:
         pv.main()
         pv.sys.exit.assert_called_once_with(0)
 
+    @pytest.mark.unit
     def test_debate_human_arbitration(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.sys, "argv", ["plan_validator.py", "--debate"])
         monkeypatch.setattr(pv.sys, "stdin", SimpleNamespace(read=lambda: '{"plan": "x"}'))
@@ -179,6 +203,7 @@ class TestMain:
         pv.main()
         pv.sys.exit.assert_called_once_with(2)
 
+    @pytest.mark.unit
     def test_debate_rechazo(self, monkeypatch) -> None:
         monkeypatch.setattr(pv.sys, "argv", ["plan_validator.py", "--debate"])
         monkeypatch.setattr(pv.sys, "stdin", SimpleNamespace(read=lambda: '{"plan": "x"}'))

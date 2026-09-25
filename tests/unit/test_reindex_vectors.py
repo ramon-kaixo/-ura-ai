@@ -1,3 +1,4 @@
+import pytest
 """Tests for scripts/pro/reindex_vectors.py — lógica pura con mocks."""
 
 from unittest.mock import MagicMock, patch
@@ -11,6 +12,7 @@ class TestMain:
     @patch("scripts.pro.reindex_vectors.SQLiteGraphRetriever")
     @patch("scripts.pro.reindex_vectors.SQLiteAssetStore")
     @patch("scripts.pro.reindex_vectors.VectorAugmentedRetriever")
+    @pytest.mark.unit
     def test_dry_run(self, mock_retriever_cls, mock_asset_cls, mock_graph_cls,
                    mock_qdrant_cls, mock_embedder_cls, caplog, tmp_path, monkeypatch):
         caplog.set_level("INFO")
@@ -37,6 +39,7 @@ class TestMain:
     @patch("scripts.pro.reindex_vectors.SQLiteGraphRetriever")
     @patch("scripts.pro.reindex_vectors.SQLiteAssetStore")
     @patch("scripts.pro.reindex_vectors.VectorAugmentedRetriever")
+    @pytest.mark.unit
     def test_execute(self, mock_retriever_cls, mock_asset_cls, mock_graph_cls,
                      mock_qdrant_cls, mock_embedder_cls, caplog, tmp_path, monkeypatch):
         caplog.set_level("INFO")
@@ -56,6 +59,7 @@ class TestMain:
         mock_retriever.reconcile.assert_called_once_with(dry_run=False, batch_size=50)
         assert "Upserted:  3" in caplog.text
 
+    @pytest.mark.unit
     def test_db_not_found(self, caplog, tmp_path, monkeypatch):
         caplog.set_level("ERROR")
         db = tmp_path / "no_existe.db"
@@ -71,6 +75,7 @@ class TestMain:
     @patch("scripts.pro.reindex_vectors.SQLiteGraphRetriever")
     @patch("scripts.pro.reindex_vectors.SQLiteAssetStore")
     @patch("scripts.pro.reindex_vectors.VectorAugmentedRetriever")
+    @pytest.mark.unit
     def test_suggests_execute(self, mock_retriever_cls, mock_asset_cls, mock_graph_cls,
                               mock_qdrant_cls, mock_embedder_cls, caplog, tmp_path, monkeypatch):
         caplog.set_level("INFO")

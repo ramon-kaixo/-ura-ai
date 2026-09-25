@@ -6,6 +6,7 @@ en el fixture para poder parchear get_secret y httpx.
 """
 from __future__ import annotations
 
+import pytest
 import asyncio
 from unittest import mock
 
@@ -41,6 +42,7 @@ def provider(gemini_mod):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_capabilities(self, provider) -> None:
         caps = provider.capabilities
         assert caps["chat"] is True
@@ -52,6 +54,7 @@ class TestInit:
         assert caps["max_context"] == 1048576
         assert caps["max_output"] == 8192
 
+    @pytest.mark.unit
     def test_defaults(self, gemini_mod) -> None:
         with mock.patch.object(gemini_mod, "get_secret", side_effect=lambda name, default=None: default):
             p = gemini_mod.GeminiProvider()
@@ -61,6 +64,7 @@ class TestInit:
         assert p._temperature == 0.3
         assert p._max_tokens == 1024
 
+    @pytest.mark.unit
     def test_custom_values(self, gemini_mod) -> None:
         secrets = {
             "GEMINI_API_KEY": "k",
@@ -82,11 +86,13 @@ class TestInit:
         assert p._temperature == 0.9
         assert p._max_tokens == 512
 
+    @pytest.mark.unit
     def test_headers(self, provider) -> None:
         headers = provider._headers()
         assert headers["x-goog-api-key"] == "secret-val"
         assert headers["Content-Type"] == "application/json"
 
+    @pytest.mark.unit
     def test_base_url(self, provider) -> None:
         assert provider._base_url("gemini-x") == (
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-x"
@@ -103,6 +109,7 @@ class TestGenerate:
         }
         return r
 
+    @pytest.mark.unit
     def test_success_concatenates_parts(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._response(["hola", " mundo"])) as post:
             result = provider.generate("prompt")
@@ -115,6 +122,7 @@ class TestGenerate:
         assert post.call_args.kwargs["headers"]["x-goog-api-key"] == "secret-val"
         assert post.call_args.kwargs["timeout"] == 60
 
+    @pytest.mark.unit
     def test_success_strip_y_usage(self, provider, gemini_mod) -> None:
         """Respuesta con espacios se trima; log_call recibe usage tokens."""
         with (
@@ -127,6 +135,7 @@ class TestGenerate:
         assert log_mock.call_args.kwargs["candidates_tokens"] == 3
         assert post.call_args.kwargs["json"]["generationConfig"]["temperature"] == 0.9
 
+    @pytest.mark.unit
     def test_options_custom(self, provider, gemini_mod) -> None:
         """Options custom no sobrescriben defaults de temperature/maxOutputTokens."""
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._response(["x"])) as post:
@@ -136,6 +145,7 @@ class TestGenerate:
         assert cfg["maxOutputTokens"] == 512  # default del provider
         assert cfg["extra"] == 1
 
+    @pytest.mark.unit
     def test_no_candidates(self, provider, gemini_mod) -> None:
         r = mock.Mock()
         r.status_code = 200
@@ -144,11 +154,13 @@ class TestGenerate:
             result = provider.generate("p")
         assert result == "El modelo no generó ninguna respuesta."
 
+    @pytest.mark.unit
     def test_empty_parts(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._response([])):
             result = provider.generate("p")
         assert result == "El modelo no generó ninguna respuesta."
 
+    @pytest.mark.unit
     def test_custom_model(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._response(["x"])) as post:
             provider.generate("p", model="custom-model")
@@ -156,22 +168,27 @@ class TestGenerate:
             "https://generativelanguage.googleapis.com/v1beta/models/custom-model:generateContent"
         )
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=httpx.TimeoutException("t")):
             result = provider.generate("p")
         assert "tiempo de espera" in result
 
+    @pytest.mark.unit
     def test_http_error(self, provider, gemini_mod) -> None:
         error = httpx.HTTPStatusError("bad", request=mock.Mock(), response=mock.Mock(status_code=429))
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=error):
             result = provider.generate("p")
         assert "429" in result
 
+    @pytest.mark.unit
     def test_request_error(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=httpx.RequestError("conn")):
             result = provider.generate("p")
         assert "No se pudo conectar" in result
 
+    @pytest.mark.unit
     def test_unexpected_error(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=RuntimeError("boom")):
             result = provider.generate("p")
@@ -185,6 +202,7 @@ class TestEmbed:
         r.json.return_value = {"embeddings": [{"values": [0.1]}, {"values": [0.2]}]}
         return r
 
+    @pytest.mark.unit
     def test_batch_success(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._batch_response()) as post:
             result = provider.embed(["a", "b"])
@@ -194,12 +212,14 @@ class TestEmbed:
         assert len(payload["requests"]) == 2
         assert payload["requests"][0]["content"]["parts"] == [{"text": "a"}]
 
+    @pytest.mark.unit
     def test_custom_model(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", return_value=self._batch_response()) as post:
             provider.embed(["a"], model="embed-2")
         payload = post.call_args.kwargs["json"]
         assert payload["requests"][0]["model"] == "models/embed-2"
 
+    @pytest.mark.unit
     def test_error_zero_fallback(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=httpx.RequestError("conn")):
             result = provider.embed(["a", "b"])
@@ -207,6 +227,7 @@ class TestEmbed:
 
 
 class TestEmbedAsync:
+    @pytest.mark.unit
     def test_batch_success(self, provider, gemini_mod) -> None:
         r = mock.Mock()
         r.status_code = 200
@@ -215,6 +236,7 @@ class TestEmbedAsync:
             result = asyncio.run(provider.embed_async(["a"]))
         assert result == [[0.1]]
 
+    @pytest.mark.unit
     def test_error_zero_fallback(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "post", side_effect=httpx.RequestError("conn")):
             result = asyncio.run(provider.embed_async(["a"]))
@@ -222,6 +244,7 @@ class TestEmbedAsync:
 
 
 class TestHealth:
+    @pytest.mark.unit
     def test_ok(self, provider, gemini_mod) -> None:
         r = mock.Mock()
         r.is_error = False
@@ -236,6 +259,7 @@ class TestHealth:
         assert result["latency_ms"] >= 0
         assert mget.call_args.kwargs["timeout"] == 5
 
+    @pytest.mark.unit
     def test_http_error(self, provider, gemini_mod) -> None:
         r = mock.Mock()
         r.is_error = True
@@ -248,6 +272,7 @@ class TestHealth:
         assert result["provider"] == "gemini"
         assert result["latency_ms"] >= 0
 
+    @pytest.mark.unit
     def test_exception(self, provider, gemini_mod) -> None:
         with mock.patch.object(gemini_mod.httpx, "get", side_effect=httpx.RequestError("conn")):
             result = provider.health()

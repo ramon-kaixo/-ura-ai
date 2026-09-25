@@ -5,6 +5,7 @@ TASK-20260821-002: ampliación Hypothesis a módulos críticos.
 """
 
 from __future__ import annotations
+import pytest
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -18,6 +19,8 @@ st_keywords = st.lists(st_palabras, min_size=1, max_size=4, unique=True)
 
 @settings(derandomize=True, max_examples=50)
 @given(kw=st_keywords, contexto=st.text(max_size=40))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_scorer_una_entrada_devuelve_siempre_0(kw: list[str], contexto: str) -> None:
     entradas = [EntityDef(entity_id="e1", canonical_name="E1", keywords=kw)]
     assert KeywordScorer().select(entradas, contexto) == 0
@@ -25,6 +28,8 @@ def test_scorer_una_entrada_devuelve_siempre_0(kw: list[str], contexto: str) -> 
 
 @settings(derandomize=True, max_examples=50)
 @given(kws=st.lists(st_keywords, min_size=2, max_size=3), contexto=st.text(max_size=30))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_scorer_sin_coincidencias_es_ambiguo(
     kws: list[list[str]], contexto: str
 ) -> None:
@@ -43,6 +48,8 @@ def test_scorer_sin_coincidencias_es_ambiguo(
 
 @settings(derandomize=True, max_examples=50)
 @given(palabra=st_palabras, relleno=st.text(max_size=20))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_scorer_gana_el_maximo_unico(palabra: str, relleno: str) -> None:
     ctx = f"{relleno} {palabra} {relleno}"
     entradas = [

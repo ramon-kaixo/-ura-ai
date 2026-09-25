@@ -21,12 +21,14 @@ def root(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@pytest.mark.unit
 def test_cargar_memoria_vacia(root: Path) -> None:
     m = cargar_memoria(root)
     assert m["funciones"] == {}
     assert m["metricas"]["intentos"] == 0
 
 
+@pytest.mark.unit
 def test_cargar_memoria_corrupta(root: Path) -> None:
     (root / ".nervioso").mkdir(exist_ok=True)
     (root / ".nervioso" / "refactor_memoria.json").write_text("{json invalido")
@@ -34,6 +36,7 @@ def test_cargar_memoria_corrupta(root: Path) -> None:
     assert m["funciones"] == {}
 
 
+@pytest.mark.unit
 def test_guardar_y_recargar(root: Path) -> None:
     m = cargar_memoria(root)
     m["funciones"]["test"] = {"intentos": [], "estado": "pendiente"}
@@ -42,6 +45,7 @@ def test_guardar_y_recargar(root: Path) -> None:
     assert "test" in m2["funciones"]
 
 
+@pytest.mark.unit
 def test_registrar_primer_intento(root: Path) -> None:
     m = registrar_intento(root, "archivo.py:func", "modelo1", "exito", "ok")
     f = m["funciones"]["archivo.py:func"]
@@ -51,6 +55,7 @@ def test_registrar_primer_intento(root: Path) -> None:
     assert m["metricas"]["exitos"] == 1
 
 
+@pytest.mark.unit
 def test_registrar_rechazo_estado_pendiente(root: Path) -> None:
     registrar_intento(root, "a.py:f", "m1", "rechazo", "razon")
     f = consultar_funcion(root, "a.py:f")
@@ -58,6 +63,7 @@ def test_registrar_rechazo_estado_pendiente(root: Path) -> None:
     assert f["intentos"][0]["motivo"] == "razon"
 
 
+@pytest.mark.unit
 def test_dos_rechazos_necesita_otro_modelo(root: Path) -> None:
     registrar_intento(root, "b.py:f", "m1", "rechazo", "r1")
     registrar_intento(root, "b.py:f", "m1", "rechazo", "r2")
@@ -65,6 +71,7 @@ def test_dos_rechazos_necesita_otro_modelo(root: Path) -> None:
     assert f["estado"] == "necesita_otro_modelo"
 
 
+@pytest.mark.unit
 def test_exito_tras_rechazos_completa(root: Path) -> None:
     registrar_intento(root, "c.py:f", "m1", "rechazo", "r1")
     registrar_intento(root, "c.py:f", "m2", "exito", "ok")
@@ -72,12 +79,14 @@ def test_exito_tras_rechazos_completa(root: Path) -> None:
     assert f["estado"] == "completada"
 
 
+@pytest.mark.unit
 def test_consultar_sin_historial(root: Path) -> None:
     f = consultar_funcion(root, "noexiste.py:x")
     assert f["estado"] == "sin_intentar"
     assert f["intentos"] == []
 
 
+@pytest.mark.unit
 def test_resumen_metricas(root: Path) -> None:
     registrar_intento(root, "d.py:f", "m1", "exito", "ok")
     registrar_intento(root, "d.py:f", "m1", "rechazo", "no")
@@ -87,6 +96,7 @@ def test_resumen_metricas(root: Path) -> None:
     assert r["rechazos"] == 1
 
 
+@pytest.mark.unit
 def test_registrar_intento_rechazo(tmp_path: Path) -> None:
     """resultado='rechazo' -> incrementa rechazos (87->90)."""
     from memoria_refactor import registrar_intento
@@ -98,6 +108,7 @@ def test_registrar_intento_rechazo(tmp_path: Path) -> None:
     assert memoria["funciones"]["a.py:f"]["estado"] == "pendiente"
 
 
+@pytest.mark.unit
 def test_registrar_intento_error(tmp_path: Path) -> None:
     """resultado='error' -> no incrementa exito ni rechazo (87->90)."""
     from memoria_refactor import registrar_intento

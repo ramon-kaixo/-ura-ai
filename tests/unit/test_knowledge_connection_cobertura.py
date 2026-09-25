@@ -6,6 +6,7 @@ timeout, error no-BUSY) y _inc_busy_retry (con/sin métricas).
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 import threading
 import time
@@ -17,6 +18,7 @@ from knowledge.engine.connection import _inc_busy_retry, begin_immediate, open_d
 
 
 class TestOpenDb:
+    @pytest.mark.unit
     def test_pragmas_y_row_factory(self, tmp_path) -> None:
         db = tmp_path / "k.db"
         conn = open_db(db)
@@ -28,12 +30,14 @@ class TestOpenDb:
         finally:
             conn.close()
 
+    @pytest.mark.unit
     def test_acepta_str(self, tmp_path) -> None:
         conn = open_db(str(tmp_path / "s.db"))
         conn.close()
 
 
 class TestBeginImmediate:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         conn = open_db(tmp_path / "b.db")
         try:
@@ -42,6 +46,7 @@ class TestBeginImmediate:
         finally:
             conn.close()
 
+    @pytest.mark.unit
     def test_error_no_busy_relanza(self, tmp_path) -> None:
         conn = open_db(tmp_path / "c.db")
         try:
@@ -51,6 +56,7 @@ class TestBeginImmediate:
         finally:
             conn.close()
 
+    @pytest.mark.unit
     def test_retry_hasta_liberar(self, tmp_path) -> None:
         db = tmp_path / "r.db"
         # Uso multi-hilo legitimo: la conexion del "otro escritor" se crea con
@@ -79,6 +85,8 @@ class TestBeginImmediate:
             a.close()
             b.close()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, tmp_path) -> None:
         db = tmp_path / "t.db"
         a = open_db(db)
@@ -94,6 +102,7 @@ class TestBeginImmediate:
 
 
 class TestIncBusyRetry:
+    @pytest.mark.unit
     def test_con_metricas(self, monkeypatch) -> None:
         metrics = mock.Mock()
         metrics.sqlite_busy_retries_total = mock.Mock()
@@ -101,6 +110,7 @@ class TestIncBusyRetry:
         _inc_busy_retry()
         metrics.sqlite_busy_retries_total.inc.assert_called_once()
 
+    @pytest.mark.unit
     def test_sin_metricas(self, monkeypatch) -> None:
         def _boom():
             raise RuntimeError("metrics no disponible")
@@ -108,6 +118,7 @@ class TestIncBusyRetry:
         monkeypatch.setattr("knowledge.engine.metrics.sqlite_busy_retries_total", mock.Mock(side_effect=_boom))
         _inc_busy_retry()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_import_falla(self, monkeypatch) -> None:
         import sys
 

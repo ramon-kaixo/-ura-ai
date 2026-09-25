@@ -33,52 +33,63 @@ def scheduler(monkeypatch):
 
 
 class TestDetectMaxVram:
+    @pytest.mark.unit
     def test_nvidia_smi_ok(self):
         with patch("core.mochila.vram_scheduler.subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "128000\n"
             assert VRAMAwareScheduler._detect_max_vram(50000) == 128000
 
+    @pytest.mark.unit
     def test_nvidia_smi_fallo_devuelve_default(self):
         with patch("core.mochila.vram_scheduler.subprocess.run") as mock_run:
             mock_run.return_value.returncode = 1
             assert VRAMAwareScheduler._detect_max_vram(50000) == 50000
 
+    @pytest.mark.unit
     def test_nvidia_smi_na_devuelve_default(self):
         with patch("core.mochila.vram_scheduler.subprocess.run") as mock_run:
             mock_run.return_value.returncode = 0
             mock_run.return_value.stdout = "N/A\n"
             assert VRAMAwareScheduler._detect_max_vram(50000) == 50000
 
+    @pytest.mark.unit
     def test_excepcion_devuelve_default(self):
         with patch("core.mochila.vram_scheduler.subprocess.run", side_effect=OSError("boom")):
             assert VRAMAwareScheduler._detect_max_vram(50000) == 50000
 
 
 class TestEstimarVram:
+    @pytest.mark.unit
     def test_vram_explicito(self):
         assert VRAMAwareScheduler.estimar_vram({"_vram_mb": 4000}) == 4000
 
+    @pytest.mark.unit
     def test_modelo_conocido(self):
         assert VRAMAwareScheduler.estimar_vram({"model": "qwen3-coder:30b"}) == 18000
 
+    @pytest.mark.unit
     def test_modelo_desconocido_base_512(self):
         assert VRAMAwareScheduler.estimar_vram({"model": "otro"}) == 512
 
+    @pytest.mark.unit
     def test_prompt_largo_incrementa(self):
         a = VRAMAwareScheduler.estimar_vram({"model": "otro", "prompt": ""})
         b = VRAMAwareScheduler.estimar_vram({"model": "otro", "prompt": "x" * 8000})
         assert b > a
 
+    @pytest.mark.unit
     def test_messages_como_fuente(self):
         v = VRAMAwareScheduler.estimar_vram({"model": "otro", "messages": "x" * 8000})
         assert v == 512 + int((8000 // 4) * 0.002)
 
 
 class TestAvailableMb:
+    @pytest.mark.unit
     def test_inicial(self, scheduler):
         assert scheduler.available_mb() == 100000
 
+    @pytest.mark.unit
     def test_tras_fijar_current(self, scheduler):
         scheduler._current_mb = 25000
         assert scheduler.available_mb() == 75000

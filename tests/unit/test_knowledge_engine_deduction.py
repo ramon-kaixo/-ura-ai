@@ -6,6 +6,7 @@ contrato real del modulo (TASK-20260818-029).
 """
 
 from __future__ import annotations
+import pytest
 
 from typing import Any
 
@@ -26,6 +27,7 @@ def get_sample_data() -> dict[str, list[dict[str, Any]]]:
 
 
 class TestDeduction:
+    @pytest.mark.unit
     def test_contar(self) -> None:
         nodes = [
             {"id": "a", "type": "guide"},
@@ -38,6 +40,7 @@ class TestDeduction:
         assert dict(src_counts) == {"a": 1, "b": 1}
         assert dict(dst_counts) == {"b": 1, "c": 1}
 
+    @pytest.mark.unit
     def test_huerfanos(self) -> None:
         sample = get_sample_data()
         refs_only = [e for e in sample["edges"] if e["relation"] == "references"]
@@ -46,6 +49,7 @@ class TestDeduction:
         assert len(orphans) == 7  # n8..n14 sin edges (hub_node no esta en nodes)
         assert all("Documento sin relaciones" in d.description for d in orphans)
 
+    @pytest.mark.unit
     def test_cobertura(self) -> None:
         sample = get_sample_data()
         data = StateDeductor().deduce(sample["nodes"], [])
@@ -57,6 +61,7 @@ class TestDeduction:
             assert d.metadata["count"] == expected[d.subject_id]
             assert abs(d.metadata["ratio"] - expected[d.subject_id] / 15) < 0.01
 
+    @pytest.mark.unit
     def test_hubs(self) -> None:
         sample = get_sample_data()
         data = StateDeductor().deduce(sample["nodes"], sample["edges"])

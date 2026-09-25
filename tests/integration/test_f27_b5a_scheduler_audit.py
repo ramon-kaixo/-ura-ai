@@ -13,6 +13,7 @@ Cubre:
 """
 
 from __future__ import annotations
+import pytest
 
 import threading
 import time
@@ -34,6 +35,7 @@ def _exec(agent_id: str = "a1", duration: int = 300) -> AgentExecution:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_queue_abstraction() -> None:
     """Scheduler usa TaskQueue por inyección, no instancia directamente."""
     from motor.agents.scheduler import _PriorityQueue
@@ -49,6 +51,8 @@ def test_queue_abstraction() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_aging_under_continuous_load() -> None:
     """Tareas de baja prioridad eventualmente se ejecutan (no starvation)."""
     s = AgentScheduler(max_concurrent=4)
@@ -68,6 +72,7 @@ def test_aging_under_continuous_load() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_queue_saturation() -> None:
     """Cola saturada no debe fallar (encola todo)."""
     s = AgentScheduler(max_concurrent=0)  # no auto-dispatch
@@ -81,6 +86,7 @@ def test_queue_saturation() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_cancel_before_execution() -> None:
     """Tareas canceladas antes de ejecutarse no aparecen en resultados."""
     s = AgentScheduler(max_concurrent=0)
@@ -97,6 +103,7 @@ def test_cancel_before_execution() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_concurrent_submit() -> None:
     """Múltiples hilos enviando tareas simultáneamente."""
     s = AgentScheduler(max_concurrent=4)
@@ -124,6 +131,7 @@ def test_concurrent_submit() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_shutdown_with_running_tasks() -> None:
     """Shutdown debe completar las tareas en ejecución dentro del timeout."""
     s = AgentScheduler(max_concurrent=3)
@@ -140,6 +148,7 @@ def test_shutdown_with_running_tasks() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_no_queue_priority_queue_acoplamiento() -> None:
     """Scheduler no debe importar queue.PriorityQueue directamente."""
     import inspect

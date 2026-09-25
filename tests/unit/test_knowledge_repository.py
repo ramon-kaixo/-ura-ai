@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/repository.py — SQLiteKnowledgeRepository."""
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 from unittest import mock
@@ -25,6 +26,7 @@ def db_path(tmp_path) -> Path:
 
 
 class TestSQLiteKnowledgeRepository:
+    @pytest.mark.unit
     def test_get_document(self, db_path, monkeypatch) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         doc = mock.Mock()
@@ -34,6 +36,7 @@ class TestSQLiteKnowledgeRepository:
         assert repo.get_document("n1") is doc
         reader.get_document.assert_called_once_with("n1")
 
+    @pytest.mark.unit
     def test_search(self, db_path, monkeypatch) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         results = [mock.Mock()]
@@ -44,6 +47,7 @@ class TestSQLiteKnowledgeRepository:
         assert out is results
         reader.search.assert_called_once_with("q", mode="hybrid", filters={"type": "doc"}, limit=5)
 
+    @pytest.mark.unit
     def test_related(self, db_path, monkeypatch) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         relations = [mock.Mock()]
@@ -54,14 +58,17 @@ class TestSQLiteKnowledgeRepository:
         assert out is relations
         reader.related.assert_called_once_with("n1", relation="links", depth=3)
 
+    @pytest.mark.unit
     def test_get_node_ids(self, db_path) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         assert repo.get_node_ids() == {"n1", "n2"}
 
+    @pytest.mark.unit
     def test_get_relation_targets(self, db_path) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         assert repo.get_relation_targets() == {"n2"}
 
+    @pytest.mark.unit
     def test_get_documents_for_rules(self, db_path) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         docs, node_ids, targets = repo.get_documents_for_rules()
@@ -77,12 +84,14 @@ class TestSQLiteKnowledgeRepository:
         doc2 = next(d for d in docs if d["id"] == "n2")
         assert doc2["title"] == ""
 
+    @pytest.mark.unit
     def test_health_check_ok(self, db_path) -> None:
         repo = SQLiteKnowledgeRepository(db_path)
         h = repo.health_check()
         assert h["healthy"] is True
         assert h["integrity"] == "ok"
 
+    @pytest.mark.unit
     def test_health_check_error(self, tmp_path) -> None:
         """open_db crea la DB si falta (healthy True en vacia).
         El fallo real: DB corrupta (no sqlite)."""

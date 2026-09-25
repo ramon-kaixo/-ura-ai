@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from typing import Any, ClassVar
 
 import pytest
@@ -56,9 +57,11 @@ class NotProvider:
 
 
 class TestBaseLLMProvider:
+    @pytest.mark.unit
     def test_default_capabilities(self) -> None:
         assert GoodProvider().capabilities == DEFAULT_PROVIDER_CAPABILITIES
 
+    @pytest.mark.unit
     def test_generate_stream_degradado(self) -> None:
         """generate_stream sin sobrescribir emite el resultado completo en un fragmento."""
         p = GoodProvider()
@@ -66,6 +69,7 @@ class TestBaseLLMProvider:
         assert chunks == ["ok"]
         assert isinstance(chunks[0], str)
 
+    @pytest.mark.unit
     def test_chat_generate_convierte_a_prompt(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """chat_generate sin tools → prompt plano y resultado OpenAI-shape."""
         p = GoodProvider()
@@ -84,24 +88,30 @@ class TestBaseLLMProvider:
         assert llamado["prompt"] == "<user>hola</user>\n<assistant>adiós</assistant>"
         assert result == {"content": "respuesta", "tool_calls": None, "usage": {}}
 
+    @pytest.mark.unit
     def test_chat_generate_mensajes_vacios(self, monkeypatch: pytest.MonkeyPatch) -> None:
         p = GoodProvider()
         monkeypatch.setattr(p, "generate", lambda prompt, model=None, options=None: "x")
         result = p.chat_generate([])
         assert result["content"] == "x"
 
+    @pytest.mark.unit
     def test_supports_known_bool_true(self) -> None:
         assert GoodProvider().supports("chat") is True
 
+    @pytest.mark.unit
     def test_supports_false_bool(self) -> None:
         assert GoodProvider().supports("streaming") is False
 
+    @pytest.mark.unit
     def test_supports_unknown_capability(self) -> None:
         assert GoodProvider().supports("no_existe") is False
 
+    @pytest.mark.unit
     def test_supports_numeric_positive(self) -> None:
         assert GoodProvider().supports("max_context") is True
 
+    @pytest.mark.unit
     def test_supports_numeric_zero(self) -> None:
         class ZeroCap(GoodProvider):
             @property
@@ -110,6 +120,7 @@ class TestBaseLLMProvider:
 
         assert ZeroCap().supports("max_context") is False
 
+    @pytest.mark.unit
     def test_supports_string_valor(self) -> None:
         class StrCap(GoodProvider):
             @property
@@ -120,12 +131,14 @@ class TestBaseLLMProvider:
         assert p.supports("extra") is True
         assert p.supports("vacio") is False
 
+    @pytest.mark.unit
     def test_abstract_methods(self) -> None:
         with pytest.raises(TypeError):
             BaseLLMProvider()  # type: ignore[abstract]
 
 
 class TestValidadoresInternos:
+    @pytest.mark.unit
     def test_metodo_eliminado(self) -> None:
         class SinMetodos:
             pass
@@ -135,6 +148,7 @@ class TestValidadoresInternos:
         assert any("Falta método: generate" in e for e in errors)
         assert any("Falta método: health" in e for e in errors)
 
+    @pytest.mark.unit
     def test_metodo_no_invocable(self) -> None:
         prov = GoodProvider()
         prov.generate = 42
@@ -142,6 +156,7 @@ class TestValidadoresInternos:
         _validar_metodos(prov, errors)
         assert any("generate no es invocable" in e for e in errors)
 
+    @pytest.mark.unit
     def test_firma_embed_mal(self) -> None:
         prov = GoodProvider()
 
@@ -153,6 +168,7 @@ class TestValidadoresInternos:
         _validar_firmas(prov, errors)
         assert any("embed:" in e and "falta parámetro" in e for e in errors)
 
+    @pytest.mark.unit
     def test_capacidades_no_dict(self) -> None:
         class NoDictCap(GoodProvider):
             capabilities: ClassVar = ["chat"]
@@ -162,6 +178,7 @@ class TestValidadoresInternos:
         _validar_capacidades(prov, errors)
         assert any("capabilities debe ser un dict" in e for e in errors)
 
+    @pytest.mark.unit
     def test_comportamiento_generate_raise(self) -> None:
         prov = GoodProvider()
 
@@ -173,6 +190,7 @@ class TestValidadoresInternos:
         _validar_comportamiento(prov, errors)
         assert any("lanzó excepción" in e for e in errors)
 
+    @pytest.mark.unit
     def test_comportamiento_embed_no_list(self) -> None:
         prov = GoodProvider()
         prov.embed = lambda texts, model=None: "no-soy-lista"  # type: ignore[assignment]
@@ -180,6 +198,7 @@ class TestValidadoresInternos:
         _validar_comportamiento(prov, errors)
         assert any("embed() no retorna list" in e for e in errors)
 
+    @pytest.mark.unit
     def test_comportamiento_embed_raise(self) -> None:
         prov = GoodProvider()
 
@@ -193,6 +212,7 @@ class TestValidadoresInternos:
 
 
 class TestValidateProvider:
+    @pytest.mark.unit
     def test_valid_provider(self) -> None:
         result = validate_provider(GoodProvider)
         assert result.valid is True
@@ -200,11 +220,13 @@ class TestValidateProvider:
         assert result.provider_name == "good"
         assert "valid=True" in repr(result)
 
+    @pytest.mark.unit
     def test_not_subclass(self) -> None:
         result = validate_provider(NotProvider)
         assert result.valid is False
         assert "No hereda de BaseLLMProvider" in result.errors
 
+    @pytest.mark.unit
     def test_instantiation_failure(self) -> None:
         class Broken(BaseLLMProvider):
             def __init__(self) -> None:
@@ -226,11 +248,13 @@ class TestValidateProvider:
         assert result.valid is False
         assert "No se puede instanciar" in result.errors[0]
 
+    @pytest.mark.unit
     def test_missing_provider_name(self) -> None:
         result = validate_provider(NoNameProvider)
         assert not result.valid
         assert any("Falta _provider_name" in e for e in result.errors)
 
+    @pytest.mark.unit
     def test_missing_method(self) -> None:
         class NoHealth(BaseLLMProvider):
             _provider_name = "nh"
@@ -247,6 +271,7 @@ class TestValidateProvider:
         result = validate_provider(NoHealth)
         assert any("health" in e for e in result.errors)
 
+    @pytest.mark.unit
     def test_bad_signature_generate(self) -> None:
         class BadSig(BaseLLMProvider):
             _provider_name = "bad"
@@ -267,6 +292,7 @@ class TestValidateProvider:
         assert any("generate" in e for e in result.errors)
         assert any("model" in e for e in result.errors)
 
+    @pytest.mark.unit
     def test_generate_not_returning_str(self) -> None:
         class BadReturn(BaseLLMProvider):
             _provider_name = "br"
@@ -286,6 +312,7 @@ class TestValidateProvider:
         result = validate_provider(BadReturn)
         assert any("generate() no retorna str" in e for e in result.errors)
 
+    @pytest.mark.unit
     def test_missing_chat_capability(self) -> None:
         class NoChat(BaseLLMProvider):
             _provider_name = "nc"
@@ -311,6 +338,7 @@ class TestValidateProvider:
         result = validate_provider(NoChat)
         assert any("Falta capacidad 'chat'" in e for e in result.errors)
 
+    @pytest.mark.unit
     def test_invalid_repr(self) -> None:
         result = ProviderValidationResult(False, ["e1", "e2"], "x")
         assert "valid=False" in repr(result)
@@ -318,24 +346,28 @@ class TestValidateProvider:
 
 
 class TestCheckSignature:
+    @pytest.mark.unit
     def test_missing_optional_ok(self) -> None:
         def fn(prompt: str, model: str | None = None) -> str:
             return ""
 
         assert _check_signature(fn, ["prompt", "model"], ["model"]) is None
 
+    @pytest.mark.unit
     def test_missing_param(self) -> None:
         def fn(prompt: str) -> str:
             return ""
 
         assert _check_signature(fn, ["prompt", "model"], ["model"]) == "falta parámetro 'model'"
 
+    @pytest.mark.unit
     def test_strips_self(self) -> None:
         def fn(self, prompt: str) -> str:
             return ""
 
         assert _check_signature(fn, ["prompt"], []) is None
 
+    @pytest.mark.unit
     def test_inspect_error(self) -> None:
         result = _check_signature(42, ["x"], [])
         assert result is not None

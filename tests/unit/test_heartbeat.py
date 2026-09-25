@@ -1,6 +1,7 @@
 """Tests para core/infra/heartbeat.py."""
 from __future__ import annotations
 
+import pytest
 import json
 from types import SimpleNamespace
 from unittest import mock
@@ -11,6 +12,7 @@ import core.infra.heartbeat as hb
 
 
 class TestCheckHealth:
+    @pytest.mark.unit
     def test_ok_con_token(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "get_secret", mock.Mock(return_value="tok"))
         resp = mock.Mock()
@@ -20,6 +22,7 @@ class TestCheckHealth:
         monkeypatch.setattr(hb, "urlopen", mock.Mock(return_value=resp))
         assert hb.check_health() is True
 
+    @pytest.mark.unit
     def test_ok_sin_token(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "get_secret", mock.Mock(return_value=""))
         resp = mock.Mock()
@@ -29,6 +32,7 @@ class TestCheckHealth:
         monkeypatch.setattr(hb, "urlopen", mock.Mock(return_value=resp))
         assert hb.check_health() is True
 
+    @pytest.mark.unit
     def test_status_no_200(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "get_secret", mock.Mock(return_value=""))
         resp = mock.Mock()
@@ -38,6 +42,7 @@ class TestCheckHealth:
         monkeypatch.setattr(hb, "urlopen", mock.Mock(return_value=resp))
         assert hb.check_health() is False
 
+    @pytest.mark.unit
     def test_error_red(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "get_secret", mock.Mock(return_value=""))
         monkeypatch.setattr(hb, "urlopen", mock.Mock(side_effect=OSError("net")))
@@ -45,10 +50,12 @@ class TestCheckHealth:
 
 
 class TestDumpCheckpoint:
+    @pytest.mark.unit
     def test_sin_checkpoint(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr(hb, "STATE_FILE", str(tmp_path / "nope.json"))
         hb.dump_checkpoint()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_con_checkpoint(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         f.write_text(json.dumps({"task_id": "t1", "target_file": "f.py"}))
@@ -59,6 +66,7 @@ class TestDumpCheckpoint:
         logger.critical.assert_called_once()
         assert "t1" in logger.critical.call_args.args[1]
 
+    @pytest.mark.unit
     def test_checkpoint_corrupto(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         f.write_text("no json")
@@ -70,6 +78,7 @@ class TestDumpCheckpoint:
 
 
 class TestSaveRestartQdrant:
+    @pytest.mark.unit
     def test_guardar_incidente_cuando_disponible(self, monkeypatch) -> None:
         """Tras el fix del C2, `QdrantClient.instancia` existe y guarda el
         incidente si el cliente está disponible (el ImportError documentado
@@ -87,6 +96,7 @@ class TestSaveRestartQdrant:
         fake.guardar_incidente.assert_called_once()
         logger.exception.assert_not_called()
 
+    @pytest.mark.unit
     def test_sin_cliente_disponible_no_guarda(self, monkeypatch) -> None:
         fake = mock.Mock()
         fake.disponible = False
@@ -102,6 +112,7 @@ class TestSaveRestartQdrant:
 
 
 class TestRestartService:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "dump_checkpoint", mock.Mock())
         monkeypatch.setattr(hb, "_save_restart_to_qdrant", mock.Mock())
@@ -113,6 +124,7 @@ class TestRestartService:
         logger.critical.assert_called_once()
         logger.info.assert_called_once()
 
+    @pytest.mark.unit
     def test_fallo(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "dump_checkpoint", mock.Mock())
         monkeypatch.setattr(hb, "_save_restart_to_qdrant", mock.Mock())
@@ -123,6 +135,8 @@ class TestRestartService:
         hb.restart_service()
         logger.error.assert_called_once()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "dump_checkpoint", mock.Mock())
         monkeypatch.setattr(hb, "_save_restart_to_qdrant", mock.Mock())
@@ -137,6 +151,7 @@ class TestVramPressure:
         yield
         hb.vram_critical_cycles = 0
 
+    @pytest.mark.unit
     def test_normal_reset(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="100\n200\n")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
@@ -144,6 +159,7 @@ class TestVramPressure:
         hb.check_vram_pressure()
         assert hb.vram_critical_cycles == 0
 
+    @pytest.mark.unit
     def test_presion_acumula(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="70000\n")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
@@ -151,6 +167,7 @@ class TestVramPressure:
         hb.check_vram_pressure()
         assert hb.vram_critical_cycles == 1
 
+    @pytest.mark.unit
     def test_panico_restart(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="70000\n")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
@@ -162,11 +179,13 @@ class TestVramPressure:
         restart.assert_called_once()
         assert hb.vram_critical_cycles == 0
 
+    @pytest.mark.unit
     def test_error_monitor(self, monkeypatch) -> None:
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(side_effect=ValueError("bad")))
         monkeypatch.setattr(hb, "log_event", mock.Mock())
         hb.check_vram_pressure()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_salida_vacia(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0, stdout="")
         monkeypatch.setattr(hb.subprocess, "run", mock.Mock(return_value=res))
@@ -175,12 +194,14 @@ class TestVramPressure:
 
 
 class TestLoopLatency:
+    @pytest.mark.unit
     def test_mide_latencia(self) -> None:
         lat = hb.check_loop_latency()
         assert lat >= 0.0
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_una_ejecucion_ok(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "_shutdown_flag", False)
         monkeypatch.setattr("sys.argv", ["heartbeat.py"])
@@ -193,6 +214,7 @@ class TestMain:
         monkeypatch.setattr(hb, "check_loop_latency", mock.Mock(return_value=0.0))
         hb.main()  # no debe explotar ni iterar
 
+    @pytest.mark.unit
     def test_tres_fallos_restart(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "_shutdown_flag", False)
         monkeypatch.setattr("sys.argv", ["heartbeat.py"])
@@ -219,6 +241,7 @@ class TestMain:
         hb.main()
         restart.assert_called_once()
 
+    @pytest.mark.unit
     def test_latencia_alta_publica_alert(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "_shutdown_flag", False)
         monkeypatch.setattr("sys.argv", ["heartbeat.py"])
@@ -240,6 +263,7 @@ class TestMain:
         publish.assert_called_once()
         assert publish.call_args.args[0] == "alert"
 
+    @pytest.mark.unit
     def test_latencia_baja_sin_alert(self, monkeypatch) -> None:
         monkeypatch.setattr(hb, "_shutdown_flag", False)
         monkeypatch.setattr("sys.argv", ["heartbeat.py"])

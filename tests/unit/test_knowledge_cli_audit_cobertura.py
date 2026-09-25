@@ -6,6 +6,7 @@ existente (test_knowledge_cli_audit.py) no alcanza.
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -60,6 +61,7 @@ def _report(estado: dict) -> Any:
 
 
 class TestAuditIntegrity:
+    @pytest.mark.unit
     def test_fail(self) -> None:
         conn = FakeConn({"PRAGMA integrity_check": FakeRow("corrupt")})
         r: list[tuple] = []
@@ -69,6 +71,7 @@ class TestAuditIntegrity:
 
 
 class TestAuditOrphans:
+    @pytest.mark.unit
     def test_ambos_orphans(self) -> None:
         conn = FakeConn(
             {
@@ -87,12 +90,14 @@ class TestAuditOrphans:
 
 
 class TestAuditActiveVersion:
+    @pytest.mark.unit
     def test_cero(self) -> None:
         conn = FakeConn({"SELECT COUNT(*) as c FROM kg_active_version": FakeRow(0)})
         r: list[tuple] = []
         _audit_active_version(conn, _report(r))
         assert r[0][0] == "WARN"
 
+    @pytest.mark.unit
     def test_multiples(self) -> None:
         conn = FakeConn({"SELECT COUNT(*) as c FROM kg_active_version": FakeRow(3)})
         r: list[tuple] = []
@@ -101,6 +106,7 @@ class TestAuditActiveVersion:
 
 
 class TestAuditStuckJobs:
+    @pytest.mark.unit
     def test_stuck(self) -> None:
         conn = FakeConn(
             {"SELECT COUNT(*) as c FROM op_jobs WHERE status = 'running' AND started_at < datetime('now', '-30 minutes')": FakeRow(5)}
@@ -111,6 +117,7 @@ class TestAuditStuckJobs:
 
 
 class TestAuditWal:
+    @pytest.mark.unit
     def test_no_wal(self, tmp_path: Path) -> None:
         conn = FakeConn({"PRAGMA journal_mode": FakeRow("delete")})
         db = tmp_path / "db.sqlite"
@@ -118,6 +125,7 @@ class TestAuditWal:
         _audit_wal(conn, db, _report(r))
         assert r[0][0] == "FAIL"
 
+    @pytest.mark.unit
     def test_wal_grande(self, tmp_path: Path) -> None:
         conn = FakeConn({"PRAGMA journal_mode": FakeRow("wal")})
         db = tmp_path / "db.sqlite"
@@ -126,6 +134,7 @@ class TestAuditWal:
         _audit_wal(conn, db, _report(r))
         assert r[1][0] == "WARN"
 
+    @pytest.mark.unit
     def test_wal_pequeno(self, tmp_path: Path) -> None:
         conn = FakeConn({"PRAGMA journal_mode": FakeRow("wal")})
         db = tmp_path / "db.sqlite"
@@ -136,6 +145,7 @@ class TestAuditWal:
 
 
 class TestAuditPendingSync:
+    @pytest.mark.unit
     def test_pendientes(self) -> None:
         conn = FakeConn(
             {"SELECT COUNT(*) as c FROM op_vector_sync WHERE status IN ('pending', 'failed')": FakeRow(4)}
@@ -146,6 +156,7 @@ class TestAuditPendingSync:
 
 
 class TestAuditBackend:
+    @pytest.mark.unit
     def test_sin_backend(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.audit.get_audit",
@@ -155,6 +166,7 @@ class TestAuditBackend:
         _audit_backend(_report(r))
         assert r[0][0] == "WARN"
 
+    @pytest.mark.unit
     def test_backend_unhealthy(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.audit.get_audit",
@@ -168,6 +180,7 @@ class TestAuditBackend:
         _audit_backend(_report(r))
         assert r[0][0] == "FAIL"
 
+    @pytest.mark.unit
     def test_backend_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("knowledge.engine.audit.get_audit", lambda: (_ for _ in ()).throw(RuntimeError("x")))
         r: list[tuple] = []
@@ -176,6 +189,7 @@ class TestAuditBackend:
 
 
 class TestAuditDisk:
+    @pytest.mark.unit
     def test_poco_espacio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "shutil.disk_usage",
@@ -185,6 +199,7 @@ class TestAuditDisk:
         _audit_disk(SimpleNamespace(parent="."), _report(r))
         assert r[0][0] == "FAIL"
 
+    @pytest.mark.unit
     def test_medio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "shutil.disk_usage",
@@ -194,6 +209,7 @@ class TestAuditDisk:
         _audit_disk(SimpleNamespace(parent="."), _report(r))
         assert r[0][0] == "WARN"
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "shutil.disk_usage",
@@ -205,6 +221,7 @@ class TestAuditDisk:
 
 
 class TestCmdAuditDb:
+    @pytest.mark.unit
     def test_db_no_existe(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.cli.audit._resolve_db_path",
@@ -212,6 +229,7 @@ class TestCmdAuditDb:
         )
         assert cmd_audit_db(SimpleNamespace()) == 1
 
+    @pytest.mark.unit
     def test_audit_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({})
         monkeypatch.setattr(
@@ -232,6 +250,7 @@ class TestCmdAuditDb:
 
 
 class TestCmdVacuum:
+    @pytest.mark.unit
     def test_db_no_existe(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.cli.audit._resolve_db_path",
@@ -239,6 +258,7 @@ class TestCmdVacuum:
         )
         assert cmd_vacuum(SimpleNamespace()) == 1
 
+    @pytest.mark.unit
     def test_vacuum_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({})
         monkeypatch.setattr(

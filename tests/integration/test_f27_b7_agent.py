@@ -22,6 +22,7 @@ Cubre los 18 constraints arquitectónicos:
 """
 
 from __future__ import annotations
+import pytest
 
 from typing import TYPE_CHECKING
 
@@ -117,6 +118,7 @@ class _MockAuditLogger(AuditLogger):
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_agent_run_completes() -> None:
     agent = AgentOrchestrator(
         planner=_MockPlanner(),
@@ -136,6 +138,7 @@ def test_agent_run_completes() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_agent_flow_components_called() -> None:
     planner = _MockPlanner()
     scheduler = _MockScheduler()
@@ -160,6 +163,7 @@ def test_agent_flow_components_called() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_audit_on_completion() -> None:
     audit = _MockAuditLogger()
     agent = AgentOrchestrator(
@@ -178,6 +182,7 @@ def test_audit_on_completion() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_agent_reiniciable() -> None:
     """Dos ejecuciones consecutivas no deben compartir estado."""
     audit = _MockAuditLogger()
@@ -198,6 +203,7 @@ def test_agent_reiniciable() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_one_result_per_execution() -> None:
     audit = _MockAuditLogger()
     agent = AgentOrchestrator(
@@ -216,6 +222,7 @@ def test_one_result_per_execution() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_planner_replacement() -> None:
     """El planner puede sustituirse sin modificar Agent."""
     p1 = _MockPlanner()
@@ -243,6 +250,7 @@ def test_planner_replacement() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_no_direct_imports() -> None:
     import inspect
 

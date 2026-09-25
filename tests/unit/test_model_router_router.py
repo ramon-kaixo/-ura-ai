@@ -1,6 +1,7 @@
 """Tests para core/model_router/router.py — URLs, auth, rate_limiter."""
 
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -8,6 +9,7 @@ import core.model_router.router as r
 
 
 class TestNoOpRateLimiter:
+    @pytest.mark.unit
     def test_import_fallback(self, monkeypatch) -> None:
         import builtins
 
@@ -28,24 +30,29 @@ class TestNoOpRateLimiter:
         assert r.rate_limiter.get_metrics() == {}
         importlib.reload(r)  # restaurar
 
+    @pytest.mark.unit
     def test_rate_limiter_real_importado(self) -> None:
         assert r.rate_limiter is not None
 
 
 class TestAuthFallback:
+    @pytest.mark.unit
     def test_auth_validate_default(self) -> None:
         # Si auth_layer importa bien, auth_validate es la real
         assert callable(r.auth_validate)
 
+    @pytest.mark.unit
     def test_require_auth_callable(self) -> None:
         assert callable(r.require_auth)
 
 
 class TestGetUrls:
+    @pytest.mark.unit
     def test_cached(self, monkeypatch) -> None:
         monkeypatch.setattr(r, "_URLS", {"primary": "a", "fallback": "b"})
         assert r.get_urls() == {"primary": "a", "fallback": "b"}
 
+    @pytest.mark.unit
     def test_llama_config(self, monkeypatch) -> None:
         monkeypatch.setattr(r, "_URLS", None)
         monkeypatch.setattr(r, "get_ollama_urls", mock.Mock(return_value={"primary": "p", "fallback": "f"}))
@@ -54,11 +61,13 @@ class TestGetUrls:
 
 
 class TestResolveOllamaUrl:
+    @pytest.mark.unit
     def test_env_forzada(self, monkeypatch) -> None:
         monkeypatch.setenv("OLLAMA_URL", "http://custom:11434")
         monkeypatch.setattr(r, "get_urls", mock.Mock(return_value={"primary": "p", "fallback": "f"}))
         assert r._resolve_ollama_url() == "http://custom:11434"
 
+    @pytest.mark.unit
     def test_primary_conecta(self, monkeypatch) -> None:
         monkeypatch.delenv("OLLAMA_URL", raising=False)
         monkeypatch.setattr(
@@ -70,6 +79,7 @@ class TestResolveOllamaUrl:
         monkeypatch.setattr("core.model_router.router.urllib.request.urlopen", mock.Mock(return_value=resp))
         assert r._resolve_ollama_url() == "http://asus:11434"
 
+    @pytest.mark.unit
     def test_primary_falla_usar_fallback(self, monkeypatch) -> None:
         monkeypatch.delenv("OLLAMA_URL", raising=False)
         monkeypatch.setattr(
@@ -78,6 +88,7 @@ class TestResolveOllamaUrl:
         monkeypatch.setattr("core.model_router.router.urllib.request.urlopen", mock.Mock(side_effect=OSError("no red")))
         assert r._resolve_ollama_url() == "http://local:11434"
 
+    @pytest.mark.unit
     def test_connection_header(self, monkeypatch) -> None:
         monkeypatch.delenv("OLLAMA_URL", raising=False)
         monkeypatch.setattr(r, "get_urls", mock.Mock(return_value={"primary": "http://asus:11434", "fallback": "f"}))
@@ -93,6 +104,7 @@ class TestResolveOllamaUrl:
 
 
 class TestGetOllamaUrl:
+    @pytest.mark.unit
     def test_cachea(self, monkeypatch) -> None:
         monkeypatch.setattr(r, "_OLLAMA_URL", None)
         resolver = mock.Mock(return_value="http://x:11434")
@@ -103,6 +115,7 @@ class TestGetOllamaUrl:
 
 
 class TestConstantes:
+    @pytest.mark.unit
     def test_constantes(self) -> None:
         assert r.ROUTER_PORT == 11435
         assert r.DEFAULT_TIPO == "respuesta_rapida"
@@ -111,6 +124,7 @@ class TestConstantes:
 
 
 class TestAuthFallbackReal:
+    @pytest.mark.unit
     def test_fallback_por_import_error(self, monkeypatch) -> None:
         """El branch except ImportError del auth fallback en router.py."""
         import builtins

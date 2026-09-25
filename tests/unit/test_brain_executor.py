@@ -1,5 +1,6 @@
 """Tests for motor/brain/executor.py (ProposalExecutor)."""
 from __future__ import annotations
+import pytest
 
 from unittest.mock import MagicMock, patch
 
@@ -7,6 +8,7 @@ from motor.brain.executor import ProposalExecutor
 
 
 class TestToTuneladoraTask:
+    @pytest.mark.unit
     def test_mapping_tipos(self) -> None:
         casos = [
             ({"type": "refactor"}, "code_quality"),
@@ -19,6 +21,7 @@ class TestToTuneladoraTask:
             r = ProposalExecutor.to_tuneladora_task(proposal)
             assert r["plugin"] == plugin
 
+    @pytest.mark.unit
     def test_campos_default(self) -> None:
         r = ProposalExecutor.to_tuneladora_task({"type": "refactor", "target": "a.py", "priority": "high"})
         assert r["target"] == "a.py"
@@ -27,6 +30,7 @@ class TestToTuneladoraTask:
 
 
 class TestProposalToArgs:
+    @pytest.mark.unit
     def test_maneja_tipos(self) -> None:
         p = {
             "type": "refactor",
@@ -51,6 +55,7 @@ class TestProposalToArgs:
 
 
 class TestGetEngine:
+    @pytest.mark.unit
     def test_engine_cargado(self) -> None:
         fake = MagicMock()
         fake_engine_mod = MagicMock()
@@ -62,6 +67,7 @@ class TestGetEngine:
             assert ex._get_engine() == fake
         assert ex._engine == fake
 
+    @pytest.mark.unit
     def test_engine_import_error(self) -> None:
         import sys
 
@@ -78,12 +84,14 @@ class TestExecute:
         r.stderr = "err"
         return r
 
+    @pytest.mark.unit
     def test_engine_none(self) -> None:
         ex = ProposalExecutor()
         with patch.object(ex, "_get_engine", return_value=None):
             r = ex.execute({"type": "refactor"})
         assert "error" in r
 
+    @pytest.mark.unit
     def test_exito(self) -> None:
         ex = ProposalExecutor()
         engine = MagicMock()
@@ -94,6 +102,7 @@ class TestExecute:
         assert r["returncode"] == 0
         engine.run_script.assert_called_once()
 
+    @pytest.mark.unit
     def test_fallo_returncode(self) -> None:
         ex = ProposalExecutor()
         engine = MagicMock()
@@ -103,6 +112,7 @@ class TestExecute:
         assert r["status"] == "failed"
         assert r["returncode"] == 3
 
+    @pytest.mark.unit
     def test_excepcion(self) -> None:
         ex = ProposalExecutor()
         engine = MagicMock()

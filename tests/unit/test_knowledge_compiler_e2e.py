@@ -6,6 +6,7 @@ todas las ramas de los helpers internos usando mocks sqlite-free.
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -109,12 +110,14 @@ def _options() -> CompileOptions:
 
 
 class TestCompilarDefaults:
+    @pytest.mark.unit
     def test_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
         src, db = _compilar_defaults(None, None)
         assert src.name == "source"
         assert db == Path("/home/test/URA/ura_ia_1972/knowledge/knowledge.db")
 
+    @pytest.mark.unit
     def test_paths(self, tmp_path: Path) -> None:
         src, db = _compilar_defaults(tmp_path / "src", tmp_path / "k.db")
         assert src == tmp_path / "src"
@@ -122,6 +125,7 @@ class TestCompilarDefaults:
 
 
 class TestEtapaScan:
+    @pytest.mark.unit
     def test_early_return_sin_cambios(self, monkeypatch: pytest.MonkeyPatch) -> None:
         snap = _snapshot()
         monkeypatch.setattr(
@@ -138,6 +142,7 @@ class TestEtapaScan:
         assert changed == []
         assert snapshot is snap
 
+    @pytest.mark.unit
     def test_con_cambios_y_deleted(self, monkeypatch: pytest.MonkeyPatch) -> None:
         deleted_so = _source_object(path="docs/borrado.md")
         monkeypatch.setattr(
@@ -154,6 +159,7 @@ class TestEtapaScan:
         assert warns[0].code == "KE207"
         assert deleted == [deleted_so]
 
+    @pytest.mark.unit
     def test_sin_previous_snapshot(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.scan_incremental",
@@ -169,6 +175,7 @@ class TestEtapaScan:
 
 
 class TestEtapaParsing:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.parse_source", lambda so: _knowledge_object()
@@ -176,6 +183,7 @@ class TestEtapaParsing:
         objects = _etapa_parsing([_source_object()], [])
         assert objects == [_knowledge_object()]
 
+    @pytest.mark.unit
     def test_parse_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = _error()
         monkeypatch.setattr("knowledge.engine.compiler.parse_source", lambda so: err)
@@ -186,6 +194,7 @@ class TestEtapaParsing:
 
 
 class TestEtapaValidacion:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.validate_batch",
@@ -198,6 +207,7 @@ class TestEtapaValidacion:
 
 
 class TestEtapaCompilacion:
+    @pytest.mark.unit
     def test_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         result = _compile_result()
         monkeypatch.setattr(
@@ -221,6 +231,7 @@ class TestEtapaCompilacion:
         assert valid == [_knowledge_object()]
         assert deleted_ids == []
 
+    @pytest.mark.unit
     def test_con_deleted_y_previous(self, monkeypatch: pytest.MonkeyPatch) -> None:
         result = _compile_result()
         monkeypatch.setattr("knowledge.engine.compiler.parse_source", lambda so: _knowledge_object())
@@ -244,6 +255,7 @@ class TestEtapaCompilacion:
 
 
 class TestCompilarFinal:
+    @pytest.mark.unit
     def test_success_sync_y_audit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         spy: list[str] = []
         monkeypatch.setattr(
@@ -269,6 +281,7 @@ class TestCompilarFinal:
         assert final.duration_ms == 100.0
         assert spy == ["sync", "audit"]
 
+    @pytest.mark.unit
     def test_failure_solo_audit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         spy: list[str] = []
         monkeypatch.setattr(
@@ -295,6 +308,7 @@ class TestCompilarFinal:
 
 
 class TestSyncSemantica:
+    @pytest.mark.unit
     def test_synced_positivo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.sync_documents",
@@ -322,6 +336,7 @@ class TestSyncSemantica:
         )
         assert calls == ["abc123", "det"]
 
+    @pytest.mark.unit
     def test_synced_cero_sin_docs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.sync_documents", lambda **kw: 0
@@ -343,6 +358,7 @@ class TestSyncSemantica:
         )
         assert calls == ["HEAD", "det"]
 
+    @pytest.mark.unit
     def test_save_snapshot_falla(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.sync_documents", lambda **kw: 0
@@ -364,6 +380,7 @@ class TestSyncSemantica:
 
 
 class TestAuditar:
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         logged: list[dict[str, Any]] = []
         monkeypatch.setattr(
@@ -376,6 +393,7 @@ class TestAuditar:
         assert logged[0]["result"] == "success"
         assert logged[0]["duration_ms"] == 250
 
+    @pytest.mark.unit
     def test_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         logged: list[dict[str, Any]] = []
         monkeypatch.setattr(
@@ -385,6 +403,7 @@ class TestAuditar:
         _auditar(_compile_result(False), "cid", 1.0)
         assert logged[0]["result"] == "failure"
 
+    @pytest.mark.unit
     def test_exception_ignorada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.audit.get_audit",
@@ -394,6 +413,7 @@ class TestAuditar:
 
 
 class TestStreamParsear:
+    @pytest.mark.unit
     def test_mixto(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = _error()
         so_ok = _source_object(path="docs/ok.md")
@@ -414,6 +434,7 @@ class TestStreamParsear:
 
 
 class TestResultadoCompile:
+    @pytest.mark.unit
     def test_success(self) -> None:
         r = _resultado_compile(
             _compile_result(True), _metadata(), "0.1.0", 5, 0.25
@@ -423,6 +444,7 @@ class TestResultadoCompile:
         assert r.duration_ms == 250.0
         assert r.stage == CompileStage.DONE.value
 
+    @pytest.mark.unit
     def test_failure(self) -> None:
         r = _resultado_compile(
             _compile_result(False), _metadata(), "0.1.0", 0, 0.5
@@ -432,12 +454,15 @@ class TestResultadoCompile:
 
 
 class TestResolveDeletedIds:
+    @pytest.mark.unit
     def test_sin_previous(self) -> None:
         assert _resolve_deleted_ids([_source_object()], None) == []
 
+    @pytest.mark.unit
     def test_sin_deleted(self) -> None:
         assert _resolve_deleted_ids([], _snapshot()) == []
 
+    @pytest.mark.unit
     def test_ambos(self) -> None:
         ids = _resolve_deleted_ids([_source_object(path="docs/d.md")], _snapshot())
         assert len(ids) == 1
@@ -445,12 +470,14 @@ class TestResolveDeletedIds:
 
 
 class TestCtxStage:
+    @pytest.mark.unit
     def test_snapshot(self) -> None:
         snap = _snapshot()
         ctx = _ctx_stage(_metadata(), _options(), snap, CompileStage.PARSING)
         assert ctx.stage == CompileStage.PARSING
         assert ctx.snapshot is snap
 
+    @pytest.mark.unit
     def test_errores_warnings(self) -> None:
         errs = (_error(),)
         ctx = _ctx_stage(
@@ -462,9 +489,11 @@ class TestCtxStage:
 
 
 class TestWarningsDeletados:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _warnings_deletados([]) == []
 
+    @pytest.mark.unit
     def test_con_deleted(self) -> None:
         warns = _warnings_deletados([_source_object(path="docs/borrado.md")])
         assert len(warns) == 1
@@ -473,6 +502,7 @@ class TestWarningsDeletados:
 
 
 class TestRecordDeterminismHash:
+    @pytest.mark.unit
     def test_delega(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[tuple] = []
         monkeypatch.setattr(
@@ -484,6 +514,7 @@ class TestRecordDeterminismHash:
 
 
 class TestCompileSource:
+    @pytest.mark.unit
     def test_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.scan_incremental",
@@ -526,6 +557,7 @@ class TestCompileSource:
         assert result.documents_changed == 1
         assert result.duration_ms >= 0.0
 
+    @pytest.mark.unit
     def test_early_sin_cambios(self, monkeypatch: pytest.MonkeyPatch) -> None:
         snap = _snapshot()
         monkeypatch.setattr(
@@ -541,6 +573,7 @@ class TestCompileSource:
         assert result.documents_changed == 0
         assert result.stage == CompileStage.DONE.value
 
+    @pytest.mark.unit
     def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
         monkeypatch.setattr(
@@ -572,6 +605,7 @@ class TestCompileSource:
 
 
 class TestCompileSourceStreaming:
+    @pytest.mark.unit
     def test_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.scan_source_stream",
@@ -597,6 +631,7 @@ class TestCompileSourceStreaming:
         assert result.documents_total == 1
         assert result.stage == CompileStage.DONE.value
 
+    @pytest.mark.unit
     def test_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.compiler.scan_source_stream",
@@ -620,6 +655,7 @@ class TestCompileSourceStreaming:
 
 
 class TestCompileIncremental:
+    @pytest.mark.unit
     def test_con_snapshot(self, monkeypatch: pytest.MonkeyPatch) -> None:
         snap = _snapshot()
         monkeypatch.setattr(
@@ -633,6 +669,7 @@ class TestCompileIncremental:
         assert result.success is True
         assert result.documents_changed == 0
 
+    @pytest.mark.unit
     def test_sin_snapshot(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.snapshot_store.load_snapshot", lambda: None
@@ -671,6 +708,7 @@ class TestCompileIncremental:
         assert result.success is True
         assert result.documents_changed == 1
 
+    @pytest.mark.unit
     def test_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: Path("/home/test"))
         monkeypatch.setattr(
@@ -704,6 +742,7 @@ class TestCompileIncremental:
         assert result.success is True
 
 
+@pytest.mark.unit
 def test_ctx_compatible() -> None:
     """CompileContext construido por _ctx_stage es inmutable y usable."""
     ctx = _ctx_stage(_metadata(), _options(), None, CompileStage.DONE)

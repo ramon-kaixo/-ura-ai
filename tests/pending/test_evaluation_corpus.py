@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 
@@ -101,6 +102,7 @@ class TestBenchmarkReproducibility:
         r2 = retriever.search("What is semantic chunking?")
         assert r1 != r2
 
+    @pytest.mark.slow
     def test_benchmark_reproducible(self):
         import tempfile
 
@@ -121,10 +123,12 @@ class TestBenchmarkReproducibility:
 
 
 class TestBenchmarkDirect:
+    @pytest.mark.slow
     def test_load_corpus_returns_200_queries(self):
         queries, _relevance = load_corpus(CORPUS_DIR)
         assert len(queries) == 200
 
+    @pytest.mark.slow
     def test_load_corpus_populates_relevance(self):
         _, relevance = load_corpus(CORPUS_DIR)
         assert len(relevance) > 0

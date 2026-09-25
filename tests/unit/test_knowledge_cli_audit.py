@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/audit.py — vacuum y audit_db."""
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from pathlib import Path
@@ -22,10 +23,12 @@ def _crear_db(path: Path) -> None:
 
 
 class TestCmdVacuum:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
         assert cmd_vacuum(args) == 1
 
+    @pytest.mark.unit
     def test_vacuum_ok(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -34,16 +37,19 @@ class TestCmdVacuum:
 
 
 class TestCmdAuditDb:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
         assert cmd_audit_db(args) == 1
 
+    @pytest.mark.unit
     def test_db_sana(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
         args = SimpleNamespace(db_path=str(db))
         assert cmd_audit_db(args) == 0
 
+    @pytest.mark.unit
     def test_audit_backend_ok(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -59,6 +65,7 @@ class TestCmdAuditDb:
         with mock.patch("knowledge.engine.audit.get_audit", return_value=audit):
             assert cmd_audit_db(args) == 0
 
+    @pytest.mark.unit
     def test_audit_backend_fail(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -73,6 +80,7 @@ class TestCmdAuditDb:
         with mock.patch("knowledge.engine.audit.get_audit", return_value=audit):
             assert cmd_audit_db(args) == 1  # FAIL audit -> errors
 
+    @pytest.mark.unit
     def test_orhpan_edges(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -83,6 +91,7 @@ class TestCmdAuditDb:
         args = SimpleNamespace(db_path=str(db))
         assert cmd_audit_db(args) == 1  # FAIL orphan
 
+    @pytest.mark.unit
     def test_multiples_versiones(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)

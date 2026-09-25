@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 
@@ -42,6 +43,7 @@ from motor.core.secrets import KNOWN_SECRETS, get_secret, has_secret, list_avail
 # ── interfaces (Protocols) ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_illm_client_protocol() -> None:
     class _Cliente:
         def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
@@ -53,6 +55,7 @@ def test_illm_client_protocol() -> None:
     assert isinstance(_Cliente(), ILLMClient)
 
 
+@pytest.mark.unit
 def test_ivector_store_protocol() -> None:
     class _Store:
         def guardar_incidente(self, incidente: dict) -> bool:
@@ -64,6 +67,7 @@ def test_ivector_store_protocol() -> None:
     assert isinstance(_Store(), IVectorStore)
 
 
+@pytest.mark.unit
 def test_isecret_store_protocol() -> None:
     class _Secretos:
         def get_secret(self, name: str, default: str | None = None) -> str | None:
@@ -72,6 +76,7 @@ def test_isecret_store_protocol() -> None:
     assert isinstance(_Secretos(), ISecretStore)
 
 
+@pytest.mark.unit
 def test_llm_client_elipsis() -> None:
     class _Parcial:
         def generate(self, prompt: str, model: str | None = None, options: dict | None = None) -> str:
@@ -91,6 +96,7 @@ def test_llm_client_elipsis() -> None:
     assert p.health() == {}
 
 
+@pytest.mark.unit
 def test_vector_store_elipsis() -> None:
     class _Parcial:
         def guardar_incidente(self, incidente: dict) -> bool:
@@ -110,6 +116,7 @@ def test_vector_store_elipsis() -> None:
     assert p.buscar_similares([0.1]) == []
 
 
+@pytest.mark.unit
 def test_secret_store_elipsis() -> None:
     class _Parcial:
         def get_secret(self, name: str, default: str | None = None) -> str | None:
@@ -122,12 +129,14 @@ def test_secret_store_elipsis() -> None:
 # ── secrets ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_get_secret_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_TEST_SECRET", "valor-env")
     assert get_secret("URA_TEST_SECRET") == "valor-env"
     assert has_secret("URA_TEST_SECRET") is True
 
 
+@pytest.mark.unit
 def test_get_secret_file(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "secrets.env"
     f.write_text("# comentario\n\nURA_FILE_SECRET='valor-archivo'\nURA_OTRO=\"comillas\"\nLINEA_SIN_IGUAL\n")
@@ -142,6 +151,7 @@ def test_get_secret_file(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> N
         sec._clear_cache()
 
 
+@pytest.mark.unit
 def test_get_secret_prioridad_env_sobre_file(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "secrets.env"
     f.write_text("URA_PRIORIDAD=archivo\n")
@@ -154,6 +164,8 @@ def test_get_secret_prioridad_env_sobre_file(tmp_path: object, monkeypatch: pyte
         sec._clear_cache()
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_file_secrets_oserror(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     class _Roto:
         def __init__(self) -> None:
@@ -174,6 +186,8 @@ def test_load_file_secrets_oserror(tmp_path: object, monkeypatch: pytest.MonkeyP
         sec._clear_cache()
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_file_secrets_no_existe(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(sec, "RUTA_SECRETOS", str(tmp_path / "no-existe.env"))
     sec._clear_cache()
@@ -183,6 +197,8 @@ def test_load_file_secrets_no_existe(tmp_path: object, monkeypatch: pytest.Monke
         sec._clear_cache()
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_file_secrets_cacheado(monkeypatch: pytest.MonkeyPatch) -> None:
     # segunda llamada usa caché (línea 74)
     sec._cached_file_secrets = {"CACHE": "1"}
@@ -192,17 +208,20 @@ def test_load_file_secrets_cacheado(monkeypatch: pytest.MonkeyPatch) -> None:
         sec._clear_cache()
 
 
+@pytest.mark.unit
 def test_require_secret_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_REQ", "valor")
     assert require_secret("URA_REQ") == "valor"
 
 
+@pytest.mark.unit
 def test_require_secret_falta(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("URA_REQ_NO_EXISTE", raising=False)
     with pytest.raises(KeyError):
         require_secret("URA_REQ_NO_EXISTE")
 
 
+@pytest.mark.unit
 def test_list_available(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "x")
     available = list_available()
@@ -213,6 +232,7 @@ def test_list_available(monkeypatch: pytest.MonkeyPatch) -> None:
 # ── groq ─────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_groq_provider_init(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("GROQ_API_KEY", "k")
     monkeypatch.setenv("GROQ_MODEL", "m")
@@ -233,6 +253,7 @@ def test_groq_provider_init(monkeypatch: pytest.MonkeyPatch) -> None:
     assert caps["max_context"] == 131072
 
 
+@pytest.mark.unit
 def test_groq_provider_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("GROQ_API_KEY", raising=False)
     monkeypatch.delenv("GROQ_MODEL", raising=False)
@@ -246,6 +267,7 @@ def test_groq_provider_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert p._max_tokens == 4096
 
 
+@pytest.mark.unit
 def test_groq_embed() -> None:
     p = GroqProvider.__new__(GroqProvider)
     res = p.embed(["texto"])
@@ -254,6 +276,7 @@ def test_groq_embed() -> None:
     assert res[0][0] == 0.0
 
 
+@pytest.mark.unit
 def test_groq_embed_async() -> None:
     import asyncio
 
@@ -277,17 +300,20 @@ def _execution(caps=None, cancelled=False, cost=0) -> AgentExecution:
     )
 
 
+@pytest.mark.unit
 def test_denial_code_valores() -> None:
     assert DenialCode.GATE_CLOSED.value == "gate_closed"
     assert DenialCode.BUDGET_EXCEEDED.value == "budget_exceeded"
 
 
+@pytest.mark.unit
 def test_permission_decision_defaults() -> None:
     d = PermissionDecision(granted=True, capability=AgentCapability.MEMORY_READ, agent_id="a1")
     assert d.denial_code is None
     assert d.cached is False
 
 
+@pytest.mark.unit
 def test_gate_check_ok() -> None:
     g = AgentCapabilityGate(_execution())
     g.check(AgentCapability.MEMORY_READ)  # no lanza
@@ -297,6 +323,7 @@ def test_gate_check_ok() -> None:
     assert g.decisions[0].granted is True
 
 
+@pytest.mark.unit
 def test_gate_check_denegada() -> None:
     g = AgentCapabilityGate(_execution())
     with pytest.raises(PermissionError) as e:
@@ -305,6 +332,7 @@ def test_gate_check_denegada() -> None:
     assert g.denied_count == 1
 
 
+@pytest.mark.unit
 def test_gate_check_capability_no_reconocida() -> None:
     g = AgentCapabilityGate(_execution())
 
@@ -316,6 +344,7 @@ def test_gate_check_capability_no_reconocida() -> None:
     assert "capability_not_recognized" in str(e.value)
 
 
+@pytest.mark.unit
 def test_gate_cerrado() -> None:
     g = AgentCapabilityGate(_execution())
     g.close()
@@ -325,6 +354,7 @@ def test_gate_cerrado() -> None:
     assert "gate_closed" in str(e.value)
 
 
+@pytest.mark.unit
 def test_gate_agente_cancelado() -> None:
     g = AgentCapabilityGate(_execution(cancelled=True))
     with pytest.raises(PermissionError) as e:
@@ -332,6 +362,7 @@ def test_gate_agente_cancelado() -> None:
     assert "agent_cancelled" in str(e.value)
 
 
+@pytest.mark.unit
 def test_gate_budget_excedido() -> None:
     g = AgentCapabilityGate(_execution(cost=150))
     with pytest.raises(PermissionError) as e:
@@ -339,11 +370,13 @@ def test_gate_budget_excedido() -> None:
     assert "budget_exceeded" in str(e.value)
 
 
+@pytest.mark.unit
 def test_gate_capabilities() -> None:
     g = AgentCapabilityGate(_execution())
     assert g.capabilities() == {AgentCapability.MEMORY_READ}
 
 
+@pytest.mark.unit
 def test_gate_cache() -> None:
     g = AgentCapabilityGate(_execution(), enable_cache=True)
     g.check(AgentCapability.MEMORY_READ)
@@ -352,6 +385,7 @@ def test_gate_cache() -> None:
     assert g.decisions[1].cached is True
 
 
+@pytest.mark.unit
 def test_gate_sin_cache() -> None:
     g = AgentCapabilityGate(_execution(), enable_cache=False)
     g.check(AgentCapability.MEMORY_READ)
@@ -359,6 +393,7 @@ def test_gate_sin_cache() -> None:
     assert g.decisions[1].cached is False
 
 
+@pytest.mark.unit
 def test_gate_audit_events() -> None:
     g = AgentCapabilityGate(_execution())
     g.check(AgentCapability.MEMORY_READ)
@@ -380,6 +415,7 @@ def _task(objective: str) -> AgentTask:
     return AgentTask(task_id="t1", objective=objective)
 
 
+@pytest.mark.unit
 def test_planner_search() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("search information"))
@@ -391,6 +427,7 @@ def test_planner_search() -> None:
     assert plan.plan_id != ""
 
 
+@pytest.mark.unit
 def test_planner_facts() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("lee los facts"))
@@ -398,6 +435,7 @@ def test_planner_facts() -> None:
     assert "retrieve" in actions
 
 
+@pytest.mark.unit
 def test_planner_summarize() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("summarize este texto"))
@@ -406,6 +444,7 @@ def test_planner_summarize() -> None:
     assert actions[-1] == "llm"  # respond
 
 
+@pytest.mark.unit
 def test_planner_write() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("save el informe"))
@@ -414,12 +453,14 @@ def test_planner_write() -> None:
     assert actions[-1] == "llm"
 
 
+@pytest.mark.unit
 def test_planner_sin_keywords() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("hola"))
     assert len(plan.steps) == 2  # retrieve + llm respond
 
 
+@pytest.mark.unit
 def test_planner_make_step() -> None:
     s = RuleBasedPlanner._make_step(3, "action", {"k": "v"})
     assert s.step_id != ""
@@ -429,6 +470,7 @@ def test_planner_make_step() -> None:
     assert s2.params == {}
 
 
+@pytest.mark.unit
 def test_planner_replan_con_fallo() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("busca información"))
@@ -440,6 +482,7 @@ def test_planner_replan_con_fallo() -> None:
     assert "retrieve" in actions[1:]  # fallback tras fallo
 
 
+@pytest.mark.unit
 def test_planner_replan_tras_fallo_descarta_resto() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("search and save the report"))  # retrieve, search, retrieve, llm, tool, llm
@@ -454,6 +497,7 @@ def test_planner_replan_tras_fallo_descarta_resto() -> None:
     assert len(nuevo.steps) == 4  # 2 conservados + 2 del fallback
 
 
+@pytest.mark.unit
 def test_planner_replan_sin_fallo() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("hola"))
@@ -461,12 +505,14 @@ def test_planner_replan_sin_fallo() -> None:
     assert nuevo is plan  # sin fallo → plan original
 
 
+@pytest.mark.unit
 def test_planner_generate_remaining_search() -> None:
     p = RuleBasedPlanner()
     steps = p._generate_remaining("x", PlanStep(step_id="s", action="search"))
     assert steps[0].params.get("fallback") is True
 
 
+@pytest.mark.unit
 def test_planner_generate_remaining_tool() -> None:
     p = RuleBasedPlanner()
     steps = p._generate_remaining("x", PlanStep(step_id="s", action="tool"))
@@ -474,6 +520,7 @@ def test_planner_generate_remaining_tool() -> None:
     assert steps[0].params.get("action") == "suggest"
 
 
+@pytest.mark.unit
 def test_planner_generate_remaining_otro() -> None:
     p = RuleBasedPlanner()
     steps = p._generate_remaining("x", PlanStep(step_id="s", action="otro"))
@@ -483,6 +530,7 @@ def test_planner_generate_remaining_otro() -> None:
 # ── base ABCs ────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_abc_lanzan() -> None:
     with pytest.raises(TypeError):
         CapabilityGate()
@@ -647,6 +695,7 @@ class _StateMachineSuper(StateMachine):
         return r
 
 
+@pytest.mark.unit
 def test_abc_elipsis_via_super() -> None:
     _GateSuper().capabilities()
     _GateSuper().check(AgentCapability.MEMORY_READ)  # type: ignore[arg-type]
@@ -686,11 +735,13 @@ class _LLMFake:
         return ""
 
 
+@pytest.mark.unit
 def test_telemetry_check_ollama_ok() -> None:
     t = Telemetria(llm=_LLMFake())
     assert t._check_ollama() == "3 modelos"
 
 
+@pytest.mark.unit
 def test_telemetry_check_ollama_down(monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.core.llm as llm_mod
 
@@ -699,6 +750,7 @@ def test_telemetry_check_ollama_down(monkeypatch: pytest.MonkeyPatch) -> None:
     assert t._check_ollama() == "down"
 
 
+@pytest.mark.unit
 def test_telemetry_hardware_con_psutil(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -718,6 +770,7 @@ def test_telemetry_hardware_con_psutil(monkeypatch: pytest.MonkeyPatch) -> None:
     assert m["cpu_pct"] == 25.0
 
 
+@pytest.mark.unit
 def test_telemetry_hardware_sin_psutil(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -735,6 +788,7 @@ def test_telemetry_hardware_sin_psutil(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "ram_libre_mb" in m
 
 
+@pytest.mark.unit
 def test_telemetry_hardware_meminfo_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -763,6 +817,7 @@ def test_telemetry_hardware_meminfo_error(monkeypatch: pytest.MonkeyPatch) -> No
     assert m["ram_libre_mb"] == 8192  # fallback
 
 
+@pytest.mark.unit
 def test_telemetry_red_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -781,6 +836,7 @@ def test_telemetry_red_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert status["ollama"] == "2 modelos"
 
 
+@pytest.mark.unit
 def test_telemetry_red_router_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -798,6 +854,7 @@ def test_telemetry_red_router_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert status["model_router"] == "down"
 
 
+@pytest.mark.unit
 def test_telemetry_red_ollama_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -820,6 +877,7 @@ def test_telemetry_red_ollama_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert status["ollama"] == "down"
 
 
+@pytest.mark.unit
 def test_telemetry_llm_stats(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "chunk_config.json"
     f.write_text(json.dumps({"chunk_actual": 4096, "modelo": "qwen", "historico": [1, 2, 3]}))
@@ -830,12 +888,14 @@ def test_telemetry_llm_stats(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert stats["historico_ajustes"] == 3
 
 
+@pytest.mark.unit
 def test_telemetry_llm_stats_default(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(tel, "NERVIOSO", Path(str(tmp_path)))
     stats = Telemetria.llm_stats()
     assert stats == {"chunk_actual": 8192, "modelo": "?", "historico_ajustes": 0}
 
 
+@pytest.mark.unit
 def test_telemetry_f821_count(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -845,6 +905,7 @@ def test_telemetry_f821_count(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Telemetria.f821_count() == 2
 
 
+@pytest.mark.unit
 def test_telemetry_f821_error(monkeypatch: pytest.MonkeyPatch) -> None:
     def _roto(*a, **k):
         msg = "ruff no existe"
@@ -854,6 +915,7 @@ def test_telemetry_f821_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Telemetria.f821_count() == -1
 
 
+@pytest.mark.unit
 def test_telemetry_reporte_completo(monkeypatch: pytest.MonkeyPatch) -> None:
     t = Telemetria(llm=_LLMFake())
     monkeypatch.setattr(Telemetria, "hardware", staticmethod(lambda: {"ram_total_mb": 1}))
@@ -866,6 +928,7 @@ def test_telemetry_reporte_completo(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["f821"] == 0
 
 
+@pytest.mark.unit
 def test_telemetry_shadow_hooks() -> None:
     t = Telemetria(llm=None)
     t.on_layer_start(1, "layer")  # no lanza

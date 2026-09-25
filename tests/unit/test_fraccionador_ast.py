@@ -1,3 +1,4 @@
+import pytest
 """Tests del fraccionador AST (TASK-20260812-019).
 
 Verifica: (1) funciones pequeñas no se fraccionan, (2) fraccionamiento por
@@ -13,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "pro"))
 from fraccionador_ast import extraer_bloques, fraccionar, reensamblar
 
 
+@pytest.mark.unit
 def test_funcion_pequena_no_se_fracciona() -> None:
     codigo = """def pequeña():
     a = 1
@@ -22,6 +24,7 @@ def test_funcion_pequena_no_se_fracciona() -> None:
     assert frags[0] == codigo
 
 
+@pytest.mark.unit
 def test_extraer_bloques_if_for() -> None:
     codigo = """def grande():
     x = 0
@@ -37,6 +40,7 @@ def test_extraer_bloques_if_for() -> None:
     assert "for" in tipos
 
 
+@pytest.mark.unit
 def test_fraccionar_grande_no_rompe_sintaxis() -> None:
     # Función de 100+ líneas con bloques
     partes = ["def monolitica():"]
@@ -57,6 +61,7 @@ def test_fraccionar_grande_no_rompe_sintaxis() -> None:
     assert orig <= reens_l or orig >= reens_l, "líneas perdidas en reensamblado"
 
 
+@pytest.mark.unit
 def test_round_trip_aproximado() -> None:
     """Reensamblar los fragmentos conserva todas las líneas del original."""
     partes = ["def monolitica():"]
@@ -75,6 +80,7 @@ def test_round_trip_aproximado() -> None:
     assert lineas_orig <= lineas_reens or lineas_orig >= lineas_reens
 
 
+@pytest.mark.unit
 def test_round_trip_exacto_funcion_con_if() -> None:
     codigo = """def procesar(datos):
     total = 0
@@ -92,6 +98,7 @@ def test_round_trip_exacto_funcion_con_if() -> None:
         assert reensamblado == codigo or len(reensamblado) >= len(codigo)
 
 
+@pytest.mark.unit
 def test_extraer_bloques_while_with_try() -> None:
     """Cubre _nombre_nodo con While, With, Try y codigo plano."""
     codigo = """def variados():
@@ -114,6 +121,7 @@ def test_extraer_bloques_while_with_try() -> None:
     assert any(b.tipo == "try" for b in bloques)
 
 
+@pytest.mark.unit
 def test_extraer_bloques_nombres() -> None:
     """Verifica los nombres generados por _nombre_nodo para cada tipo."""
     codigo = """def f():
@@ -135,14 +143,17 @@ def test_extraer_bloques_nombres() -> None:
     assert any(n.startswith("try@") for n in nombres)
 
 
+@pytest.mark.unit
 def test_extraer_bloques_sintaxis_rota() -> None:
     assert extraer_bloques("def (") == []
 
 
+@pytest.mark.unit
 def test_extraer_bloques_sin_funcion() -> None:
     assert extraer_bloques("x = 1") == []
 
 
+@pytest.mark.unit
 def test_extraer_bloques_varias_funciones() -> None:
     """Código con 2 funciones -> devuelve [] (requiere exactamente 1)."""
     codigo = "def a():\n    pass\ndef b():\n    pass"
@@ -150,6 +161,7 @@ def test_extraer_bloques_varias_funciones() -> None:
 
 
 
+@pytest.mark.unit
 def test_reensamblar() -> None:
     from fraccionador_ast import reensamblar
 
@@ -157,6 +169,7 @@ def test_reensamblar() -> None:
     assert r == "a\nb"
 
 
+@pytest.mark.unit
 def test_nombre_nodo_match_default() -> None:
     """Cubre la rama default de _nombre_nodo (nodo no clasificado, p.ej. match)."""
 
@@ -172,6 +185,7 @@ def test_nombre_nodo_match_default() -> None:
     assert any(n.startswith("bloque@") for n in nombres)
 
 
+@pytest.mark.unit
 def test_extraer_bloques_nodo_sin_end_lineno() -> None:
     """Nodos con end_lineno None se saltan (cobertura 82-84)."""
 
@@ -182,6 +196,7 @@ def test_extraer_bloques_nodo_sin_end_lineno() -> None:
     assert isinstance(bloques, list)
 
 
+@pytest.mark.unit
 def test_fraccionar_con_relleno_entre_bloques() -> None:
     """Comentarios entre bloques se conservan (rama 144-152)."""
     codigo = """def f():
@@ -197,6 +212,7 @@ def test_fraccionar_con_relleno_entre_bloques() -> None:
     assert "# primer bloque" in reens or "# segundo bloque" in reens
 
 
+@pytest.mark.unit
 def test_fraccionar_sintaxis_rota_devuelve_completo() -> None:
     """fraccionar con código que no parsea -> devuelve el original (113)."""
     codigo = "def ("
@@ -204,6 +220,7 @@ def test_fraccionar_sintaxis_rota_devuelve_completo() -> None:
     assert frags == [codigo]
 
 
+@pytest.mark.unit
 def test_fraccionar_varias_funciones_devuelve_completo() -> None:
     """fraccionar con 2 funciones (extraer_bloques=[]) -> devuelve original."""
     codigo = "def a():\n    pass\ndef b():\n    pass"
@@ -211,6 +228,7 @@ def test_fraccionar_varias_funciones_devuelve_completo() -> None:
     assert len(frags) == 1
 
 
+@pytest.mark.unit
 def test_extraer_bloques_nodo_artificial_sin_end_lineno() -> None:
     """Nodo sin end_lineno se ignora (82-84) — simulado con AST manual."""
     import ast as _ast
@@ -228,6 +246,7 @@ def test_extraer_bloques_nodo_artificial_sin_end_lineno() -> None:
         pass  # Python sin match
 
 
+@pytest.mark.unit
 def test_nombre_nodo_def_anidada() -> None:
     """Una def anidada en el cuerpo directo: _nombre_nodo devuelve su nombre."""
     codigo = """def exterior():
@@ -238,6 +257,7 @@ def test_nombre_nodo_def_anidada() -> None:
     assert any(b.nombre == "interna" and b.tipo == "def" for b in bloques)
 
 
+@pytest.mark.unit
 def test_extraer_bloques_nodo_sin_lineno_ni_end(monkeypatch) -> None:
     """Nodo sin atributo end_lineno -> continue (lineas 82-84)."""
     import ast as _ast

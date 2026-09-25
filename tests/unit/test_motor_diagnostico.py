@@ -1,6 +1,7 @@
 """Tests para motor/diagnostico/diagnostico.py — Diagnostico."""
 from __future__ import annotations
 
+import pytest
 import hashlib
 from types import SimpleNamespace
 from unittest import mock
@@ -37,6 +38,7 @@ def diag(monkeypatch, scan) -> Diagnostico:
 
 
 class TestRun:
+    @pytest.mark.unit
     def test_run_basico(self, diag: Diagnostico, scan: ScanResult) -> None:
         r = diag.run(scan)
         assert isinstance(r, DiagnoseResult)
@@ -44,16 +46,19 @@ class TestRun:
         assert r.incidentes == []
         assert "Z" in r.timestamp
 
+    @pytest.mark.unit
     def test_run_scan_no_ok(self, diag: Diagnostico, scan: ScanResult) -> None:
         scan.ok = False
         r = diag.run(scan)
         assert r.ok is False
 
+    @pytest.mark.unit
     def test_run_offline(self, diag: Diagnostico, scan: ScanResult) -> None:
         diag.cb.operacional = mock.Mock(return_value=False)
         r = diag.run(scan)
         assert r.modo_offline is True
 
+    @pytest.mark.unit
     def test_run_con_incidentes_backup(self, diag: Diagnostico, scan: ScanResult, monkeypatch) -> None:
         incidente = {"tipo": "GPU", "subtipo": "power_cap"}
         monkeypatch.setattr("motor.diagnostico.diagnostico.buscar_patrones", mock.Mock(return_value=([incidente], 100)))
@@ -63,18 +68,21 @@ class TestRun:
         assert r.incidentes == [incidente]
         backup.assert_called_once_with(diag.config, incidente)
 
+    @pytest.mark.unit
     def test_run_guarda_qdrant(self, diag: Diagnostico, scan: ScanResult, monkeypatch) -> None:
         incidente = {"tipo": "GPU", "subtipo": "power_cap"}
         monkeypatch.setattr("motor.diagnostico.diagnostico.buscar_patrones", mock.Mock(return_value=([incidente], 0)))
         diag.run(scan)
         diag.qdrant.guardar_incidente.assert_called_once()
 
+    @pytest.mark.unit
     def test_run_sin_incidentes_no_guarda(self, diag: Diagnostico, scan: ScanResult) -> None:
         diag.run(scan)
         diag.qdrant.guardar_incidente.assert_not_called()
 
 
 class TestSnapshot:
+    @pytest.mark.unit
     def test_snapshot_con_configs(self, diag: Diagnostico, scan: ScanResult, tmp_path, monkeypatch) -> None:
         f = tmp_path / "opencode.json"
         f.write_bytes(b"config")
@@ -84,11 +92,13 @@ class TestSnapshot:
         assert str(f) in snap
         assert snap[str(f)]["hash"] == hashlib.sha256(b"config").hexdigest()[:16]
 
+    @pytest.mark.unit
     def test_snapshot_sin_configs(self, diag: Diagnostico, tmp_path, monkeypatch) -> None:
         monkeypatch.setattr("motor.diagnostico.diagnostico.RUTAS_CONFIG_OPENCODE", [str(tmp_path / "nope.json")])
         snap = diag._tomar_snapshot_inicial()
         assert "procesos" in snap
 
+    @pytest.mark.unit
     def test_snapshot_executor_error(self, diag: Diagnostico, scan: ScanResult, monkeypatch) -> None:
         diag.executor.run.side_effect = OSError("no ps")
         snap = diag._tomar_snapshot_inicial()
@@ -96,6 +106,7 @@ class TestSnapshot:
 
 
 class TestExtraerTags:
+    @pytest.mark.unit
     def test_tags_variados(self, diag: Diagnostico, scan: ScanResult) -> None:
         incidentes = [{"tipo": "GPU", "subtipo": "power_cap"}, {"tipo": "Disco"}]
         scan.hw_health = {"ok": False, "issues": ["gpu"]}
@@ -111,25 +122,30 @@ class TestExtraerTags:
         assert "flapping" in tags
         assert "exit_node_offline" in tags
 
+    @pytest.mark.unit
     def test_tags_minimos(self, diag: Diagnostico, scan: ScanResult) -> None:
         assert diag._extraer_tags([], scan) == []
 
 
 class TestDeterminarCausas:
+    @pytest.mark.unit
     def test_extrae_causas(self, diag: Diagnostico) -> None:
         corr = [{"causa_raiz": "gpu_power"}, {"sin_causa": 1}, {"causa_raiz": "disco"}]
         assert diag._determinar_causas(corr) == ["gpu_power", "disco"]
 
+    @pytest.mark.unit
     def test_vacio(self, diag: Diagnostico) -> None:
         assert diag._determinar_causas([]) == []
 
 
 class TestGuardarIncidente:
+    @pytest.mark.unit
     def test_sin_incidentes(self, diag: Diagnostico, scan: ScanResult) -> None:
         r = DiagnoseResult(timestamp="t")
         diag._guardar_incidente_qdrant(r, scan)
         diag.qdrant.guardar_incidente.assert_not_called()
 
+    @pytest.mark.unit
     def test_con_impacto(self, diag: Diagnostico, scan: ScanResult) -> None:
         r = DiagnoseResult(timestamp="t")
         r.incidentes = [{"tipo": "x"}]
@@ -145,6 +161,7 @@ class TestGuardarIncidente:
 
 
 class TestCorrelacion:
+    @pytest.mark.unit
     def test_agrupar_simple(self) -> None:
         from motor.diagnostico.correlacion import agrupar_incidentes
 
@@ -152,6 +169,7 @@ class TestCorrelacion:
         assert grupos[0]["causa_raiz"] == "docker"
         assert grupos[0]["servicios_afectados"] == ["container_searxng", "container_n8n", "container_qdrant"]
 
+    @pytest.mark.unit
     def test_agrupar_con_hardware(self) -> None:
         from motor.diagnostico.correlacion import agrupar_incidentes
 
@@ -161,6 +179,7 @@ class TestCorrelacion:
         assert "docker" in causas
         assert "sshd" in causas
 
+    @pytest.mark.unit
     def test_agrupar_desconocido(self) -> None:
         from motor.diagnostico.correlacion import agrupar_incidentes
 
@@ -168,11 +187,13 @@ class TestCorrelacion:
         assert grupos[0]["causa_raiz"] == "raro"
         assert grupos[0]["servicios_afectados"] == ["raro"]
 
+    @pytest.mark.unit
     def test_resumir_vacio(self) -> None:
         from motor.diagnostico.correlacion import resumir_incidentes
 
         assert resumir_incidentes([]) == "Sin incidencias activas"
 
+    @pytest.mark.unit
     def test_resumir_con_subtipos(self) -> None:
         from motor.diagnostico.correlacion import resumir_incidentes
 

@@ -6,6 +6,7 @@ y el CircuitBreaker de motor.core.llm.
 """
 from __future__ import annotations
 
+import pytest
 import logging
 import time
 import tracemalloc
@@ -27,26 +28,33 @@ from motor.core.llm.registry import ProviderRegistry
 # ===================================================================
 
 class TestPercentile:
+    @pytest.mark.unit
     def test_empty_returns_zero(self) -> None:
         assert percentile([], 50) == 0.0
 
+    @pytest.mark.unit
     def test_single_value(self) -> None:
         assert percentile([5.0], 50) == 5.0
 
+    @pytest.mark.unit
     def test_p50(self) -> None:
         assert percentile(list(range(1, 11)), 50) == 6.0
 
+    @pytest.mark.unit
     def test_p0_min(self) -> None:
         assert percentile(list(range(1, 11)), 0) == 1.0
 
+    @pytest.mark.unit
     def test_p100_max(self) -> None:
         assert percentile(list(range(1, 11)), 100) == 10.0
 
+    @pytest.mark.unit
     def test_unsorted_input(self) -> None:
         assert percentile([10, 1, 5], 50) == 5.0
 
 
 class TestLogCall:
+    @pytest.mark.unit
     def test_info_sin_error(self, caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level(logging.INFO, logger="motor.core.llm._logging"):
             log_call("ollama", "qwen", 12.5)
@@ -54,11 +62,13 @@ class TestLogCall:
         assert "provider=ollama" in caplog.text
         assert "model=qwen" in caplog.text
 
+    @pytest.mark.unit
     def test_warning_con_error(self, caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level(logging.WARNING, logger="motor.core.llm._logging"):
             log_call("ollama", "qwen", 12.5, "timeout")
         assert "error=timeout" in caplog.text
 
+    @pytest.mark.unit
     def test_extra_kwargs(self, caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level(logging.INFO, logger="motor.core.llm._logging"):
             log_call("p", "m", 1.0, prompt_tokens=10)
@@ -70,6 +80,7 @@ class TestLogCall:
 # ===================================================================
 
 class TestProfiler:
+    @pytest.mark.unit
     def test_start_stop(self) -> None:
         p = LLMProfiler(enabled=True)
         profile = p.start("ollama", "generate", "qwen")
@@ -82,20 +93,24 @@ class TestProfiler:
         assert result.cpu_time_ms >= 0.0
         assert result.allocations_count >= 0
 
+    @pytest.mark.unit
     def test_stop_sin_start(self) -> None:
         p = LLMProfiler(enabled=True)
         assert p.stop("x", "y") is None
 
+    @pytest.mark.unit
     def test_disabled(self) -> None:
         p = LLMProfiler(enabled=False)
         assert p.enabled is False
         assert p.start("x", "y") is None
         assert p.stop("x", "y") is None
 
+    @pytest.mark.unit
     def test_is_tracing_activo(self) -> None:
         p = LLMProfiler(enabled=True)
         assert p.is_tracing is True
 
+    @pytest.mark.unit
     def test_profile_to_dict(self) -> None:
         profile = LLMOperationProfile("p", "op", "m")
         profile.wall_time_ms = 100.0
@@ -104,10 +119,12 @@ class TestProfiler:
         assert d["wall_time_ms"] == 100.0
         assert d["peak_memory_kb"] == 0.0
 
+    @pytest.mark.unit
     def test_profile_repr(self) -> None:
         profile = LLMOperationProfile("p", "op")
         assert "LLMOperationProfile" in repr(profile)
 
+    @pytest.mark.unit
     def test_get_recent(self) -> None:
         p = LLMProfiler(enabled=True)
         p.start("a", "op1")
@@ -118,6 +135,7 @@ class TestProfiler:
         assert len(recent) == 1
         assert recent[0]["operation"] == "op2"
 
+    @pytest.mark.unit
     def test_get_stats(self) -> None:
         p = LLMProfiler(enabled=True)
         p.start("a", "op")
@@ -127,10 +145,12 @@ class TestProfiler:
         assert "total_wall_time_ms" in stats
         assert p.get_stats("other") == {}
 
+    @pytest.mark.unit
     def test_get_stats_sin_datos(self) -> None:
         p = LLMProfiler(enabled=True)
         assert p.get_stats() == {}
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         p = LLMProfiler(enabled=True)
         p.start("a", "op")
@@ -139,6 +159,7 @@ class TestProfiler:
         assert p.get_stats() == {}
         assert p.get_recent() == []
 
+    @pytest.mark.unit
     def test_close(self) -> None:
         p = LLMProfiler(enabled=True)
         p.close()
@@ -146,6 +167,7 @@ class TestProfiler:
         assert tracemalloc.is_tracing() is False
         p.close()
 
+    @pytest.mark.unit
     def test_singleton_desactivado(self) -> None:
         from motor.core.llm.profiler import profiler
 
@@ -157,16 +179,19 @@ class TestProfiler:
 # ===================================================================
 
 class TestHotspotDetector:
+    @pytest.mark.unit
     def test_threshold_property(self) -> None:
         d = HotspotDetector(threshold_ms=2000.0)
         assert d.threshold_ms == 2000.0
         d.threshold_ms = 100.0
         assert d.threshold_ms == 100.0
 
+    @pytest.mark.unit
     def test_evaluate_under_threshold(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         assert d.evaluate("p", "op", wall_time_ms=50.0) is None
 
+    @pytest.mark.unit
     def test_evaluate_over_threshold(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         rec = d.evaluate("p", "op", wall_time_ms=500.0, cpu_time_ms=10.0)
@@ -175,6 +200,7 @@ class TestHotspotDetector:
         assert rec.to_dict()["wall_time_ms"] == 500.0
         assert "Hotspot" in repr(rec)
 
+    @pytest.mark.unit
     def test_ranking_desc(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         d.evaluate("p", "a", wall_time_ms=100.0)
@@ -183,16 +209,19 @@ class TestHotspotDetector:
         assert d.get_hotspots(3)[0]["operation"] == "b"
         assert [r["rank"] for r in d.get_hotspots(3)] == [1, 2, 3]
 
+    @pytest.mark.unit
     def test_max_records_trim(self) -> None:
         d = HotspotDetector(threshold_ms=1.0, max_records=2)
         for i in range(3):
             d.evaluate("p", f"op{i}", wall_time_ms=100.0 + i)
         assert len(d.get_hotspots(10)) == 2
 
+    @pytest.mark.unit
     def test_evaluate_from_profile_none(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         assert d.evaluate_from_profile(None) is None
 
+    @pytest.mark.unit
     def test_evaluate_from_profile(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         profile = mock.Mock()
@@ -208,6 +237,7 @@ class TestHotspotDetector:
         assert rec.peak_memory_bytes == 1024
 
     @pytest.mark.parametrize("sort_by", ["wall_time", "cpu_time", "memory", "otro"])
+    @pytest.mark.unit
     def test_get_hotspots_sort_by(self, sort_by: str) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         d.evaluate("p", "wall", wall_time_ms=100.0, cpu_time_ms=5.0, peak_memory_bytes=10)
@@ -215,14 +245,17 @@ class TestHotspotDetector:
         out = d.get_hotspots(10, sort_by=sort_by)
         assert len(out) == 2
 
+    @pytest.mark.unit
     def test_get_hotspots_empty(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         assert d.get_hotspots() == []
 
+    @pytest.mark.unit
     def test_get_stats_empty(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         assert d.get_stats() == {"total_hotspots": 0, "threshold_ms": 100.0}
 
+    @pytest.mark.unit
     def test_get_stats_filled(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         d.evaluate("ollama", "gen", wall_time_ms=100.0)
@@ -233,6 +266,7 @@ class TestHotspotDetector:
         assert stats["min_wall_time_ms"] == 50.0
         assert stats["max_wall_time_ms"] == 100.0
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         d = HotspotDetector(threshold_ms=1.0)
         d.evaluate("p", "op", wall_time_ms=100.0)
@@ -245,6 +279,7 @@ class TestHotspotDetector:
 # ===================================================================
 
 class TestBaseline:
+    @pytest.mark.unit
     def test_record_y_compute(self) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
@@ -255,16 +290,19 @@ class TestBaseline:
         assert stats.wall_time_p50 > 0
         assert stats.throughput > 0
 
+    @pytest.mark.unit
     def test_get_baseline_missing(self) -> None:
         b = PerformanceBaseline()
         assert b.get_baseline("p", "op") is None
 
+    @pytest.mark.unit
     def test_compare_con_pocas_muestras(self) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
         b.record("p", "op", wall_time_ms=100.0)
         assert b.compare("p", "op", wall_time_ms=900.0) == []
 
+    @pytest.mark.unit
     def test_compare_detecta_regresion(self) -> None:
         b = PerformanceBaseline()
         for _ in range(4):
@@ -274,18 +312,21 @@ class TestBaseline:
         assert regressions[0].metric == "wall_time_p50"
         assert regressions[0].ratio >= 1.5
 
+    @pytest.mark.unit
     def test_compare_sin_regresion(self) -> None:
         b = PerformanceBaseline()
         for _ in range(4):
             b.record("p", "op", wall_time_ms=100.0)
         assert b.compare("p", "op", wall_time_ms=110.0) == []
 
+    @pytest.mark.unit
     def test_thresholds_personalizados(self) -> None:
         b = PerformanceBaseline(thresholds={"wall_time_p50": 1.1})
         for _ in range(4):
             b.record("p", "op", wall_time_ms=100.0)
         assert len(b.compare("p", "op", wall_time_ms=150.0)) >= 1
 
+    @pytest.mark.unit
     def test_regression_ratio_zero_baseline(self) -> None:
         r = RegressionResult("p", "op", "wall_time_p50", 0.0, 5.0, 2.0)
         assert r.ratio == 999.0
@@ -294,6 +335,7 @@ class TestBaseline:
         assert d["ratio"] == 999.0
         assert d["baseline_value"] == 0.0
 
+    @pytest.mark.unit
     def test_baseline_stats_from_dict(self) -> None:
         stats = BaselineStats({"wall_time_p50": 10.0, "sample_count": 5})
         assert stats.wall_time_p50 == 10.0
@@ -301,11 +343,13 @@ class TestBaseline:
         d = stats.to_dict()
         assert d["wall_time_p50"] == 10.0
 
+    @pytest.mark.unit
     def test_baseline_stats_defaults(self) -> None:
         stats = BaselineStats()
         assert stats.wall_time_p50 == 0.0
         assert stats.sample_count == 0
 
+    @pytest.mark.unit
     def test_max_samples_trim(self) -> None:
         b = PerformanceBaseline(max_samples=2)
         for i in range(5):
@@ -315,12 +359,15 @@ class TestBaseline:
         assert stats.sample_count == 2
         assert stats.wall_time_p50 == 4.0
 
+    @pytest.mark.unit
     def test_get_all_baselines(self) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
         all_b = b.get_all_baselines()
         assert "p.op" in all_b
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_save_y_load(self, tmp_path: pytest.TempPathFactory) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
@@ -332,10 +379,13 @@ class TestBaseline:
         assert stats is not None
         assert stats.sample_count == 1
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_missing_file(self, tmp_path: pytest.TempPathFactory) -> None:
         b = PerformanceBaseline()
         b.load(tmp_path / "no-existe.json")
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
@@ -343,6 +393,7 @@ class TestBaseline:
         assert b.get_baseline("p", "op") is None
         assert b.get_all_baselines() == {}
 
+    @pytest.mark.unit
     def test_recompute_sin_muestras(self) -> None:
         b = PerformanceBaseline()
         b.record("p", "op", wall_time_ms=100.0)
@@ -351,6 +402,7 @@ class TestBaseline:
         b._recompute(("sin", "muestras"))
         assert b.get_baseline("sin", "muestras") is None
 
+    @pytest.mark.unit
     def test_default_thresholds(self) -> None:
         assert DEFAULT_THRESHOLDS["wall_time_p50"] == 1.5
 
@@ -363,6 +415,7 @@ class TestMonitor:
     def _monitor(self, threshold_ms: float = 1.0, history_size: int = 100) -> PerformanceMonitor:
         return PerformanceMonitor(hotspot_threshold_ms=threshold_ms, history_size=history_size)
 
+    @pytest.mark.unit
     def test_start_finish(self) -> None:
         m = self._monitor()
         m.start_operation("ollama", "generate", "qwen")
@@ -374,10 +427,12 @@ class TestMonitor:
         assert snap.to_dict()["provider"] == "ollama"
         assert m._total_operations == 1
 
+    @pytest.mark.unit
     def test_finish_sin_start(self) -> None:
         m = self._monitor()
         assert m.finish_operation("ollama", "generate") is None
 
+    @pytest.mark.unit
     def test_hotspot_detectado(self) -> None:
         m = self._monitor(threshold_ms=1.0)
         m.start_operation("p", "op")
@@ -391,6 +446,7 @@ class TestMonitor:
         assert m._total_hotspots == 1
         assert m.get_report()["total_hotspots"] == 1
 
+    @pytest.mark.unit
     def test_sin_hotspot(self) -> None:
         m = self._monitor(threshold_ms=10_000.0)
         m.start_operation("p", "op")
@@ -399,6 +455,7 @@ class TestMonitor:
         assert snap.is_hotspot is False
         assert snap.has_issues() is False
 
+    @pytest.mark.unit
     def test_regresion_en_snapshot(self) -> None:
         m = self._monitor()
         fake = [RegressionResult("p", "op", "wall_time_p50", 100.0, 500.0, 2.0)]
@@ -410,6 +467,7 @@ class TestMonitor:
         assert snap.has_issues() is True
         assert m._total_regressions == 1
 
+    @pytest.mark.unit
     def test_history_trim(self) -> None:
         m = self._monitor(history_size=2)
         for op in ("a", "b", "c"):
@@ -418,6 +476,7 @@ class TestMonitor:
         assert len(m._history) == 2
         assert m._history[-1].operation == "c"
 
+    @pytest.mark.unit
     def test_get_history_filters(self) -> None:
         m = self._monitor(threshold_ms=10_000.0)
         for op in ("ok1", "ok2"):
@@ -428,6 +487,7 @@ class TestMonitor:
         assert m.get_history(only_issues=True) == []
         assert m.get_recent_issues() == []
 
+    @pytest.mark.unit
     def test_get_report_shape(self) -> None:
         m = self._monitor()
         m.start_operation("p", "op")
@@ -439,12 +499,14 @@ class TestMonitor:
         assert "baselines" in report
         assert report["history_size"] == 1
 
+    @pytest.mark.unit
     def test_properties(self) -> None:
         m = self._monitor()
         assert m.profiler.enabled is True
         assert m.detector.threshold_ms == 1.0
         assert m.baseline is not None
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         m = self._monitor()
         m.start_operation("p", "op")
@@ -460,6 +522,7 @@ class TestMonitor:
 # ===================================================================
 
 class TestLLMMetrics:
+    @pytest.mark.unit
     def test_record_success(self) -> None:
         m = LLMMetrics()
         m.record("ollama", "generate", 12.5, success=True, tokens=100)
@@ -470,18 +533,21 @@ class TestLLMMetrics:
         assert stats[key]["latencia_media_ms"] == 12.5
         assert stats[key]["tokens_por_segundo"] > 0
 
+    @pytest.mark.unit
     def test_record_failure_con_error(self) -> None:
         m = LLMMetrics()
         m.record("gemini", "generate", 5.0, success=False, error="timeout")
         stats = m.get_stats()
         assert stats["gemini.generate"]["errores"] == {"timeout": 1}
 
+    @pytest.mark.unit
     def test_record_failure_sin_error(self) -> None:
         m = LLMMetrics()
         m.record("p", "op", 1.0, success=False)
         stats = m.get_stats()
         assert stats["p.op"]["errores"] == {}
 
+    @pytest.mark.unit
     def test_max_records_trim(self) -> None:
         m = LLMMetrics()
         for i in range(1001):
@@ -489,6 +555,7 @@ class TestLLMMetrics:
         stats = m.get_stats()
         assert stats["p.op"]["llamadas_totales"] == 1000
 
+    @pytest.mark.unit
     def test_tokens_max_records_trim(self) -> None:
         m = LLMMetrics()
         for i in range(1001):
@@ -496,6 +563,7 @@ class TestLLMMetrics:
         stats = m.get_stats()
         assert stats["p.op"]["tokens_medios_por_call"] > 0
 
+    @pytest.mark.unit
     def test_filtro_por_provider(self) -> None:
         m = LLMMetrics()
         m.record("a", "op1", 1.0, success=True)
@@ -503,6 +571,7 @@ class TestLLMMetrics:
         stats = m.get_stats(provider="a")
         assert list(stats) == ["a.op1"]
 
+    @pytest.mark.unit
     def test_filtro_por_operation(self) -> None:
         m = LLMMetrics()
         m.record("a", "op1", 1.0, success=True)
@@ -510,10 +579,12 @@ class TestLLMMetrics:
         stats = m.get_stats(operation="op2")
         assert list(stats) == ["a.op2"]
 
+    @pytest.mark.unit
     def test_sin_datos(self) -> None:
         m = LLMMetrics()
         assert m.get_stats() == {"error": "no data"}
 
+    @pytest.mark.unit
     def test_summary(self) -> None:
         m = LLMMetrics()
         m.record("a", "op1", 1.0, success=True)
@@ -521,10 +592,12 @@ class TestLLMMetrics:
         s = m.summary()
         assert s["a"] == {"total": 2, "ok": 1, "fail": 1}
 
+    @pytest.mark.unit
     def test_summary_vacio(self) -> None:
         m = LLMMetrics()
         assert m.summary() == {}
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         m = LLMMetrics()
         m.record("a", "op", 1.0, success=True)
@@ -537,6 +610,7 @@ class TestLLMMetrics:
 # ===================================================================
 
 class TestProviderRegistry:
+    @pytest.mark.unit
     def test_register_default_primer(self) -> None:
         r = ProviderRegistry()
         assert r.default is None
@@ -550,23 +624,27 @@ class TestProviderRegistry:
         assert "a" in r
         assert len(r) == 2
 
+    @pytest.mark.unit
     def test_register_default_explicito(self) -> None:
         r = ProviderRegistry()
         r.register("a", mock.Mock())
         r.register("b", mock.Mock(), default=True)
         assert r.default_name == "b"
 
+    @pytest.mark.unit
     def test_get(self) -> None:
         r = ProviderRegistry()
         p = mock.Mock()
         r.register("a", p)
         assert r.get("a") is p
 
+    @pytest.mark.unit
     def test_get_missing_keyerror(self) -> None:
         r = ProviderRegistry()
         with pytest.raises(KeyError):
             r.get("no-existe")
 
+    @pytest.mark.unit
     def test_unregister_default_fallback(self) -> None:
         r = ProviderRegistry()
         p1, p2 = mock.Mock(), mock.Mock()
@@ -577,6 +655,7 @@ class TestProviderRegistry:
         assert "a" not in r
         assert len(r) == 1
 
+    @pytest.mark.unit
     def test_unregister_ultimo(self) -> None:
         r = ProviderRegistry()
         r.register("a", mock.Mock())
@@ -584,12 +663,14 @@ class TestProviderRegistry:
         assert r.default is None
         assert r.default_name is None
 
+    @pytest.mark.unit
     def test_unregister_inexistente(self) -> None:
         r = ProviderRegistry()
         r.register("a", mock.Mock())
         r.unregister("zzz")
         assert r.default_name == "a"
 
+    @pytest.mark.unit
     def test_list(self) -> None:
         r = ProviderRegistry()
         r.register("a", mock.Mock())
@@ -602,10 +683,12 @@ class TestProviderRegistry:
 # ===================================================================
 
 class TestCircuitBreakerWrapper:
+    @pytest.mark.unit
     def test_call_disponible(self) -> None:
         cb = CircuitBreaker("test", failure_threshold=1)
         assert cb.call(lambda: 42) == 42
 
+    @pytest.mark.unit
     def test_call_abre_y_lanza_error(self) -> None:
         cb = CircuitBreaker("test", failure_threshold=1)
         with pytest.raises(RuntimeError):
@@ -614,6 +697,7 @@ class TestCircuitBreakerWrapper:
         with pytest.raises(CircuitBreakerOpenError):
             cb.call(lambda: 42)
 
+    @pytest.mark.unit
     def test_open_error_atributos(self) -> None:
         err = CircuitBreakerOpenError("test", 30.0)
         assert err.provider == "test"

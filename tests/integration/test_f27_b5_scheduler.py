@@ -13,6 +13,7 @@ Cubre:
 """
 
 from __future__ import annotations
+import pytest
 
 import time
 
@@ -36,12 +37,14 @@ def _execution(
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_submit() -> None:
     s = AgentScheduler(max_concurrent=0)
     s.submit(_execution("a1"))
     assert s.queue_size == 1
 
 
+@pytest.mark.integration
 def test_submit_multiple() -> None:
     s = AgentScheduler(max_concurrent=0)
     for i in range(5):
@@ -54,6 +57,7 @@ def test_submit_multiple() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_cancel_queued() -> None:
     s = AgentScheduler(max_concurrent=0)
     s.submit(_execution("a1"))
@@ -61,6 +65,7 @@ def test_cancel_queued() -> None:
     assert s.queue_size == 0
 
 
+@pytest.mark.integration
 def test_cancel_nonexistent() -> None:
     s = AgentScheduler()
     s.cancel("nonexistent")  # no debe lanzar
@@ -71,12 +76,14 @@ def test_cancel_nonexistent() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_shutdown_empty() -> None:
     s = AgentScheduler()
     results = s.shutdown()
     assert len(results) == 0
 
 
+@pytest.mark.integration
 def test_shutdown_with_pending() -> None:
     s = AgentScheduler(max_concurrent=0)
     s.submit(_execution("a1"))
@@ -90,6 +97,7 @@ def test_shutdown_with_pending() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_fifo_by_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -103,6 +111,7 @@ def test_fifo_by_priority() -> None:
     assert q.pop().agent_id == "a1"
 
 
+@pytest.mark.integration
 def test_fifo_same_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -120,6 +129,7 @@ def test_fifo_same_priority() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_queue_size() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -131,6 +141,7 @@ def test_queue_size() -> None:
     assert q.size() == 0
 
 
+@pytest.mark.integration
 def test_queue_remove() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -142,6 +153,7 @@ def test_queue_remove() -> None:
     assert q.remove("nonexistent") is False
 
 
+@pytest.mark.integration
 def test_queue_peek() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -157,6 +169,7 @@ def test_queue_peek() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_aging_moves_to_higher_priority() -> None:
     from motor.agents.scheduler import _PriorityQueue
 
@@ -181,6 +194,7 @@ def test_aging_moves_to_higher_priority() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_no_external_dependencies() -> None:
     import inspect
 
@@ -199,6 +213,7 @@ def test_no_external_dependencies() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_running_count() -> None:
     s = AgentScheduler()
     assert s.running_count == 0

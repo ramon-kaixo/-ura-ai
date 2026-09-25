@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -45,12 +46,14 @@ class _Result:
         self.errors = errors or []
 
 
+@pytest.mark.unit
 def test_default_dedup_key() -> None:
     assert _default_dedup_key(None) == _default_dedup_key({})
     assert _default_dedup_key({"b": 1, "a": 2}) == _default_dedup_key({"a": 2, "b": 1})
     assert len(_default_dedup_key({"x": 1})) == 16
 
 
+@pytest.mark.unit
 def test_finalizar_success(monkeypatch) -> None:
     seen: list[CompileCompleted] = []
     get_bus().subscribe(CompileCompleted, lambda e: seen.append(e))
@@ -64,6 +67,7 @@ def test_finalizar_success(monkeypatch) -> None:
     assert seen[0].correlation_id == "cid123"
 
 
+@pytest.mark.unit
 def test_finalizar_failure_no_publish(monkeypatch) -> None:
     seen: list[CompileCompleted] = []
     get_bus().subscribe(CompileCompleted, lambda e: seen.append(e))
@@ -72,6 +76,7 @@ def test_finalizar_failure_no_publish(monkeypatch) -> None:
     assert seen == []
 
 
+@pytest.mark.unit
 def test_execute_compile_exception(monkeypatch, tmp_path) -> None:
     def _boom(*args, **kwargs):
         raise RuntimeError("compile falló")
@@ -81,6 +86,7 @@ def test_execute_compile_exception(monkeypatch, tmp_path) -> None:
     assert n == 0
 
 
+@pytest.mark.unit
 def test_execute_compile_lock_acquisition(monkeypatch, tmp_path) -> None:
     class _LockError(Exception):
         pass
@@ -95,6 +101,7 @@ def test_execute_compile_lock_acquisition(monkeypatch, tmp_path) -> None:
     assert n == 0
 
 
+@pytest.mark.unit
 def test_request_compile_ok(tmp_path) -> None:
     src = tmp_path / "source"
     docs = src / "docs"
@@ -113,11 +120,13 @@ def test_request_compile_ok(tmp_path) -> None:
     assert row["c"] >= 1
 
 
+@pytest.mark.unit
 def test_request_compile_dedup_key(tmp_path) -> None:
     db = tmp_path / "k.db"
     assert request_compile("t", dedup_key="fijo", db_path=db, source_dir=tmp_path) in (0, 1)
 
 
+@pytest.mark.unit
 def test_compile_result_to_claims(tmp_path) -> None:
     db = tmp_path / "c.db"
     conn = sqlite3.connect(db)
@@ -144,6 +153,7 @@ def test_compile_result_to_claims(tmp_path) -> None:
     assert claims[1].text == "n2"
 
 
+@pytest.mark.unit
 def test_compile_worker(tmp_path) -> None:
     db = tmp_path / "w.db"
     src = tmp_path / "src"

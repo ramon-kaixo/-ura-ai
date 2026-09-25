@@ -8,6 +8,7 @@ todos los contratos G-01 a G-08.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from motor.agents import (
     AgentCapability,
@@ -24,6 +25,7 @@ from motor.agents import (
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g01_agents_are_consumers() -> None:
     """Agentes consultan, no poseen conocimiento."""
     p = RuleBasedPlanner()
@@ -37,6 +39,7 @@ def test_g01_agents_are_consumers() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g02_no_direct_modification() -> None:
     """CapabilityGate no permite facts.write."""
     gate = AgentCapabilityGate(
@@ -56,6 +59,7 @@ def test_g02_no_direct_modification() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g03_official_apis() -> None:
     """AgentOrchestrator solo usa ABCs, no acceso directo."""
     import inspect
@@ -74,6 +78,7 @@ def test_g03_official_apis() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g04_auditability() -> None:
     """AgentAuditRecord contiene todos los campos necesarios."""
     from motor.agents.models import AgentAuditRecord
@@ -106,6 +111,7 @@ def test_g04_auditability() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g05_no_hidden_state() -> None:
     """AgentScheduler no retiene estado entre shutdowns."""
     s = AgentScheduler(max_concurrent=0)
@@ -130,6 +136,7 @@ def test_g05_no_hidden_state() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g06_determinism() -> None:
     """RuleBasedPlanner produce planes deterministas."""
     p = RuleBasedPlanner()
@@ -144,6 +151,7 @@ def test_g06_determinism() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_g07_scheduler_no_business_logic() -> None:
     """Scheduler solo planifica, prioriza, cancela, reintenta."""
     import inspect

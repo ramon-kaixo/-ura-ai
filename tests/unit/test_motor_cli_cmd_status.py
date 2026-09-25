@@ -23,12 +23,14 @@ def config(tmp_path: Path) -> mock.Mock:
 
 
 class TestStatus:
+    @pytest.mark.unit
     def test_sin_estado(self, config: mock.Mock) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.return_value = _res(stdout="python3\npython3\nopencode\n")
         with mock.patch("motor.cli.cmd_status._executor", fake_exec):
             assert cmd_status.cmd_status(config) is None
 
+    @pytest.mark.unit
     def test_con_estado(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_ESTADO).write_text(json.dumps({"health_score": 95}))
         fake_exec = mock.Mock()
@@ -36,6 +38,7 @@ class TestStatus:
         with mock.patch("motor.cli.cmd_status._executor", fake_exec):
             assert cmd_status.cmd_status(config) is None
 
+    @pytest.mark.unit
     def test_gethostname_falla(self, config: mock.Mock) -> None:
         with mock.patch("motor.cli.cmd_status.socket.gethostname", side_effect=OSError("x")), \
                 mock.patch("motor.cli.cmd_status.log.debug"), \
@@ -43,6 +46,7 @@ class TestStatus:
             fake_exec.run.return_value = _res(stdout="")
             assert cmd_status.cmd_status(config) is None
 
+    @pytest.mark.unit
     def test_ps_falla(self, config: mock.Mock) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.side_effect = RuntimeError("boom")
@@ -52,6 +56,7 @@ class TestStatus:
 
 
 class TestCross:
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_ESTADO).write_text(json.dumps({"health_score": 88}))
         fake_exec = mock.Mock()
@@ -59,12 +64,14 @@ class TestCross:
         with mock.patch("motor.cli.cmd_status._executor", fake_exec):
             assert cmd_status.cmd_cross(config) is None
 
+    @pytest.mark.unit
     def test_remoto_error(self, config: mock.Mock) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.return_value = _res(returncode=1, stderr="ssh fail")
         with mock.patch("motor.cli.cmd_status._executor", fake_exec):
             assert cmd_status.cmd_cross(config) is None
 
+    @pytest.mark.unit
     def test_remoto_excepcion(self, config: mock.Mock) -> None:
         fake_exec = mock.Mock()
         fake_exec.run.side_effect = TimeoutError("timeout")
@@ -73,11 +80,13 @@ class TestCross:
 
 
 class TestTrend:
+    @pytest.mark.unit
     def test_sin_archivo(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_trend(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_con_archivo(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_TRENDS).write_text(
             json.dumps({"health": 90}) + "\n" + json.dumps({"health": 91}) + "\n",
@@ -86,17 +95,20 @@ class TestTrend:
 
 
 class TestGraph:
+    @pytest.mark.unit
     def test_sin_archivo(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_graph(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_pocas_lineas(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_TRENDS).write_text(json.dumps({"health": 90}) + "\n")
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_graph(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock, tmp_path: Path) -> None:
         lines = [json.dumps({"health": h, "ts": "2026-01-01T00:00:00"}) for h in (92, 95, 98)]
         (tmp_path / cmd_status.ARCHIVO_TRENDS).write_text("\n".join(lines) + "\n")
@@ -104,17 +116,20 @@ class TestGraph:
 
 
 class TestPerf:
+    @pytest.mark.unit
     def test_sin_archivo(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_perf(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_sin_perf(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_TRENDS).write_text(json.dumps({"health": 90}) + "\n")
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_perf(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock, tmp_path: Path) -> None:
         lines = [json.dumps({"perf": {"scan_s": 1, "gen_s": 2}}) for _ in range(3)]
         (tmp_path / cmd_status.ARCHIVO_TRENDS).write_text("\n".join(lines) + "\n")
@@ -122,11 +137,13 @@ class TestPerf:
 
 
 class TestSummarise:
+    @pytest.mark.unit
     def test_sin_estado(self, config: mock.Mock) -> None:
         with pytest.raises(SystemExit) as exc:
             cmd_status.cmd_summarise(config)
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_con_estado(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_ESTADO).write_text(json.dumps({
             "health_score": 90,
@@ -136,6 +153,7 @@ class TestSummarise:
         with mock.patch("motor.cli.cmd_status.QdrantClient.instancia", return_value=mock.Mock()):
             assert cmd_status.cmd_summarise(config) is None
 
+    @pytest.mark.unit
     def test_con_trends(self, config: mock.Mock, tmp_path: Path) -> None:
         (tmp_path / cmd_status.ARCHIVO_ESTADO).write_text(json.dumps({
             "health_score": 90,

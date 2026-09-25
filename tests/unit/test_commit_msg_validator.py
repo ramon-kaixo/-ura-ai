@@ -27,10 +27,12 @@ class TestValidMessages:
             "feat(scope-con-123): con guiones y números",
         ],
     )
+    @pytest.mark.unit
     def test_accepts_conventional(self, msg: str) -> None:
         ok, _reason = validate(msg)
         assert ok
 
+    @pytest.mark.unit
     def test_accepts_body(self) -> None:
         ok, _reason = validate("fix(cli): primera línea válida\n\ncuerpo con detalles\nsegunda línea")
         assert ok
@@ -52,32 +54,38 @@ class TestInvalidMessages:
             ("fix(cli): " + "x" * 200, "larga"),
         ],
     )
+    @pytest.mark.unit
     def test_rejects_invalid(self, msg: str, substr: str) -> None:
         ok, reason = validate(msg)
         assert not ok
         assert substr in reason
 
+    @pytest.mark.unit
     def test_rejects_consecutive_blank_lines(self) -> None:
         ok, _reason = validate("fix(cli): válida\n\n\ncuerpo")
         assert not ok
 
+    @pytest.mark.unit
     def test_allows_single_blank_separator(self) -> None:
         ok, _reason = validate("fix(cli): descripción válida\n\ncuerpo")
         assert ok
 
 
 class TestMutationSensitivity:
+    @pytest.mark.unit
     def test_mutation_forbidden_regex_removed(self) -> None:
         """Si se elimina la regla FORBIDDEN_RE, 'wip' debe pasar — este test
         falla si eso ocurre (mutation testing)."""
         ok, _reason = validate("wip")
         assert not ok
 
+    @pytest.mark.unit
     def test_mutation_conventional_regex_removed(self) -> None:
         """Si se elimina CONVENTIONAL_RE, 'foo: bar baz' pasaría."""
         ok, _reason = validate("foo: bar baz qux")
         assert not ok
 
+    @pytest.mark.unit
     def test_mutation_length_check_removed(self) -> None:
         """Si se elimina el check de longitud, mensajes >100 chars pasarían."""
         ok, _reason = validate("fix: " + "x" * 200)

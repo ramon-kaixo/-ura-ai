@@ -18,6 +18,7 @@ def _patched_commands(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(main, "URA_COMMANDS", mock_ura)
 
 
+@pytest.mark.unit
 def test_setup_logging_default(monkeypatch: pytest.MonkeyPatch) -> None:
     handler = mock.Mock()
     with mock.patch("motor.cli.main.logging.StreamHandler", return_value=handler), \
@@ -31,6 +32,7 @@ def test_setup_logging_default(monkeypatch: pytest.MonkeyPatch) -> None:
         assert call(logging.INFO) in root.setLevel.call_args_list
 
 
+@pytest.mark.unit
 def test_setup_logging_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
     with mock.patch("motor.cli.main.logging.StreamHandler", return_value=mock.Mock()), \
             mock.patch("motor.cli.main.logging.Formatter"), \
@@ -41,6 +43,7 @@ def test_setup_logging_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
         assert call(logging.INFO) in root.setLevel.call_args_list
 
 
+@pytest.mark.unit
 def test_main_command_ura_commands(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cada comando URA con raw args y sys.exit."""
     fake_cfg = mock.Mock()
@@ -59,6 +62,7 @@ def test_main_command_ura_commands(monkeypatch: pytest.MonkeyPatch) -> None:
             sys_exit.reset_mock()
 
 
+@pytest.mark.unit
 def test_main_command_normal(monkeypatch: pytest.MonkeyPatch) -> None:
     """Cada comando normal (sin sys.exit)."""
     fake_cfg = mock.Mock()
@@ -78,12 +82,14 @@ def test_main_command_normal(monkeypatch: pytest.MonkeyPatch) -> None:
             sys_exit.reset_mock()
 
 
+@pytest.mark.unit
 def test_main_sin_comando(monkeypatch: pytest.MonkeyPatch) -> None:
     """Sin comando → SystemExit (argparse required)."""
     with mock.patch("motor.cli.main.sys.argv", ["ura"]), pytest.raises(SystemExit):
         main.main()
 
 
+@pytest.mark.unit
 def test_main_flag_config(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_cfg = mock.Mock()
     fake_cfg.log_level = "INFO"
@@ -96,6 +102,7 @@ def test_main_flag_config(monkeypatch: pytest.MonkeyPatch) -> None:
     assert fake_cfg.log_level == "INFO"
 
 
+@pytest.mark.unit
 def test_main_command_log_level_passthrough(monkeypatch: pytest.MonkeyPatch) -> None:
     fake_cfg = mock.Mock()
     fake_cfg.log_level = "INFO"

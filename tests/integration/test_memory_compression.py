@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from datetime import UTC, datetime, timedelta
 
@@ -20,6 +21,7 @@ def _store_episodes(store: EpisodeStore, count: int, session: str = "s1") -> Non
 
 
 class TestNeverCompress:
+    @pytest.mark.integration
     def test_never_runs(self):
         store = EpisodeStore()
         _store_episodes(store, 100)
@@ -31,6 +33,7 @@ class TestNeverCompress:
 
 
 class TestSizeBasedCompression:
+    @pytest.mark.integration
     def test_below_threshold(self):
         store = EpisodeStore()
         _store_episodes(store, 10)
@@ -39,6 +42,7 @@ class TestSizeBasedCompression:
         result = compressor.compress()
         assert result.summaries_created == 0
 
+    @pytest.mark.integration
     def test_above_threshold(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -48,6 +52,7 @@ class TestSizeBasedCompression:
         assert result.summaries_created >= 1
         assert result.episodes_compressed >= 1
 
+    @pytest.mark.integration
     def test_delete_originals(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -58,6 +63,7 @@ class TestSizeBasedCompression:
         assert result.episodes_deleted > 0
         assert store.count() < count_before
 
+    @pytest.mark.integration
     def test_keep_originals(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -69,6 +75,7 @@ class TestSizeBasedCompression:
 
 
 class TestAgeBasedCompression:
+    @pytest.mark.integration
     def test_recent_not_compressed(self):
         store = EpisodeStore()
         _store_episodes(store, 10)
@@ -77,6 +84,7 @@ class TestAgeBasedCompression:
         result = compressor.compress()
         assert result.summaries_created == 0
 
+    @pytest.mark.integration
     def test_old_episodes_compressed(self):
         store = EpisodeStore()
         old = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -90,6 +98,7 @@ class TestAgeBasedCompression:
 
 
 class TestHybridCompressionPolicy:
+    @pytest.mark.integration
     def test_combines_age_and_size(self):
         store = EpisodeStore()
         old = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -102,6 +111,7 @@ class TestHybridCompressionPolicy:
 
 
 class TestSummaryRecord:
+    @pytest.mark.integration
     def test_auto_id(self):
         from motor.intelligence.memory.compression import SummaryRecord
 
@@ -111,6 +121,7 @@ class TestSummaryRecord:
 
 
 class TestCompressionResult:
+    @pytest.mark.integration
     def test_defaults(self):
         r = CompressionResult()
         assert r.summaries_created == 0
@@ -118,12 +129,14 @@ class TestCompressionResult:
 
 
 class TestMemoryCompressor:
+    @pytest.mark.integration
     def test_compress_empty_store(self):
         store = EpisodeStore()
         compressor = MemoryCompressor(store)
         result = compressor.compress()
         assert result.summaries_created == 0
 
+    @pytest.mark.integration
     def test_summary_has_references(self):
         store = EpisodeStore()
         for i in range(20):
@@ -136,6 +149,7 @@ class TestMemoryCompressor:
         assert len(summaries) >= 1
         assert len(summaries[0].source_episode_ids) > 0
 
+    @pytest.mark.integration
     def test_summary_content(self):
         store = EpisodeStore()
         store.store(Episode(payload="Hello world", session_id="s1"))
@@ -147,6 +161,7 @@ class TestMemoryCompressor:
         assert len(summaries) >= 1
         assert "Hello" in summaries[0].summary or "Second" in summaries[0].summary
 
+    @pytest.mark.integration
     def test_multiple_sessions(self):
         store = EpisodeStore()
         for i in range(10):
@@ -157,6 +172,7 @@ class TestMemoryCompressor:
         result = compressor.compress()
         assert result.summaries_created >= 2  # one per session
 
+    @pytest.mark.integration
     def test_summary_confidence_and_importance(self):
         store = EpisodeStore()
         store.store(Episode(payload="A", session_id="s1", importance=0.9, confidence=0.8))
@@ -168,6 +184,7 @@ class TestMemoryCompressor:
         assert summaries[0].confidence > 0
         assert summaries[0].importance > 0
 
+    @pytest.mark.integration
     def test_policy_swappable(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -176,6 +193,7 @@ class TestMemoryCompressor:
         compressor.policy = SizeBasedCompression(max_episodes=10)
         assert compressor.compress().summaries_created >= 1
 
+    @pytest.mark.integration
     def test_idempotent(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -186,6 +204,7 @@ class TestMemoryCompressor:
         # Second run should produce fewer or no new summaries
         assert r2.summaries_created <= r1.summaries_created
 
+    @pytest.mark.integration
     def test_get_summary_by_id(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -197,6 +216,7 @@ class TestMemoryCompressor:
             sid = summaries[0].id
             assert compressor.get_summary(sid) is not None
 
+    @pytest.mark.integration
     def test_clear_summaries(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -207,6 +227,7 @@ class TestMemoryCompressor:
         assert compressor.clear_summaries() > 0
         assert compressor.count_summaries() == 0
 
+    @pytest.mark.integration
     def test_summary_tags(self):
         store = EpisodeStore()
         store.store(Episode(payload="A", session_id="s1", tags=["urgent", "bug"]))
@@ -221,6 +242,7 @@ class TestMemoryCompressor:
 
 
 class TestCompressionScheduler:
+    @pytest.mark.integration
     def test_enable_disable(self):
         store = EpisodeStore()
         compressor = MemoryCompressor(store)
@@ -231,6 +253,7 @@ class TestCompressionScheduler:
         scheduler.disable()
         assert not scheduler.enabled
 
+    @pytest.mark.integration
     def test_run_once(self):
         store = EpisodeStore()
         _store_episodes(store, 50)
@@ -241,6 +264,7 @@ class TestCompressionScheduler:
 
 
 class TestCompressionBenchmark:
+    @pytest.mark.integration
     def test_compression_under_2s(self):
         import time
 
@@ -259,6 +283,7 @@ class TestCompressionBenchmark:
 
 
 class TestThreadSafety:
+    @pytest.mark.integration
     def test_concurrent_compress(self):
         import concurrent.futures
 

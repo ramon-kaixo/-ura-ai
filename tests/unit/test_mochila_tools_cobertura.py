@@ -7,6 +7,7 @@ httpx.AsyncClient y de crawl4ai, sin red real ni efectos laterales.
 
 from __future__ import annotations
 
+import pytest
 import sys
 import time
 import types
@@ -135,19 +136,23 @@ def _set_client(monkeypatch: pytest.MonkeyPatch, client: FakeClient) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_en_whitelist_dentro() -> None:
     assert _en_whitelist(Path("/home/ramon/URA/ura_ia_1972/README.md")) is True
 
 
+@pytest.mark.unit
 def test_en_whitelist_fuera() -> None:
     assert _en_whitelist(Path("/etc/passwd")) is False
 
 
+@pytest.mark.unit
 def test_en_whitelist_continue_hasta_segunda_entrada(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(tools_mod, "WHITELIST_DIRS", [Path("/no/existe"), tmp_path])
     assert _en_whitelist(tmp_path / "a.txt") is True
 
 
+@pytest.mark.unit
 def test_en_whitelist_resolve_error(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(Path, "resolve", lambda self: (_ for _ in ()).throw(OSError("boom")))
     assert _en_whitelist(Path("/tmp/x")) is False
@@ -158,16 +163,19 @@ def test_en_whitelist_resolve_error(monkeypatch: pytest.MonkeyPatch) -> None:
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_extraer_texto_limpia_script_style_y_tags() -> None:
     html = "<html><head><style>a{color:red}</style></head><body><script>var x=1</script><p>Hola <b>mundo</b></p></body></html>"
     assert _extraer_texto(html) == "Hola mundo"
 
 
+@pytest.mark.unit
 def test_extraer_texto_trunca_por_max_chars() -> None:
     html = "<p>12345678901234567890</p>"
     assert _extraer_texto(html, max_chars=5) == "12345"
 
 
+@pytest.mark.unit
 def test_extraer_texto_html_vacio() -> None:
     assert _extraer_texto("") == ""
 
@@ -513,6 +521,7 @@ async def test_page_read_max_chars_acotado(monkeypatch: pytest.MonkeyPatch) -> N
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_file_read_denegado_fuera_whitelist(tmp_path: Path) -> None:
     ruta = tmp_path / "outside.txt"
     ruta.write_text("x")
@@ -520,17 +529,20 @@ def test_file_read_denegado_fuera_whitelist(tmp_path: Path) -> None:
     assert res["error"] == f"Acceso denegado: {tmp_path / '..' / ruta.name}"
 
 
+@pytest.mark.unit
 def test_file_read_relativo_no_existe() -> None:
     res = _sync_file_read("nunca-existira-mochila-tools.txt")
     assert res["error"].startswith("Archivo no encontrado:")
 
 
+@pytest.mark.unit
 def test_file_read_no_es_archivo(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(tools_mod, "WHITELIST_DIRS", [tmp_path])
     res = _sync_file_read(str(tmp_path))
     assert res["error"] == f"No es un archivo: {tmp_path}"
 
 
+@pytest.mark.unit
 def test_file_read_ok(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(tools_mod, "WHITELIST_DIRS", [tmp_path])
     archivo = tmp_path / "a.txt"
@@ -542,6 +554,7 @@ def test_file_read_ok(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     assert res["content"] == "linea1\nlinea2"
 
 
+@pytest.mark.unit
 def test_file_read_max_lines(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(tools_mod, "WHITELIST_DIRS", [tmp_path])
     archivo = tmp_path / "b.txt"
@@ -551,6 +564,7 @@ def test_file_read_max_lines(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
     assert res["content"].endswith("... (3 lineas mostradas)")
 
 
+@pytest.mark.unit
 def test_file_read_oserror(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setattr(tools_mod, "WHITELIST_DIRS", [tmp_path])
     archivo = tmp_path / "c.txt"
@@ -664,15 +678,19 @@ async def test_crawl_web_error_generico(monkeypatch: pytest.MonkeyPatch) -> None
 # ---------------------------------------------------------------------------
 
 
+@pytest.mark.unit
 def test_contrato_esquemas() -> None:
     nombres = {s["function"]["name"] for s in TOOL_SCHEMAS}
     assert nombres == {"web_search", "page_read", "file_read", "crawl_web"}
 
 
+@pytest.mark.unit
 def test_contrato_handlers() -> None:
     assert set(TOOL_HANDLERS) == {"web_search", "page_read", "file_read", "crawl_web"}
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_contrato_timeouts_positivos() -> None:
     assert SEARXNG_TIMEOUT > 0
     assert PAGEREAD_TIMEOUT > 0

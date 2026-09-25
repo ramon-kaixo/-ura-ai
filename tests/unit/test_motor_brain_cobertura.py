@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import time
 from pathlib import Path
 
@@ -24,6 +25,7 @@ def _write_py(tmp_path: object, name: str, code: str) -> Path:
     return p
 
 
+@pytest.mark.unit
 def test_analyze_file_basico(tmp_path: object) -> None:
     p = _write_py(tmp_path, "a.py", "def f1():\n    pass\n\ndef f2():\n    pass\n\nclass C:\n    pass\n")
     r = CodeAnalyzer().analyze_file(p)
@@ -33,12 +35,14 @@ def test_analyze_file_basico(tmp_path: object) -> None:
     assert r["complex_functions"] == []
 
 
+@pytest.mark.unit
 def test_analyze_file_syntax_error(tmp_path: object) -> None:
     p = _write_py(tmp_path, "bad.py", "def roto(:\n")
     r = CodeAnalyzer().analyze_file(p)
     assert r == {"error": "syntax_error"}
 
 
+@pytest.mark.unit
 def test_analyze_file_funcion_compleja(tmp_path: object) -> None:
     cuerpo = "\n".join(f"    print({i})" for i in range(60))
     p = _write_py(tmp_path, "c.py", f"def grande():\n{cuerpo}\n")
@@ -46,6 +50,7 @@ def test_analyze_file_funcion_compleja(tmp_path: object) -> None:
     assert r["complex_functions"] == ["grande"]
 
 
+@pytest.mark.unit
 def test_analyze_module_recorre(tmp_path: object) -> None:
     _write_py(tmp_path, "a.py", "def f():\n    pass\n")
     _write_py(tmp_path, "b.py", "class C:\n    pass\n")
@@ -56,12 +61,14 @@ def test_analyze_module_recorre(tmp_path: object) -> None:
 # ── advisor ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_advisor_propose_sin_propuestas(tmp_path: object) -> None:
     _write_py(tmp_path, "a.py", "def f():\n    pass\n")
     props = ArchitectureAdvisor().propose(str(tmp_path))
     assert props == []
 
 
+@pytest.mark.unit
 def test_advisor_propose_con_funcion_compleja(tmp_path: object) -> None:
     cuerpo = "\n".join(f"    print({i})" for i in range(60))
     _write_py(tmp_path, "c.py", f"def grande():\n{cuerpo}\n")
@@ -69,6 +76,7 @@ def test_advisor_propose_con_funcion_compleja(tmp_path: object) -> None:
     assert any(p["type"] == "refactor" and p["priority"] == "high" for p in props)
 
 
+@pytest.mark.unit
 def test_advisor_propose_archivo_grande(tmp_path: object) -> None:
     cuerpo = "\n".join(f"x{i} = {i}" for i in range(600))
     _write_py(tmp_path, "big.py", f"def f():\n    pass\n{cuerpo}\n")
@@ -79,6 +87,7 @@ def test_advisor_propose_archivo_grande(tmp_path: object) -> None:
 # ── executor ─────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_to_tuneladora_task_mapping() -> None:
     t = ProposalExecutor.to_tuneladora_task({"type": "refactor", "target": "x.py", "priority": "high"})
     assert t["plugin"] == "code_quality"
@@ -87,6 +96,7 @@ def test_to_tuneladora_task_mapping() -> None:
     assert t2["priority"] == "low"
 
 
+@pytest.mark.unit
 def test_proposal_to_args_completo() -> None:
     args = ProposalExecutor._proposal_to_args(
         {
@@ -116,11 +126,13 @@ def test_proposal_to_args_completo() -> None:
     assert "--nada" not in args
 
 
+@pytest.mark.unit
 def test_proposal_to_args_sin_target() -> None:
     args = ProposalExecutor._proposal_to_args({"type": "test"})
     assert args == []
 
 
+@pytest.mark.unit
 def test_execute_sin_engine() -> None:
     p = ProposalExecutor()
     p._engine = None
@@ -129,6 +141,7 @@ def test_execute_sin_engine() -> None:
     assert r["error"] == "PipelineEngine not available"
 
 
+@pytest.mark.unit
 def test_execute_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Engine:
         def run_script(self, script: str, args: list, timeout: int) -> object:
@@ -141,6 +154,7 @@ def test_execute_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["returncode"] == 0
 
 
+@pytest.mark.unit
 def test_execute_script_falla() -> None:
     class _Engine:
         def run_script(self, script: str, args: list, timeout: int) -> object:
@@ -153,6 +167,7 @@ def test_execute_script_falla() -> None:
     assert r["returncode"] == 2
 
 
+@pytest.mark.unit
 def test_execute_excepcion() -> None:
     class _Engine:
         def run_script(self, script: str, args: list, timeout: int) -> object:
@@ -166,6 +181,7 @@ def test_execute_excepcion() -> None:
     assert "exploto" in r["error"]
 
 
+@pytest.mark.unit
 def test_get_engine_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -183,6 +199,7 @@ def test_get_engine_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert p._get_engine() is None
 
 
+@pytest.mark.unit
 def test_get_engine_import_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
 
@@ -199,6 +216,7 @@ def test_get_engine_import_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_executor_sys_path_insert() -> None:
     import sys
 
@@ -225,6 +243,7 @@ def _obs(subsystem: str, status: str, raw: dict | None = None) -> HealthObservat
     return HealthObservation(timestamp=time.time(), subsystem=subsystem, status=status, raw_data=raw or {})
 
 
+@pytest.mark.unit
 def test_observer_register_y_observe() -> None:
     o = BrainObserver()
     o.register_provider("svc", lambda: {"status": "ok"})
@@ -236,6 +255,7 @@ def test_observer_register_y_observe() -> None:
     assert obs[1].anomaly == "Provider svc2 reports error"
 
 
+@pytest.mark.unit
 def test_observer_provider_que_lanza() -> None:
     o = BrainObserver()
 
@@ -249,6 +269,7 @@ def test_observer_provider_que_lanza() -> None:
     assert "Health check failed" in obs[0].anomaly
 
 
+@pytest.mark.unit
 def test_observer_latencia_critica() -> None:
     o = BrainObserver()
     o.register_provider("lento", lambda: {"status": "ok", "latency_ms": 1500})
@@ -256,6 +277,7 @@ def test_observer_latencia_critica() -> None:
     assert obs[0].anomaly == "Latency critical: 1500ms"
 
 
+@pytest.mark.unit
 def test_observer_latencia_elevada() -> None:
     o = BrainObserver()
     o.register_provider("medio", lambda: {"status": "ok", "latency_ms": 600})
@@ -264,6 +286,7 @@ def test_observer_latencia_elevada() -> None:
     assert "Latency elevated" in obs[0].anomaly
 
 
+@pytest.mark.unit
 def test_observer_sin_anomalia() -> None:
     o = BrainObserver()
     o.register_provider("bien", lambda: {"status": "ok", "latency_ms": 10})
@@ -272,6 +295,7 @@ def test_observer_sin_anomalia() -> None:
     assert obs[0].status == "ok"
 
 
+@pytest.mark.unit
 def test_observer_status_unknown() -> None:
     o = BrainObserver()
     o.register_provider("raro", lambda: {})
@@ -279,6 +303,7 @@ def test_observer_status_unknown() -> None:
     assert obs[0].status == "unknown"
 
 
+@pytest.mark.unit
 def test_observer_history_y_get_critical() -> None:
     o = BrainObserver()
     o.register_provider("a", lambda: {"status": "ok"})
@@ -301,6 +326,7 @@ class _ObserverStub:
         return self._obs
 
 
+@pytest.mark.unit
 def test_alert_provider_caido() -> None:
     eng = AlertEngine(_ObserverStub([_obs("ollama", "error", {"anomaly": "timeout"})]))
     alerts = eng.evaluate()
@@ -310,6 +336,7 @@ def test_alert_provider_caido() -> None:
     assert alerts[0].suggested_action == "Verificar conectividad y credenciales"
 
 
+@pytest.mark.unit
 def test_alert_disco_critico_y_bajo() -> None:
     eng = AlertEngine(_ObserverStub([_obs("disk", "ok", {"libre_gb": 5})]))
     alerts = eng.evaluate()
@@ -321,6 +348,7 @@ def test_alert_disco_critico_y_bajo() -> None:
     assert eng3.evaluate() == []
 
 
+@pytest.mark.unit
 def test_alert_degradacion() -> None:
     obs = [
         _obs("a", "ok", {"latency_ms": 900}),
@@ -332,6 +360,7 @@ def test_alert_degradacion() -> None:
     assert any("DEGRADACION" in a.title for a in alerts)
 
 
+@pytest.mark.unit
 def test_alert_red() -> None:
     obs = [_obs("search", "ok", {"latency_ms": 900})]
     eng = AlertEngine(_ObserverStub(obs))
@@ -339,6 +368,7 @@ def test_alert_red() -> None:
     assert any("red" in a.title.lower() for a in alerts)
 
 
+@pytest.mark.unit
 def test_alert_red_excluye_error_y_disk() -> None:
     obs = [_obs("disk", "error", {"latency_ms": 900})]
     eng = AlertEngine(_ObserverStub(obs))
@@ -346,6 +376,7 @@ def test_alert_red_excluye_error_y_disk() -> None:
     assert not any("red" in a.title.lower() for a in alerts)
 
 
+@pytest.mark.unit
 def test_alert_history_y_critical() -> None:
     eng = AlertEngine(_ObserverStub([_obs("x", "error")]))
     eng.evaluate()
@@ -357,6 +388,7 @@ def test_alert_history_y_critical() -> None:
 # ── web_adapter ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_web_adapter_search_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     a = WebLearningAdapter()
 
@@ -383,6 +415,7 @@ def test_web_adapter_search_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r[0]["relevance"] >= 0.0
 
 
+@pytest.mark.unit
 def test_web_adapter_search_error() -> None:
     a = WebLearningAdapter()
 
@@ -396,6 +429,7 @@ def test_web_adapter_search_error() -> None:
     assert "error" in r[0]
 
 
+@pytest.mark.unit
 def test_web_adapter_crawl_ok() -> None:
     a = WebLearningAdapter()
 
@@ -409,6 +443,7 @@ def test_web_adapter_crawl_ok() -> None:
     assert r["content"] == "x" * 50
 
 
+@pytest.mark.unit
 def test_web_adapter_crawl_error() -> None:
     a = WebLearningAdapter()
 
@@ -423,6 +458,7 @@ def test_web_adapter_crawl_error() -> None:
     assert "no accesible" in r["error"]
 
 
+@pytest.mark.unit
 def test_web_adapter_summarize() -> None:
     a = WebLearningAdapter()
 
@@ -434,6 +470,7 @@ def test_web_adapter_summarize() -> None:
     assert a.summarize("texto") == "resumen"
 
 
+@pytest.mark.unit
 def test_web_adapter_summarize_error() -> None:
     a = WebLearningAdapter()
 
@@ -446,6 +483,7 @@ def test_web_adapter_summarize_error() -> None:
     assert a.summarize("texto") == ""
 
 
+@pytest.mark.unit
 def test_web_adapter_learn_from_web(monkeypatch: pytest.MonkeyPatch) -> None:
     a = WebLearningAdapter()
 
@@ -470,6 +508,7 @@ def test_web_adapter_learn_from_web(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["summary"] == "resumen final"
 
 
+@pytest.mark.unit
 def test_web_adapter_learn_sin_summary() -> None:
     a = WebLearningAdapter()
 
@@ -489,6 +528,7 @@ def test_web_adapter_learn_sin_summary() -> None:
     assert r["summary"] == "No summarizer available"
 
 
+@pytest.mark.unit
 def test_web_adapter_score() -> None:
     a = WebLearningAdapter()
     assert a._score("python codigo", {"title": "python", "snippet": "codigo"}) == 1.0
@@ -515,6 +555,7 @@ def _executor_stub(result: dict | None = None) -> object:
     return _E()
 
 
+@pytest.mark.unit
 def test_classify_risk() -> None:
     a = _alert("warning", "Disco bajo")
     p = MaintenanceProposal(alert=a, action="auto_fix_ruff", target="x", params={})
@@ -533,6 +574,7 @@ def test_classify_risk() -> None:
     assert AutoMaintainer._classify_risk(p7) == "medium"
 
 
+@pytest.mark.unit
 def test_alert_to_proposal() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -543,6 +585,7 @@ def test_alert_to_proposal() -> None:
     assert m._alert_to_proposal(_alert("warning", "Otro titulo")) is None
 
 
+@pytest.mark.unit
 def test_scan_clasifica_riesgos() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -557,6 +600,7 @@ def test_scan_clasifica_riesgos() -> None:
     assert props[0].auto_execute is True
 
 
+@pytest.mark.unit
 def test_propose_and_maybe_execute() -> None:
     o = BrainObserver()
     ex = _executor_stub()
@@ -567,6 +611,7 @@ def test_propose_and_maybe_execute() -> None:
     assert results[0]["auto_executed"] is True
 
 
+@pytest.mark.unit
 def test_approve_and_execute_critical() -> None:
     o = BrainObserver()
     ex = _executor_stub()
@@ -576,6 +621,7 @@ def test_approve_and_execute_critical() -> None:
     assert r["status"] == "critical_blocked"
 
 
+@pytest.mark.unit
 def test_approve_and_execute_rechazado() -> None:
     o = BrainObserver()
     ex = _executor_stub()
@@ -585,6 +631,7 @@ def test_approve_and_execute_rechazado() -> None:
     assert r["status"] == "rejected"
 
 
+@pytest.mark.unit
 def test_approve_and_execute_ok() -> None:
     o = BrainObserver()
     ex = _executor_stub()
@@ -597,6 +644,7 @@ def test_approve_and_execute_ok() -> None:
     assert len(m.get_resolved()) == 1
 
 
+@pytest.mark.unit
 def test_action_to_type() -> None:
     assert AutoMaintainer._action_to_type("clean_disk") == "refactor"
     assert AutoMaintainer._action_to_type("check_network") == "test"
@@ -604,6 +652,7 @@ def test_action_to_type() -> None:
     assert AutoMaintainer._action_to_type("desconocido") == "generic"
 
 
+@pytest.mark.unit
 def test_verify_resolution() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -617,6 +666,7 @@ def test_verify_resolution() -> None:
     assert m._verify_resolution(prop) == {"resolved": False, "error": "Subsystem not found"}
 
 
+@pytest.mark.unit
 def test_auto_fix_code_sin_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -627,6 +677,7 @@ def test_auto_fix_code_sin_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["committed"] is False
 
 
+@pytest.mark.unit
 def test_auto_fix_code_con_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -637,6 +688,7 @@ def test_auto_fix_code_con_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["status"] == "committed"
 
 
+@pytest.mark.unit
 def test_run_ruff_error() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -644,12 +696,14 @@ def test_run_ruff_error() -> None:
     assert "fallo" in res
 
 
+@pytest.mark.unit
 def test_git_has_changes_error() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
     assert m._git_has_changes("zzz", Path("/no/existe")) is False
 
 
+@pytest.mark.unit
 def test_git_commit_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import subprocess
 
@@ -665,6 +719,7 @@ def test_git_commit_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["status"] == "commit_failed"
 
 
+@pytest.mark.unit
 def test_scheduler_start_y_stop(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
 
@@ -698,6 +753,7 @@ def test_scheduler_start_y_stop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_scheduler_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -717,6 +773,7 @@ def test_scheduler_import_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert m.get_scheduler_status()["reason"] == "Scheduler not started"
 
 
+@pytest.mark.unit
 def test_stop_scheduler_sin_scheduler() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -724,6 +781,7 @@ def test_stop_scheduler_sin_scheduler() -> None:
     m.stop_scheduler()  # rama else: no hace nada
 
 
+@pytest.mark.unit
 def test_get_pending_y_resolved() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -736,6 +794,7 @@ def test_get_pending_y_resolved() -> None:
 # ── ramas restantes ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_scan_alerta_sin_propuesta() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -743,6 +802,7 @@ def test_scan_alerta_sin_propuesta() -> None:
     assert m.scan() == []
 
 
+@pytest.mark.unit
 def test_scan_alerta_no_convertible() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -752,6 +812,7 @@ def test_scan_alerta_no_convertible() -> None:
     assert m.scan() == []
 
 
+@pytest.mark.unit
 def test_observer_history_duplicado() -> None:
     o = BrainObserver()
     obs = _obs("dup", "ok")
@@ -760,6 +821,7 @@ def test_observer_history_duplicado() -> None:
     assert len(o.get_history("dup")) == 2
 
 
+@pytest.mark.unit
 def test_propose_y_ejecutar_pendiente() -> None:
     o = BrainObserver()
     ex = _executor_stub()
@@ -771,6 +833,7 @@ def test_propose_y_ejecutar_pendiente() -> None:
     assert results[0]["status"] == "pending"
 
 
+@pytest.mark.unit
 def test_scheduler_real_sin_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
 
@@ -802,6 +865,7 @@ def test_scheduler_real_sin_event_loop(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_run_ruff_ok() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -809,12 +873,14 @@ def test_run_ruff_ok() -> None:
     assert "exit=" in res
 
 
+@pytest.mark.unit
 def test_git_has_changes_true() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
     assert m._git_has_changes("motor/brain/", Path(__file__).resolve().parents[2]) in (True, False)
 
 
+@pytest.mark.unit
 def test_git_commit_ok() -> None:
     o = BrainObserver()
     m = AutoMaintainer(o, _executor_stub())
@@ -822,6 +888,7 @@ def test_git_commit_ok() -> None:
     assert r["status"] in ("committed", "commit_failed")
 
 
+@pytest.mark.unit
 def test_observer_history_primer_registro() -> None:
     o = BrainObserver()
     obs = _obs("nuevo", "ok")
@@ -829,6 +896,7 @@ def test_observer_history_primer_registro() -> None:
     assert o.get_history("nuevo") == [obs]
 
 
+@pytest.mark.unit
 def test_web_adapter_sin_searcher() -> None:
     a = WebLearningAdapter()
     a._load_modules = lambda: None
@@ -837,6 +905,7 @@ def test_web_adapter_sin_searcher() -> None:
     assert r[0]["error"] == "No searcher available"
 
 
+@pytest.mark.unit
 def test_web_adapter_sin_crawler() -> None:
     a = WebLearningAdapter()
     a._load_modules = lambda: None
@@ -845,6 +914,7 @@ def test_web_adapter_sin_crawler() -> None:
     assert r["error"] == "No crawler available"
 
 
+@pytest.mark.unit
 def test_web_adapter_learn_sin_sources() -> None:
     a = WebLearningAdapter()
 

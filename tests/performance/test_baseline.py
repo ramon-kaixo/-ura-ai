@@ -9,6 +9,7 @@ Marcador: ``performance`` — excluible con ``-m "not performance"``.
 
 from __future__ import annotations
 
+import pytest
 import time
 from typing import Any
 

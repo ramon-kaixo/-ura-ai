@@ -17,20 +17,24 @@ from motor.memory.timeline import MemoryTimeline
 # ── crypto ───────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_encrypt_sin_clave_devuelve_plaintext() -> None:
     raw = b"hola mundo"
     assert crypto.encrypt(raw, "") == raw
 
 
+@pytest.mark.unit
 def test_decrypt_sin_clave_devuelve_ciphertext() -> None:
     raw = b"hola mundo"
     assert crypto.decrypt(raw, "") == raw
 
 
+@pytest.mark.unit
 def test_is_encryption_available_booleano() -> None:
     assert isinstance(crypto.is_encryption_available(), bool)
 
 
+@pytest.mark.unit
 def test_derive_key_sin_cryptography_devuelve_none(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(crypto, "_ENCRYPTION_ENABLED", False)
     assert crypto._derive_key("k", b"salt") is None
@@ -38,6 +42,7 @@ def test_derive_key_sin_cryptography_devuelve_none(monkeypatch: pytest.MonkeyPat
     assert crypto.decrypt(b"x", "k") == b"x"
 
 
+@pytest.mark.unit
 def test_import_cryptography_fallido_marca_deshabilitado(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
     import importlib
@@ -58,6 +63,7 @@ def test_import_cryptography_fallido_marca_deshabilitado(monkeypatch: pytest.Mon
     assert crypto._ENCRYPTION_ENABLED or not crypto._ENCRYPTION_ENABLED
 
 
+@pytest.mark.unit
 def test_encrypt_derived_none_devuelve_plaintext(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(crypto, "_ENCRYPTION_ENABLED", True)
     monkeypatch.setattr(crypto, "_derive_key", lambda k, s: None)
@@ -65,6 +71,7 @@ def test_encrypt_derived_none_devuelve_plaintext(monkeypatch: pytest.MonkeyPatch
     assert crypto.decrypt(b"x", "clave") == b"x"
 
 
+@pytest.mark.unit
 def test_encrypt_con_clave_devuelve_distinto() -> None:
     if not crypto.is_encryption_available():
         pytest.skip("cryptography no instalado")
@@ -74,6 +81,7 @@ def test_encrypt_con_clave_devuelve_distinto() -> None:
     assert crypto.decrypt(enc, "mi-clave") == plain
 
 
+@pytest.mark.unit
 def test_roundtrip_clave_incorrecta_rompe_datos() -> None:
     if not crypto.is_encryption_available():
         pytest.skip("cryptography no instalado")
@@ -108,6 +116,7 @@ def _entry(
 # ── make_entry_id ────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_make_entry_id_determinista() -> None:
     a = make_entry_id("fact_added", ["v2", "v1"], 100)
     b = make_entry_id("fact_added", ["v1", "v2"], 100)
@@ -115,6 +124,7 @@ def test_make_entry_id_determinista() -> None:
     assert len(a) == 16
 
 
+@pytest.mark.unit
 def test_make_entry_id_cambia_con_evento_y_ts() -> None:
     base = make_entry_id("fact_added", ["v1"], 100)
     assert make_entry_id("rollback", ["v1"], 100) != base
@@ -124,6 +134,7 @@ def test_make_entry_id_cambia_con_evento_y_ts() -> None:
 # ── MemoryTimeline ───────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_append_y_size() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0))
@@ -132,6 +143,7 @@ def test_append_y_size() -> None:
     assert set(tl.entries.keys()) == {"a", "b"}
 
 
+@pytest.mark.unit
 def test_append_duplicado_lanza_keyerror() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0))
@@ -139,12 +151,14 @@ def test_append_duplicado_lanza_keyerror() -> None:
         tl.append(_entry("a", 1.0))
 
 
+@pytest.mark.unit
 def test_state_at_antes_del_primero_devuelve_none() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 5.0))
     assert tl.state_at(4.0) is None
 
 
+@pytest.mark.unit
 def test_state_at_devuelve_vigente() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 5.0, [("f1", "v1", "alice")]))
@@ -154,6 +168,7 @@ def test_state_at_devuelve_vigente() -> None:
     assert tl.state_at(99.0).entry_id == "b"
 
 
+@pytest.mark.unit
 def test_state_at_desempate_mayor_entry_id() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("aaa", 5.0))
@@ -161,6 +176,7 @@ def test_state_at_desempate_mayor_entry_id() -> None:
     assert tl.state_at(5.0).entry_id == "bbb"
 
 
+@pytest.mark.unit
 def test_by_entity_insensible_a_mayusculas() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0, [("f1", "v1", "Alice")]))
@@ -168,6 +184,7 @@ def test_by_entity_insensible_a_mayusculas() -> None:
     assert [e.entry_id for e in tl.by_entity("nadie")] == []
 
 
+@pytest.mark.unit
 def test_by_time_rango() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0))
@@ -177,6 +194,7 @@ def test_by_time_rango() -> None:
     assert [e.entry_id for e in tl.by_time(0.0, 99.0)] == ["a", "b", "c"]
 
 
+@pytest.mark.unit
 def test_by_event() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0, event=MemoryEventType.FACT_ADDED))
@@ -185,6 +203,7 @@ def test_by_event() -> None:
     assert [e.entry_id for e in tl.by_event("nada")] == []
 
 
+@pytest.mark.unit
 def test_get_devuelve_entry_o_none() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("x", 1.0))
@@ -192,6 +211,7 @@ def test_get_devuelve_entry_o_none() -> None:
     assert tl.get("zzz") is None
 
 
+@pytest.mark.unit
 def test_diff_compara_refs() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0, [("f1", "v1", "alice"), ("f2", "v1", "bob")]))
@@ -202,6 +222,7 @@ def test_diff_compara_refs() -> None:
     assert d["common"] == ["f2"]
 
 
+@pytest.mark.unit
 def test_diff_entry_inexistente_lanza() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0))
@@ -209,6 +230,7 @@ def test_diff_entry_inexistente_lanza() -> None:
         tl.diff("a", "zzz")
 
 
+@pytest.mark.unit
 def test_timeline_propiedad_es_copia() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0))
@@ -216,6 +238,7 @@ def test_timeline_propiedad_es_copia() -> None:
     assert tl.size == 1
 
 
+@pytest.mark.unit
 def test_index_por_entidad_y_evento() -> None:
     tl = MemoryTimeline()
     tl.append(_entry("a", 1.0, [("f1", "v1", "alice")], event=MemoryEventType.FACT_ADDED))

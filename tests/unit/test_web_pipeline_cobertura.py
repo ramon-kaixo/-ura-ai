@@ -13,6 +13,7 @@ components internos (cleaner, ranker, summarizer, citation) son reales.
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from typing import Any
 
@@ -94,6 +95,7 @@ def _make_registry() -> _FakeRegistry:
 class TestSearch:
     """Búsqueda."""
 
+    @pytest.mark.unit
     def test_busqueda_con_fuentes(self) -> None:
         registry = _make_registry()
         p = WebPipeline(registry)
@@ -101,12 +103,14 @@ class TestSearch:
         assert len(results) == 1
         assert PipelineStage.SEARCH in p._stage_times
 
+    @pytest.mark.unit
     def test_busqueda_sin_fuentes_usa_registry(self) -> None:
         registry = _make_registry()
         p = WebPipeline(registry)
         results = p.search("q")
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_busqueda_keyerror_salta_fuente(self) -> None:
         class _RegistryConFallos:
             def list_searchers(self) -> list[str]:
@@ -121,18 +125,21 @@ class TestSearch:
         results = p.search("q")
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_busqueda_vacia(self) -> None:
         registry = _make_registry()
         registry.searchers = {}  # type: ignore[assignment]
         p = WebPipeline(registry)
         assert p.search("q") == []
 
+    @pytest.mark.unit
     def test_fetch(self) -> None:
         p = WebPipeline(_make_registry())
         html = p.fetch("https://example.com/a")
         assert "hola" in html
         assert PipelineStage.CRAWL in p._stage_times
 
+    @pytest.mark.unit
     def test_extract(self) -> None:
         p = WebPipeline(_make_registry())
         doc = p.extract("<html></html>", "https://example.com/a")
@@ -143,12 +150,14 @@ class TestSearch:
 class TestClean:
     """Limpieza y deduplicación."""
 
+    @pytest.mark.unit
     def test_clean(self) -> None:
         p = WebPipeline(_make_registry())
         cleaned = p.clean([_document()])
         assert len(cleaned.documents) == 1
         assert PipelineStage.CLEAN in p._stage_times
 
+    @pytest.mark.unit
     def test_clean_dedup_y_vacias(self) -> None:
         p = WebPipeline(_make_registry())
         cleaned = p.clean([_document(), _document(), _document(text="")])
@@ -159,6 +168,7 @@ class TestClean:
         assert cleaned.stats.documents_removed_empty == 0
         assert cleaned.stats.documents_removed_duplicate_url == 2
 
+    @pytest.mark.unit
     def test_clean_rdeduplica_por_contenido(self) -> None:
         p = WebPipeline(_make_registry())
         a = _document(url="https://example.com/a")
@@ -166,6 +176,7 @@ class TestClean:
         cleaned = p.clean([a, b])
         assert len(cleaned.documents) == 1
 
+    @pytest.mark.unit
     def test_clean_min_words(self) -> None:
         p = WebPipeline(_make_registry())
         cleaned = p.clean([_document(text="corto")], min_words=5)
@@ -175,6 +186,7 @@ class TestClean:
 class TestRank:
     """Ranking."""
 
+    @pytest.mark.unit
     def test_rank_usa_registry(self) -> None:
         registry = _make_registry()
         p = WebPipeline(registry)
@@ -183,6 +195,7 @@ class TestRank:
         assert list(ranked) == results
         assert PipelineStage.RANK in p._stage_times
 
+    @pytest.mark.unit
     def test_rank_documents_real(self) -> None:
         p = WebPipeline(_make_registry())
         ranked = p.rank_documents("python", [_document(text="python es un lenguaje de programación usado y popular")])
@@ -190,6 +203,7 @@ class TestRank:
         assert ranked[0].document.url == "https://example.com/a"
         assert PipelineStage.RANK in p._stage_times
 
+    @pytest.mark.unit
     def test_rank_documents_sin_posiciones(self) -> None:
         p = WebPipeline(_make_registry())
         ranked = p.rank_documents("q", [_document()])
@@ -199,12 +213,14 @@ class TestRank:
 class TestSummarize:
     """Resumen extractivo y vía registry."""
 
+    @pytest.mark.unit
     def test_summarize_documents_reales(self) -> None:
         p = WebPipeline(_make_registry())
         summary: Summary = p.summarize_documents([_document(text="Primera frase del documento. Segunda frase.")])
         assert summary.sentences
         assert PipelineStage.SUMMARIZE in p._stage_times
 
+    @pytest.mark.unit
     def test_summarize_via_registry(self) -> None:
         p = WebPipeline(_make_registry())
         summary, citations = p.summarize("q", [_document()])
@@ -212,6 +228,7 @@ class TestSummarize:
         assert len(citations) == 1
         assert PipelineStage.SUMMARIZE in p._stage_times
 
+    @pytest.mark.unit
     def test_cite(self) -> None:
         p = WebPipeline(_make_registry())
         doc = _document()
@@ -231,6 +248,7 @@ class TestSummarize:
 class TestRun:
     """Pipeline completo."""
 
+    @pytest.mark.unit
     def test_run_completo(self) -> None:
         p = WebPipeline(_make_registry())
         result = p.run("q", limit=10)
@@ -242,6 +260,7 @@ class TestRun:
         assert result["elapsed_ms"] >= 0
         assert "search" in result["stage_times"]
 
+    @pytest.mark.unit
     def test_run_sin_extract_ni_summarize(self) -> None:
         p = WebPipeline(_make_registry())
         result = p.run("q", extract=False, summarize=False)
@@ -251,6 +270,7 @@ class TestRun:
         assert result["elapsed_ms"] >= 0
         assert "search" in result["stage_times"]
 
+    @pytest.mark.unit
     def test_run_error_fetch_se_ignora(self) -> None:
         registry = _make_registry()
 
@@ -263,6 +283,7 @@ class TestRun:
         assert result["results"] == []
         assert result["summary"] is None
 
+    @pytest.mark.unit
     def test_run_sin_documentos_no_resume(self) -> None:
         registry = _make_registry()
 
@@ -312,10 +333,12 @@ class TestPersist:
         monkeypatch.setattr(motor.core.fusion.bridge, "knowledge_fact_to_semantic_fact", _convert)
         monkeypatch.setattr(motor.intelligence.memory.semantic, "SemanticFact", _Fact)
 
+    @pytest.mark.unit
     def test_persist_sin_documentos(self) -> None:
         p = WebPipeline(_make_registry())
         assert p.persist([], store=object()) == {"stored": 0, "errors": []}
 
+    @pytest.mark.unit
     def test_persist_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._patch_fusion(monkeypatch, accepted=["kf1", "kf2"])
         records: list[Any] = []
@@ -330,6 +353,7 @@ class TestPersist:
         assert records[0].kwargs == {"text": "text-kf1"}
         # evidence_id/position/document_hash cubiertos por _convert
 
+    @pytest.mark.unit
     def test_persist_error_pipeline(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._patch_fusion(monkeypatch, accepted=[], run_error=RuntimeError("fusion fallo"))
         p = WebPipeline(_make_registry())
@@ -338,6 +362,7 @@ class TestPersist:
         assert len(result["errors"]) == 1
         assert "fusion fallo" in result["errors"][0]
 
+    @pytest.mark.unit
     def test_persist_error_por_fact(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.core.fusion.bridge
         import motor.core.fusion.engine
@@ -379,9 +404,11 @@ class TestPersist:
 class TestRegistryProperty:
     """Acceso al registry."""
 
+    @pytest.mark.unit
     def test_self_registry(self) -> None:
         registry = _make_registry()
         assert WebPipeline(registry).registry is registry
 
+    @pytest.mark.unit
     def test_stage_times_init(self) -> None:
         assert WebPipeline(_make_registry())._stage_times == {}

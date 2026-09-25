@@ -8,6 +8,7 @@ subcadena SQL + params para las rutas de grafo.
 
 from __future__ import annotations
 
+import pytest
 import json
 import sqlite3
 from pathlib import Path
@@ -55,76 +56,99 @@ def _row(**vals: Any) -> FakeRow:
 
 
 class TestSanitizeFilename:
+    @pytest.mark.unit
     def test_normal(self) -> None:
         assert kb._sanitize_filename("My Doc") == "my_doc"
 
+    @pytest.mark.unit
     def test_especiales(self) -> None:
         assert kb._sanitize_filename("A/B?C:D*E") == "a_b_c_d_e"
 
+    @pytest.mark.unit
     def test_vacio_queda_untitled(self) -> None:
         assert kb._sanitize_filename("___") == "untitled"
 
+    @pytest.mark.unit
     def test_trunca_a_200(self) -> None:
         name = "x" * 500
         assert len(kb._sanitize_filename(name)) == kb._MAX_FILENAME_LENGTH
 
+    @pytest.mark.unit
     def test_mantiene_guiones_y_digitos(self) -> None:
         assert kb._sanitize_filename("Doc-123_abc") == "doc-123_abc"
 
 
 class TestSafeMarkdown:
+    @pytest.mark.unit
     def test_escapa_menor_y_ampersand(self) -> None:
         assert kb._safe_markdown("a < b & c") == "a &lt; b &amp; c"
 
+    @pytest.mark.unit
     def test_no_escapa_otros(self) -> None:
         assert kb._safe_markdown('> y "comillas" y \'ap\'') == '> y "comillas" y \'ap\''
 
+    @pytest.mark.unit
     def test_preserva_bloques_codigo(self) -> None:
         text = "```python\nif a < b: pass\n```"
         assert kb._safe_markdown(text) == "```python\nif a &lt; b: pass\n```"
 
+    @pytest.mark.unit
     def test_preserva_entidades_html(self) -> None:
         assert kb._safe_markdown("&#169; &copy;") == "&#169; &copy;"
 
+    @pytest.mark.unit
     def test_corrige_doble_escape(self) -> None:
         assert kb._safe_markdown("&amp;lt;") == "&lt;"
 
+    @pytest.mark.unit
     def test_entidades_numericas_preservadas(self) -> None:
         assert kb._safe_markdown("x &#8212; y") == "x &#8212; y"
 
 
 class TestVerifyLinks:
+    @pytest.mark.unit
     def test_sin_enlaces(self) -> None:
         assert kb._verify_links("texto sin enlaces", {"a"}) == []
 
+    @pytest.mark.unit
     def test_enlace_valido(self) -> None:
         content = "ver (aabbccddeeff.md) y (112233445566.md)"
         assert kb._verify_links(content, {"aabbccddeeff", "112233445566"}) == []
 
+    @pytest.mark.unit
     def test_enlace_roto(self) -> None:
         content = "roto (000000000000.md) y (aabbccddeeff.md)"
         assert kb._verify_links(content, {"aabbccddeeff"}) == ["000000000000"]
 
+    @pytest.mark.unit
     def test_no_confunde_no_enlace(self) -> None:
         assert kb._verify_links("(no es hex).md", set()) == []
 
 
 class TestManifest:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_sin_archivo(self, tmp_path: Path) -> None:
         assert kb._load_manifest(tmp_path) == {}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_valido(self, tmp_path: Path) -> None:
         meta = tmp_path / ".meta"
         meta.mkdir()
         (meta / "manifest.json").write_text(json.dumps({"a": "h1"}))
         assert kb._load_manifest(tmp_path) == {"a": "h1"}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_corrupto(self, tmp_path: Path) -> None:
         meta = tmp_path / ".meta"
         meta.mkdir()
         (meta / "manifest.json").write_text("{not json")
         assert kb._load_manifest(tmp_path) == {}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_error_oserror(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         meta = tmp_path / ".meta"
         meta.mkdir()
@@ -137,6 +161,7 @@ class TestManifest:
         monkeypatch.setattr(Path, "read_text", boom)
         assert kb._load_manifest(tmp_path) == {}
 
+    @pytest.mark.unit
     def test_save_crea_archivo(self, tmp_path: Path) -> None:
         kb._save_manifest(tmp_path, {"b": "h2", "a": "h1"})
         manifest_file = tmp_path / ".meta" / "manifest.json"
@@ -145,6 +170,7 @@ class TestManifest:
 
 
 class TestContentHash:
+    @pytest.mark.unit
     def test_sha256_estable(self) -> None:
         h1 = kb._content_hash("hola")
         assert h1 == kb._content_hash("hola")
@@ -153,6 +179,7 @@ class TestContentHash:
 
 
 class TestGenerateKnowledgeBase:
+    @pytest.mark.unit
     def test_bd_vacia_devuelve_cero(self, tmp_path: Path) -> None:
         db = tmp_path / "grafo.db"
         conn = sqlite3.connect(db)
@@ -163,6 +190,7 @@ class TestGenerateKnowledgeBase:
         assert kb.generate_knowledge_base(db, out) == 0
         assert not out.exists()
 
+    @pytest.mark.unit
     def test_sin_cursor_devuelve_cero(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"SELECT COUNT(*) as c FROM kg_nodes": None})
 
@@ -173,6 +201,7 @@ class TestGenerateKnowledgeBase:
         assert kb.generate_knowledge_base(tmp_path / "n.db") == 0
         assert conn.closed
 
+    @pytest.mark.unit
     def test_end_to_end(self, tmp_path: Path) -> None:
         db = tmp_path / "grafo.db"
         conn = sqlite3.connect(db)
@@ -235,6 +264,7 @@ class TestGenerateKnowledgeBase:
 
 
 class TestGenerarKnowledgeBase:
+    @pytest.mark.unit
     def test_ok_atomico(self, tmp_path: Path) -> None:
         out = tmp_path / "out"
         nodes = [
@@ -260,6 +290,7 @@ class TestGenerarKnowledgeBase:
         assert (out / "tipo" / "aa1122334455.md").exists()
         assert (out / ".meta" / "manifest.json").exists()
 
+    @pytest.mark.unit
     def test_excepcion_devuelve_cero(self, tmp_path: Path, caplog: pytest.LogCaptureFixture) -> None:
         class BoomConn:
             def execute(self, sql: str, params: Any = ()) -> BoomConn:
@@ -271,12 +302,14 @@ class TestGenerarKnowledgeBase:
 
 
 class TestLogResultado:
+    @pytest.mark.unit
     def test_sin_enlaces_rotos(self, caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level("INFO", logger="ura.knowledge.knowledge_base"):
             kb._log_resultado(3, 1, Path("/tmp/out"), 0)
         assert "3 docs (1 changed) in /tmp/out" in caplog.text
         assert "broken" not in caplog.text
 
+    @pytest.mark.unit
     def test_con_enlaces_rotos(self, caplog: pytest.LogCaptureFixture) -> None:
         with caplog.at_level("INFO", logger="ura.knowledge.knowledge_base"):
             kb._log_resultado(3, 2, Path("/tmp/out"), 5)
@@ -284,6 +317,7 @@ class TestLogResultado:
 
 
 class TestCargarDatosGrafo:
+    @pytest.mark.unit
     def test_lee_edges_feedback_y_nodos(self) -> None:
         nodes = [
             _row(id="aa11", type="t", path="/a", frontmatter="{}", body="b"),
@@ -306,6 +340,7 @@ class TestCargarDatosGrafo:
         assert by_type["t"][0]["rels"] == ["bb22"]
         assert by_type["doc"][0]["title"] == "bb22"
 
+    @pytest.mark.unit
     def test_batch_vacio_termina_loop(self) -> None:
         conn = FakeConn(
             {
@@ -320,6 +355,7 @@ class TestCargarDatosGrafo:
 
 
 class TestConstruirDocEntry:
+    @pytest.mark.unit
     def test_con_frontmatter_edges_feedback(self) -> None:
         r = _row(
             id="aa11",
@@ -339,6 +375,7 @@ class TestConstruirDocEntry:
         assert "# Titulo" in entry["content"]
         assert "## Relaciones" in entry["content"]
 
+    @pytest.mark.unit
     def test_sin_frontmatter_sin_relaciones(self) -> None:
         r = _row(id="bb22", type="t", path="/b", frontmatter=None, body=None)
         entry = kb._construir_doc_entry(r, {}, {})
@@ -348,9 +385,11 @@ class TestConstruirDocEntry:
 
 
 class TestConstruirRelaciones:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert kb._construir_relaciones([]) == ""
 
+    @pytest.mark.unit
     def test_con_relaciones(self) -> None:
         rels = [{"dst": "bb22", "relation": "rel <a>"}, {"dst": "cc33", "relation": "x"}]
         out = kb._construir_relaciones(rels)
@@ -360,12 +399,15 @@ class TestConstruirRelaciones:
 
 
 class TestConstruirRating:
+    @pytest.mark.unit
     def test_none(self) -> None:
         assert kb._construir_rating(None) == ""
 
+    @pytest.mark.unit
     def test_cero_votos(self) -> None:
         assert kb._construir_rating({"n_ratings": 0, "avg_rating": 4.0}) == ""
 
+    @pytest.mark.unit
     def test_positivo(self) -> None:
         out = kb._construir_rating({"n_ratings": 2, "avg_rating": 4.6})
         assert "⭐" * 5 in out
@@ -373,6 +415,7 @@ class TestConstruirRating:
 
 
 class TestConstruirContent:
+    @pytest.mark.unit
     def test_con_tags(self) -> None:
         fm = {"title": "T", "tags": ["a", "b"]}
         r = _row(id="aa11", type="t", path="/p", frontmatter=None, body=None)
@@ -381,6 +424,7 @@ class TestConstruirContent:
         assert "# T" in out
         assert "*Generated by Knowledge Engine v0.2.0*" in out
 
+    @pytest.mark.unit
     def test_sin_tags(self) -> None:
         fm: dict[str, Any] = {}
         r = _row(id="aa11", type="t", path="/p", frontmatter=None, body=None)
@@ -412,6 +456,7 @@ class TestEscribirDocs:
             ],
         }
 
+    @pytest.mark.unit
     def test_escribe_ordenado(self, tmp_path: Path) -> None:
         nav, count, changed = kb._escribir_docs(tmp_path, self._by_type(), {}, {})
         assert count == 2
@@ -419,6 +464,7 @@ class TestEscribirDocs:
         assert [next(iter(e)) for e in nav] == ["alfa", "zeta"]
         assert (tmp_path / "alfa" / "aa11.md").read_text() == "contenido a"
 
+    @pytest.mark.unit
     def test_documento_sin_cambios_no_reescribe(self, tmp_path: Path) -> None:
         prev = {"aa11": kb._content_hash("contenido a"), "zz11": "otro"}
         _nav, count, changed = kb._escribir_docs(tmp_path, self._by_type(), prev, {})
@@ -429,10 +475,12 @@ class TestEscribirDocs:
 
 
 class TestVerificarEnlaces:
+    @pytest.mark.unit
     def test_sin_rotos(self) -> None:
         by_type = {"t": [{"id": "aa11", "content": "ok (bb22cc33dd44.md)"}]}
         assert kb._verificar_enlaces(by_type, {"bb22cc33dd44"}) == 0
 
+    @pytest.mark.unit
     def test_con_rotos(self, caplog: pytest.LogCaptureFixture) -> None:
         by_type = {"t": [{"id": "aa11", "content": "roto (000000000000.md) y (111111111111.md)"}]}
         with caplog.at_level("WARNING", logger="ura.knowledge.knowledge_base"):
@@ -441,6 +489,7 @@ class TestVerificarEnlaces:
 
 
 class TestEscribirConfigMkdocs:
+    @pytest.mark.unit
     def test_genera_yml_y_manifest(self, tmp_path: Path) -> None:
         nav = [{"tipo": [{"Titulo": "tipo/aa11.md"}]}]
         kb._escribir_config_mkdocs(tmp_path, nav, {"aa11": "h1"})
@@ -450,6 +499,7 @@ class TestEscribirConfigMkdocs:
 
 
 class TestEscribirIndex:
+    @pytest.mark.unit
     def test_index_ordenado(self, tmp_path: Path) -> None:
         by_type = {
             "zeta": [{"id": "zz11", "title": "Zeta", "path": "/z"}],
@@ -467,6 +517,7 @@ class TestEscribirIndex:
 
 
 class TestSwapAtomico:
+    @pytest.mark.unit
     def test_sin_destino_previo(self, tmp_path: Path) -> None:
         out = tmp_path / "out"
         dest = tmp_path / "tmp" / "docs"
@@ -477,6 +528,7 @@ class TestSwapAtomico:
         assert not dest.exists()
         assert not (tmp_path / "out.bak").exists()
 
+    @pytest.mark.unit
     def test_con_destino_previo(self, tmp_path: Path) -> None:
         out = tmp_path / "out"
         out.mkdir()
@@ -489,6 +541,7 @@ class TestSwapAtomico:
         assert not (out / "old.md").exists()
         assert not (tmp_path / "out.bak").exists()
 
+    @pytest.mark.unit
     def test_con_backup_previo_eliminado(self, tmp_path: Path) -> None:
         out = tmp_path / "out"
         out.mkdir()

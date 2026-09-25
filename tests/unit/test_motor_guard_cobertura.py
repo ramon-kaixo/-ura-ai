@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +41,7 @@ class _FakeExecutor:
 # ── verifier ─────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_verificacion_sin_cambios_skip(monkeypatch: pytest.MonkeyPatch) -> None:
     def _no_sleep(s: float) -> None:
         msg = "no debe dormir"
@@ -51,6 +53,7 @@ def test_verificacion_sin_cambios_skip(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r.ok is True
 
 
+@pytest.mark.unit
 def test_verificacion_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor([_ExecResult(ok=True, stdout='{"choices": [{"message": {"content": "hola"}}]}')])
     monkeypatch.setattr(verifier, "_executor", fx)
@@ -62,6 +65,7 @@ def test_verificacion_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert fx.calls[0][0] == "curl"
 
 
+@pytest.mark.unit
 def test_verificacion_fail_sin_auto_revert(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor([_ExecResult(ok=False, stdout="")])
     monkeypatch.setattr(verifier, "_executor", fx)
@@ -73,6 +77,7 @@ def test_verificacion_fail_sin_auto_revert(monkeypatch: pytest.MonkeyPatch) -> N
     assert r.revertido is False
 
 
+@pytest.mark.unit
 def test_verificacion_fail_con_auto_revert(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor([_ExecResult(ok=False, stdout=""), _ExecResult(ok=True, stdout="")])
     monkeypatch.setattr(verifier, "_executor", fx)
@@ -85,24 +90,28 @@ def test_verificacion_fail_con_auto_revert(monkeypatch: pytest.MonkeyPatch) -> N
     assert fx.calls[1][0] == "systemctl"
 
 
+@pytest.mark.unit
 def test_test_ollama_respuesta_vacia_choices() -> None:
     fx = _FakeExecutor([_ExecResult(ok=True, stdout='{"choices": []}')])
     verifier._executor = fx
     assert verifier._test_ollama() == "ok"
 
 
+@pytest.mark.unit
 def test_test_ollama_json_invalido(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor([_ExecResult(ok=True, stdout="no-json")])
     monkeypatch.setattr(verifier, "_executor", fx)
     assert verifier._test_ollama() == ""
 
 
+@pytest.mark.unit
 def test_test_ollama_json_sin_choices() -> None:
     fx = _FakeExecutor([_ExecResult(ok=True, stdout='{"otro": 1}')])
     verifier._executor = fx
     assert verifier._test_ollama() == ""
 
 
+@pytest.mark.unit
 def test_test_ollama_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor()
     fx.raise_exc = RuntimeError("curl no existe")
@@ -110,6 +119,7 @@ def test_test_ollama_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     assert verifier._test_ollama() == ""
 
 
+@pytest.mark.unit
 def test_revertir_cambios_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor([_ExecResult(ok=True, stdout="")])
     monkeypatch.setattr(verifier, "_executor", fx)
@@ -117,6 +127,7 @@ def test_revertir_cambios_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert fx.calls[0][0] == "systemctl"
 
 
+@pytest.mark.unit
 def test_revertir_cambios_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     fx = _FakeExecutor()
     fx.raise_exc = RuntimeError("denegado")
@@ -124,6 +135,7 @@ def test_revertir_cambios_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     verifier._revertir_cambios()  # no debe lanzar
 
 
+@pytest.mark.unit
 def test_test_ollama_content_truncado_100() -> None:
     largo = "x" * 200
     fx = _FakeExecutor([_ExecResult(ok=True, stdout=json.dumps({"choices": [{"message": {"content": largo}}]}))])
@@ -134,6 +146,7 @@ def test_test_ollama_content_truncado_100() -> None:
 # ── preflight ────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_preflight_ok_sin_duplicadas(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(preflight, "RUTAS_CONFIG_OPENCODE", [])
     fx = _FakeExecutor([_ExecResult(ok=True, stdout="pid1 proc1\npid2 proc2\n")])
@@ -148,6 +161,7 @@ def test_preflight_ok_sin_duplicadas(tmp_path: object, monkeypatch: pytest.Monke
     assert snap["procesos"][0] == "pid1 proc1"
 
 
+@pytest.mark.unit
 def test_preflight_bloqueo_por_duplicadas(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     ruta1 = str(tmp_path / "opencode.json")
     ruta2 = str(tmp_path / "opencode.jsonc")
@@ -164,6 +178,7 @@ def test_preflight_bloqueo_por_duplicadas(tmp_path: object, monkeypatch: pytest.
     assert r.configs_duplicadas == [ruta1, ruta2]
 
 
+@pytest.mark.unit
 def test_preflight_snapshot_configs_hashes(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     ruta1 = str(tmp_path / "opencode.json")
     Path(ruta1).write_text('{"a": 1}')
@@ -178,6 +193,7 @@ def test_preflight_snapshot_configs_hashes(tmp_path: object, monkeypatch: pytest
     assert str(tmp_path / "no-existe.json") not in snap["configs"]
 
 
+@pytest.mark.unit
 def test_preflight_procesos_excepcion(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(preflight, "RUTAS_CONFIG_OPENCODE", [])
     fx = _FakeExecutor()
@@ -189,6 +205,7 @@ def test_preflight_procesos_excepcion(tmp_path: object, monkeypatch: pytest.Monk
     assert snap["procesos"] == []
 
 
+@pytest.mark.unit
 def test_preflight_procesos_lineas_vacias_filtradas(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(preflight, "RUTAS_CONFIG_OPENCODE", [])
     fx = _FakeExecutor([_ExecResult(ok=True, stdout="\npid1 proc1\n\npid2 proc2\n\n")])
@@ -199,6 +216,7 @@ def test_preflight_procesos_lineas_vacias_filtradas(tmp_path: object, monkeypatc
     assert snap["procesos"] == ["pid1 proc1", "pid2 proc2"]
 
 
+@pytest.mark.unit
 def test_preflight_procesos_limitado_a_30(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(preflight, "RUTAS_CONFIG_OPENCODE", [])
     lineas = "\n".join(f"p{i} proc{i}" for i in range(40))
@@ -210,6 +228,7 @@ def test_preflight_procesos_limitado_a_30(tmp_path: object, monkeypatch: pytest.
     assert len(snap["procesos"]) == 30
 
 
+@pytest.mark.unit
 def test_preflight_snapshot_path_timestamp() -> None:
     import re
 

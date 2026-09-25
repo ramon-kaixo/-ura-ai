@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from unittest import mock
 

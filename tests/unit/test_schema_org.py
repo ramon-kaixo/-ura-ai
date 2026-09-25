@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/ontology/schema_org.py — Fase 4 (B2)."""
 
 from __future__ import annotations
+import pytest
 
 import json
 from typing import Any
@@ -19,6 +20,7 @@ class _FakeAsset:
 
 
 class TestSoftwareVersion:
+    @pytest.mark.unit
     def test_minimal(self) -> None:
         e = schema_org.software_version("URA", "1.0", "2026-01-01")
         assert e["@context"] == "https://schema.org"
@@ -26,16 +28,19 @@ class TestSoftwareVersion:
         assert e["version"] == "1.0"
         assert "description" not in e
 
+    @pytest.mark.unit
     def test_with_description(self) -> None:
         e = schema_org.software_version("URA", "1.0", "2026-01-01", "desc")
         assert e["description"] == "desc"
 
+    @pytest.mark.unit
     def test_with_bugs(self) -> None:
         e = schema_org.software_version("URA", "1.0", "2026-01-01", bugs=[{"id": "B1", "description": "d", "status": "OPEN"}])
         assert e["subjectOf"][0]["@type"] == "BugReport"
         assert e["subjectOf"][0]["identifier"] == "B1"
         assert e["subjectOf"][0]["status"] == "OPEN"
 
+    @pytest.mark.unit
     def test_bug_defaults(self) -> None:
         e = schema_org.software_version("URA", "1.0", "2026-01-01", bugs=[{"id": "B2"}])
         assert e["subjectOf"][0]["status"] == "UNKNOWN"
@@ -43,15 +48,18 @@ class TestSoftwareVersion:
 
 
 class TestBugReport:
+    @pytest.mark.unit
     def test_minimal(self) -> None:
         e = schema_org.bug_report("B1", "falla")
         assert e["@type"] == "BugReport"
         assert e["status"] == "OPEN"
 
+    @pytest.mark.unit
     def test_custom_status_and_severity(self) -> None:
         e = schema_org.bug_report("B1", "falla", status="FIXED", severity="high")
         assert e["status"] == "FIXED"
 
+    @pytest.mark.unit
     def test_affected_versions(self) -> None:
         e = schema_org.bug_report("B1", "falla", affected_versions=["1.0", "1.1"])
         assert e["affectedRelease"] == [
@@ -59,22 +67,26 @@ class TestBugReport:
             {"@type": "SoftwareVersion", "name": "1.1"},
         ]
 
+    @pytest.mark.unit
     def test_no_affected_versions(self) -> None:
         e = schema_org.bug_report("B1", "falla")
         assert "affectedRelease" not in e
 
 
 class TestPersonOrg:
+    @pytest.mark.unit
     def test_person_minimal(self) -> None:
         e = schema_org.person("Ana")
         assert e["@type"] == "Person"
         assert "email" not in e
 
+    @pytest.mark.unit
     def test_person_full(self) -> None:
         e = schema_org.person("Ana", email="a@x.com", url="http://x.com")
         assert e["email"] == "a@x.com"
         assert e["url"] == "http://x.com"
 
+    @pytest.mark.unit
     def test_organization(self) -> None:
         e = schema_org.organization("URA", "http://ura.io")
         assert e["@type"] == "Organization"
@@ -82,11 +94,13 @@ class TestPersonOrg:
 
 
 class TestDcat:
+    @pytest.mark.unit
     def test_minimal(self) -> None:
         e = schema_org.dcat_dataset("dataset")
         assert e["@type"] == "dcat:Dataset"
         assert "dcat:distribution" not in e
 
+    @pytest.mark.unit
     def test_full(self) -> None:
         e = schema_org.dcat_dataset(
             "dataset",
@@ -102,6 +116,7 @@ class TestDcat:
 
 
 class TestAssetToJsonLd:
+    @pytest.mark.unit
     def test_minimal(self) -> None:
         out = schema_org.asset_to_jsonld(_FakeAsset())
         e = json.loads(out)
@@ -109,6 +124,7 @@ class TestAssetToJsonLd:
         assert e["@id"] == "ura:asset:a1"
         assert e["name"] == "a1"
 
+    @pytest.mark.unit
     def test_metadata_title_and_author(self) -> None:
         asset = _FakeAsset(metadata={"title": "Título", "author": "Ana", "license": "MIT"})
         e = json.loads(schema_org.asset_to_jsonld(asset))
@@ -116,6 +132,7 @@ class TestAssetToJsonLd:
         assert e["author"]["@type"] == "Person"
         assert e["license"] == "MIT"
 
+    @pytest.mark.unit
     def test_relationships(self) -> None:
         rel = type("Rel", (), {"target_id": "a2", "relation": "references"})()
         asset = _FakeAsset(asset_id="a1")
@@ -123,6 +140,7 @@ class TestAssetToJsonLd:
         e = json.loads(schema_org.asset_to_jsonld(asset))
         assert e["mentions"] == [{"@id": "ura:asset:a2", "description": "references"}]
 
+    @pytest.mark.unit
     def test_unknown_type_falls_back(self) -> None:
         e = json.loads(schema_org.asset_to_jsonld(_FakeAsset(asset_type="cosa_rara")))
         assert e["@type"] == "DigitalDocument"

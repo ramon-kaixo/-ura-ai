@@ -1,6 +1,7 @@
 """Tests de cobertura para motor/scanner/_state.py (gate 90%)."""
 
 from __future__ import annotations
+import pytest
 
 from unittest.mock import MagicMock, patch
 
@@ -8,6 +9,7 @@ from motor.scanner._state import ScannerState, build_scanner_state
 
 
 class TestScannerState:
+    @pytest.mark.unit
     def test_dataclass_frozen(self) -> None:
         s = ScannerState(executor="e", config="c")
         assert s.executor == "e"
@@ -15,6 +17,7 @@ class TestScannerState:
 
 
 class TestBuildScannerState:
+    @pytest.mark.unit
     def test_con_config(self) -> None:
         cfg = MagicMock()
         with patch("motor.core.executor.SubprocessExecutor") as se:
@@ -22,6 +25,7 @@ class TestBuildScannerState:
         assert s.config is cfg
         assert s.executor is se.return_value
 
+    @pytest.mark.unit
     def test_sin_config_carga_default(self) -> None:
         with patch("motor.core.config.UraConfig.load", return_value="cfg-default") as load, \
              patch("motor.core.executor.SubprocessExecutor"):

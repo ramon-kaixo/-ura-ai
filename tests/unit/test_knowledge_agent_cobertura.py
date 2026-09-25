@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -63,18 +64,21 @@ def _insert(conn: sqlite3.Connection, n: int = 3) -> None:
 # ── Dataclasses ──────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_agent_goal_defaults() -> None:
     g = AgentGoal(kind="custom", description="d")
     assert g.params == {}
     assert g.kind == "custom"
 
 
+@pytest.mark.unit
 def test_agent_finding_defaults() -> None:
     f = AgentFinding(agent_id="a", kind="k", severity="INFO", title="t", description="d")
     assert f.doc_id == ""
     assert f.metadata == {}
 
 
+@pytest.mark.unit
 def test_agent_finding_con_metadata() -> None:
     f = AgentFinding(
         agent_id="a",
@@ -89,6 +93,7 @@ def test_agent_finding_con_metadata() -> None:
     assert f.metadata == {"k": 1}
 
 
+@pytest.mark.unit
 def test_agent_es_abstracto() -> None:
     assert Agent.__abstractmethods__ == {"agent_id", "execute"}
 
@@ -96,17 +101,20 @@ def test_agent_es_abstracto() -> None:
 # ── KnowledgeGraphAgent ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_init_y_agent_id(db_path: Path) -> None:
     ag = KnowledgeGraphAgent(db_path=db_path)
     assert ag.agent_id == "knowledge-graph-agent"
     assert ag._db_path == Path(db_path)
 
 
+@pytest.mark.unit
 def test_execute_custom_vacio(db_path: Path) -> None:
     ag = KnowledgeGraphAgent(db_path=db_path)
     assert ag.execute(AgentGoal(kind="custom", description="x")) == []
 
 
+@pytest.mark.unit
 def test_audit_grafo_vacio(db_path: Path) -> None:
     ag = KnowledgeGraphAgent(db_path=db_path)
     findings = ag.execute(AgentGoal(kind="audit", description="a"))
@@ -115,11 +123,13 @@ def test_audit_grafo_vacio(db_path: Path) -> None:
     assert findings[0].title == "Grafo vacío"
 
 
+@pytest.mark.unit
 def test_audit_reader_sin_db_path(db_path: Path) -> None:
     ag = KnowledgeGraphAgent(db_path=db_path)
     assert ag._audit_coverage(object()) == []
 
 
+@pytest.mark.unit
 def test_audit_con_documentos(db_path: Path) -> None:
     conn = sqlite3.connect(db_path)
     _insert(conn)
@@ -133,6 +143,7 @@ def test_audit_con_documentos(db_path: Path) -> None:
     assert "3" in findings[0].description
 
 
+@pytest.mark.unit
 def test_coverage_sin_documentos(db_path: Path) -> None:
     ag = KnowledgeGraphAgent(db_path=db_path)
     findings = ag.execute(
@@ -143,6 +154,7 @@ def test_coverage_sin_documentos(db_path: Path) -> None:
     assert findings[0].title == "Sin documentos de tipo 'md'"
 
 
+@pytest.mark.unit
 def test_coverage_con_documentos(db_path: Path) -> None:
     conn = sqlite3.connect(db_path)
     _insert(conn)
@@ -156,6 +168,7 @@ def test_coverage_con_documentos(db_path: Path) -> None:
     assert findings[0].title == "Cobertura 'md': 3/3"
 
 
+@pytest.mark.unit
 def test_consistency_genera_hallazgos(db_path: Path) -> None:
     conn = sqlite3.connect(db_path)
     _insert(conn)
@@ -175,6 +188,7 @@ def test_consistency_genera_hallazgos(db_path: Path) -> None:
 # ── Registry ─────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_registry_roundtrip() -> None:
     class DummyAgent(Agent):
         @property
@@ -192,11 +206,13 @@ def test_registry_roundtrip() -> None:
     assert get_agent("NoExiste") is None
 
 
+@pytest.mark.unit
 def test_get_agent_con_kwargs(db_path: Path) -> None:
     ag = get_agent("KnowledgeGraphAgent", db_path=db_path)
     assert isinstance(ag, KnowledgeGraphAgent)
     assert ag.agent_id == "knowledge-graph-agent"
 
 
+@pytest.mark.unit
 def test_builtin_registrado() -> None:
     assert "KnowledgeGraphAgent" in list_agents()

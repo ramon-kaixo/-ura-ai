@@ -11,6 +11,7 @@ Valida la operación del sistema en condiciones reales:
 
 from __future__ import annotations
 
+import pytest
 import hashlib
 import random
 import time
@@ -133,6 +134,7 @@ def test_journal_sustained_growth(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_repeated_snapshots_under_load(tmp_path: str) -> None:
     """10 snapshots consecutivos con carga entre cada uno."""
     snap = Path(tmp_path) / "snap.json"
@@ -193,6 +195,7 @@ def test_soak_continuous_operation(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_stability(tmp_path: str) -> None:
     """Benchmarks deben ser estables en 3 ejecuciones consecutivas."""
     snap = Path(tmp_path) / "stab_snap.json"

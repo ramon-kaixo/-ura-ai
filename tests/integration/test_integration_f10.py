@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from typing import TYPE_CHECKING
 
@@ -18,6 +19,7 @@ class TestDegradedModePluginRegistryIntegration:
         f.write_text(f'__plugin__ = {{"name": "{name}", "phase": "pre"}}\nimport nonexistent_module_xyz_f10_int\n')
         return f
 
+    @pytest.mark.integration
     def test_degraded_mode_reflects_plugin_failure(self, tmp_path: Path):
         dm = DegradedMode.instancia()
         registry = PluginRegistry()
@@ -31,6 +33,7 @@ class TestDegradedModePluginRegistryIntegration:
         assert s["global"] is True
         assert f"plugin:{name}" in s["degraded"]
 
+    @pytest.mark.integration
     def test_degraded_mode_recovers_after_good_plugin(self, tmp_path: Path):
         dm = DegradedMode.instancia()
         registry = PluginRegistry()
@@ -53,6 +56,7 @@ class _P(PluginBase):
         s = dm.status()
         assert f"plugin:{name}" not in s["degraded"]
 
+    @pytest.mark.integration
     def test_mixed_plugin_results_reflected(self, tmp_path: Path):
         dm = DegradedMode.instancia()
         registry = PluginRegistry()
@@ -80,6 +84,7 @@ class _P(PluginBase):
 
 
 class TestDegradedModeSubprocessExecutorIntegration:
+    @pytest.mark.integration
     def test_executor_runs_independent_of_degraded_mode(self):
         executor = SubprocessExecutor()
         dm = DegradedMode.instancia()
@@ -92,6 +97,7 @@ class TestDegradedModeSubprocessExecutorIntegration:
 
 
 class TestPluginRegistrySubprocessExecutorIntegration:
+    @pytest.mark.integration
     def test_plugin_can_use_executor(self, tmp_path: Path):
         content = """
 __plugin__ = {"name": "executor_plugin_f10", "phase": "always"}
@@ -122,6 +128,7 @@ class TestTripleIntegration:
     PluginRegistry usa DegradedMode para trackear fallos,
     SubprocessExecutor ejecuta plugins que necesitan procesos externos."""
 
+    @pytest.mark.integration
     def test_full_cycle(self, tmp_path: Path):
         dm = DegradedMode.instancia()
         executor = SubprocessExecutor()

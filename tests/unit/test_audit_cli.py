@@ -1,3 +1,4 @@
+import pytest
 """Tests for knowledge.engine.cli.audit module."""
 
 import sys
@@ -20,6 +21,7 @@ from knowledge.engine.cli.audit import (
 )
 
 
+@pytest.mark.unit
 def test_cmd_vacuum_success(tmp_path):
     """Test cmd_vacuum with successful database operation."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -41,6 +43,7 @@ def test_cmd_vacuum_success(tmp_path):
         mock_db_conn.close.assert_called_once()
 
 
+@pytest.mark.unit
 def test_cmd_vacuum_failure(tmp_path):
     """Test cmd_vacuum with failed database operation."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -61,6 +64,7 @@ def test_cmd_vacuum_failure(tmp_path):
         mock_open_db.assert_called_once_with(db_path)
 
 
+@pytest.mark.unit
 def test_audit_integrity_ok():
     """Test _audit_integrity with OK result."""
     mock_conn = MagicMock()
@@ -73,6 +77,7 @@ def test_audit_integrity_ok():
     report.assert_called_once_with("OK", "integrity", "SQLite integrity check passed")
 
 
+@pytest.mark.unit
 def test_audit_integrity_fail():
     """Test _audit_integrity with FAIL result."""
     mock_conn = MagicMock()
@@ -85,6 +90,7 @@ def test_audit_integrity_fail():
     report.assert_called_once_with("FAIL", "integrity", "Corruption detected: corrupted")
 
 
+@pytest.mark.unit
 def test_audit_orphans_no_orphans():
     """Test _audit_orphans with no orphan edges."""
     mock_conn = MagicMock()
@@ -99,6 +105,7 @@ def test_audit_orphans_no_orphans():
     report.assert_any_call("OK", "orphan_dst", "No orphan edge targets")
 
 
+@pytest.mark.unit
 def test_audit_orphans_with_orphans():
     """Test _audit_orphans with orphan edges."""
     mock_conn = MagicMock()
@@ -116,6 +123,7 @@ def test_audit_orphans_with_orphans():
     report.assert_any_call("FAIL", "orphan_edges", "5 edges with missing target node")
 
 
+@pytest.mark.unit
 def test_audit_active_version_single():
     """Test _audit_active_version with single version row."""
     mock_conn = MagicMock()
@@ -128,6 +136,7 @@ def test_audit_active_version_single():
     report.assert_called_once_with("OK", "active_version", "Single active version row")
 
 
+@pytest.mark.unit
 def test_audit_active_version_zero():
     """Test _audit_active_version with zero version rows."""
     mock_conn = MagicMock()
@@ -140,6 +149,7 @@ def test_audit_active_version_zero():
     report.assert_called_once_with("WARN", "active_version", "No active version row (fresh DB)")
 
 
+@pytest.mark.unit
 def test_audit_active_version_multiple():
     """Test _audit_active_version with multiple version rows."""
     mock_conn = MagicMock()
@@ -152,6 +162,7 @@ def test_audit_active_version_multiple():
     report.assert_called_once_with("FAIL", "active_version", "3 active version rows (expected 1)")
 
 
+@pytest.mark.unit
 def test_audit_stuck_jobs_none():
     """Test _audit_stuck_jobs with no stuck jobs."""
     mock_conn = MagicMock()
@@ -165,6 +176,7 @@ def test_audit_stuck_jobs_none():
     report.assert_called_once_with("OK", "stuck_jobs", "No stuck jobs")
 
 
+@pytest.mark.unit
 def test_audit_stuck_jobs_found():
     """Test _audit_stuck_jobs with stuck jobs found."""
     mock_conn = MagicMock()
@@ -177,6 +189,7 @@ def test_audit_stuck_jobs_found():
     report.assert_called_once_with("FAIL", "stuck_jobs", "2 jobs stuck in 'running' for >30min")
 
 
+@pytest.mark.unit
 def test_audit_wal_ok():
     """Test _audit_wal with WAL mode OK and small WAL."""
     mock_conn = MagicMock()
@@ -195,6 +208,7 @@ def test_audit_wal_ok():
     report.assert_any_call("OK", "wal_size", "WAL file: 50 KB")
 
 
+@pytest.mark.unit
 def test_audit_wal_fail_mode():
     """Test _audit_wal with non-WAL journal mode."""
     mock_conn = MagicMock()
@@ -210,6 +224,7 @@ def test_audit_wal_fail_mode():
     report.assert_any_call("FAIL", "wal_mode", "Expected WAL, got delete")
 
 
+@pytest.mark.unit
 def test_audit_wal_warn_large():
     """Test _audit_wal with large WAL file (>100MB)."""
     mock_conn = MagicMock()
@@ -225,6 +240,7 @@ def test_audit_wal_warn_large():
     report.assert_any_call("WARN", "wal_size", "WAL file: 150 MB (>100MB)")
 
 
+@pytest.mark.unit
 def test_audit_wal_no_wal_file():
     """Test _audit_wal with no WAL file (fully checkpointed)."""
     mock_conn = MagicMock()
@@ -240,6 +256,7 @@ def test_audit_wal_no_wal_file():
     report.assert_any_call("OK", "wal_size", "No WAL file (fully checkpointed)")
 
 
+@pytest.mark.unit
 def test_audit_pending_sync_none():
     """Test _audit_pending_sync with no pending operations."""
     mock_conn = MagicMock()
@@ -252,6 +269,7 @@ def test_audit_pending_sync_none():
     report.assert_called_once_with("OK", "pending_sync", "All sync operations done")
 
 
+@pytest.mark.unit
 def test_audit_pending_sync_found():
     """Test _audit_pending_sync with pending operations."""
     mock_conn = MagicMock()
@@ -264,6 +282,7 @@ def test_audit_pending_sync_found():
     report.assert_called_once_with("WARN", "pending_sync", "7 pending sync operations")
 
 
+@pytest.mark.unit
 def test_audit_backend_healthy():
     """Test _audit_backend with healthy backend."""
     report = Mock()
@@ -283,6 +302,7 @@ def test_audit_backend_healthy():
         report.assert_called_once_with("OK", "audit", "Audit backend healthy (42 events)")
 
 
+@pytest.mark.unit
 def test_audit_backend_unhealthy():
     """Test _audit_backend with unhealthy backend."""
     report = Mock()
@@ -302,6 +322,7 @@ def test_audit_backend_unhealthy():
         report.assert_called_once_with("FAIL", "audit", "Audit backend unhealthy: connection failed")
 
 
+@pytest.mark.unit
 def test_audit_backend_no_backend():
     """Test _audit_backend with no backend configured."""
     report = Mock()
@@ -316,6 +337,7 @@ def test_audit_backend_no_backend():
         report.assert_called_once_with("WARN", "audit", "No audit backend configured")
 
 
+@pytest.mark.unit
 def test_audit_backend_exception():
     """Test _audit_backend when exception occurs."""
     report = Mock()
@@ -328,6 +350,7 @@ def test_audit_backend_exception():
         report.assert_called_once_with("WARN", "audit", "Could not check audit health")
 
 
+@pytest.mark.unit
 def test_audit_disk_fail():
     """Test _audit_disk with critical disk space (<1GB)."""
     mock_db_path = MagicMock()
@@ -341,6 +364,7 @@ def test_audit_disk_fail():
     report.assert_called_once_with("FAIL", "disk_space", "Only 0.5 GB free on device")
 
 
+@pytest.mark.unit
 def test_audit_disk_warn():
     """Test _audit_disk with warning disk space (<5GB)."""
     mock_db_path = MagicMock()
@@ -354,6 +378,7 @@ def test_audit_disk_warn():
     report.assert_called_once_with("WARN", "disk_space", "3.0 GB free on device")
 
 
+@pytest.mark.unit
 def test_audit_disk_ok():
     """Test _audit_disk with sufficient disk space (>5GB)."""
     mock_db_path = MagicMock()
@@ -367,6 +392,7 @@ def test_audit_disk_ok():
     report.assert_called_once_with("OK", "disk_space", "20.0 GB free on device")
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_db_not_found(tmp_path):
     """Test cmd_audit_db when database file doesn't exist."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path:
@@ -379,6 +405,7 @@ def test_cmd_audit_db_db_not_found(tmp_path):
         assert result == 1
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_all_ok(tmp_path):
     """Test cmd_audit_db with all checks passing."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -429,6 +456,7 @@ def test_cmd_audit_db_all_ok(tmp_path):
         assert result == 0
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_with_failures(tmp_path):
     """Test cmd_audit_db returns 1 when checks fail."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -479,6 +507,7 @@ def test_cmd_audit_db_with_failures(tmp_path):
         assert result == 1
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_exception_in_check(tmp_path):
     """Test cmd_audit_db handles exceptions in individual checks."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -532,6 +561,7 @@ def test_cmd_audit_db_exception_in_check(tmp_path):
             pass  # Expected if no try/except
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_disk_fail(tmp_path):
     """Test cmd_audit_db with critical disk space."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path, \
@@ -581,6 +611,7 @@ def test_cmd_audit_db_disk_fail(tmp_path):
         assert result == 1  # FAIL due to disk space
 
 
+@pytest.mark.unit
 def test_cmd_vacuum_nonexistent_db(tmp_path):
     """Test cmd_vacuum with nonexistent database file."""
     with patch('knowledge.engine.cli.audit._resolve_db_path') as mock_resolve_db_path:

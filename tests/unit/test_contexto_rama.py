@@ -1,3 +1,4 @@
+import pytest
 """Tests de contexto_rama.py (TASK-20260812-023) — cobertura 100%.
 
 Cubre: _imports_archivo, _llamadas_internas, _llamadores_externos (con repo
@@ -17,6 +18,7 @@ from contexto_rama import (
 )
 
 
+@pytest.mark.unit
 def test_imports_archivo_normal() -> None:
     fuente = "import os\nfrom pathlib import Path\nx = 1"
     imports = _imports_archivo(fuente)
@@ -24,14 +26,17 @@ def test_imports_archivo_normal() -> None:
     assert any("pathlib.Path" in i for i in imports)
 
 
+@pytest.mark.unit
 def test_imports_archivo_sin_imports() -> None:
     assert _imports_archivo("x = 1") == []
 
 
+@pytest.mark.unit
 def test_imports_archivo_sintaxis_rota() -> None:
     assert _imports_archivo("def (") == []
 
 
+@pytest.mark.unit
 def test_llamadas_internas() -> None:
     func = "def f():\n    return helper1(x) + obj.metodo()"
     llamadas = _llamadas_internas(func)
@@ -39,14 +44,17 @@ def test_llamadas_internas() -> None:
     assert "metodo" in llamadas
 
 
+@pytest.mark.unit
 def test_llamadas_internas_sin_llamadas() -> None:
     assert _llamadas_internas("def f():\n    return 1") == []
 
 
+@pytest.mark.unit
 def test_llamadas_internas_sintaxis_rota() -> None:
     assert _llamadas_internas("def (") == []
 
 
+@pytest.mark.unit
 def test_llamadores_externos_encuentra(tmp_path: Path) -> None:
     # Crear repo temporal: modulo.py define la funcion, otro.py la llama
     repo = tmp_path
@@ -60,6 +68,7 @@ def test_llamadores_externos_encuentra(tmp_path: Path) -> None:
     assert any("cliente.py" in r for r in resultado)
 
 
+@pytest.mark.unit
 def test_llamadores_externos_ignora_sin_import(tmp_path: Path) -> None:
     repo = tmp_path
     (repo / "paquete").mkdir(exist_ok=True)
@@ -70,10 +79,12 @@ def test_llamadores_externos_ignora_sin_import(tmp_path: Path) -> None:
     assert resultado == []
 
 
+@pytest.mark.unit
 def test_llamadores_externos_sin_repo() -> None:
     assert _llamadores_externos(Path("/no/existe"), "f", "m") == []
 
 
+@pytest.mark.unit
 def test_llamadores_externos_limite_5(tmp_path: Path) -> None:
     repo = tmp_path
     (repo / "paquete").mkdir(exist_ok=True)
@@ -86,6 +97,7 @@ def test_llamadores_externos_limite_5(tmp_path: Path) -> None:
     assert len(resultado) <= 5
 
 
+@pytest.mark.unit
 def test_construir_contexto_rama_completo(tmp_path: Path) -> None:
     repo = tmp_path
     (repo / "paquete").mkdir(exist_ok=True)
@@ -106,6 +118,7 @@ def test_construir_contexto_rama_completo(tmp_path: Path) -> None:
     assert "os" in ctx
 
 
+@pytest.mark.unit
 def test_construir_contexto_rama_sin_conexiones(tmp_path: Path) -> None:
     repo = tmp_path
     (repo / "a.py").write_text("def sola():\n    return 1\n")
@@ -113,6 +126,7 @@ def test_construir_contexto_rama_sin_conexiones(tmp_path: Path) -> None:
     assert ctx == ""
 
 
+@pytest.mark.unit
 def test_construir_contexto_rama_archivo_inexistente(tmp_path: Path) -> None:
     ctx = construir_contexto_rama(
         tmp_path,
@@ -123,6 +137,7 @@ def test_construir_contexto_rama_archivo_inexistente(tmp_path: Path) -> None:
     assert isinstance(ctx, str)
 
 
+@pytest.mark.unit
 def test_llamadas_internas_con_atributos() -> None:
     """Llamadas a métodos (attr) también se detectan (55)."""
     from contexto_rama import _llamadas_internas
@@ -132,6 +147,7 @@ def test_llamadas_internas_con_atributos() -> None:
     assert "helper" in llamadas
 
 
+@pytest.mark.unit
 def test_llamadores_externos_excluye_venv(tmp_path: Path) -> None:
     """Archivos en .venv se excluyen (74)."""
     from contexto_rama import _llamadores_externos
@@ -143,6 +159,7 @@ def test_llamadores_externos_excluye_venv(tmp_path: Path) -> None:
     assert r == []  # el único llamador está excluido
 
 
+@pytest.mark.unit
 def test_llamadores_externos_error_lectura(tmp_path: Path, monkeypatch) -> None:
     """OSError al leer un .py -> continue (79-80)."""
     from pathlib import Path as P
@@ -164,6 +181,7 @@ def test_llamadores_externos_error_lectura(tmp_path: Path, monkeypatch) -> None:
     assert r == []
 
 
+@pytest.mark.unit
 def test_llamadores_externos_ignora_sin_coincidencia(tmp_path: Path) -> None:
     """.py sin la llamada -> rama falsa del search (81)."""
     from contexto_rama import _llamadores_externos
@@ -175,6 +193,7 @@ def test_llamadores_externos_ignora_sin_coincidencia(tmp_path: Path) -> None:
     assert any("cli.py" in x for x in r)
 
 
+@pytest.mark.unit
 def test_construir_contexto_con_fuente_dada(tmp_path: Path) -> None:
     """rama falsa de 'if not fuente_archivo' (103)."""
     from contexto_rama import construir_contexto_rama
@@ -189,6 +208,7 @@ def test_construir_contexto_con_fuente_dada(tmp_path: Path) -> None:
     assert isinstance(ctx, str)
 
 
+@pytest.mark.unit
 def test_construir_contexto_fuente_sintaxis_rota(tmp_path: Path) -> None:
     """SyntaxError al parsear la fuente -> pass (120-121)."""
     from contexto_rama import construir_contexto_rama
@@ -204,6 +224,7 @@ def test_construir_contexto_fuente_sintaxis_rota(tmp_path: Path) -> None:
     assert isinstance(ctx, str)
 
 
+@pytest.mark.unit
 def test_construir_contexto_archivo_fuera_del_repo(tmp_path: Path) -> None:
     """file_path fuera del repo -> ValueError -> modulo = stem (129-137)."""
     from contexto_rama import construir_contexto_rama
@@ -219,6 +240,7 @@ def test_construir_contexto_archivo_fuera_del_repo(tmp_path: Path) -> None:
     assert isinstance(ctx, str)
 
 
+@pytest.mark.unit
 def test_construir_contexto_llamadores_externos(tmp_path: Path) -> None:
     """LLAMADORES EXTERNOS en el contexto (139-140)."""
     from contexto_rama import construir_contexto_rama
@@ -236,6 +258,7 @@ def test_construir_contexto_llamadores_externos(tmp_path: Path) -> None:
     assert "LLAMADORES EXTERNOS" in ctx
     assert "cli.py" in ctx
 
+@pytest.mark.unit
 def test_llamadas_internas_call_de_call() -> None:
     """func es un Call (no Name ni Attribute) -> rama elif falsa (55->51)."""
     from contexto_rama import _llamadas_internas
@@ -244,6 +267,7 @@ def test_llamadas_internas_call_de_call() -> None:
     assert llamadas == ["generar"]
 
 
+@pytest.mark.unit
 def test_construir_contexto_sin_file_path(tmp_path: Path) -> None:
     """file_path vacío -> rama falsa del 'if file_path' (129->137)."""
     from contexto_rama import construir_contexto_rama

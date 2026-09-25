@@ -12,6 +12,7 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
 import sys
 import time
 
@@ -71,6 +72,7 @@ def _make_version(
 # ── B6.1: Fact creation ────────────────────────────────
 
 
+@pytest.mark.unit
 def test_make_fact_id_normalizes() -> None:
     """make_fact_id() usa normalize_identity() canónica."""
     a = make_fact_id("Apple", "sells", "oranges")
@@ -78,6 +80,7 @@ def test_make_fact_id_normalizes() -> None:
     assert a == b, "make_fact_id must normalize inputs"
 
 
+@pytest.mark.unit
 def test_make_fact_id_no_version() -> None:
     """version NO participa en fact_id."""
     a = make_fact_id("Apple", "sells", "oranges")
@@ -85,12 +88,14 @@ def test_make_fact_id_no_version() -> None:
     assert len(a) == 16
 
 
+@pytest.mark.unit
 def test_make_version_id_deterministic() -> None:
     a = make_version_id("abc", 1000, "hash1")
     b = make_version_id("abc", 1000, "hash1")
     assert a == b
 
 
+@pytest.mark.unit
 def test_make_version_id_independent_of_order() -> None:
     """version_id no depende del orden de inserción."""
     a = make_version_id("abc", 1000, "h1")
@@ -98,6 +103,7 @@ def test_make_version_id_independent_of_order() -> None:
     assert a != b  # diferentes timestamp/hash → diferentes IDs
 
 
+@pytest.mark.unit
 def test_fact_identity_immutable() -> None:
     f = _make_fact()
     with pytest.raises(AttributeError):
@@ -107,6 +113,7 @@ def test_fact_identity_immutable() -> None:
 # ── B6.2: FactHistory creation ─────────────────────────
 
 
+@pytest.mark.unit
 def test_history_create() -> None:
     fact = _make_fact()
     v1 = _make_version(fact.fact_id)
@@ -117,6 +124,7 @@ def test_history_create() -> None:
     assert h.current.state == VersionState.CURRENT
 
 
+@pytest.mark.unit
 def test_history_create_version_mismatch_raises() -> None:
     f1 = _make_fact(subject="Apple")
     v = _make_version("other_fact_id")
@@ -124,6 +132,7 @@ def test_history_create_version_mismatch_raises() -> None:
         FactHistory.create(f1, v)
 
 
+@pytest.mark.unit
 def test_history_create_initial_not_current_raises() -> None:
     fact = _make_fact()
     v = FactVersion(
@@ -139,6 +148,7 @@ def test_history_create_initial_not_current_raises() -> None:
 # ── B6.3: add_version ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_add_version() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -149,6 +159,7 @@ def test_add_version() -> None:
     assert h.version_count == 2
 
 
+@pytest.mark.unit
 def test_add_version_supersedes_previous() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -158,6 +169,7 @@ def test_add_version_supersedes_previous() -> None:
     assert old.state == VersionState.SUPERSEDED
 
 
+@pytest.mark.unit
 def test_add_version_duplicate_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -165,6 +177,7 @@ def test_add_version_duplicate_raises() -> None:
         h.add_version(_make_version(fact.fact_id, "v1"))
 
 
+@pytest.mark.unit
 def test_add_version_wrong_fact_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -172,6 +185,7 @@ def test_add_version_wrong_fact_raises() -> None:
         h.add_version(_make_version("other_fact", "v2"))
 
 
+@pytest.mark.unit
 def test_add_version_before_creation_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=2000))
@@ -182,6 +196,7 @@ def test_add_version_before_creation_raises() -> None:
 # ── B6.4: rollback ─────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_rollback() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -197,6 +212,7 @@ def test_rollback() -> None:
     assert len(h.timeline()) == 2
 
 
+@pytest.mark.unit
 def test_rollback_preserves_history() -> None:
     """Rollback NO elimina versiones posteriores."""
     fact = _make_fact()
@@ -207,6 +223,7 @@ def test_rollback_preserves_history() -> None:
     assert len(h.timeline()) == 3
 
 
+@pytest.mark.unit
 def test_rollback_to_tombstone_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -221,6 +238,7 @@ def test_rollback_to_tombstone_raises() -> None:
         h.rollback("v2")
 
 
+@pytest.mark.unit
 def test_rollback_nonexistent_raises() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -231,6 +249,7 @@ def test_rollback_nonexistent_raises() -> None:
 # ── B6.5: tombstone ────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_tombstone() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -251,6 +270,7 @@ def test_tombstone() -> None:
 # ── B6.6: version_at (consulta temporal) ───────────────
 
 
+@pytest.mark.unit
 def test_version_at_exact() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
@@ -260,12 +280,14 @@ def test_version_at_exact() -> None:
     assert h.version_at(2000).version_id == "v2"
 
 
+@pytest.mark.unit
 def test_version_at_before_first() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
     assert h.version_at(500) is None
 
 
+@pytest.mark.unit
 def test_version_at_after_rollback() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
@@ -278,6 +300,7 @@ def test_version_at_after_rollback() -> None:
 # ── B6.7: invariantes (V01-V10) ────────────────────────
 
 
+@pytest.mark.unit
 def test_invariant_v01_version_belongs_to_history() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
@@ -286,12 +309,14 @@ def test_invariant_v01_version_belongs_to_history() -> None:
         assert v.fact_id == h.fact_id, "V01"
 
 
+@pytest.mark.unit
 def test_invariant_v02_current_in_versions() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1"))
     assert h.current.version_id in [v.version_id for v in h.timeline()], "V02"
 
 
+@pytest.mark.unit
 def test_invariant_v03_no_cycles() -> None:
     """La cadena supersedes no contiene ciclos (DAG)."""
     fact = _make_fact()
@@ -306,6 +331,7 @@ def test_invariant_v03_no_cycles() -> None:
         v = h.get_version(v.supersedes) if v.supersedes else None
 
 
+@pytest.mark.unit
 def test_invariant_v04_version_id_independent() -> None:
     """version_id no depende del orden de inserción."""
     fact = _make_fact()
@@ -321,6 +347,7 @@ def test_invariant_v04_version_id_independent() -> None:
     assert h2.current.state == VersionState.CURRENT
 
 
+@pytest.mark.unit
 def test_invariant_v09_no_orphan_versions() -> None:
     """Toda FactVersion pertenece a un FactHistory."""
     fact = _make_fact()
@@ -335,6 +362,7 @@ def test_invariant_v09_no_orphan_versions() -> None:
 # ── B6.8: idempotencia ────────────────────────────────
 
 
+@pytest.mark.unit
 def test_idempotent_add_same_version() -> None:
     """Añadir la misma versión dos veces no debe corromper el historial."""
     fact = _make_fact()
@@ -343,6 +371,7 @@ def test_idempotent_add_same_version() -> None:
         h.add_version(_make_version(fact.fact_id, "v1"))
 
 
+@pytest.mark.unit
 def test_idempotent_rollback_twice() -> None:
     """Rollback dos veces seguidas no corrompe el historial."""
     fact = _make_fact()
@@ -358,6 +387,7 @@ def test_idempotent_rollback_twice() -> None:
 # ── B6.9: serialización ────────────────────────────────
 
 
+@pytest.mark.unit
 def test_serialization_roundtrip() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
@@ -370,6 +400,7 @@ def test_serialization_roundtrip() -> None:
     assert restored.timeline()[0].confidence == 0.9
 
 
+@pytest.mark.unit
 def test_serialization_with_tombstone() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v1", created_at=1000))
@@ -388,6 +419,7 @@ def test_serialization_with_tombstone() -> None:
     assert restored.current.state == VersionState.TOMBSTONE
 
 
+@pytest.mark.unit
 def test_serialization_deep_copy() -> None:
     """Modificar el original no afecta al restaurado."""
     fact = _make_fact()
@@ -401,6 +433,7 @@ def test_serialization_deep_copy() -> None:
 # ── B6.10: FactIndex con nuevo modelo ──────────────────
 
 
+@pytest.mark.unit
 def test_fact_index_add_fact_version() -> None:
     fact = _make_fact()
     v1 = _make_version(fact.fact_id)
@@ -414,6 +447,7 @@ def test_fact_index_add_fact_version() -> None:
     assert v.version_id == "v1"
 
 
+@pytest.mark.unit
 def test_fact_index_update_current() -> None:
     fact = _make_fact()
     v1 = _make_version(fact.fact_id, "v1")
@@ -427,6 +461,7 @@ def test_fact_index_update_current() -> None:
     assert v.version_id == "v2"
 
 
+@pytest.mark.unit
 def test_fact_index_build_from_versions() -> None:
     entries: list[tuple[Fact, FactVersion]] = []
     for idx_num in range(2):
@@ -461,6 +496,7 @@ def _random_sequence(seed: int, length: int) -> list[str]:
     return ops
 
 
+@pytest.mark.unit
 def test_property_random_sequences() -> None:
     """Secuencias aleatorias no deben corromper invariantes."""
     import random
@@ -523,6 +559,8 @@ def test_property_random_sequences() -> None:
 # ── B6.12: benchmarks ──────────────────────────────────
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_add_10() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
@@ -534,6 +572,8 @@ def test_benchmark_add_10() -> None:
     assert t < 0.05, f"10 versions took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_add_1000() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
@@ -545,6 +585,8 @@ def test_benchmark_add_1000() -> None:
     assert t < 0.5, f"1K versions took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_rollback_amid_1000() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
@@ -556,6 +598,8 @@ def test_benchmark_rollback_amid_1000() -> None:
     assert t < 0.005, f"Rollback amid 1K took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_version_at_1000() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
@@ -568,6 +612,8 @@ def test_benchmark_version_at_1000() -> None:
     assert t < 0.5, f"20 version_at queries took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_peak_memory() -> None:
     """Estimar memoria de 10K versiones en FactHistory."""
     fact = _make_fact()
@@ -579,6 +625,7 @@ def test_benchmark_peak_memory() -> None:
     assert h.version_count == 10001
 
 
+@pytest.mark.unit
 def test_timeline_cache_reflects_mutations() -> None:
     """Regresión: timeline() cacheada debe reflejar add/rollback/tombstone.
 

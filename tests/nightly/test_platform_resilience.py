@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import threading
 import time
 
@@ -66,6 +67,7 @@ class TestCircuitBreakerStates:
             cb.call(_fail)
         assert cb.call(_succeed) is None
 
+    @pytest.mark.slow
     def test_half_open_after_recovery_timeout(self) -> None:
         cb = CircuitBreaker("test", failure_threshold=1, recovery_timeout=0.05)
         with pytest.raises(RuntimeError):

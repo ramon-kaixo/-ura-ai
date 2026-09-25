@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "pro"))
 import compactador_espacios as ce
 
 
+@pytest.mark.unit
 def test_compactar_simple() -> None:
     codigo = "def f():\n    return 1"
     compactado, _, stats = ce.compactar(codigo)
@@ -24,6 +25,7 @@ def test_compactar_simple() -> None:
     assert stats["reduccion_pct"] >= 0
 
 
+@pytest.mark.unit
 def test_compactar_quita_blancos() -> None:
     codigo = "def f():\n    a = 1\n\n\n    return a"
     _compactado, _, stats = ce.compactar(codigo)
@@ -31,6 +33,7 @@ def test_compactar_quita_blancos() -> None:
     assert stats["lineas_compactado"] == 3
 
 
+@pytest.mark.unit
 def test_compactar_quita_comentarios() -> None:
     codigo = "# comentario\nx = 1"
     compactado, _, stats = ce.compactar(codigo)
@@ -38,6 +41,7 @@ def test_compactar_quita_comentarios() -> None:
     assert "# comentario" not in compactado
 
 
+@pytest.mark.unit
 def test_compactar_docstring() -> None:
     codigo = '"""Docstring."""\ndef f():\n    pass'
     compactado, _, stats = ce.compactar(codigo)
@@ -45,12 +49,14 @@ def test_compactar_docstring() -> None:
     assert "Docstring" not in compactado
 
 
+@pytest.mark.unit
 def test_compactar_docstring_multilinea() -> None:
     codigo = '"""\nDocstring multilinea.\n"""\ndef f():\n    pass'
     _compactado, _, stats = ce.compactar(codigo)
     assert stats["docstrings"] == 3
 
 
+@pytest.mark.unit
 def test_compactar_comentario_inline() -> None:
     codigo = "x = 1  # comentario inline"
     compactado, _, stats = ce.compactar(codigo)
@@ -58,6 +64,7 @@ def test_compactar_comentario_inline() -> None:
     assert "# comentario inline" not in compactado
 
 
+@pytest.mark.unit
 def test_compactar_espacios_extra() -> None:
     codigo = "x  =  1"
     compactado, _, stats = ce.compactar(codigo)
@@ -65,6 +72,7 @@ def test_compactar_espacios_extra() -> None:
     assert "x = 1" in compactado
 
 
+@pytest.mark.unit
 def test_descompactar_restaura_comentario() -> None:
     codigo = "# comentario\nx = 1"
     compactado, anchors, _ = ce.compactar(codigo)
@@ -72,6 +80,7 @@ def test_descompactar_restaura_comentario() -> None:
     assert "# comentario" in restaurado
 
 
+@pytest.mark.unit
 def test_descompactar_restaura_docstring() -> None:
     codigo = '"""Doc."""\nx = 1'
     compactado, anchors, _ = ce.compactar(codigo)
@@ -79,6 +88,7 @@ def test_descompactar_restaura_docstring() -> None:
     assert "Doc" in restaurado
 
 
+@pytest.mark.unit
 def test_descompactar_inline_reanade() -> None:
     codigo = "x = 1  # inline"
     compactado, anchors, _ = ce.compactar(codigo)
@@ -86,6 +96,7 @@ def test_descompactar_inline_reanade() -> None:
     assert "# inline" in restaurado
 
 
+@pytest.mark.unit
 def test_compactar_archivo(tmp_path: Path) -> None:
     f = tmp_path / "ejemplo.py"
     f.write_text("def f():\n    pass\n")
@@ -97,6 +108,7 @@ def test_compactar_archivo(tmp_path: Path) -> None:
     assert (nervioso / "ejemplo_anchors.json").exists()
 
 
+@pytest.mark.unit
 def test_main_archivo() -> None:
     """main() con argumento de archivo (CLI)."""
     import tempfile
@@ -112,6 +124,7 @@ def test_main_archivo() -> None:
             sys.argv = old_argv
 
 
+@pytest.mark.unit
 def test_main_sin_archivo() -> None:
     """main() sin archivo existente -> exit 1."""
     import sys as _sys
@@ -126,6 +139,7 @@ def test_main_sin_archivo() -> None:
         _sys.argv = old_argv
 
 
+@pytest.mark.unit
 def test_main_descompactar() -> None:
     """main() con --descompactar y mapa existente."""
     import tempfile
@@ -142,6 +156,7 @@ def test_main_descompactar() -> None:
             sys.argv = old_argv
 
 
+@pytest.mark.unit
 def test_descompactar_mas_anchors_que_lineas() -> None:
     """Más anchors 'codigo' que líneas compactadas -> rellena con '' (115)."""
     from compactador_espacios import descompactar
@@ -150,6 +165,7 @@ def test_descompactar_mas_anchors_que_lineas() -> None:
     assert r == "a\n"
 
 
+@pytest.mark.unit
 def test_descompactar_inline_texto_vacio() -> None:
     """Anchor inline SIN texto -> no añade nada (rama and texto falsa)."""
     from compactador_espacios import descompactar
@@ -158,6 +174,7 @@ def test_descompactar_inline_texto_vacio() -> None:
     assert r == "a"
 
 
+@pytest.mark.unit
 def test_descompactar_inline_primer_anchor() -> None:
     """Anchor inline como PRIMER anchor (lineas_originales vacío) -> no añade (122)."""
     from compactador_espacios import descompactar
@@ -166,6 +183,7 @@ def test_descompactar_inline_primer_anchor() -> None:
     assert r == ""  # el inline no emite línea nueva
 
 
+@pytest.mark.unit
 def test_descompactar_inline_sin_hash() -> None:
     """Texto del inline sin '#' -> idx_com -1, no añade nada (124)."""
     from compactador_espacios import descompactar
@@ -174,6 +192,7 @@ def test_descompactar_inline_sin_hash() -> None:
     assert r == "x = 1"
 
 
+@pytest.mark.unit
 def test_descompactar_tipo_desconocido() -> None:
     """Anchor con tipo no reconocido -> se ignora (ramas elif falsas)."""
     from compactador_espacios import descompactar
@@ -182,6 +201,7 @@ def test_descompactar_tipo_desconocido() -> None:
     assert r == ""  # tipo desconocido se ignora, no emite línea
 
 
+@pytest.mark.unit
 def test_main_descompactar_sin_mapa(tmp_path, monkeypatch) -> None:
     """main --descompactar sin mapa -> sys.exit(1) (177)."""
     import sys
@@ -198,6 +218,7 @@ def test_main_descompactar_sin_mapa(tmp_path, monkeypatch) -> None:
         assert e.code == 1
 
 
+@pytest.mark.unit
 def test_main_json(tmp_path, monkeypatch, capsys) -> None:
     """main --json -> pasa por la rama json (183)."""
     import sys
@@ -211,6 +232,7 @@ def test_main_json(tmp_path, monkeypatch, capsys) -> None:
     assert (tmp_path / ".nervioso" / "modulo_compactado.py").exists()
 
 
+@pytest.mark.unit
 def test_main_archivo_inexistente(tmp_path, monkeypatch) -> None:
     """main con archivo que no existe -> sys.exit(1) (172)."""
     import sys
@@ -225,6 +247,7 @@ def test_main_archivo_inexistente(tmp_path, monkeypatch) -> None:
         assert e.code == 1
 
 
+@pytest.mark.unit
 def test_main_descompactar_con_mapa(tmp_path, monkeypatch) -> None:
     """main --descompactar con mapa existente -> descompacta (179)."""
     import sys
@@ -242,6 +265,7 @@ def test_main_descompactar_con_mapa(tmp_path, monkeypatch) -> None:
     main()  # no debe lanzar
 
 
+@pytest.mark.unit
 def test_script_main_via_directo(tmp_path, monkeypatch) -> None:
     """Ejecutar el script como programa -> cubre __main__ (188-189)."""
     import runpy

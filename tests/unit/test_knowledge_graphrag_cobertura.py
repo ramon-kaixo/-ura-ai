@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/graphrag.py."""
 
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from datetime import UTC, datetime, timedelta
@@ -85,6 +86,7 @@ def _seed_governance(db: Path) -> None:
 # ── ContextBundle ───────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_context_bundle_to_dict() -> None:
     b = ContextBundle(
         query="q",
@@ -116,6 +118,7 @@ def test_context_bundle_to_dict() -> None:
 # ── _compute_score ──────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_compute_score_asset_title_match() -> None:
     a = KnowledgeAsset(
         asset_id="a",
@@ -130,6 +133,7 @@ def test_compute_score_asset_title_match() -> None:
     assert s2 < s
 
 
+@pytest.mark.unit
 def test_compute_score_recency_invalida() -> None:
     a = KnowledgeAsset(
         asset_id="a",
@@ -141,6 +145,7 @@ def test_compute_score_recency_invalida() -> None:
     assert _compute_score("x", asset=a) >= 0.15
 
 
+@pytest.mark.unit
 def test_compute_score_memory_y_vacio() -> None:
     mem = MemoryRecord(memory_id="m", kind="note", title="Nota GraphRAG", content="c", tags=(), related_assets=())
     s = _compute_score("graphrag", memory=mem)
@@ -148,6 +153,7 @@ def test_compute_score_memory_y_vacio() -> None:
     assert _compute_score("", None, None) >= 0.075
 
 
+@pytest.mark.unit
 def test_compute_score_asset_viejo() -> None:
     a = KnowledgeAsset(
         asset_id="a",
@@ -163,6 +169,7 @@ def test_compute_score_asset_viejo() -> None:
 # ── SQLiteGraphRetriever E2E ────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_retrieve_assets(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     assert r.retrieve_assets("") == []
@@ -174,6 +181,7 @@ def test_retrieve_assets(tmp_path) -> None:
     assert r._get_asset_store() is r._get_asset_store()
 
 
+@pytest.mark.unit
 def test_retrieve_assets_con_tipo(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_assets(db)
@@ -182,6 +190,7 @@ def test_retrieve_assets_con_tipo(tmp_path) -> None:
     assert all(x.asset_id in {"a1", "a2", "a3"} for x in results)
 
 
+@pytest.mark.unit
 def test_retrieve_memory(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     assert r.retrieve_memory("nada") == []
@@ -193,6 +202,7 @@ def test_retrieve_memory(tmp_path) -> None:
     assert r._get_memory_store() is r._get_memory_store()
 
 
+@pytest.mark.unit
 def test_retrieve_memory_con_kind(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_memory(db)
@@ -200,6 +210,7 @@ def test_retrieve_memory_con_kind(tmp_path) -> None:
     assert len(r.retrieve_memory("graphrag", kind="learning")) == 1
 
 
+@pytest.mark.unit
 def test_retrieve_lineage(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_lineage(db)
@@ -209,6 +220,7 @@ def test_retrieve_lineage(tmp_path) -> None:
     assert r._get_lineage_store() is r._get_lineage_store()
 
 
+@pytest.mark.unit
 def test_retrieve_governance(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_governance(db)
@@ -217,6 +229,7 @@ def test_retrieve_governance(tmp_path) -> None:
     assert r._get_governance_store() is r._get_governance_store()
 
 
+@pytest.mark.unit
 def test_retrieve_neighbors_bfs(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     conn = sqlite3.connect(db)
@@ -236,6 +249,7 @@ def test_retrieve_neighbors_bfs(tmp_path) -> None:
     assert len(r.retrieve_neighbors("a1", depth=1, max_nodes=1)) == 2
 
 
+@pytest.mark.unit
 def test_retrieve_neighbors_ciclo(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     conn = sqlite3.connect(db)
@@ -250,6 +264,7 @@ def test_retrieve_neighbors_ciclo(tmp_path) -> None:
 # ── build_context ───────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_build_context_completo(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_assets(db)
@@ -266,6 +281,7 @@ def test_build_context_completo(tmp_path) -> None:
     assert b.total_duration_ms >= 0
 
 
+@pytest.mark.unit
 def test_build_context_sin_grafo(tmp_path) -> None:
     r, db = _mk_retriever(tmp_path)
     _seed_assets(db)
@@ -279,6 +295,7 @@ def test_build_context_sin_grafo(tmp_path) -> None:
 # ── serializadores ──────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_serializar() -> None:
     rr = RetrievalResult(asset_id="a", score=0.9, title="t", kind="doc", snippet="s")
     assets = _serializar_assets([rr])

@@ -48,6 +48,7 @@ def pdf_sample_2pages(tmp_path: Path) -> Path:
 
 
 class TestHelpers:
+    @pytest.mark.integration
     def test_hash_stream(self, tmp_path: Path):
         p = tmp_path / "test.bin"
         p.write_bytes(b"hello world")
@@ -56,18 +57,22 @@ class TestHelpers:
         assert h == expected
         assert size == 11
 
+    @pytest.mark.integration
     def test_hash_stream_empty(self):
         h, size = _hash_stream("/dev/null")
         assert h == hashlib.sha256(b"").hexdigest()
         assert size == 0
 
+    @pytest.mark.integration
     def test_hash_stream_not_found(self, tmp_path: Path):
         with pytest.raises(FileNotFoundError):
             _hash_stream(str(tmp_path / "nonexistent_file_xyz"))
 
+    @pytest.mark.integration
     def test_check_import_found(self):
         assert _check_import("os") is True
 
+    @pytest.mark.integration
     def test_check_import_not_found(self):
         assert _check_import("nonexistent_module_xyz") is False
 
@@ -76,6 +81,7 @@ class TestHelpers:
 
 
 class TestPdfExtractor:
+    @pytest.mark.integration
     def test_extract_basic(self, pdf_sample: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -89,6 +95,7 @@ class TestPdfExtractor:
         assert result.asset.metadata["_extractor"] == "pdf"
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_metadata_fields(self, pdf_sample: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -109,6 +116,7 @@ class TestPdfExtractor:
         ]:
             assert required in meta, f"Missing metadata field: {required}"
 
+    @pytest.mark.integration
     def test_determinism(self, pdf_sample: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -117,6 +125,7 @@ class TestPdfExtractor:
         r2 = ext.extract(AssetSource("filesystem", str(pdf_sample)))
         assert r1.asset.asset_id == r2.asset.asset_id
 
+    @pytest.mark.integration
     def test_asset_id_is_content_hash(self, pdf_sample: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -125,6 +134,7 @@ class TestPdfExtractor:
         content_hash = result.asset.metadata["content_sha256"]
         assert result.asset.asset_id == content_hash[:16]
 
+    @pytest.mark.integration
     def test_quality_computed(self, pdf_sample: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -132,6 +142,7 @@ class TestPdfExtractor:
         result = ext.extract(AssetSource("filesystem", str(pdf_sample)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_file_not_found(self, tmp_path: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -141,6 +152,7 @@ class TestPdfExtractor:
         assert "not found" in result.errors[0].lower()
         assert result.asset is None
 
+    @pytest.mark.integration
     def test_multipage(self, pdf_sample_2pages: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -148,6 +160,7 @@ class TestPdfExtractor:
         result = ext.extract(AssetSource("filesystem", str(pdf_sample_2pages)))
         assert result.asset.metadata["pages"] == 2
 
+    @pytest.mark.integration
     def test_no_exception_on_corrupt(self, tmp_path: Path):
         from knowledge.engine.extractors.pdf import PdfExtractor
 
@@ -159,6 +172,7 @@ class TestPdfExtractor:
         if result.asset:
             assert result.asset.asset_type == AssetType.PDF
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("pdf")
@@ -195,6 +209,7 @@ def image_sample_png(tmp_path: Path) -> Path:
 
 
 class TestImageExtractor:
+    @pytest.mark.integration
     def test_extract_jpeg(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -207,6 +222,7 @@ class TestImageExtractor:
         assert result.asset.metadata.get("height") == 100
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_extract_png(self, image_sample_png: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -217,6 +233,7 @@ class TestImageExtractor:
         assert result.asset.metadata.get("width") == 50
         assert result.asset.metadata.get("height") == 50
 
+    @pytest.mark.integration
     def test_metadata_fields(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -237,6 +254,7 @@ class TestImageExtractor:
         ]:
             assert required in meta, f"Missing metadata field: {required}"
 
+    @pytest.mark.integration
     def test_determinism(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -245,6 +263,7 @@ class TestImageExtractor:
         r2 = ext.extract(AssetSource("filesystem", str(image_sample_jpg)))
         assert r1.asset.asset_id == r2.asset.asset_id
 
+    @pytest.mark.integration
     def test_asset_id_is_content_hash(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -252,6 +271,7 @@ class TestImageExtractor:
         result = ext.extract(AssetSource("filesystem", str(image_sample_jpg)))
         assert result.asset.asset_id == result.asset.metadata["content_sha256"][:16]
 
+    @pytest.mark.integration
     def test_thumbnail_created(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -261,6 +281,7 @@ class TestImageExtractor:
         assert thumb
         assert Path(thumb).exists()
 
+    @pytest.mark.integration
     def test_file_not_found(self, tmp_path: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -270,6 +291,7 @@ class TestImageExtractor:
         assert "not found" in result.errors[0].lower()
         assert result.asset is None
 
+    @pytest.mark.integration
     def test_no_exception_on_corrupt(self, tmp_path: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -280,6 +302,7 @@ class TestImageExtractor:
         assert result.asset is not None  # degraded asset with basic metadata
         assert result.asset.metadata.get("_degraded", False)
 
+    @pytest.mark.integration
     def test_quality_computed(self, image_sample_jpg: Path):
         from knowledge.engine.extractors.image import ImageExtractor
 
@@ -287,6 +310,7 @@ class TestImageExtractor:
         result = ext.extract(AssetSource("filesystem", str(image_sample_jpg)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("image")
@@ -329,6 +353,7 @@ def office_sample_pptx(tmp_path: Path) -> Path:
 
 
 class TestOfficeExtractor:
+    @pytest.mark.integration
     def test_extract_docx(self, office_sample_docx: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -340,6 +365,7 @@ class TestOfficeExtractor:
         assert result.asset.metadata.get("paragraph_count", 0) >= 2
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_extract_pptx(self, office_sample_pptx: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -350,6 +376,7 @@ class TestOfficeExtractor:
         assert result.asset.asset_type.name == "OFFICE_SLIDE"
         assert result.asset.metadata.get("slide_count", 0) >= 1
 
+    @pytest.mark.integration
     def test_metadata_fields_docx(self, office_sample_docx: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -367,6 +394,7 @@ class TestOfficeExtractor:
         ]:
             assert required in meta, f"Missing: {required}"
 
+    @pytest.mark.integration
     def test_determinism(self, office_sample_docx: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -375,6 +403,7 @@ class TestOfficeExtractor:
         r2 = ext.extract(AssetSource("filesystem", str(office_sample_docx)))
         assert r1.asset.asset_id == r2.asset.asset_id
 
+    @pytest.mark.integration
     def test_degradation_no_docx(self, tmp_path: Path, monkeypatch):
         import knowledge.engine.extractors.office as office_mod
 
@@ -389,6 +418,7 @@ class TestOfficeExtractor:
         assert result.asset.metadata.get("_degraded", False)
         assert result.errors == []
 
+    @pytest.mark.integration
     def test_file_not_found(self, tmp_path: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -397,6 +427,7 @@ class TestOfficeExtractor:
         assert len(result.errors) > 0
         assert "not found" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_quality_computed(self, office_sample_docx: Path):
         from knowledge.engine.extractors.office import OfficeExtractor
 
@@ -404,6 +435,7 @@ class TestOfficeExtractor:
         result = ext.extract(AssetSource("filesystem", str(office_sample_docx)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("office")
@@ -441,6 +473,7 @@ def audio_sample_wav(tmp_path: Path) -> Path:
 
 
 class TestAudioExtractor:
+    @pytest.mark.integration
     def test_extract_wav(self, audio_sample_wav: Path):
         from knowledge.engine.extractors.audio import AudioExtractor
 
@@ -451,6 +484,7 @@ class TestAudioExtractor:
         assert result.asset.asset_type == AssetType.AUDIO
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_metadata_fields(self, audio_sample_wav: Path):
         from knowledge.engine.extractors.audio import AudioExtractor
 
@@ -468,6 +502,7 @@ class TestAudioExtractor:
         ]:
             assert required in meta, f"Missing: {required}"
 
+    @pytest.mark.integration
     def test_ffprobe_metadata(self, audio_sample_wav: Path):
         import shutil
 
@@ -482,6 +517,7 @@ class TestAudioExtractor:
         assert "audio_duration_sec" in meta, "Missing duration"
         assert "audio_codec" in meta, "Missing codec"
 
+    @pytest.mark.integration
     def test_determinism(self, audio_sample_wav: Path):
         from knowledge.engine.extractors.audio import AudioExtractor
 
@@ -490,6 +526,7 @@ class TestAudioExtractor:
         r2 = ext.extract(AssetSource("filesystem", str(audio_sample_wav)))
         assert r1.asset.asset_id == r2.asset.asset_id
 
+    @pytest.mark.integration
     def test_file_not_found(self, tmp_path: Path):
         from knowledge.engine.extractors.audio import AudioExtractor
 
@@ -498,6 +535,7 @@ class TestAudioExtractor:
         assert len(result.errors) > 0
         assert "not found" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_quality_computed(self, audio_sample_wav: Path):
         from knowledge.engine.extractors.audio import AudioExtractor
 
@@ -505,6 +543,7 @@ class TestAudioExtractor:
         result = ext.extract(AssetSource("filesystem", str(audio_sample_wav)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("audio")
@@ -540,6 +579,7 @@ def video_sample_mov(tmp_path: Path) -> Path:
 
 
 class TestVideoExtractor:
+    @pytest.mark.integration
     def test_extract_mov(self, video_sample_mov: Path):
         from knowledge.engine.extractors.video import VideoExtractor
 
@@ -550,6 +590,7 @@ class TestVideoExtractor:
         assert result.asset.asset_type == AssetType.VIDEO
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_metadata_fields(self, video_sample_mov: Path):
         from knowledge.engine.extractors.video import VideoExtractor
 
@@ -567,6 +608,7 @@ class TestVideoExtractor:
         ]:
             assert required in meta, f"Missing: {required}"
 
+    @pytest.mark.integration
     def test_determinism(self, video_sample_mov: Path):
         from knowledge.engine.extractors.video import VideoExtractor
 
@@ -575,6 +617,7 @@ class TestVideoExtractor:
         r2 = ext.extract(AssetSource("filesystem", str(video_sample_mov)))
         assert r1.asset.asset_id == r2.asset.asset_id
 
+    @pytest.mark.integration
     def test_file_not_found(self, tmp_path: Path):
         from knowledge.engine.extractors.video import VideoExtractor
 
@@ -583,6 +626,7 @@ class TestVideoExtractor:
         assert len(result.errors) > 0
         assert "not found" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_quality_computed(self, video_sample_mov: Path):
         from knowledge.engine.extractors.video import VideoExtractor
 
@@ -590,6 +634,7 @@ class TestVideoExtractor:
         result = ext.extract(AssetSource("filesystem", str(video_sample_mov)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("video")
@@ -602,6 +647,7 @@ class TestVideoExtractor:
 
 
 class TestWebExtractor:
+    @pytest.mark.integration
     def test_ssrf_block_file_scheme(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -610,6 +656,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
         assert "scheme" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_ssrf_block_localhost(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -618,6 +665,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
         assert "blocked" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_ssrf_block_private_ip(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -626,6 +674,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
         assert "blocked" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_ssrf_block_metadata(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -634,6 +683,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
         assert "cloud metadata" in result.errors[0].lower() or "blocked" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_ssrf_block_loopback(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -642,6 +692,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
         assert "blocked" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_empty_url(self):
         from knowledge.engine.extractors.web import WebExtractor
 
@@ -650,6 +701,7 @@ class TestWebExtractor:
         assert len(result.errors) > 0
 
     @pytest.mark.skipif(sys.platform == "darwin", reason="Sin DNS en sandbox Mac; degraded path bloqueado por SSRF validation")
+    @pytest.mark.integration
     def test_degradation_no_httpx(self, monkeypatch):
         import knowledge.engine.extractors.web as web_mod
 
@@ -661,6 +713,7 @@ class TestWebExtractor:
         assert result.asset is not None
         assert result.asset.metadata.get("_degraded", False)
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("web")
@@ -673,6 +726,7 @@ class TestWebExtractor:
 
 
 class TestGitExtractor:
+    @pytest.mark.integration
     def test_extract_local(self, tmp_path: Path):
         """Crea un repo git local y extrae metadatos."""
         repo = tmp_path / "myrepo"
@@ -699,6 +753,7 @@ class TestGitExtractor:
         assert result.asset.metadata.get("commit_count", 0) >= 1
         assert result.duration_ms > 0
 
+    @pytest.mark.integration
     def test_metadata_fields(self, tmp_path: Path):
         repo = tmp_path / "metarepo"
         repo.mkdir()
@@ -728,6 +783,7 @@ class TestGitExtractor:
         assert meta["tag_count"] >= 1
         assert meta["commit_count"] >= 1
 
+    @pytest.mark.integration
     def test_not_a_repo(self, tmp_path: Path):
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -735,6 +791,7 @@ class TestGitExtractor:
         result = ext.extract(AssetSource("filesystem", str(tmp_path / "notarepo")))
         assert len(result.errors) > 0
 
+    @pytest.mark.integration
     def test_empty_location(self):
         from knowledge.engine.extractors.git import GitExtractor
 
@@ -742,6 +799,7 @@ class TestGitExtractor:
         result = ext.extract(AssetSource("api", ""))
         assert len(result.errors) > 0
 
+    @pytest.mark.integration
     def test_readme_detected(self, tmp_path: Path):
         repo = tmp_path / "readme_repo"
         repo.mkdir()
@@ -758,6 +816,7 @@ class TestGitExtractor:
         result = ext.extract(AssetSource("filesystem", str(repo)))
         assert result.asset.metadata.get("readme_preview", "").startswith("# Project Title")
 
+    @pytest.mark.integration
     def test_quality_computed(self, tmp_path: Path):
         repo = tmp_path / "qrepo"
         repo.mkdir()
@@ -774,6 +833,7 @@ class TestGitExtractor:
         result = ext.extract(AssetSource("filesystem", str(repo)))
         assert 0.0 <= result.asset.quality <= 1.0
 
+    @pytest.mark.integration
     def test_exceeds_max_size(self, tmp_path: Path, monkeypatch):
         import knowledge.engine.extractors.git as git_mod
 
@@ -793,6 +853,7 @@ class TestGitExtractor:
         assert len(result.errors) > 0
         assert "too large" in result.errors[0].lower() or "max" in result.errors[0].lower()
 
+    @pytest.mark.integration
     def test_registered(self):
         registry = get_registry()
         ext = registry.get("git")

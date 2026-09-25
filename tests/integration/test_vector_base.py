@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from dataclasses import FrozenInstanceError
 from typing import Any
 
@@ -127,56 +128,68 @@ class FakeVectorStore:
 class TestEmbedderProtocol:
     """Verifica que FakeEmbedder cumple Embedder(Protocol) estructuralmente."""
 
+    @pytest.mark.integration
     def test_embed_texts(self):
         embedder: Embedder = FakeEmbedder()
         vectors = embedder.embed(["hello", "world"])
         assert len(vectors) == 2
         assert all(len(v) == 768 for v in vectors)
 
+    @pytest.mark.integration
     def test_embed_empty(self):
         embedder: Embedder = FakeEmbedder()
         assert embedder.embed([]) == []
 
+    @pytest.mark.integration
     def test_embed_not_available(self):
         embedder: Embedder = FakeEmbedder(available=False)
         assert embedder.embed(["test"]) == []
 
+    @pytest.mark.integration
     def test_embed_cache_hit(self):
         embedder: Embedder = FakeEmbedder()
         v1 = embedder.embed(["hello"])
         v2 = embedder.embed(["hello"])
         assert v1 == v2
 
+    @pytest.mark.integration
     def test_embed_query(self):
         embedder: Embedder = FakeEmbedder()
         vec = embedder.embed_query("test query")
         assert len(vec) == 768
 
+    @pytest.mark.integration
     def test_embed_query_empty(self):
         embedder: Embedder = FakeEmbedder()
         vec = embedder.embed_query("")
         assert vec == []
 
+    @pytest.mark.integration
     def test_embed_query_not_available(self):
         embedder: Embedder = FakeEmbedder(available=False)
         assert embedder.embed_query("test") == []
 
+    @pytest.mark.integration
     def test_vector_size(self):
         embedder: Embedder = FakeEmbedder(vector_size=384)
         assert embedder.vector_size == 384
 
+    @pytest.mark.integration
     def test_max_input_tokens(self):
         embedder: Embedder = FakeEmbedder(max_input_tokens=2048)
         assert embedder.max_input_tokens == 2048
 
+    @pytest.mark.integration
     def test_max_input_tokens_unknown(self):
         embedder: Embedder = FakeEmbedder(max_input_tokens=0)
         assert embedder.max_input_tokens == 0
 
+    @pytest.mark.integration
     def test_available_true(self):
         embedder: Embedder = FakeEmbedder(available=True)
         assert embedder.available is True
 
+    @pytest.mark.integration
     def test_available_false(self):
         embedder: Embedder = FakeEmbedder(available=False)
         assert embedder.available is False
@@ -185,6 +198,7 @@ class TestEmbedderProtocol:
 class TestVectorStoreProtocol:
     """Verifica que FakeVectorStore cumple VectorStore(Protocol) estructuralmente."""
 
+    @pytest.mark.integration
     def test_search_similar(self):
         store: VectorStore = FakeVectorStore()
         store.upsert(
@@ -198,80 +212,97 @@ class TestVectorStoreProtocol:
         assert results[0].asset_id == "a"
         assert results[0].score >= results[1].score
 
+    @pytest.mark.integration
     def test_search_empty(self):
         store: VectorStore = FakeVectorStore()
         assert store.search([1.0, 0.0]) == []
 
+    @pytest.mark.integration
     def test_search_not_available(self):
         store: VectorStore = FakeVectorStore(available=False)
         assert store.search([1.0, 0.0]) == []
 
+    @pytest.mark.integration
     def test_upsert_items(self):
         store: VectorStore = FakeVectorStore()
         count = store.upsert([VectorItem("a", [1.0, 0.0], "preview a")])
         assert count == 1
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_upsert_empty(self):
         store: VectorStore = FakeVectorStore()
         assert store.upsert([]) == 0
 
+    @pytest.mark.integration
     def test_upsert_not_available(self):
         store: VectorStore = FakeVectorStore(available=False)
         assert store.upsert([VectorItem("a", [1.0, 0.0], "x")]) == 0
 
+    @pytest.mark.integration
     def test_upsert_duplicate(self):
         store: VectorStore = FakeVectorStore()
         store.upsert([VectorItem("a", [1.0, 0.0], "v1")])
         store.upsert([VectorItem("a", [0.0, 1.0], "v2")])
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_delete(self):
         store: VectorStore = FakeVectorStore()
         store.upsert([VectorItem("a", [1.0, 0.0], "x")])
         assert store.delete(["a"]) == 1
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_delete_nonexistent(self):
         store: VectorStore = FakeVectorStore()
         assert store.delete(["nonexistent"]) == 0
 
+    @pytest.mark.integration
     def test_delete_empty(self):
         store: VectorStore = FakeVectorStore()
         assert store.delete([]) == 0
 
+    @pytest.mark.integration
     def test_delete_not_available(self):
         store: VectorStore = FakeVectorStore(available=False)
         assert store.delete(["a"]) == 0
 
+    @pytest.mark.integration
     def test_count(self):
         store: VectorStore = FakeVectorStore()
         assert store.count() == 0
         store.upsert([VectorItem("a", [1.0], "x"), VectorItem("b", [0.0], "y")])
         assert store.count() == 2
 
+    @pytest.mark.integration
     def test_count_empty(self):
         store: VectorStore = FakeVectorStore()
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_count_not_available(self):
         store: VectorStore = FakeVectorStore(available=False)
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_count_after_ops(self):
         store: VectorStore = FakeVectorStore()
         store.upsert([VectorItem("a", [1.0], "x"), VectorItem("b", [0.0], "y")])
         store.delete(["a"])
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_available_true(self):
         store: VectorStore = FakeVectorStore(available=True)
         assert store.available is True
 
+    @pytest.mark.integration
     def test_available_false(self):
         store: VectorStore = FakeVectorStore(available=False)
         assert store.available is False
 
+    @pytest.mark.integration
     def test_filter_flat_dict(self):
         store: VectorStore = FakeVectorStore()
         store.upsert([VectorItem("a", [1.0], "x")])
@@ -282,22 +313,26 @@ class TestVectorStoreProtocol:
 class TestVectorItem:
     """Verifica el dataclass VectorItem."""
 
+    @pytest.mark.integration
     def test_fields(self):
         item = VectorItem(asset_id="abc", vector=[0.1, 0.2], text_preview="hello")
         assert item.asset_id == "abc"
         assert item.vector == [0.1, 0.2]
         assert item.text_preview == "hello"
 
+    @pytest.mark.integration
     def test_frozen(self):
         item = VectorItem(asset_id="abc", vector=[0.1, 0.2], text_preview="hello")
         with pytest.raises(FrozenInstanceError):
             item.asset_id = "xyz"
 
+    @pytest.mark.integration
     def test_equality(self):
         a = VectorItem("id", [1.0], "txt")
         b = VectorItem("id", [1.0], "txt")
         assert a == b
 
+    @pytest.mark.integration
     def test_repr(self):
         item = VectorItem("id", [1.0], "txt")
         r = repr(item)
@@ -309,25 +344,30 @@ class TestVectorItem:
 class TestVectorResult:
     """Verifica el dataclass VectorResult."""
 
+    @pytest.mark.integration
     def test_fields(self):
         r = VectorResult(asset_id="abc", score=0.95)
         assert r.asset_id == "abc"
         assert r.score == 0.95
         assert r.metadata == {}
 
+    @pytest.mark.integration
     def test_mutable(self):
         r = VectorResult(asset_id="abc", score=0.95)
         r.metadata["key"] = "value"
         assert r.metadata["key"] == "value"
 
+    @pytest.mark.integration
     def test_default_metadata(self):
         r = VectorResult(asset_id="abc", score=0.95)
         assert r.metadata == {}
 
+    @pytest.mark.integration
     def test_custom_metadata(self):
         r = VectorResult(asset_id="abc", score=0.95, metadata={"type": "pdf"})
         assert r.metadata["type"] == "pdf"
 
+    @pytest.mark.integration
     def test_equality(self):
         a = VectorResult("id", 0.9, {"k": "v"})
         b = VectorResult("id", 0.9, {"k": "v"})
@@ -337,6 +377,7 @@ class TestVectorResult:
 class TestDeterminism:
     """Verifica determinismo en embeddings mock."""
 
+    @pytest.mark.integration
     def test_determinism_embed(self):
         e1: Embedder = FakeEmbedder(vector_size=768)
         e2: Embedder = FakeEmbedder(vector_size=768)
@@ -345,12 +386,14 @@ class TestDeterminism:
         v2 = e2.embed(texts)
         assert v1 == v2
 
+    @pytest.mark.integration
     def test_determinism_embed_query(self):
         e1: Embedder = FakeEmbedder()
         e2: Embedder = FakeEmbedder()
         q = "same query every time"
         assert e1.embed_query(q) == e2.embed_query(q)
 
+    @pytest.mark.integration
     def test_determinism_search(self):
         s1: VectorStore = FakeVectorStore()
         s2: VectorStore = FakeVectorStore()

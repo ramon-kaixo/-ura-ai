@@ -15,6 +15,7 @@ plano y cifrado
 
 from __future__ import annotations
 
+import pytest
 import json
 import threading
 import time
@@ -583,6 +584,7 @@ class TestJournalEncrypted:
 
 
 class TestSnapshotPlain:
+    @pytest.mark.slow
     def test_save_and_load(self, tmp_path: str) -> None:
         tl = MemoryTimeline()
         tl.append(_entry(ts=1000.0))
@@ -678,6 +680,7 @@ class TestSnapshotPlain:
 
 @pytest.mark.skipif(not _ENCRYPTION_AVAILABLE, reason="cryptography not installed")
 class TestSnapshotEncrypted:
+    @pytest.mark.slow
     def test_save_and_load(self, tmp_path: str) -> None:
         tl = MemoryTimeline()
         tl.append(_entry(ts=1000.0))
@@ -697,6 +700,7 @@ class TestSnapshotEncrypted:
         raw = Path(p).read_bytes()
         assert b"timestamp" not in raw
 
+    @pytest.mark.slow
     def test_load_without_key_raises(self, tmp_path: str) -> None:
         tl = MemoryTimeline()
         tl.append(_entry(ts=1000.0))
@@ -862,6 +866,7 @@ class TestMemoryShutdown:
         m.shutdown()
         assert m.readiness()["ready"] is False
 
+    @pytest.mark.slow
     def test_shutdown_timeout(self, tmp_path: str) -> None:
         journal = str(Path(tmp_path) / "journal.jsonl")
         m = Memory(journal_path=journal)
@@ -968,6 +973,7 @@ class TestMemoryPersistenceEdgeCases:
         assert not rot.exists()
         m.close()
 
+    @pytest.mark.slow
     def test_load_tolerates_duplicate_entry_ids(self, tmp_path: str) -> None:
         m1 = Memory()
         _populate(m1, 5)

@@ -1,5 +1,6 @@
 """Tests for motor/core/fusion/stages/entity_cache.py (LRUCache)."""
 from __future__ import annotations
+import pytest
 
 from motor.core.fusion.models import ResolvedEntity
 from motor.core.fusion.stages.entity_cache import LRUCache
@@ -10,6 +11,7 @@ def _entity(eid: str) -> ResolvedEntity:
 
 
 class TestLRUCache:
+    @pytest.mark.unit
     def test_put_get(self) -> None:
         c = LRUCache(maxsize=4)
         e = _entity("a")
@@ -17,10 +19,12 @@ class TestLRUCache:
         assert c.get("a") == e
         assert c.size == 1
 
+    @pytest.mark.unit
     def test_get_missing(self) -> None:
         c = LRUCache()
         assert c.get("nope") is None
 
+    @pytest.mark.unit
     def test_eviction_lru(self) -> None:
         c = LRUCache(maxsize=2)
         c.put("a", _entity("a"))
@@ -31,6 +35,7 @@ class TestLRUCache:
         assert c.get("c") is not None
         assert c.size == 2
 
+    @pytest.mark.unit
     def test_access_reorders(self) -> None:
         c = LRUCache(maxsize=2)
         c.put("a", _entity("a"))
@@ -40,11 +45,13 @@ class TestLRUCache:
         assert c.get("a") is not None
         assert c.get("b") is None
 
+    @pytest.mark.unit
     def test_properties(self) -> None:
         c = LRUCache(maxsize=8)
         assert c.maxsize == 8
         assert c.size == 0
 
+    @pytest.mark.unit
     def test_clear(self) -> None:
         c = LRUCache()
         c.put("a", _entity("a"))

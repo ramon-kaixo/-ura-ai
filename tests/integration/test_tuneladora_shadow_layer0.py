@@ -1,6 +1,7 @@
 """Tests para scripts/pro/tuneladora/shadow/layer0_env.py."""
 
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,6 +20,7 @@ from scripts.pro.tuneladora.shadow.layer0_env import (
 
 
 class TestSession:
+    @pytest.mark.integration
     def test_crea_y_reusa(self) -> None:
         s1 = _session()
         s2 = _session()
@@ -26,16 +28,19 @@ class TestSession:
 
 
 class TestCpuCount:
+    @pytest.mark.integration
     def test_normal(self, monkeypatch) -> None:
         monkeypatch.setattr("os.cpu_count", lambda: 8)
         assert _get_cpu_count() == 8
 
+    @pytest.mark.integration
     def test_fallback(self, monkeypatch) -> None:
         monkeypatch.setattr("os.cpu_count", mock.Mock(side_effect=RuntimeError("x")))
         assert _get_cpu_count() == 1
 
 
 class TestRamInfo:
+    @pytest.mark.integration
     def test_con_psutil(self, monkeypatch) -> None:
         vm = SimpleNamespace(total=16 * 1024**3, available=8 * 1024**3, percent=50.0)
         monkeypatch.setitem(__import__("sys").modules, "psutil", SimpleNamespace(virtual_memory=lambda: vm))
@@ -44,6 +49,7 @@ class TestRamInfo:
         assert info["available_mb"] == 8192
         assert info["percent"] == 50.0
 
+    @pytest.mark.integration
     def test_sin_psutil_con_proc(self, monkeypatch, tmp_path: Path) -> None:
         meminfo = tmp_path / "meminfo"
         meminfo.write_text("MemTotal:       16384000 kB\nMemAvailable:    8192000 kB\n")
@@ -53,6 +59,7 @@ class TestRamInfo:
         assert info["total_mb"] == 16000
         assert info["available_mb"] == 8000
 
+    @pytest.mark.integration
     def test_sin_psutil_fallback(self, monkeypatch) -> None:
         monkeypatch.setitem(__import__("sys").modules, "psutil", None)
         with mock.patch("pathlib.Path.open", side_effect=OSError("no proc")):
@@ -61,6 +68,7 @@ class TestRamInfo:
 
 
 class TestOllamaCheck:
+    @pytest.mark.integration
     def test_ok(self, monkeypatch) -> None:
         session = mock.Mock()
         session.get.return_value = SimpleNamespace(status_code=200, json=lambda: {"models": [1, 2, 3]})
@@ -69,12 +77,14 @@ class TestOllamaCheck:
         assert ok is True
         assert n == 3
 
+    @pytest.mark.integration
     def test_no_200(self, monkeypatch) -> None:
         session = mock.Mock()
         session.get.return_value = SimpleNamespace(status_code=500, json=lambda: {})
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._session", lambda: session)
         assert _ollama_check("http://x") == (False, 0)
 
+    @pytest.mark.integration
     def test_error(self, monkeypatch) -> None:
         session = mock.Mock()
         session.get.side_effect = RuntimeError("conn")
@@ -83,6 +93,7 @@ class TestOllamaCheck:
 
 
 class TestGitAvailable:
+    @pytest.mark.integration
     def test_ok(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.layer0_env.subprocess.run",
@@ -90,6 +101,7 @@ class TestGitAvailable:
         )
         assert _git_available(tmp_path) is True
 
+    @pytest.mark.integration
     def test_fail(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.layer0_env.subprocess.run",
@@ -97,6 +109,7 @@ class TestGitAvailable:
         )
         assert _git_available(tmp_path) is False
 
+    @pytest.mark.integration
     def test_error(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.layer0_env.subprocess.run",
@@ -106,9 +119,11 @@ class TestGitAvailable:
 
 
 class TestDiskIo:
+    @pytest.mark.integration
     def test_ok(self, tmp_path: Path) -> None:
         assert _disk_io_ok(tmp_path) is True
 
+    @pytest.mark.integration
     def test_error(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.shadow.layer0_env.Path.write_text",
@@ -118,6 +133,7 @@ class TestDiskIo:
 
 
 class TestRun:
+    @pytest.mark.integration
     def test_todo_ok(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: 50.0)
         monkeypatch.setattr(
@@ -133,6 +149,7 @@ class TestRun:
         assert by_name == {"disk": "OK", "ram": "OK", "ollama": "OK", "cpu": "OK", "git": "OK", "disk_io": "OK"}
         assert all(isinstance(r, EnvCheck) for r in results)
 
+    @pytest.mark.integration
     def test_disk_fail_y_ram_warn(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: 0.5)
         monkeypatch.setattr(
@@ -151,6 +168,7 @@ class TestRun:
         assert by_name["git"] == "FAIL"
         assert by_name["disk_io"] == "WARN"
 
+    @pytest.mark.integration
     def test_disk_indeterminado(self, monkeypatch, tmp_path: Path) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.shadow.layer0_env._free_disk_gb", lambda p: None)
         monkeypatch.setattr(

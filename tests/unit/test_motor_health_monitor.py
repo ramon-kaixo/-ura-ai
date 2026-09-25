@@ -1,6 +1,7 @@
 """Tests para motor/observability/prometheus_exporter.py y motor/health_monitor.py."""
 from __future__ import annotations
 
+import pytest
 from contextlib import suppress
 from unittest import mock
 
@@ -29,6 +30,7 @@ class TestPrometheusExporter:
         h._histograms = {f"k{i}": s for i, s in enumerate(snapshots)}
         return h
 
+    @pytest.mark.unit
     def test_counter_lines_con_labels(self) -> None:
         from motor.observability.prometheus_exporter import _counter_lines
 
@@ -38,6 +40,7 @@ class TestPrometheusExporter:
         assert lines[1] == "# TYPE ura_test counter"
         assert 'ura_test{mode="chat"} 5' in lines
 
+    @pytest.mark.unit
     def test_counter_lines_sin_labels(self) -> None:
         from motor.observability.prometheus_exporter import _counter_lines
 
@@ -45,6 +48,7 @@ class TestPrometheusExporter:
         lines = _counter_lines(c, "ura_x", "d")
         assert "ura_x 3" in lines
 
+    @pytest.mark.unit
     def test_histogram_lines(self) -> None:
         from motor.observability.prometheus_exporter import _histogram_lines
 
@@ -53,6 +57,7 @@ class TestPrometheusExporter:
         assert 'ura_lat{mode="chat",}_count 10' in lines
         assert 'ura_lat{mode="chat",}_sum 5.5' in lines
 
+    @pytest.mark.unit
     def test_histogram_sin_labels(self) -> None:
         from motor.observability.prometheus_exporter import _histogram_lines
 
@@ -61,6 +66,7 @@ class TestPrometheusExporter:
         assert "ura_lat_count 2" in lines
         assert "ura_lat_sum 1.0" in lines
 
+    @pytest.mark.unit
     def test_export_metrics(self, monkeypatch) -> None:
         import motor.observability.prometheus_exporter as pe
 
@@ -88,6 +94,7 @@ class TestHealthMonitor:
     def _health(self, statuses: dict) -> dict:
         return {"global": "ok", "components": {k: {"status": v} for k, v in statuses.items()}}
 
+    @pytest.mark.unit
     def test_fetch_health_ok(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -99,12 +106,14 @@ class TestHealthMonitor:
         out = hm._fetch_health()
         assert out == {"global": "ok"}
 
+    @pytest.mark.unit
     def test_fetch_health_error(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
         monkeypatch.setattr("urllib.request.urlopen", mock.Mock(side_effect=OSError("net")))
         assert hm._fetch_health() is None
 
+    @pytest.mark.unit
     def test_check_sin_health(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -112,6 +121,7 @@ class TestHealthMonitor:
         r = hm.check_and_alert()
         assert r == {"status": "error", "detail": "No se pudo obtener health"}
 
+    @pytest.mark.unit
     def test_check_nuevo_degradado(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -123,6 +133,7 @@ class TestHealthMonitor:
         alert.assert_called_once()
         assert "degraded" in alert.call_args.args[0]
 
+    @pytest.mark.unit
     def test_check_critical(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -132,6 +143,7 @@ class TestHealthMonitor:
         hm.check_and_alert()
         assert alert.call_args.args[1] == "critical"
 
+    @pytest.mark.unit
     def test_check_recuperacion(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -143,6 +155,7 @@ class TestHealthMonitor:
         assert "ollama" in r["recovered"]
         assert alert.call_args.args[1] == "info"
 
+    @pytest.mark.unit
     def test_check_sin_cambios(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -152,6 +165,7 @@ class TestHealthMonitor:
         assert r["new_degraded"] == []
         assert r["recovered"] == []
 
+    @pytest.mark.unit
     def test_send_alert_ok(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -160,12 +174,14 @@ class TestHealthMonitor:
         assert hm._send_alert("msg") is True
         notify.assert_called_once_with("msg", level="warning")
 
+    @pytest.mark.unit
     def test_send_alert_fallback(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
         monkeypatch.setattr("motor.core.notifier.notify", mock.Mock(side_effect=ImportError("no")))
         assert hm._send_alert("msg") is False
 
+    @pytest.mark.unit
     def test_backup_memory_dentro_intervalo(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -176,6 +192,7 @@ class TestHealthMonitor:
         hm._backup_memory()
         copy.assert_not_called()
 
+    @pytest.mark.unit
     def test_backup_memory_ok(self, monkeypatch, tmp_path) -> None:
         import motor.health_monitor as hm
 
@@ -188,6 +205,7 @@ class TestHealthMonitor:
         hm._backup_memory()
         assert len(list(backups.glob("memory_*.db"))) == 1
 
+    @pytest.mark.unit
     def test_backup_memory_sin_db(self, monkeypatch, tmp_path) -> None:
         import motor.health_monitor as hm
 
@@ -195,6 +213,7 @@ class TestHealthMonitor:
         monkeypatch.setattr(hm, "BACKUP_INTERVAL", 0)
         hm._backup_memory()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_main_backup(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -204,6 +223,7 @@ class TestHealthMonitor:
         hm.main()
         backup.assert_called_once()
 
+    @pytest.mark.unit
     def test_main_una_ejecucion(self, monkeypatch) -> None:
         import motor.health_monitor as hm
 
@@ -212,6 +232,7 @@ class TestHealthMonitor:
         monkeypatch.setattr("builtins.print", mock.Mock())
         hm.main()
 
+    @pytest.mark.unit
     def test_backup_memory_error(self, monkeypatch) -> None:
         """Branche except de _backup_memory (copy2 falla)."""
         import motor.health_monitor as hm
@@ -222,6 +243,7 @@ class TestHealthMonitor:
         monkeypatch.setattr("pathlib.Path.exists", mock.Mock(return_value=True))
         hm._backup_memory()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_main_daemon_interrumpido(self, monkeypatch) -> None:
         """Modo daemon: el while True termina con KeyboardInterrupt."""
         import motor.health_monitor as hm

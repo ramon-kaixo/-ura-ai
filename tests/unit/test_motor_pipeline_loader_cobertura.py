@@ -17,6 +17,8 @@ def _registry(manifests: dict[str, object] | None = None):
 
 
 class TestLoad:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_yaml(self, tmp_path) -> None:
         p = tmp_path / "pipe.yaml"
         p.write_text("name: mi-pipe\nversion: '1.0'\nstages:\n  - name: s1\n    plugin: p1\n")
@@ -25,12 +27,16 @@ class TestLoad:
         assert len(pipe.stages) == 1
         assert pipe.stages[0].name == "s1"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_yml(self, tmp_path) -> None:
         p = tmp_path / "pipe.yml"
         p.write_text("name: x\nstages: []\n")
         pipe = PipelineLoader(_registry()).load(p)
         assert pipe.name == "x"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_json(self, tmp_path) -> None:
         p = tmp_path / "pipe.json"
         p.write_text('{"name": "j", "stages": [{"name": "a", "plugin": "p", "timeout": 60}]}')
@@ -38,12 +44,16 @@ class TestLoad:
         assert pipe.name == "j"
         assert pipe.stages[0].timeout == 60
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_formato_no_soportado(self, tmp_path) -> None:
         p = tmp_path / "pipe.txt"
         p.write_text("x")
         with pytest.raises(ValueError, match="not supported"):
             PipelineLoader(_registry()).load(p)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_no_dict(self, tmp_path) -> None:
         p = tmp_path / "pipe.yaml"
         p.write_text("- a\n- b\n")
@@ -52,12 +62,16 @@ class TestLoad:
 
 
 class TestFromDict:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict({"name": "n"})
         assert pipe.version == ""
         assert pipe.description == ""
         assert pipe.stages == []
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_stage_defaults(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict(
             {"name": "n", "stages": [{"name": "s", "plugin": "p"}]}
@@ -69,6 +83,8 @@ class TestFromDict:
 
 
 class TestValidate:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_ok(self) -> None:
         pipe = PipelineDefinition(
             name="n",
@@ -81,23 +97,31 @@ class TestValidate:
         )
         assert PipelineLoader(_registry({"p": {}})).validate(pipe) == []
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_sin_nombre(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict({"stages": [{"name": "s", "plugin": "p"}]})
         errors = PipelineLoader(_registry({"p": {}})).validate(pipe)
         assert "Pipeline name is required" in errors
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_sin_stages(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict({"name": "n"})
         errors = PipelineLoader(_registry()).validate(pipe)
         assert "At least one stage is required" in errors
         assert len(errors) == 1  # return temprano
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_stage_sin_nombre_y_plugin(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict({"name": "n", "stages": [{}]})
         errors = PipelineLoader(_registry()).validate(pipe)
         assert "Stage name is required" in errors
         assert any("plugin is required" in e for e in errors)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_nombres_duplicados(self) -> None:
         pipe = PipelineLoader(_registry({"p": {}}))._from_dict(
             {"name": "n", "stages": [{"name": "s", "plugin": "p"}, {"name": "s", "plugin": "p"}]}
@@ -105,6 +129,8 @@ class TestValidate:
         errors = PipelineLoader(_registry({"p": {}})).validate(pipe)
         assert any("Duplicate stage name" in e for e in errors)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_plugin_no_encontrado(self) -> None:
         pipe = PipelineLoader(_registry())._from_dict({"name": "n", "stages": [{"name": "s", "plugin": "ghost"}]})
         errors = PipelineLoader(_registry()).validate(pipe)

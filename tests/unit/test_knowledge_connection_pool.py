@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/connection_pool.py — ReadConnectionPool."""
 from __future__ import annotations
 
+import pytest
 import sqlite3
 import threading
 import time
@@ -24,6 +25,7 @@ def db_path(tmp_path) -> Path:
 
 
 class TestReadConnectionPool:
+    @pytest.mark.unit
     def test_acquire_release(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         conn = pool.acquire()
@@ -35,6 +37,7 @@ class TestReadConnectionPool:
         assert pool.active_count == 0
         assert pool.idle_count == 1
 
+    @pytest.mark.unit
     def test_reutiliza_conexion(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         c1 = pool.acquire()
@@ -42,6 +45,7 @@ class TestReadConnectionPool:
         c2 = pool.acquire()
         assert c1 is c2  # reutilizada
 
+    @pytest.mark.unit
     def test_max_conexiones(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         c1 = pool.acquire()
@@ -64,6 +68,7 @@ class TestReadConnectionPool:
         t.join(timeout=2)
         assert len(resultado) == 1
 
+    @pytest.mark.unit
     def test_close_all(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         c1 = pool.acquire()
@@ -74,6 +79,7 @@ class TestReadConnectionPool:
         assert pool.active_count == 0
         assert pool.idle_count == 0
 
+    @pytest.mark.unit
     def test_propiedades(self, db_path) -> None:
         pool = ReadConnectionPool(db_path, max_connections=2)
         assert pool.active_count == 0
@@ -83,6 +89,7 @@ class TestReadConnectionPool:
         pool.release(conn)
         assert pool.idle_count == 1
 
+    @pytest.mark.unit
     def test_new_connection_usa_open_db(self, db_path, monkeypatch) -> None:
         fake = mock.Mock(return_value="conn-fake")
         monkeypatch.setattr("knowledge.engine.connection.open_db", fake)

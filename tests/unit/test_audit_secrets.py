@@ -1,3 +1,4 @@
+import pytest
 """Tests de audit_secrets.py — precisión de la heurística refinada.
 
 Cubre el refinamiento de 2026-08-13 (hallazgo hallazgos-fondo.md):
@@ -22,61 +23,77 @@ def _tipos(texto: str, nombre: str = "x.py") -> list[str]:
 
 
 class TestStrongKeys:
+    @pytest.mark.unit
     def test_sk_prefijo_detectado(self):
         assert "hardcoded_secret" in _tipos('API_KEY = "sk-abcdefghijklmnopqrstuvwx123456"')
 
+    @pytest.mark.unit
     def test_gsk_prefijo_detectado(self):
         assert "hardcoded_secret" in _tipos('clave = "gsk_abcdefghijklmnopqrstuvwx123456"')
 
+    @pytest.mark.unit
     def test_akia_detectado(self):
         assert "hardcoded_secret" in _tipos('AWS_KEY = "AKIAIOSFODNN7EXAMPLE123456"')
 
+    @pytest.mark.unit
     def test_fuerte_no_duplica_con_generica(self):
         tipos = _tipos('API_KEY = "sk-abcdefghijklmnopqrstuvwx123456"')
         assert tipos.count("hardcoded_secret") == 1
 
 
 class TestGenericKeys:
+    @pytest.mark.unit
     def test_generica_con_var_sensible_detectada(self):
         assert "hardcoded_secret" in _tipos('PASSWORD = "dummy_valor_para_test_no_es_real"')
 
+    @pytest.mark.unit
     def test_generica_sin_var_sensible_no(self):
         assert _tipos('x = "abcdefghijklmnopqrstuvwxyz0123456789"') == []
 
+    @pytest.mark.unit
     def test_generica_sin_asignacion_no(self):
         assert _tipos('print("abcdefghijklmnopqrstuvwxyz0123456789")') == []
 
+    @pytest.mark.unit
     def test_jwt_fuera_de_alcance(self):
         assert _tipos('token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMj"') == []
 
+    @pytest.mark.unit
     def test_longitud_corta_no(self):
         assert _tipos('password = "abc123"') == []
 
 
 class TestFiltros:
+    @pytest.mark.unit
     def test_regex_no_detectado(self):
         assert _tipos('PATTERN = re.compile(r"sk-[A-Za-z0-9]{10,}|gsk_")') == []
 
+    @pytest.mark.unit
     def test_comentario_no_detectado(self):
         assert _tipos("# PASSWORD = 'sk-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'") == []
 
+    @pytest.mark.unit
     def test_autorreferencia_excluida(self):
         for nombre in ("audit_secrets.py", "audit_git_secrets.py"):
             assert a._check_hardcoded_strings(Path(nombre), 'PASSWORD = "sk-aaaaaaaaaaaaaaaaaaaaaaaa"') == []
 
 
 class TestCredentialUrl:
+    @pytest.mark.unit
     def test_credenciales_reales_detectadas(self):
         assert "credential_url" in _tipos('url = "http://admin:secret123@host"')
 
+    @pytest.mark.unit
     def test_credenciales_cortas_no(self):
         assert _tipos('url = "http://user:pa@host"') == []
 
+    @pytest.mark.unit
     def test_regex_url_excluido(self):
         assert _tipos('r = re.compile(r"://[^:]+:[^@]+@")') == []
 
 
 class TestContrato:
+    @pytest.mark.unit
     def test_json_estructura(self, tmp_path):
         py = tmp_path / "con_secreto.py"
         py.write_text('TOKEN = "sk-abcdefghijklmnopqrstuvwx123456"\n', encoding="utf-8")
@@ -93,6 +110,7 @@ class TestContrato:
         assert d["by_severity"]["high"] == 1
         assert d["findings"][0]["type"] == "hardcoded_secret"
 
+    @pytest.mark.unit
     def test_sin_hallazgos_exit_0(self, tmp_path):
         py = tmp_path / "limpio.py"
         py.write_text("x = 1\n", encoding="utf-8")
@@ -105,6 +123,7 @@ class TestContrato:
         assert proc.returncode == 0
         assert "OK" in proc.stdout
 
+    @pytest.mark.unit
     def test_json_sin_hallazgos_exit_0(self, tmp_path):
         py = tmp_path / "limpio2.py"
         py.write_text("x = 1\n", encoding="utf-8")
@@ -117,6 +136,7 @@ class TestContrato:
         assert proc.returncode == 0
         assert json.loads(proc.stdout)["total"] == 0
 
+    @pytest.mark.unit
     def test_fail_critical_con_critico_exit_1(self, tmp_path):
         py = tmp_path / "crit.py"
         py.write_text('TOKEN = "sk-abcdefghijklmnopqrstuvwx123456"\n', encoding="utf-8")
@@ -129,6 +149,7 @@ class TestContrato:
         assert proc.returncode == 1
         assert "CRITICAL" in proc.stdout
 
+    @pytest.mark.unit
     def test_fail_critical_solo_high_exit_0(self, tmp_path):
         py = tmp_path / "high_only.py"
         py.write_text('import os\nos.environ.get("GROQ_API_KEY", "")\n', encoding="utf-8")

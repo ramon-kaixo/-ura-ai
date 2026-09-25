@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 from unittest import mock
@@ -188,6 +189,7 @@ class TestManifest:
         assert "model-router" in data.get("services", {}).get("system", {})
         assert len(data.get("ports", {})) > 10
 
+    @pytest.mark.slow
     def test_load_manifest_file_not_found(self, tmp_path):
         with mock.patch("scripts.pro.tuneladora.preflight_system.MANIFEST", tmp_path / "nonexistent.json"):
             assert load_manifest() == {}

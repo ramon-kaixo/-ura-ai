@@ -1,6 +1,7 @@
 """Tests para determinism hash (SQLite en temp dir, sin mocks)."""
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -66,6 +67,7 @@ def _populate_edges(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+@pytest.mark.unit
 def test_record_and_get_hash_roundtrip(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     _populate_nodes(conn)
@@ -78,6 +80,7 @@ def test_record_and_get_hash_roundtrip(db_path: Path) -> None:
     assert all(c in "0123456789abcdef" for c in h)
 
 
+@pytest.mark.unit
 def test_same_content_same_hash(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     _populate_nodes(conn)
@@ -90,6 +93,7 @@ def test_same_content_same_hash(db_path: Path) -> None:
     assert h1 == h2
 
 
+@pytest.mark.unit
 def test_different_content_different_hash(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     _populate_nodes(conn)
@@ -106,6 +110,7 @@ def test_different_content_different_hash(db_path: Path) -> None:
     assert h1 != h2
 
 
+@pytest.mark.unit
 def test_get_hash_empty_db(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     conn.close()
@@ -113,6 +118,7 @@ def test_get_hash_empty_db(db_path: Path) -> None:
     assert h == ""
 
 
+@pytest.mark.unit
 def test_get_algorithm_returns_version(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     _populate_nodes(conn)
@@ -122,6 +128,7 @@ def test_get_algorithm_returns_version(db_path: Path) -> None:
     assert algo == "sha256-v2"
 
 
+@pytest.mark.unit
 def test_get_algorithm_fallback_for_empty_db(db_path: Path) -> None:
     conn = _create_test_db(db_path)
     conn.close()
@@ -129,6 +136,7 @@ def test_get_algorithm_fallback_for_empty_db(db_path: Path) -> None:
     assert algo == "sha256-v1"
 
 
+@pytest.mark.unit
 def test_record_no_crash_on_missing_table(tmp_path: Path) -> None:
     db = tmp_path / "empty.db"
     sqlite3.connect(str(db)).close()

@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/snapshot_store.py."""
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 
@@ -37,6 +38,7 @@ def _snapshot() -> Snapshot:
 
 
 class TestSaveSnapshot:
+    @pytest.mark.unit
     def test_save_crea_archivos(self) -> None:
         save_snapshot(_snapshot(), commit="abc123def456")
         snap = json.loads(Path(load_snapshot.__globals__["_SNAPSHOT_FILE"]).read_text())
@@ -44,15 +46,18 @@ class TestSaveSnapshot:
         assert snap["sources"][0]["id"] == "s1"
         assert Path(load_last_commit.__globals__["_COMMIT_FILE"]).read_text() == "abc123def456"
 
+    @pytest.mark.unit
     def test_save_default_commit(self) -> None:
         save_snapshot(_snapshot())
         assert load_last_commit() == "HEAD"
 
 
 class TestLoadSnapshot:
+    @pytest.mark.unit
     def test_sin_snapshot(self) -> None:
         assert load_snapshot() is None
 
+    @pytest.mark.unit
     def test_roundtrip(self) -> None:
         save_snapshot(_snapshot())
         snap = load_snapshot()
@@ -62,6 +67,7 @@ class TestLoadSnapshot:
         assert snap.sources[1].kind == "yaml"
         assert snap.taken_at == "2026-01-01T00:00:00"
 
+    @pytest.mark.unit
     def test_json_corrupto(self) -> None:
         import knowledge.engine.snapshot_store as ss
 
@@ -69,6 +75,7 @@ class TestLoadSnapshot:
         ss._SNAPSHOT_FILE.write_text("no es json")
         assert load_snapshot() is None
 
+    @pytest.mark.unit
     def test_key_faltante(self) -> None:
         import knowledge.engine.snapshot_store as ss
 
@@ -78,9 +85,11 @@ class TestLoadSnapshot:
 
 
 class TestLoadLastCommit:
+    @pytest.mark.unit
     def test_sin_commit(self) -> None:
         assert load_last_commit() is None
 
+    @pytest.mark.unit
     def test_con_commit(self) -> None:
         import knowledge.engine.snapshot_store as ss
 
@@ -90,11 +99,13 @@ class TestLoadLastCommit:
 
 
 class TestClearSnapshot:
+    @pytest.mark.unit
     def test_limpia(self) -> None:
         save_snapshot(_snapshot())
         clear_snapshot()
         assert load_snapshot() is None
         assert load_last_commit() is None
 
+    @pytest.mark.unit
     def test_limpia_sin_archivos(self) -> None:
         clear_snapshot()  # no debe lanzar

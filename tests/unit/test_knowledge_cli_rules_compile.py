@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/cli/ — __main__, rules y compile."""
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 from types import SimpleNamespace
@@ -21,6 +22,7 @@ def _crear_db(path: Path) -> None:
 
 
 class TestMainModule:
+    @pytest.mark.unit
     def test_import_main(self, monkeypatch) -> None:
         import importlib
 
@@ -39,12 +41,14 @@ class TestMainModule:
 
 
 class TestCmdRulesList:
+    @pytest.mark.unit
     def test_vacio(self, monkeypatch) -> None:
         from knowledge.engine.cli.rules import cmd_rules_list
 
         monkeypatch.setattr("knowledge.engine.rules.list_rules", mock.Mock(return_value=[]))
         assert cmd_rules_list(SimpleNamespace()) == 0
 
+    @pytest.mark.unit
     def test_con_reglas(self, monkeypatch) -> None:
         from knowledge.engine.cli.rules import cmd_rules_list
 
@@ -55,12 +59,14 @@ class TestCmdRulesList:
 
 
 class TestCmdRulesEval:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_rules_eval
 
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
         assert cmd_rules_eval(args) == 1
 
+    @pytest.mark.unit
     def test_ok_sin_resultados(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_rules_eval
 
@@ -76,6 +82,7 @@ class TestCmdRulesEval:
         args = SimpleNamespace(db_path=str(db))
         assert cmd_rules_eval(args) == 0
 
+    @pytest.mark.unit
     def test_con_resultados_error(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_rules_eval
 
@@ -93,6 +100,7 @@ class TestCmdRulesEval:
         args = SimpleNamespace(db_path=str(db))
         assert cmd_rules_eval(args) == 1
 
+    @pytest.mark.unit
     def test_filter_doc_no_encontrado(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_rules_eval
 
@@ -103,12 +111,14 @@ class TestCmdRulesEval:
 
 
 class TestCmdDeduce:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_deduce
 
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
         assert cmd_deduce(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_deduce
 
@@ -120,6 +130,7 @@ class TestCmdDeduce:
         args = SimpleNamespace(db_path=str(db))
         assert cmd_deduce(args) == 0
 
+    @pytest.mark.unit
     def test_sin_deducciones(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.rules import cmd_deduce
 
@@ -133,6 +144,7 @@ class TestCmdDeduce:
 
 
 class TestCmdInit:
+    @pytest.mark.unit
     def test_schema_no_existe(self, tmp_path, monkeypatch) -> None:
         from knowledge.engine.cli.compile import cmd_init
 
@@ -140,6 +152,7 @@ class TestCmdInit:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"))
         assert cmd_init(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, tmp_path, monkeypatch) -> None:
         from knowledge.engine.cli.compile import cmd_init
 
@@ -155,6 +168,7 @@ class TestCmdInit:
 
 
 class TestCmdVerify:
+    @pytest.mark.unit
     def test_sin_resultados(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_verify
 
@@ -162,6 +176,7 @@ class TestCmdVerify:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"))
         assert cmd_verify(args) == 1
 
+    @pytest.mark.unit
     def test_con_errores(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_verify
 
@@ -171,6 +186,7 @@ class TestCmdVerify:
             args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"))
             assert cmd_verify(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_verify
 
@@ -181,6 +197,7 @@ class TestCmdVerify:
 
 
 class TestCmdStatus:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_status
 
@@ -188,6 +205,7 @@ class TestCmdStatus:
             args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
             assert cmd_status(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_status
 
@@ -199,6 +217,7 @@ class TestCmdStatus:
 
 
 class TestCmdCompile:
+    @pytest.mark.unit
     def test_incremental_ok(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_compile_incremental
 
@@ -209,6 +228,7 @@ class TestCmdCompile:
         args = SimpleNamespace(source_dir=str(tmp_path / "src"), db_path=str(tmp_path / "db.sqlite"))
         assert cmd_compile_incremental(args) == 0
 
+    @pytest.mark.unit
     def test_incremental_fail(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_compile_incremental
 
@@ -219,6 +239,7 @@ class TestCmdCompile:
         args = SimpleNamespace(source_dir=str(tmp_path / "src"), db_path=str(tmp_path / "db.sqlite"))
         assert cmd_compile_incremental(args) == 1
 
+    @pytest.mark.unit
     def test_compile_ok(self, monkeypatch, tmp_path) -> None:
         from knowledge.engine.cli.compile import cmd_compile
 

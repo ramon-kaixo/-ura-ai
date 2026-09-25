@@ -1,6 +1,7 @@
 """Tests para scripts/pro/manage_timers.py (Módulo 7)."""
 
 from __future__ import annotations
+import pytest
 
 import sys
 from pathlib import Path
@@ -16,9 +17,11 @@ from manage_timers import (
 
 
 class TestTimers:
+    @pytest.mark.integration
     def test_8_timers_configurados(self) -> None:
         assert len(TIMERS) == 9
 
+    @pytest.mark.integration
     def test_frecuencia_on_calendar(self) -> None:
         assert _frecuencia_on_calendar("daily") == "*-*-* 04:00:00"
         assert _frecuencia_on_calendar("weekly") == "*-*-* 05:00:00"
@@ -26,6 +29,7 @@ class TestTimers:
         assert _frecuencia_on_calendar("6h") == "*:0/6"
         assert _frecuencia_on_calendar("desconocida") == "*-*-* 04:00:00"
 
+    @pytest.mark.integration
     def test_generar_unidades(self, tmp_path: Path) -> None:
 
         with mock.patch("manage_timers.UNITS_DIR", tmp_path / "timers"):
@@ -45,12 +49,14 @@ class TestTimers:
 
 
 class TestFuncionesComando:
+    @pytest.mark.integration
     def test_status(self) -> None:
         from manage_timers import status
 
         with mock.patch("subprocess.run", return_value=mock.Mock(stdout="active", stderr="")):
             assert status() == 0
 
+    @pytest.mark.integration
     def test_install_sin_sudo(self) -> None:
         from manage_timers import install
 
@@ -59,6 +65,7 @@ class TestFuncionesComando:
         assert rc == 1
         m_run.assert_called()
 
+    @pytest.mark.integration
     def test_install_con_sudo(self, tmp_path: Path) -> None:
         from manage_timers import install
 
@@ -68,6 +75,7 @@ class TestFuncionesComando:
                 rc = install()
         assert rc == 0
 
+    @pytest.mark.integration
     def test_start_stop(self) -> None:
         from manage_timers import start, stop
 
@@ -75,12 +83,14 @@ class TestFuncionesComando:
             assert start() == 0
             assert stop() == 0
 
+    @pytest.mark.integration
     def test_main_sin_args(self) -> None:
         from manage_timers import main
 
         with mock.patch("sys.argv", ["manage_timers.py"]):
             assert main() == 1
 
+    @pytest.mark.integration
     def test_main_generate(self) -> None:
         from manage_timers import main
 

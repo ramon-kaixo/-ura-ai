@@ -9,6 +9,7 @@ No ejecuta los tests nightly completos (eso es para pipelines programadas).
 """
 from __future__ import annotations
 
+import pytest
 import ast
 import importlib
 import subprocess
@@ -27,12 +28,14 @@ TEST_FILES = sorted(NIGHTLY_DIR.glob("test_*.py"))
     TEST_FILES,
     ids=[t.stem for t in TEST_FILES],
 )
+@pytest.mark.smoke
 def test_nightly_file_parses(test_file: Path) -> None:
     """El archivo de test debe ser Python válido (parseable por ast)."""
     source = test_file.read_text(encoding="utf-8")
     ast.parse(source, filename=str(test_file))
 
 
+@pytest.mark.smoke
 def test_knowledge_engine_cli_exists() -> None:
     """El CLI de knowledge.engine debe ser invocable."""
     result = subprocess.run(
@@ -55,6 +58,7 @@ def test_knowledge_engine_cli_exists() -> None:
         "motor.exceptions",
     ],
 )
+@pytest.mark.smoke
 def test_critical_modules_importable(module_path: str) -> None:
     """Los módulos críticos testeados por nightly deben ser importables."""
     mod = importlib.import_module(module_path)

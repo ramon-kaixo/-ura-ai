@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/ — jobs, pipeline, docs, notify."""
 from __future__ import annotations
+import pytest
 
 from types import SimpleNamespace
 from unittest import mock
@@ -21,6 +22,7 @@ class FakeResult:
 
 
 class TestCmdJobProcess:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         worker = mock.Mock()
         monkeypatch.setattr("knowledge.engine.cli.jobs.compile_worker", worker)
@@ -29,6 +31,7 @@ class TestCmdJobProcess:
         worker.assert_called_once()
         assert worker.call_args.kwargs["source_dir"] == tmp_path / "src"
 
+    @pytest.mark.unit
     def test_sin_source_dir(self, monkeypatch, tmp_path) -> None:
         worker = mock.Mock()
         monkeypatch.setattr("knowledge.engine.cli.jobs.compile_worker", worker)
@@ -38,6 +41,7 @@ class TestCmdJobProcess:
 
 
 class TestCmdPipelineRun:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         pipeline = mock.Mock()
         pipeline.run.return_value = FakeResult(success=True, stages=[FakeResult.Stage(), FakeResult.Stage(error="err")])
@@ -45,6 +49,7 @@ class TestCmdPipelineRun:
         args = SimpleNamespace(source_dir=str(tmp_path / "src"), archive_dir=str(tmp_path / "arc"), db_path="")
         assert cmd_pipeline_run(args) == 0
 
+    @pytest.mark.unit
     def test_fail(self, monkeypatch, tmp_path) -> None:
         pipeline = mock.Mock()
         pipeline.run.return_value = FakeResult(success=False)
@@ -52,6 +57,7 @@ class TestCmdPipelineRun:
         args = SimpleNamespace(source_dir=None, archive_dir=None, db_path="")
         assert cmd_pipeline_run(args) == 1
 
+    @pytest.mark.unit
     def test_db_path_directo(self, monkeypatch, tmp_path) -> None:
         pipeline = mock.Mock()
         pipeline.run.return_value = FakeResult(success=True)
@@ -63,6 +69,7 @@ class TestCmdPipelineRun:
 
 
 class TestCmdDocsGenerate:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         gen = mock.Mock(return_value=10)
         monkeypatch.setattr("knowledge.engine.knowledge_base.generate_knowledge_base", gen)
@@ -70,6 +77,7 @@ class TestCmdDocsGenerate:
         assert cmd_docs_generate(args) == 0
         assert gen.call_args.kwargs["output_dir"] == tmp_path / "out"
 
+    @pytest.mark.unit
     def test_sin_output(self, monkeypatch) -> None:
         gen = mock.Mock(return_value=5)
         monkeypatch.setattr("knowledge.engine.knowledge_base.generate_knowledge_base", gen)
@@ -77,6 +85,7 @@ class TestCmdDocsGenerate:
         assert cmd_docs_generate(args) == 0
         assert gen.call_args.kwargs["output_dir"] is None
 
+    @pytest.mark.unit
     def test_cero_docs_error(self, monkeypatch) -> None:
         gen = mock.Mock(return_value=0)
         monkeypatch.setattr("knowledge.engine.knowledge_base.generate_knowledge_base", gen)
@@ -85,6 +94,7 @@ class TestCmdDocsGenerate:
 
 
 class TestCmdNotifyTest:
+    @pytest.mark.unit
     def test_sin_urls_sin_notifiers(self, monkeypatch) -> None:
         service = mock.Mock()
         service.notifier_count = 0
@@ -92,6 +102,7 @@ class TestCmdNotifyTest:
         args = SimpleNamespace(webhook="", slack="")
         assert cmd_notify_test(args) == 0
 
+    @pytest.mark.unit
     def test_con_webhook_envia(self, monkeypatch) -> None:
         service = mock.Mock()
         service.notifier_count = 1
@@ -103,6 +114,7 @@ class TestCmdNotifyTest:
         assert cmd_notify_test(args) == 0
         service.send.assert_called_once()
 
+    @pytest.mark.unit
     def test_send_falla(self, monkeypatch) -> None:
         service = mock.Mock()
         service.notifier_count = 1

@@ -1,6 +1,7 @@
 """Tests para core/notifier.py (secretario_cache eliminado en Fase B)."""
 from __future__ import annotations
 
+import pytest
 import json
 from unittest import mock
 
@@ -43,6 +44,7 @@ def _reset_secrets():
 
 
 class TestNotifierSecrets:
+    @pytest.mark.unit
     def test_ensure_con_store(self) -> None:
         store = mock.Mock()
         store.get_secret.side_effect = lambda k, d="": {"TELEGRAM_TOKEN": "tok", "TELEGRAM_CHAT_ID": "123", "PUSHOVER_USER_KEY": "u", "PUSHOVER_APP_TOKEN": "a"}.get(k, "")
@@ -50,12 +52,14 @@ class TestNotifierSecrets:
         assert notifier._TELEGRAM_TOKEN == "tok"
         assert notifier._TELEGRAM_CHAT_ID == "123"
 
+    @pytest.mark.unit
     def test_ensure_sin_store(self, monkeypatch) -> None:
         getter = mock.Mock(side_effect=lambda k, d="": {"TELEGRAM_TOKEN": "t", "TELEGRAM_CHAT_ID": "c", "PUSHOVER_USER_KEY": "u", "PUSHOVER_APP_TOKEN": "p"}.get(k, ""))
         monkeypatch.setattr("motor.core.secrets.get_secret", getter)
         notifier._ensure_secrets(None)
         assert notifier._TELEGRAM_TOKEN == "t"
 
+    @pytest.mark.unit
     def test_ensure_no_reinicializa(self) -> None:
         notifier._TELEGRAM_TOKEN = "ya"
         notifier._ensure_secrets(mock.Mock())
@@ -63,9 +67,11 @@ class TestNotifierSecrets:
 
 
 class TestNotifierEnvio:
+    @pytest.mark.unit
     def test_telegram_no_configurado(self) -> None:
         assert notifier._send_telegram("msg") is False
 
+    @pytest.mark.unit
     def test_telegram_ok(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "tok"
         notifier._TELEGRAM_CHAT_ID = "123"
@@ -80,6 +86,7 @@ class TestNotifierEnvio:
         assert args.kwargs["json"]["parse_mode"] == "HTML"
         assert args.kwargs["timeout"] == 10
 
+    @pytest.mark.unit
     def test_telegram_trunca_4096(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "tok"
         notifier._TELEGRAM_CHAT_ID = "123"
@@ -88,21 +95,25 @@ class TestNotifierEnvio:
         assert notifier._send_telegram("x" * 5000) is True
         assert len(post.call_args.kwargs["json"]["text"]) == 4096
 
+    @pytest.mark.unit
     def test_telegram_http_error(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "tok"
         notifier._TELEGRAM_CHAT_ID = "123"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(return_value=FakeResp(status_code=500)))
         assert notifier._send_telegram("m") is False
 
+    @pytest.mark.unit
     def test_telegram_excepcion(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "tok"
         notifier._TELEGRAM_CHAT_ID = "123"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(side_effect=OSError("net")))
         assert notifier._send_telegram("m") is False
 
+    @pytest.mark.unit
     def test_pushover_no_configurado(self) -> None:
         assert notifier._send_pushover("m") is False
 
+    @pytest.mark.unit
     def test_pushover_ok(self, monkeypatch) -> None:
         notifier._PUSHOVER_USER = "u"
         notifier._PUSHOVER_TOKEN = "t"
@@ -114,6 +125,7 @@ class TestNotifierEnvio:
         assert post.call_args.kwargs["json"]["message"] == "hola"
         assert post.call_args.args[0] == "https://api.pushover.net/1/messages.json"
 
+    @pytest.mark.unit
     def test_pushover_trunca_1024(self, monkeypatch) -> None:
         notifier._PUSHOVER_USER = "u"
         notifier._PUSHOVER_TOKEN = "t"
@@ -122,23 +134,27 @@ class TestNotifierEnvio:
         assert notifier._send_pushover("y" * 2000) is True
         assert len(post.call_args.kwargs["json"]["message"]) == 1024
 
+    @pytest.mark.unit
     def test_pushover_http_error(self, monkeypatch) -> None:
         notifier._PUSHOVER_USER = "u"
         notifier._PUSHOVER_TOKEN = "t"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(return_value=FakeResp(status_code=500)))
         assert notifier._send_pushover("m") is False
 
+    @pytest.mark.unit
     def test_pushover_error(self, monkeypatch) -> None:
         notifier._PUSHOVER_USER = "u"
         notifier._PUSHOVER_TOKEN = "t"
         monkeypatch.setattr(notifier.httpx, "post", mock.Mock(side_effect=OSError("net")))
         assert notifier._send_pushover("m") is False
 
+    @pytest.mark.unit
     def test_notify_channels_default_sin_credenciales(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = ""
         notifier._TELEGRAM_CHAT_ID = ""
         assert notifier.notify("m") is False
 
+    @pytest.mark.unit
     def test_notify_levels(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "t"
         notifier._TELEGRAM_CHAT_ID = "c"
@@ -148,6 +164,7 @@ class TestNotifierEnvio:
         assert "🚨" in post.call_args.kwargs["json"]["text"]
         assert "CRITICAL" in post.call_args.kwargs["json"]["text"]
 
+    @pytest.mark.unit
     def test_notify_channel_especifico(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "t"
         notifier._TELEGRAM_CHAT_ID = "c"
@@ -156,6 +173,7 @@ class TestNotifierEnvio:
         assert notifier.notify("m", channels=["telegram"]) is True
         post.assert_called_once()
 
+    @pytest.mark.unit
     def test_notify_level_desconocido(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "t"
         notifier._TELEGRAM_CHAT_ID = "c"
@@ -167,6 +185,7 @@ class TestNotifierEnvio:
         assert "DEBUG" in text
         assert text.startswith("⚠️ URA [DEBUG]")
 
+    @pytest.mark.unit
     def test_notify_formato_info(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "t"
         notifier._TELEGRAM_CHAT_ID = "c"
@@ -175,6 +194,7 @@ class TestNotifierEnvio:
         assert notifier.notify("m", level="info") is True
         assert post.call_args.kwargs["json"]["text"] == "ℹ️ URA [INFO]: m"  # noqa: RUF001
 
+    @pytest.mark.unit
     def test_notify_pushover_falla_telegram_ok(self, monkeypatch) -> None:
         notifier._TELEGRAM_TOKEN = "t"
         notifier._TELEGRAM_CHAT_ID = "c"

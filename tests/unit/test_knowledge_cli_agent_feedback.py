@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/ — agent y feedback."""
 from __future__ import annotations
+import pytest
 
 from types import SimpleNamespace
 from unittest import mock
@@ -9,21 +10,25 @@ from knowledge.engine.cli.feedback import cmd_feedback_rate, cmd_feedback_top
 
 
 class TestCmdAgentList:
+    @pytest.mark.unit
     def test_sin_agentes(self, monkeypatch) -> None:
         monkeypatch.setattr("knowledge.engine.agent.list_agents", mock.Mock(return_value=[]))
         assert cmd_agent_list(SimpleNamespace()) == 0
 
+    @pytest.mark.unit
     def test_con_agentes(self, monkeypatch) -> None:
         monkeypatch.setattr("knowledge.engine.agent.list_agents", mock.Mock(return_value=[mock.Mock(), mock.Mock()]))
         assert cmd_agent_list(SimpleNamespace()) == 0
 
 
 class TestCmdAgentRun:
+    @pytest.mark.unit
     def test_agente_no_existe(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.agent.get_agent", mock.Mock(return_value=None))
         args = SimpleNamespace(agent_id="nope", db_path=str(tmp_path / "db.sqlite"))
         assert cmd_agent_run(args) == 1  # sin kind -> default audit
 
+    @pytest.mark.unit
     def test_ok_con_findings(self, monkeypatch, tmp_path) -> None:
         agent = mock.Mock()
         finding = mock.Mock()
@@ -36,6 +41,7 @@ class TestCmdAgentRun:
         goal = agent.execute.call_args.args[0]
         assert goal.kind == "audit"
 
+    @pytest.mark.unit
     def test_ok_sin_findings(self, monkeypatch, tmp_path) -> None:
         agent = mock.Mock()
         agent.execute.return_value = []
@@ -43,6 +49,7 @@ class TestCmdAgentRun:
         args = SimpleNamespace(agent_id="a1", db_path=str(tmp_path / "db.sqlite"), kind="audit")
         assert cmd_agent_run(args) == 0
 
+    @pytest.mark.unit
     def test_sin_kind_default_audit(self, monkeypatch, tmp_path) -> None:
         agent = mock.Mock()
         agent.execute.return_value = []
@@ -53,12 +60,14 @@ class TestCmdAgentRun:
 
 
 class TestCmdFeedbackRate:
+    @pytest.mark.unit
     def test_rating_invalido(self, monkeypatch, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), doc_id="d1", rating=6)
         assert cmd_feedback_rate(args) == 1
         args2 = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), doc_id="d1", rating=0)
         assert cmd_feedback_rate(args2) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         record = mock.Mock(return_value=True)
         monkeypatch.setattr("knowledge.engine.feedback.record_feedback", record)
@@ -66,6 +75,7 @@ class TestCmdFeedbackRate:
         assert cmd_feedback_rate(args) == 0
         record.assert_called_once_with(tmp_path / "db.sqlite", "d1", 4)
 
+    @pytest.mark.unit
     def test_falla(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.feedback.record_feedback", mock.Mock(return_value=False))
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), doc_id="d1", rating=3)
@@ -73,11 +83,13 @@ class TestCmdFeedbackRate:
 
 
 class TestCmdFeedbackTop:
+    @pytest.mark.unit
     def test_sin_resultados(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.feedback.top_rated", mock.Mock(return_value=[]))
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), limit=5)
         assert cmd_feedback_top(args) == 0
 
+    @pytest.mark.unit
     def test_con_resultados(self, monkeypatch, tmp_path) -> None:
         fb = mock.Mock()
         fb.rating = 4
@@ -85,6 +97,7 @@ class TestCmdFeedbackTop:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), limit=10)
         assert cmd_feedback_top(args) == 0
 
+    @pytest.mark.unit
     def test_limit_default(self, monkeypatch, tmp_path) -> None:
         top = mock.Mock(return_value=[])
         monkeypatch.setattr("knowledge.engine.feedback.top_rated", top)

@@ -1,5 +1,6 @@
 """Tests Fase 7 — Reconcile/Integration (split de test_fase7.py)."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from _fase7_helpers import (  # noqa: F401
 
 
 class TestReconcile:
+    @pytest.mark.unit
     def test_reconcile_dry_run_no_changes(self):
         """Dry-run no modifica nada."""
         graph = MagicMock()
@@ -35,6 +37,7 @@ class TestReconcile:
         assert stats["upserted"] == 0
         assert stats["deleted"] == 0
 
+    @pytest.mark.unit
     def test_reconcile_dry_run_reports_pending(self):
         """Dry-run reporta assets sin indexar sin modificarlos."""
         graph = MagicMock()
@@ -62,6 +65,7 @@ class TestReconcile:
 class TestListIds:
     """Verifica que list_ids() y _get_vector_ids() no tienen loop infinito."""
 
+    @pytest.mark.unit
     def test_qdrant_list_ids_calls_scroll_endpoint(self, mock_qdrant_client):  # noqa: F811
         """list_ids() llama a scroll API de Qdrant con los parámetros correctos."""
         store = QdrantVectorStore(collection="test")
@@ -84,6 +88,7 @@ class TestListIds:
         assert call_args[1]["json"]["limit"] == 50
         assert "with_payload" in call_args[1]["json"]
 
+    @pytest.mark.unit
     def test_qdrant_list_ids_pagination(self, mock_qdrant_client):  # noqa: F811
         """list_ids() pasa offset a Qdrant en páginas siguientes."""
         store = QdrantVectorStore(collection="test")
@@ -120,6 +125,7 @@ class TestListIds:
         assert len(ids2) == 2
         assert next2 is None
 
+    @pytest.mark.unit
     def test_qdrant_list_ids_degraded(self, mock_qdrant_client):  # noqa: F811
         """list_ids() retorna vacío si el store está degradado."""
         store = QdrantVectorStore(collection="test")
@@ -128,6 +134,7 @@ class TestListIds:
         assert ids == []
         assert next_offset is None
 
+    @pytest.mark.unit
     def test_get_vector_ids_no_infinite_loop(self):
         """_get_vector_ids() termina con >100 vectores (sin loop infinito)."""
         graph = MagicMock()
@@ -165,6 +172,7 @@ class TestListIds:
         assert "asset_0" in result
         assert "asset_249" in result
 
+    @pytest.mark.unit
     def test_get_vector_ids_duplicate_offset(self, caplog):
         """_get_vector_ids() rompe el loop si next_offset se repite (M04)."""
         graph = MagicMock()
@@ -196,6 +204,7 @@ class TestListIds:
         assert calls == 2
         assert "Duplicate next_offset=cursor_stuck" in caplog.text
 
+    @pytest.mark.unit
     def test_get_vector_ids_empty(self):
         """_get_vector_ids() con store vacío retorna set vacío."""
         graph = MagicMock()
@@ -213,6 +222,7 @@ class TestListIds:
         result = retriever._get_vector_ids()
         assert result == set()
 
+    @pytest.mark.unit
     def test_get_vector_ids_degraded(self):
         """_get_vector_ids() con store degradado retorna set vacío."""
         graph = MagicMock()
@@ -230,6 +240,7 @@ class TestListIds:
         result = retriever._get_vector_ids()
         assert result == set()
 
+    @pytest.mark.unit
     def test_reconcile_with_many_vectors_completes(self):
         """reconcile() con >100 vectores en store no hace loop infinito."""
         graph = MagicMock()
@@ -265,6 +276,7 @@ class TestListIds:
         assert stats["upserted"] == 0
         assert stats["deleted"] == 0
 
+    @pytest.mark.unit
     def test_reconcile_with_matching_vectors(self):
         """reconcile() detecta correctamente assets ya indexados."""
         graph = MagicMock()
@@ -308,6 +320,8 @@ class TestIntegration:
     Opcionales: Ollama, Qdrant.
     """
 
+    @pytest.mark.e2e
+    @pytest.mark.unit
     def test_e2e_fts5_search(self, tmp_path: Path):
         """Pipeline completo: save_asset → search_assets retorna asset."""
         from knowledge.engine.graphrag import SQLiteGraphRetriever
@@ -349,6 +363,8 @@ class TestIntegration:
         assert len(direct) >= 1
         conn.close()
 
+    @pytest.mark.e2e
+    @pytest.mark.unit
     def test_e2e_lineage_edges(self, tmp_path: Path):
         """Lineage event → edges consultable sin LIKE."""
         db = tmp_path / "e2e_lineage.db"
@@ -389,6 +405,8 @@ class TestIntegration:
         assert "input_b" in upstream
         assert "input_c" not in upstream
 
+    @pytest.mark.e2e
+    @pytest.mark.unit
     def test_e2e_degraded_fallback(self, tmp_path: Path):
         """Sin FTS5 ni edges, todo funciona con LIKE."""
         db = tmp_path / "e2e_degraded.db"

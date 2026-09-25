@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import threading
 import time
 
@@ -74,6 +75,7 @@ def degraded() -> DegradedMode:
 
 
 class TestEventCreation:
+    @pytest.mark.slow
     def test_event_requires_topic_and_payload(self) -> None:
         event = Event(topic="test.topic", payload=EventPayload())
         assert event.topic == "test.topic"
@@ -120,6 +122,7 @@ class TestEventCreation:
         assert "Event(" in r
         assert "abc123" in r
 
+    @pytest.mark.slow
     def test_event_with_concrete_payload(self) -> None:
         payload = SystemStarted(python_version="3.11", ura_version="0.29.0")
         event = Event(topic=SYSTEM_STARTED, payload=payload)
@@ -161,11 +164,13 @@ class TestConcretePayloads:
         assert p.name == "ingest"
         assert p.error == "timeout"
 
+    @pytest.mark.slow
     def test_plugin_loaded(self) -> None:
         p = PluginLoaded(name="my-plugin", version="1.2.3")
         assert p.name == "my-plugin"
         assert p.version == "1.2.3"
 
+    @pytest.mark.slow
     def test_plugin_unloaded(self) -> None:
         p = PluginUnloaded(name="my-plugin")
         assert p.name == "my-plugin"
@@ -197,6 +202,7 @@ class TestConcretePayloads:
         assert p.new == {"a": 2}
         assert p.keys == ["a"]
 
+    @pytest.mark.slow
     def test_payload_defaults(self) -> None:
         assert SystemStarted().python_version == ""
         assert SystemStarted().ura_version == ""
@@ -210,6 +216,7 @@ class TestConcretePayloads:
 
 
 class TestEventPayloadInheritance:
+    @pytest.mark.slow
     def test_all_payloads_are_eventpayload(self) -> None:
         assert isinstance(SystemStarted(), EventPayload)
         assert isinstance(SystemShutdown(), EventPayload)
@@ -236,6 +243,7 @@ class TestEventBusPublish:
         assert len(received) == 1
         assert received[0].topic == "test.topic"
 
+    @pytest.mark.slow
     def test_publish_passes_payload_by_reference(self, bus: EventBus) -> None:
         received: list[EventPayload] = []
         payload = EventPayload()
@@ -289,6 +297,7 @@ class TestEventBusPublish:
         bus.publish("t", EventPayload())
         assert sorted(results) == [1, 2]
 
+    @pytest.mark.slow
     def test_publish_concrete_payload(self, bus: EventBus) -> None:
         received: list[Event] = []
 
@@ -983,6 +992,7 @@ class TestHookManagerExecution:
         bus.emit_sync(f"{HOOK_PREFIX}pre_ingest", EventPayload())
         assert plugin.pre_ingest_calls[0].topic == f"{HOOK_PREFIX}pre_ingest"
 
+    @pytest.mark.slow
     def test_hook_receives_payload(self, bus: EventBus, degraded: DegradedMode) -> None:
         hm = HookManager(bus, degraded)
         plugin = _HookablePlugin()

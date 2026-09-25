@@ -5,11 +5,15 @@ import pytest
 from motor.core.llm.base import validate_provider
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import_base():
     """El módulo importa sin errores."""
     assert validate_provider is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_base_validate_provider():
     """La función no lanza con argumentos básicos."""
     try:
@@ -56,6 +60,8 @@ def _provider_valido():
     return P
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_provider_valido():
     """Cobertura: validate_provider con clase concreta completa."""
     from motor.core.llm.base import validate_provider
@@ -65,6 +71,8 @@ def test_validate_provider_valido():
     assert r.valid
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_provider_invalido():
     """Cobertura: clase sin métodos abstractos implementados falla."""
     from motor.core.llm.base import validate_provider
@@ -77,6 +85,8 @@ def test_validate_provider_invalido():
     assert r.errors
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_no_hereda():
     """Rama: clase que no hereda de BaseLLMProvider."""
     from motor.core.llm.base import validate_provider
@@ -89,6 +99,8 @@ def test_validate_no_hereda():
     assert "No hereda" in r.errors[0]
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_no_instanciable():
     """Rama: clase hereda pero su __init__ lanza."""
     from motor.core.llm.base import validate_provider
@@ -118,6 +130,8 @@ def test_validate_no_instanciable():
     assert "No se puede instanciar" in r.errors[0]
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_sin_provider_name():
     """Rama: sin _provider_name."""
     from motor.core.llm.base import validate_provider
@@ -142,6 +156,8 @@ def test_validate_sin_provider_name():
     assert any("_provider_name" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_metodos_faltantes():
     """Rama: métodos requeridos ausentes -> clase abstracta no instanciable."""
     from motor.core.llm.base import validate_provider
@@ -160,6 +176,8 @@ def test_validate_metodos_faltantes():
     assert any("No se puede instanciar" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_metodo_no_callable():
     """Rama: método presente pero no invocable (clase completa)."""
     from motor.core.llm.base import validate_provider
@@ -185,6 +203,8 @@ def test_validate_metodo_no_callable():
     assert any("embed_async no es invocable" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_firma_incorrecta():
     """Rama: firma de generate sin parámetro prompt."""
     from motor.core.llm.base import validate_provider
@@ -212,6 +232,8 @@ def test_validate_firma_incorrecta():
     assert any("generate: falta parámetro" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_embed_firma_mal():
     """Rama: firma de embed sin parámetro texts."""
     from motor.core.llm.base import validate_provider
@@ -238,6 +260,8 @@ def test_validate_embed_firma_mal():
     assert any("embed: falta parámetro" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_capacidades_mal():
     """Rama: capabilities sin chat."""
     from motor.core.llm.base import validate_provider
@@ -265,6 +289,8 @@ def test_validate_capacidades_mal():
     assert any("Falta capacidad 'chat'" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_capacidades_no_dict():
     """Rama: capabilities no es dict."""
     from motor.core.llm.base import validate_provider
@@ -291,6 +317,8 @@ def test_validate_capacidades_no_dict():
     assert any("capabilities debe ser un dict" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_comportamiento_lanza():
     """Rama: generate() lanza excepción en validación de comportamiento."""
     from motor.core.llm.base import validate_provider
@@ -319,6 +347,8 @@ def test_validate_comportamiento_lanza():
     assert any("embed(['test']) lanzó" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_comportamiento_retorna_mal():
     """Rama: generate no retorna str / embed no retorna list."""
     from motor.core.llm.base import validate_provider
@@ -347,6 +377,8 @@ def test_validate_comportamiento_retorna_mal():
     assert any("no retorna list" in e for e in r.errors)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_supports_ramas():
     """Rama: supports con valores bool/int/otros en capabilities."""
     B = _base()
@@ -376,6 +408,8 @@ def test_supports_ramas():
     assert p.supports("noexiste") is False
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_generate_stream_y_chat():
     """Rama: generate_stream produce y chat_generate formatea mensajes."""
     B = _base()
@@ -403,6 +437,8 @@ def test_generate_stream_y_chat():
     assert r["tool_calls"] is None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_repr_resultado():
     """Rama: __repr__ de ProviderValidationResult válido e inválido."""
     from motor.core.llm.base import ProviderValidationResult
@@ -413,6 +449,8 @@ def test_repr_resultado():
     assert "valid=False" in repr(bad) and "err1" in repr(bad)
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_check_signature_error_inspeccion():
     """Rama: _check_signature con __signature__ inválido."""
     from motor.core.llm.base import _check_signature
@@ -424,6 +462,8 @@ def test_check_signature_error_inspeccion():
     assert "error al inspeccionar firma" in _check_signature(_f, ["prompt"], [])
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_validate_generate_no_callable_firmas():
     """Rama: generate no callable -> _validar_firmas salta."""
     from motor.core.llm.base import validate_provider

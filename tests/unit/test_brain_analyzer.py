@@ -1,6 +1,7 @@
 """Tests for CodeAnalyzer (motor/brain/analyzer.py)."""
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,6 +16,7 @@ def analyzer() -> CodeAnalyzer:
 
 
 class TestAnalyzeFile:
+    @pytest.mark.unit
     def test_analyze_file_counts(self, analyzer: CodeAnalyzer) -> None:
         source = "def foo(): pass\nclass Bar: pass\n"
         with patch.object(Path, "read_text", return_value=source):
@@ -24,11 +26,13 @@ class TestAnalyzeFile:
             assert result["classes"] == 1
             assert result["lines"] == 2
 
+    @pytest.mark.unit
     def test_analyze_file_syntax_error(self, analyzer: CodeAnalyzer) -> None:
         with patch.object(Path, "read_text", return_value="def foo(:"):
             result = analyzer.analyze_file(Path("bad.py"))
             assert result == {"error": "syntax_error"}
 
+    @pytest.mark.unit
     def test_analyze_file_complex_functions(self, analyzer: CodeAnalyzer) -> None:
         lines = [f"    pass  # {i}" for i in range(55)]
         body = "\n".join(lines)
@@ -39,6 +43,7 @@ class TestAnalyzeFile:
 
 
 class TestAnalyzeModule:
+    @pytest.mark.unit
     def test_analyze_module_rglob(self, analyzer: CodeAnalyzer) -> None:
         with patch.object(Path, "rglob") as mock_rglob:
             mock_rglob.return_value = [Path("a.py"), Path("b.py")]

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from motor.intelligence.memory.episodic import Episode, EpisodeStore
 from motor.intelligence.memory.extractor import RuleBasedFactExtractor
@@ -14,12 +15,14 @@ from motor.intelligence.pipeline import (
 
 
 class TestMemoryOrchestrator:
+    @pytest.mark.integration
     def test_consolidate_empty(self):
         epi = EpisodeStore()
         sem = SemanticMemoryStore()
         orch = MemoryOrchestrator(epi, sem, extractor=RuleBasedFactExtractor())
         assert orch.consolidate() == 0
 
+    @pytest.mark.integration
     def test_consolidate_with_episodes(self):
         epi = EpisodeStore()
         sem = SemanticMemoryStore()
@@ -30,12 +33,14 @@ class TestMemoryOrchestrator:
         assert count >= 1
         assert sem.count() >= 1
 
+    @pytest.mark.integration
     def test_compress_no_compressor(self):
         epi = EpisodeStore()
         sem = SemanticMemoryStore()
         orch = MemoryOrchestrator(epi, sem)
         assert orch.compress() == 0
 
+    @pytest.mark.integration
     def test_forget_no_engine(self):
         epi = EpisodeStore()
         sem = SemanticMemoryStore()
@@ -43,6 +48,7 @@ class TestMemoryOrchestrator:
         result = orch.forget()
         assert result["removed"] == 0
 
+    @pytest.mark.integration
     def test_run_all(self):
         epi = EpisodeStore()
         sem = SemanticMemoryStore()
@@ -55,12 +61,15 @@ class TestMemoryOrchestrator:
 
 
 class TestLLMFactExtractor:
+    @pytest.mark.integration
     def test_implements_interface(self):
         from motor.intelligence.memory.extractor import FactExtractor
 
         extractor = LLMFactExtractor()
         assert isinstance(extractor, FactExtractor)
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_empty_payload(self):
         extractor = LLMFactExtractor()
         ep = Episode(payload="")
@@ -69,9 +78,11 @@ class TestLLMFactExtractor:
 
 
 class TestRerankerFeatureFlag:
+    @pytest.mark.integration
     def test_disabled_by_default(self):
         assert not reranker_enabled()
 
+    @pytest.mark.integration
     def test_enable_disable(self):
         class FakeReranker:
             def rerank(self, query, candidates):
@@ -82,6 +93,7 @@ class TestRerankerFeatureFlag:
         disable_reranker()
         assert not reranker_enabled()
 
+    @pytest.mark.integration
     def test_search_with_reranker_disabled(self):
         from motor.intelligence.retrieval.lexical import LexicalRetriever
 
@@ -92,6 +104,7 @@ class TestRerankerFeatureFlag:
 
 
 class TestIntegration:
+    @pytest.mark.integration
     def test_researcher_with_memory(self):
         from motor.intelligence.agents.researcher import ResearcherAgent
         from motor.intelligence.memory.episodic import Episode, EpisodeStore
@@ -108,6 +121,7 @@ class TestIntegration:
         assert result.success
         assert result.output.get("sources") == ["episodic_memory"]
 
+    @pytest.mark.integration
     def test_full_pipeline(self):
         from motor.intelligence.agents.executor import ExecutorAgent
         from motor.intelligence.agents.runtime import MultiAgentRuntime

@@ -1,6 +1,7 @@
 """Cobertura 100x100 de motor/intelligence/agents (parallel + reflection). TASK-20260820-007."""
 
 from __future__ import annotations
+import pytest
 
 import time
 
@@ -44,11 +45,13 @@ class _FastAgent:
 # ── ParallelExecutor ─────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_parallel_max_workers_min_1() -> None:
     p = ParallelExecutor(max_workers=0)
     assert p.max_workers == 1
 
 
+@pytest.mark.unit
 def test_parallel_sin_tasks() -> None:
     p = ParallelExecutor()
     r = p.execute([])
@@ -57,6 +60,7 @@ def test_parallel_sin_tasks() -> None:
     assert r.success is True
 
 
+@pytest.mark.unit
 def test_parallel_ok() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent())
     r = p.execute([("a1", _task("t1")), ("a2", _task("t2"))])
@@ -67,12 +71,14 @@ def test_parallel_ok() -> None:
     assert len(r.results) == 2
 
 
+@pytest.mark.unit
 def test_parallel_workflow_id_auto() -> None:
     p = ParallelExecutor()
     r = p.execute([], workflow_id=None)
     assert r.workflow_id != ""
 
 
+@pytest.mark.unit
 def test_parallel_cancelled_antes_de_ejecutar() -> None:
     p = ParallelExecutor()
     wf = "wf-x"
@@ -82,6 +88,7 @@ def test_parallel_cancelled_antes_de_ejecutar() -> None:
     assert r.cancelled_by_user is True
 
 
+@pytest.mark.unit
 def test_parallel_cancel_duplicado_false() -> None:
     p = ParallelExecutor()
     assert p.cancel("wf1") is True
@@ -90,6 +97,7 @@ def test_parallel_cancel_duplicado_false() -> None:
     assert p.is_cancelled("wf2") is False
 
 
+@pytest.mark.unit
 def test_parallel_cancel_durante_submit() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent())
     wf = "wf-cancel-mid"
@@ -124,6 +132,7 @@ def test_parallel_cancel_durante_submit() -> None:
     assert r.total_tasks == 3
 
 
+@pytest.mark.unit
 def test_parallel_future_falla() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent(lanzar=True))
     r = p.execute([("a1", _task("t1"))])
@@ -132,6 +141,7 @@ def test_parallel_future_falla() -> None:
     assert len(r.errors) == 1
 
 
+@pytest.mark.unit
 def test_parallel_resultado_fallido() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent(result=_result("t1", success=False, error="mal")))
     r = p.execute([("a1", _task("t1"))])
@@ -139,6 +149,7 @@ def test_parallel_resultado_fallido() -> None:
     assert "mal" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_parallel_agente_no_encontrado() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: None)
     r = p.execute([("a1", _task("t1"))])
@@ -146,6 +157,7 @@ def test_parallel_agente_no_encontrado() -> None:
     assert "agent_not_found" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_parallel_sin_find_agent() -> None:
     p = ParallelExecutor()
     r = p.execute([("a1", _task("t1"))])
@@ -153,6 +165,7 @@ def test_parallel_sin_find_agent() -> None:
     assert "agent_not_found" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_parallel_fail_fast() -> None:
     def _fnd(aid: str):
         return _FastAgent(result=_result(aid, success=False, error="fail"))
@@ -163,6 +176,7 @@ def test_parallel_fail_fast() -> None:
     assert r.success is False
 
 
+@pytest.mark.unit
 def test_parallel_cancel_on_error() -> None:
     def _fnd(aid: str):
         return _FastAgent(result=_result(aid, success=False, error="fail"))
@@ -173,6 +187,8 @@ def test_parallel_cancel_on_error() -> None:
     assert p.is_cancelled(r.workflow_id) is True
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_parallel_global_timeout() -> None:
     def _fnd(aid: str):
         return _FastAgent(delay=1.0)
@@ -183,6 +199,8 @@ def test_parallel_global_timeout() -> None:
     assert r.success is False
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_parallel_global_timeout_parcial() -> None:
     def _fnd(aid: str):
         return _FastAgent(delay=0.5)
@@ -192,6 +210,7 @@ def test_parallel_global_timeout_parcial() -> None:
     assert r.timed_out >= 1
 
 
+@pytest.mark.unit
 def test_parallel_excepcion_en_future() -> None:
     class _Roto:
         def run(self, task: AgentTask) -> AgentResult:
@@ -204,6 +223,7 @@ def test_parallel_excepcion_en_future() -> None:
     assert "roto" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_parallel_close_limpia_cancelled() -> None:
     p = ParallelExecutor()
     p.cancel("wf1")
@@ -211,6 +231,7 @@ def test_parallel_close_limpia_cancelled() -> None:
     assert p.is_cancelled("wf1") is False
 
 
+@pytest.mark.unit
 def test_parallel_cancel_durante_submit_loop() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent())
     wf = "wf-submit-cancel"
@@ -229,6 +250,7 @@ def test_parallel_cancel_durante_submit_loop() -> None:
     assert r.cancelled >= 2  # 2ª llamada cancela: resto de tareas canceladas
 
 
+@pytest.mark.unit
 def test_parallel_deadline_superado() -> None:
     import motor.intelligence.agents.parallel as pmod
 
@@ -248,6 +270,7 @@ def test_parallel_deadline_superado() -> None:
         pmod.time.monotonic = time.monotonic
 
 
+@pytest.mark.unit
 def test_parallel_future_excepcion_en_result() -> None:
     p = ParallelExecutor(find_agent_fn=lambda aid: _FastAgent())
     p._run_single = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("future-boom"))
@@ -256,6 +279,7 @@ def test_parallel_future_excepcion_en_result() -> None:
     assert "future-boom" in r.errors[0]
 
 
+@pytest.mark.unit
 def test_parallel_run_single_cancelled() -> None:
     p = ParallelExecutor()
     p.cancel("wfx")
@@ -267,6 +291,7 @@ def test_parallel_run_single_cancelled() -> None:
 # ── reflection ───────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_rule_based_falla_devuelve_revise() -> None:
     s = RuleBasedReflectionStrategy()
     d = s.reflect(_result("t", success=False, error="boom"), iteration=1)
@@ -276,6 +301,7 @@ def test_rule_based_falla_devuelve_revise() -> None:
     assert d.iteration == 1
 
 
+@pytest.mark.unit
 def test_rule_based_acepta_por_confianza() -> None:
     s = RuleBasedReflectionStrategy(min_confidence=0.7)
     d = s.reflect(_result("t", success=True, output={"confidence": 0.9}), iteration=2)
@@ -284,6 +310,7 @@ def test_rule_based_acepta_por_confianza() -> None:
     assert "above_threshold" in d.reason
 
 
+@pytest.mark.unit
 def test_rule_based_revisa_bajo_umbral() -> None:
     s = RuleBasedReflectionStrategy(min_confidence=0.7)
     d = s.reflect(_result("t", success=True, output={"confidence": 0.4}), iteration=3)
@@ -291,18 +318,21 @@ def test_rule_based_revisa_bajo_umbral() -> None:
     assert "below_threshold" in d.reason
 
 
+@pytest.mark.unit
 def test_rule_based_confianza_sin_output() -> None:
     s = RuleBasedReflectionStrategy(min_confidence=0.5)
     d = s.reflect(_result("t", success=True), iteration=0)
     assert d.confidence == 1.0
 
 
+@pytest.mark.unit
 def test_rule_based_confianza_no_numerica() -> None:
     s = RuleBasedReflectionStrategy(min_confidence=0.5)
     d = s.reflect(_result("t", success=True, output={"confidence": "alto"}), iteration=0)
     assert d.confidence == 1.0
 
 
+@pytest.mark.unit
 def test_rule_based_confianza_forzada_rango() -> None:
     s = RuleBasedReflectionStrategy(min_confidence=0.5)
     d = s.reflect(_result("t", success=True, output={"confidence": 5.0}), iteration=0)
@@ -311,6 +341,7 @@ def test_rule_based_confianza_forzada_rango() -> None:
     assert d2.confidence == 0.0
 
 
+@pytest.mark.unit
 def test_always_reject() -> None:
     s = AlwaysRejectStrategy()
     d = s.reflect(_result("t"), iteration=1)
@@ -318,6 +349,7 @@ def test_always_reject() -> None:
     assert d.reason == "always_reject"
 
 
+@pytest.mark.unit
 def test_reflection_agent_run_sin_initial() -> None:
     a = ReflectionAgent()
     r = a.run(AgentTask(objective="x", input_data={}))
@@ -326,6 +358,7 @@ def test_reflection_agent_run_sin_initial() -> None:
     assert a.status.value == "idle"
 
 
+@pytest.mark.unit
 def test_reflection_agent_initial_no_agent_result() -> None:
     a = ReflectionAgent()
     r = a.run(AgentTask(objective="x", input_data={"initial_result": {"no": "es"}}))
@@ -333,6 +366,7 @@ def test_reflection_agent_initial_no_agent_result() -> None:
     assert r.error == "initial_result_not_agent_result"
 
 
+@pytest.mark.unit
 def test_reflection_agent_acepta() -> None:
     a = ReflectionAgent(min_confidence=0.5)
     r = a.run(AgentTask(objective="x", input_data={"initial_result": _result("t", success=True, output={"confidence": 0.9})}))
@@ -341,6 +375,7 @@ def test_reflection_agent_acepta() -> None:
     assert r.output["final_decision"]["action"] == "accept"
 
 
+@pytest.mark.unit
 def test_reflection_agent_stop_on_accept_false() -> None:
     a = ReflectionAgent(min_confidence=0.5, stop_on_accept=False)
     r = a.run(AgentTask(objective="x", input_data={"initial_result": _result("t", success=True, output={"confidence": 0.9})}))
@@ -348,6 +383,7 @@ def test_reflection_agent_stop_on_accept_false() -> None:
     assert r.output["stopped_by"] == "confidence"
 
 
+@pytest.mark.unit
 def test_reflection_agent_rechaza() -> None:
     a = ReflectionAgent(strategy=AlwaysRejectStrategy())
     r = a.run(AgentTask(objective="x", input_data={"initial_result": _result("t")}))
@@ -355,6 +391,7 @@ def test_reflection_agent_rechaza() -> None:
     assert r.output["stopped_by"] == "reject"
 
 
+@pytest.mark.unit
 def test_reflection_agent_revisa_y_agota_iteraciones() -> None:
     a = ReflectionAgent(max_iterations=1)
     r = a.run(AgentTask(objective="x", input_data={"initial_result": _result("t", success=True, output={"confidence": 0.1})}))
@@ -362,6 +399,7 @@ def test_reflection_agent_revisa_y_agota_iteraciones() -> None:
     assert r.output["stopped_by"] == "max_iterations"
 
 
+@pytest.mark.unit
 def test_reflection_agent_stop_estrategia() -> None:
     class _StopStrategy(ReflectionStrategy):
         def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision:
@@ -373,6 +411,7 @@ def test_reflection_agent_stop_estrategia() -> None:
     assert r.output["reason"] == "stop-now"
 
 
+@pytest.mark.unit
 def test_reflection_agent_revise_fallido() -> None:
     class _ReviseFallo(ReflectionStrategy):
         def __init__(self) -> None:
@@ -392,6 +431,7 @@ def test_reflection_agent_revise_fallido() -> None:
     a._revise = original
 
 
+@pytest.mark.unit
 def test_reflection_strategy_property_setter() -> None:
     a = ReflectionAgent()
     s2 = AlwaysRejectStrategy()
@@ -399,12 +439,14 @@ def test_reflection_strategy_property_setter() -> None:
     assert a.strategy is s2
 
 
+@pytest.mark.unit
 def test_reflection_reflect_on() -> None:
     a = ReflectionAgent()
     d = a.reflect_on(_result("t", success=True))
     assert isinstance(d, ReflectionDecision)
 
 
+@pytest.mark.unit
 def test_reflection_run_excepcion() -> None:
     class _Explota(ReflectionStrategy):
         def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision:
@@ -417,6 +459,7 @@ def test_reflection_run_excepcion() -> None:
     assert "strategia-rota" in r.error
 
 
+@pytest.mark.unit
 def test_reflection_min_confidence_clamp() -> None:
     a = ReflectionAgent(min_confidence=5.0)
     assert a._min_confidence == 1.0
@@ -426,6 +469,7 @@ def test_reflection_min_confidence_clamp() -> None:
     assert c._max_iterations == 1
 
 
+@pytest.mark.unit
 def test_reflection_strategy_abstract_reflect_elipsis() -> None:
     class _ConSuperReflect(ReflectionStrategy):
         def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision:
@@ -439,6 +483,7 @@ def test_reflection_strategy_abstract_reflect_elipsis() -> None:
     assert d.action == ReflectionAction.ACCEPT
 
 
+@pytest.mark.unit
 def test_reflection_accept_bajo_umbral_sin_stop_continua_loop() -> None:
     class _AcceptBajo(ReflectionStrategy):
         def reflect(self, result: AgentResult, iteration: int) -> ReflectionDecision:

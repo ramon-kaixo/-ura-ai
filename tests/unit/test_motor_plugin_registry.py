@@ -1,5 +1,6 @@
 """Tests para motor.plugin.registry (PluginRegistry)."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 from unittest import mock
@@ -92,12 +93,14 @@ def _fresh_registry() -> PluginRegistry:
 
 
 class TestRegistryBasics:
+    @pytest.mark.unit
     def test_empty_registry(self):
         registry = _fresh_registry()
         assert registry.entries == {}
         assert registry.loaded == []
         assert registry.count() == 0
 
+    @pytest.mark.unit
     def test_discover_dir_and_file(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         _write(tmp_path, "always_plugin.py", ALWAYS_SRC)
@@ -107,18 +110,21 @@ class TestRegistryBasics:
         assert registry.count() == 2
         assert set(registry.entries) == {"demo_plugin", "always_plugin"}
 
+    @pytest.mark.unit
     def test_discover_single_file(self, tmp_path):
         pyfile = _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
         assert registry.discover([pyfile]) == 1
         assert registry.entries["demo_plugin"].path == pyfile
 
+    @pytest.mark.unit
     def test_discover_invalid_path_logs(self, tmp_path):
         registry = _fresh_registry()
         with mock.patch("motor.plugin.registry.log.warning") as warn:
             assert registry.discover([tmp_path / "no-existe"]) == 0
         warn.assert_called_once()
 
+    @pytest.mark.unit
     def test_discover_duplicate_name_warns(self, tmp_path):
         _write(tmp_path, "a.py", PLUGIN_SRC)
         _write(tmp_path, "b.py", PLUGIN_SRC.replace("class DemoPlugin", "class DemoPlugin2"))
@@ -128,6 +134,7 @@ class TestRegistryBasics:
         warn.assert_called_once()
         assert registry.count() == 1
 
+    @pytest.mark.unit
     def test_discover_file_without_meta_uses_stem(self, tmp_path):
         pyfile = _write(tmp_path, "bare_plugin.py", NO_META_SRC)
         registry = _fresh_registry()
@@ -135,6 +142,7 @@ class TestRegistryBasics:
         assert "bare_plugin" in registry.entries
         assert isinstance(registry.entries["bare_plugin"].meta, PluginMeta)
 
+    @pytest.mark.unit
     def test_get_meta(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -144,6 +152,7 @@ class TestRegistryBasics:
         assert meta.phase == "pre"
         assert registry.get_meta("nope") is None
 
+    @pytest.mark.unit
     def test_count(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -153,6 +162,8 @@ class TestRegistryBasics:
 
 
 class TestLoad:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_success_caches(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -163,10 +174,14 @@ class TestLoad:
         assert registry.loaded == ["demo_plugin"]
         registry._dm.mark_healthy.assert_called_once()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_unknown_returns_none(self):
         registry = _fresh_registry()
         assert registry.get("nope") is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_spec_none_degrades(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -177,6 +192,8 @@ class TestLoad:
             assert registry.get("demo_plugin") is None
         registry._dm.mark_degraded.assert_called_once_with("plugin:demo_plugin")
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_exec_failure_degrades(self, tmp_path):
         pyfile = _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -189,6 +206,8 @@ class TestLoad:
             assert registry.get("demo_plugin") is None
         registry._dm.mark_degraded.assert_called_once_with("plugin:demo_plugin")
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_no_subclass_degrades(self, tmp_path):
         pyfile = _write(tmp_path, "nope.py", NO_SUBCLASS_SRC)
         registry = _fresh_registry()
@@ -196,6 +215,8 @@ class TestLoad:
         assert registry.get("nope") is None
         registry._dm.mark_degraded.assert_called_once_with("plugin:nope")
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_instantiation_error_falls_to_next_class(self, tmp_path):
         src = PLUGIN_SRC + '''
 
@@ -221,6 +242,7 @@ class BrokenPlugin(PluginBase):
 
 
 class TestRunPhase:
+    @pytest.mark.unit
     def test_run_phase_filters_by_phase(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -232,6 +254,7 @@ class TestRunPhase:
         assert results[0].data["ran"] is True
         assert results[0].data["ctx"] == {"x": 1}
 
+    @pytest.mark.unit
     def test_run_phase_always_included(self, tmp_path):
         _write(tmp_path, "always_plugin.py", ALWAYS_SRC)
         registry = _fresh_registry()
@@ -240,6 +263,7 @@ class TestRunPhase:
         assert len(results) == 1
         assert results[0].plugin == "always_plugin"
 
+    @pytest.mark.unit
     def test_run_phase_context_none_becomes_empty(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -247,6 +271,8 @@ class TestRunPhase:
         results = registry.run_phase("pre")
         assert results[0].data["ctx"] == {}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_run_phase_load_failure_result(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -258,6 +284,7 @@ class TestRunPhase:
         assert results[0].error == "Plugin load failed"
         assert isinstance(results[0], PluginResult)
 
+    @pytest.mark.unit
     def test_run_phase_execute_error_degrades(self, tmp_path):
         src = PLUGIN_SRC.replace('return {"ran": True', 'raise RuntimeError("exec boom")\n        return {"ran": True')
         _write(tmp_path, "demo_plugin.py", src)
@@ -269,6 +296,7 @@ class TestRunPhase:
         assert results[0].error == "exec boom"
         registry._dm.mark_degraded.assert_called_once_with("plugin:demo_plugin")
 
+    @pytest.mark.unit
     def test_run_phase_measures_duration(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -277,16 +305,19 @@ class TestRunPhase:
             results = registry.run_phase("pre")
         assert results[0].duration_ms == 500.0
 
+    @pytest.mark.unit
     def test_run_phase_empty(self):
         registry = _fresh_registry()
         assert registry.run_phase("pre") == []
 
 
 class TestRunOne:
+    @pytest.mark.unit
     def test_run_one_unknown_returns_none(self):
         registry = _fresh_registry()
         assert registry.run_one("nope") is None
 
+    @pytest.mark.unit
     def test_run_one_executes_target(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -297,6 +328,7 @@ class TestRunOne:
         assert result.plugin == "demo_plugin"
         assert result.data["ctx"] == {"y": 2}
 
+    @pytest.mark.unit
     def test_run_one_phase_skips_target(self, tmp_path):
         _write(tmp_path, "demo_plugin.py", PLUGIN_SRC)
         registry = _fresh_registry()
@@ -311,10 +343,12 @@ class TestRunOne:
 
 
 class TestPluginBaseCobertura:
+    @pytest.mark.unit
     def test_from_source_syntax_error(self):
         result = PluginMeta.from_source("def (invalid syntax")
         assert result is None
 
+    @pytest.mark.unit
     def test_from_file_exception_fallback(self, tmp_path):
         bad = tmp_path / "bad.py"
         bad.write_bytes(b"\x80\x81\x82")  # invalid UTF-8 → UnicodeDecodeError
@@ -322,6 +356,7 @@ class TestPluginBaseCobertura:
         assert result is not None
         assert result.name == "bad"
 
+    @pytest.mark.unit
     def test_ast_list_value(self):
         import ast as _ast
 
@@ -330,6 +365,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["k"] == [1, 2]
 
+    @pytest.mark.unit
     def test_ast_dict_nested_value(self):
         import ast as _ast
 
@@ -338,6 +374,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["k"]["nested"] == "v"
 
+    @pytest.mark.unit
     def test_ast_not_unary_op(self):
         import ast as _ast
 
@@ -346,6 +383,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["flag"] is False
 
+    @pytest.mark.unit
     def test_ast_name_true_value(self):
         import ast as _ast
 
@@ -354,6 +392,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["flag"] is True
 
+    @pytest.mark.unit
     def test_ast_name_value_none(self):
         import ast as _ast
 
@@ -362,6 +401,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["val"] is None
 
+    @pytest.mark.unit
     def test_ast_name_unknown_identifier(self):
         import ast as _ast
 
@@ -370,6 +410,7 @@ class TestPluginBaseCobertura:
         result = _ast_dict_to_dict(node)
         assert result["val"] == "SOME_UNDEFINED"
 
+    @pytest.mark.unit
     def test_plugin_repr(self):
         class _P(PluginBase):
             def on_load(self) -> None:

@@ -14,14 +14,17 @@ from motor.assistant.executor import (
 
 
 class TestConfig:
+    @pytest.mark.integration
     def test_default_host(self):
         cfg = AssistantConfig()
         assert cfg.host == "127.0.0.1"
 
+    @pytest.mark.integration
     def test_default_port(self):
         cfg = AssistantConfig()
         assert cfg.port == 8000
 
+    @pytest.mark.integration
     def test_auth_disabled_by_default(self, monkeypatch):
         monkeypatch.delenv("URA_API_KEY", raising=False)
         monkeypatch.delenv("URA_AUTH_ENABLED", raising=False)
@@ -35,12 +38,14 @@ class TestConfig:
         cfg = AssistantConfig()
         assert cfg.auth_enabled is False
 
+    @pytest.mark.integration
     def test_auth_enabled_with_key(self, monkeypatch):
         monkeypatch.setenv("URA_API_KEY", "test-key")
         cfg = AssistantConfig()
         assert cfg.auth_enabled is True
         assert cfg.api_key == "test-key"
 
+    @pytest.mark.integration
     def test_db_for_returns_path(self, monkeypatch, tmp_path):
         monkeypatch.setenv("URA_DATA_DIR", str(tmp_path))
         cfg = AssistantConfig()
@@ -53,30 +58,36 @@ class TestCalculator:
     def calc(self):
         return CalculatorTool()
 
+    @pytest.mark.integration
     def test_basic_arithmetic(self, calc):
         result = calc.execute("2 + 3")
         assert result.success
         assert result.output == "5"
 
+    @pytest.mark.integration
     def test_complex_expression(self, calc):
         result = calc.execute("(4 + 5) * 3")
         assert result.success
         assert result.output == "27"
 
+    @pytest.mark.integration
     def test_division(self, calc):
         result = calc.execute("10 / 4")
         assert result.success
         assert result.output == "2.5"
 
+    @pytest.mark.integration
     def test_math_functions(self, calc):
         result = calc.execute("sqrt(16) + abs(-5)")
         assert result.success
         assert result.output == "9"
 
+    @pytest.mark.integration
     def test_empty_expression(self, calc):
         result = calc.execute("")
         assert not result.success
 
+    @pytest.mark.integration
     def test_invalid_expression(self, calc):
         result = calc.execute("invalid")
         assert not result.success
@@ -87,10 +98,12 @@ class TestFileReadTool:
     def tool(self):
         return FileReadTool()
 
+    @pytest.mark.integration
     def test_nonexistent_file(self, tool):
         result = tool.execute("/nonexistent/path/file.txt")
         assert not result.success
 
+    @pytest.mark.integration
     def test_outside_safe_dirs(self, tool):
         result = tool.execute("/etc/shadow")
         assert not result.success
@@ -101,6 +114,7 @@ class TestGitBranchTool:
     def tool(self):
         return GitBranchTool()
 
+    @pytest.mark.integration
     def test_execute_returns_string(self, tool):
         result = tool.execute()
         assert result.success
@@ -113,6 +127,7 @@ class TestGitCommitTool:
     def tool(self):
         return GitCommitTool()
 
+    @pytest.mark.integration
     def test_rejects_empty_message(self, tool):
         result = tool.execute(message="")
         assert not result.success

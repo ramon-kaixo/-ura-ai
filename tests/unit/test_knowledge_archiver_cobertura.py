@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import subprocess
 from pathlib import Path
@@ -46,6 +47,7 @@ def git_repo(tmp_path: Path) -> Path:
     return repo
 
 
+@pytest.mark.unit
 def test_resolve_within_ok(tmp_path) -> None:
     allowed = tmp_path / "arch"
     allowed.mkdir()
@@ -54,6 +56,7 @@ def test_resolve_within_ok(tmp_path) -> None:
     assert _resolve_within(target, allowed) == target
 
 
+@pytest.mark.unit
 def test_resolve_within_fuera(tmp_path) -> None:
     allowed = tmp_path / "arch"
     allowed.mkdir()
@@ -63,6 +66,7 @@ def test_resolve_within_fuera(tmp_path) -> None:
         _resolve_within(fuera, allowed)
 
 
+@pytest.mark.unit
 def test_resolve_within_no_existe_fuera(tmp_path) -> None:
     allowed = tmp_path / "arch"
     allowed.mkdir()
@@ -70,6 +74,7 @@ def test_resolve_within_no_existe_fuera(tmp_path) -> None:
         _resolve_within(tmp_path / "no" / "existe", allowed)
 
 
+@pytest.mark.unit
 def test_resolve_within_no_existe_dentro(tmp_path) -> None:
     allowed = tmp_path / "arch"
     allowed.mkdir()
@@ -77,12 +82,14 @@ def test_resolve_within_no_existe_dentro(tmp_path) -> None:
     assert res == allowed / "nuevo.txt"
 
 
+@pytest.mark.unit
 def test_validate_source_dir(tmp_path) -> None:
     src = tmp_path / "src"
     src.mkdir()
     assert _validate_source_dir(src) == src
 
 
+@pytest.mark.unit
 def test_validate_source_dir_fuera(tmp_path) -> None:
     src = tmp_path / "src"
     src.mkdir()
@@ -92,35 +99,42 @@ def test_validate_source_dir_fuera(tmp_path) -> None:
         _validate_source_dir(src, allowed_root=allowed)
 
 
+@pytest.mark.unit
 def test_ensure_dir(tmp_path) -> None:
     d = _ensure_dir(tmp_path / "n" / "d")
     assert d.is_dir()
 
 
+@pytest.mark.unit
 def test_git_cmd(git_repo) -> None:
     r = _git_cmd("rev-parse", "HEAD", cwd=git_repo)
     assert r.returncode == 0
     assert len(r.stdout.strip()) == 40
 
 
+@pytest.mark.unit
 def test_paths_helpers(tmp_path) -> None:
     assert _manifest_path(tmp_path, "source", "ts") == tmp_path / "source-ts.manifest.json"
     assert _archive_path(tmp_path, "source", "ts") == tmp_path / "source-ts.bundle"
 
 
+@pytest.mark.unit
 def test_verificar_git_commit(git_repo) -> None:
     assert len(_verificar_git_commit(git_repo)) == 40
 
 
+@pytest.mark.unit
 def test_verificar_git_commit_no_repo(tmp_path) -> None:
     with pytest.raises(ValueError):
         _verificar_git_commit(tmp_path)
 
 
+@pytest.mark.unit
 def test_contar_tracked(git_repo) -> None:
     assert _contar_tracked(git_repo) == 2
 
 
+@pytest.mark.unit
 def test_crear_bundle_error(git_repo, tmp_path, monkeypatch) -> None:
     def _falla(*args, **kwargs):
         return subprocess.CompletedProcess(args=(), returncode=1, stdout="", stderr="boom")
@@ -130,12 +144,14 @@ def test_crear_bundle_error(git_repo, tmp_path, monkeypatch) -> None:
         _crear_bundle(git_repo, tmp_path / "x.bundle")
 
 
+@pytest.mark.unit
 def test_calcular_sha256(tmp_path) -> None:
     p = tmp_path / "f.bin"
     p.write_bytes(b"a" * 100_000)
     assert len(_calcular_sha256(p)) == 64
 
 
+@pytest.mark.unit
 def test_escribir_manifest(tmp_path) -> None:
     m = ArchiveManifest(source_commit="c", created_at="ts", archive_path=str(tmp_path / "x.bundle"))
     path = _escribir_manifest(m)
@@ -144,6 +160,7 @@ def test_escribir_manifest(tmp_path) -> None:
     assert data["source_commit"] == "c"
 
 
+@pytest.mark.unit
 def test_archive_source_e2e(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -154,11 +171,13 @@ def test_archive_source_e2e(git_repo, tmp_path) -> None:
     assert verify_archive(arch / f"source-{manifest.created_at}.manifest.json", archive_dir=arch) is True
 
 
+@pytest.mark.unit
 def test_archive_source_no_repo(tmp_path) -> None:
     with pytest.raises(ValueError):
         archive_source(source_dir=tmp_path, archive_dir=tmp_path / "arch")
 
 
+@pytest.mark.unit
 def test_archive_source_con_db(git_repo, tmp_path) -> None:
     from knowledge.engine.sqlite_writer import init_db
 
@@ -172,18 +191,21 @@ def test_archive_source_con_db(git_repo, tmp_path) -> None:
     assert rows[0]["file_count"] == 2 if "file_count" in rows[0] else True
 
 
+@pytest.mark.unit
 def test_verify_archive_manifest_fuera(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
     assert verify_archive(arch / f"source-{manifest.created_at}.manifest.json", archive_dir=tmp_path / "otro") is False
 
 
+@pytest.mark.unit
 def test_verify_archive_manifest_no_existe(tmp_path) -> None:
     arch = tmp_path / "arch"
     arch.mkdir()
     assert verify_archive(arch / "no.manifest.json", archive_dir=arch) is False
 
 
+@pytest.mark.unit
 def test_verify_archive_manifest_invalido(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -192,6 +214,7 @@ def test_verify_archive_manifest_invalido(git_repo, tmp_path) -> None:
     assert verify_archive(mp, archive_dir=arch) is False
 
 
+@pytest.mark.unit
 def test_verify_archive_bundle_faltante(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -201,6 +224,7 @@ def test_verify_archive_bundle_faltante(git_repo, tmp_path) -> None:
     assert verify_archive(mp, archive_dir=arch) is False
 
 
+@pytest.mark.unit
 def test_verify_archive_sha_mismatch(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -210,12 +234,14 @@ def test_verify_archive_sha_mismatch(git_repo, tmp_path) -> None:
     assert verify_archive(mp, archive_dir=arch) is False
 
 
+@pytest.mark.unit
 def test_resolver_dentro_traversal(tmp_path) -> None:
     allowed = tmp_path / "arch"
     allowed.mkdir()
     assert _resolver_dentro(allowed, tmp_path / "fuera", "x") is None
 
 
+@pytest.mark.unit
 def test_restore_source_e2e(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -225,6 +251,7 @@ def test_restore_source_e2e(git_repo, tmp_path) -> None:
     assert (dest / "a.md").exists()
 
 
+@pytest.mark.unit
 def test_restore_source_verificacion_falla(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     archive_source(source_dir=git_repo, archive_dir=arch)
@@ -232,6 +259,7 @@ def test_restore_source_verificacion_falla(git_repo, tmp_path) -> None:
         restore_source(arch / "no.manifest.json", dest_dir=tmp_path / "d", archive_dir=arch)
 
 
+@pytest.mark.unit
 def test_restore_source_bundle_faltante(git_repo, tmp_path, monkeypatch) -> None:
     arch = tmp_path / "arch"
     manifest = archive_source(source_dir=git_repo, archive_dir=arch)
@@ -242,11 +270,13 @@ def test_restore_source_bundle_faltante(git_repo, tmp_path, monkeypatch) -> None
         restore_source(mp, dest_dir=tmp_path / "d", archive_dir=arch)
 
 
+@pytest.mark.unit
 def test_restore_source_traversal(git_repo, tmp_path) -> None:
     with pytest.raises(ValueError):
         restore_source(tmp_path / "fuera.manifest.json", dest_dir=tmp_path / "d")
 
 
+@pytest.mark.unit
 def test_clonar_bundle_error(git_repo, tmp_path, monkeypatch) -> None:
     bundle = tmp_path / "x.bundle"
     bundle.write_bytes(b"no-bundle")
@@ -259,10 +289,12 @@ def test_clonar_bundle_error(git_repo, tmp_path, monkeypatch) -> None:
         _clonar_bundle(bundle, tmp_path / "dest", None)
 
 
+@pytest.mark.unit
 def test_list_archives_dir_no_existe(tmp_path) -> None:
     assert list_archives(tmp_path / "nope") == []
 
 
+@pytest.mark.unit
 def test_list_archives_mezcla(git_repo, tmp_path) -> None:
     arch = tmp_path / "arch"
     archive_source(source_dir=git_repo, archive_dir=arch)
@@ -272,6 +304,7 @@ def test_list_archives_mezcla(git_repo, tmp_path) -> None:
     assert manifests[0].file_count == 2
 
 
+@pytest.mark.unit
 def test_list_archives_from_db_sin_tabla(tmp_path) -> None:
     db = tmp_path / "vacia.db"
     import sqlite3
@@ -280,17 +313,20 @@ def test_list_archives_from_db_sin_tabla(tmp_path) -> None:
     assert list_archives_from_db(db) == []
 
 
+@pytest.mark.unit
 def test_registrar_en_db_error_no_crash(git_repo, tmp_path) -> None:
     m = ArchiveManifest(source_commit="c", archive_path=str(tmp_path / "x.bundle"))
     _registrar_en_db(tmp_path / "sin_tabla.db", m, tmp_path / "m.json", tmp_path / "x.bundle", 10)
     assert True
 
 
+@pytest.mark.unit
 def test_registrar_audit_y_metricas() -> None:
     _registrar_audit_y_metricas("abc", 1, 2, 0.0)
     assert True
 
 
+@pytest.mark.unit
 def test_restore_source_manifest_invalido_despues_verify(git_repo, tmp_path, monkeypatch) -> None:
     arch = tmp_path / "arch"
     arch.mkdir()
@@ -301,6 +337,7 @@ def test_restore_source_manifest_invalido_despues_verify(git_repo, tmp_path, mon
         restore_source(mp, dest_dir=tmp_path / "d", archive_dir=arch)
 
 
+@pytest.mark.unit
 def test_restore_source_archive_path_traversal(git_repo, tmp_path, monkeypatch) -> None:
     arch = tmp_path / "arch"
     arch.mkdir()
@@ -312,6 +349,7 @@ def test_restore_source_archive_path_traversal(git_repo, tmp_path, monkeypatch) 
         restore_source(mp, dest_dir=tmp_path / "d", archive_dir=arch)
 
 
+@pytest.mark.unit
 def test_clonar_bundle_git_falla(git_repo, tmp_path, monkeypatch) -> None:
     bundle = tmp_path / "x.bundle"
     bundle.write_bytes(b"no-bundle")
@@ -324,6 +362,7 @@ def test_clonar_bundle_git_falla(git_repo, tmp_path, monkeypatch) -> None:
         _clonar_bundle(bundle, tmp_path / "dest", None)
 
 
+@pytest.mark.unit
 def test_clonar_bundle_checkout_falla(git_repo, tmp_path, monkeypatch) -> None:
     bundle = tmp_path / "x.bundle"
     bundle.write_bytes(b"no-bundle")
@@ -341,6 +380,7 @@ def test_clonar_bundle_checkout_falla(git_repo, tmp_path, monkeypatch) -> None:
     assert len(calls) == 2
 
 
+@pytest.mark.unit
 def test_registrar_audit_falla_silencioso(git_repo, tmp_path, monkeypatch) -> None:
     def _boom():
         raise RuntimeError("audit no disponible")

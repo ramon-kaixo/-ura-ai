@@ -1,3 +1,4 @@
+import pytest
 """Hypothesis property-based tests for URA core modules (merged from test_memory_engine + test_properties)."""
 
 from hypothesis import given, settings
@@ -10,6 +11,8 @@ from motor.core.query_cache import AsyncQueryCache
 
 @given(text(max_size=500))
 @settings(max_examples=100)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_chunking_never_empty_for_nonempty_text(text_in: str) -> None:
     if not text_in.strip():
         return
@@ -23,6 +26,8 @@ def test_chunking_never_empty_for_nonempty_text(text_in: str) -> None:
 
 @given(lists(text(max_size=200), max_size=5), integers(min_value=1, max_value=10))
 @settings(max_examples=50)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_query_cache_roundtrip(entries: list[str], ttl: int) -> None:
     import asyncio
 
@@ -50,6 +55,8 @@ def test_query_cache_roundtrip(entries: list[str], ttl: int) -> None:
 
 @given(text(max_size=300))
 @settings(max_examples=50)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_language_detection_stable(text_in: str) -> None:
     if not text_in.strip():
         return
@@ -60,6 +67,8 @@ def test_language_detection_stable(text_in: str) -> None:
 
 @given(text(max_size=200))
 @settings(max_examples=50)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_content_type_never_empty(text_in: str) -> None:
     ctype = content_type(text_in) if text_in else ""
     if text_in:
@@ -68,6 +77,8 @@ def test_content_type_never_empty(text_in: str) -> None:
 
 @given(text(max_size=100), booleans(), booleans(), integers(min_value=1, max_value=20))
 @settings(max_examples=50)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_cache_key_properties(query: str, reranker: bool, hybrid: bool, top_k: int) -> None:
     cache = AsyncQueryCache()
     key1 = cache.compute_key(query, use_reranker=reranker, use_hybrid=hybrid, top_k=top_k)

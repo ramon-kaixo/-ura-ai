@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import asyncio
 from datetime import UTC, datetime, timedelta
 from unittest import mock
@@ -17,34 +18,41 @@ def scheduler() -> TuneladoraScheduler:
 
 
 class TestRegistration:
+    @pytest.mark.integration
     def test_add_pipeline(self, scheduler):
         scheduler.add_pipeline("health", interval_minutes=5)
         assert scheduler.pipeline_count == 1
 
+    @pytest.mark.integration
     def test_add_multiple(self, scheduler):
         scheduler.add_pipeline("health", interval_minutes=5)
         scheduler.add_pipeline("cleanup", interval_minutes=60)
         assert scheduler.pipeline_count == 2
 
+    @pytest.mark.integration
     def test_remove_pipeline(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=10)
         scheduler.remove_pipeline("test")
         assert scheduler.pipeline_count == 0
 
+    @pytest.mark.integration
     def test_remove_nonexistent(self, scheduler):
         assert scheduler.remove_pipeline("nonexistent") is False
 
+    @pytest.mark.integration
     def test_add_pipeline_sets_next_run(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5)
         status = scheduler.get_status()
         assert status[0]["next_run"] is not None
         assert status[0]["interval_minutes"] == 5.0
 
+    @pytest.mark.integration
     def test_auto_execute_safe_default(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5)
         status = scheduler.get_status()
         assert status[0]["auto_execute_safe"] is True
 
+    @pytest.mark.integration
     def test_auto_execute_safe_false(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5, auto_execute_safe=False)
         status = scheduler.get_status()
@@ -82,9 +90,11 @@ class TestLifecycle:
 
 
 class TestStatus:
+    @pytest.mark.integration
     def test_empty_status(self, scheduler):
         assert scheduler.get_status() == []
 
+    @pytest.mark.integration
     def test_status_contains_fields(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5)
         status = scheduler.get_status()[0]
@@ -99,6 +109,7 @@ class TestStatus:
         ):
             assert key in status
 
+    @pytest.mark.integration
     def test_overdue_flag(self, scheduler):
         scheduler.add_pipeline("test", interval_minutes=5)
         # Justo después de añadirlo, debería tener next_run futuro
@@ -115,18 +126,21 @@ class TestRunPipelineSync:
             next_run=datetime.now(UTC) + timedelta(seconds=5),
         )
 
+    @pytest.mark.integration
     def test_health_disco_critico(self, scheduler):
         engine = mock.Mock()
         engine.health_disk.return_value = {"libre_gb": 5}
         scheduler._run_pipeline_sync(engine, self._pipeline("health"))
         engine.notify.assert_called_once()
 
+    @pytest.mark.integration
     def test_health_disco_medio_limpia(self, scheduler):
         engine = mock.Mock()
         engine.health_disk.return_value = {"libre_gb": 30}
         scheduler._run_pipeline_sync(engine, self._pipeline("health"))
         engine.run_script.assert_called_once_with("scripts/pro/cleanup_logs.py")
 
+    @pytest.mark.integration
     def test_health_disco_ok_sin_accion(self, scheduler):
         engine = mock.Mock()
         engine.health_disk.return_value = {"libre_gb": 100}
@@ -134,21 +148,25 @@ class TestRunPipelineSync:
         engine.notify.assert_not_called()
         engine.run_script.assert_not_called()
 
+    @pytest.mark.integration
     def test_cleanup_auto(self, scheduler):
         engine = mock.Mock()
         scheduler._run_pipeline_sync(engine, self._pipeline("cleanup"))
         assert engine.run_script.call_count == 2
 
+    @pytest.mark.integration
     def test_cleanup_no_auto(self, scheduler):
         engine = mock.Mock()
         scheduler._run_pipeline_sync(engine, self._pipeline("cleanup", auto=False))
         engine.run_script.assert_not_called()
 
+    @pytest.mark.integration
     def test_full_audit(self, scheduler):
         engine = mock.Mock()
         scheduler._run_pipeline_sync(engine, self._pipeline("full_audit"))
         engine.run_ruff.assert_called_once()
 
+    @pytest.mark.integration
     def test_desconocido(self, scheduler):
         engine = mock.Mock()
         scheduler._run_pipeline_sync(engine, self._pipeline("raro"))

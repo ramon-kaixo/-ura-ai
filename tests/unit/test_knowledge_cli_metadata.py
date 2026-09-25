@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/metadata.py."""
 from __future__ import annotations
+import pytest
 
 from types import SimpleNamespace
 from unittest import mock
@@ -18,6 +19,7 @@ from knowledge.engine.cli.metadata import (
 
 
 class TestCmdMetadataLineage:
+    @pytest.mark.unit
     def test_sin_eventos(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.get_lineage.return_value = []
@@ -26,6 +28,7 @@ class TestCmdMetadataLineage:
         assert cmd_metadata_lineage(args) == 0
         store.get_upstream.assert_not_called()
 
+    @pytest.mark.unit
     def test_con_eventos(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.get_lineage.return_value = [mock.Mock(), mock.Mock()]
@@ -39,6 +42,7 @@ class TestCmdMetadataLineage:
 
 
 class TestCmdMetadataPolicy:
+    @pytest.mark.unit
     def test_sin_asset(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.list_policies.return_value = []
@@ -47,6 +51,7 @@ class TestCmdMetadataPolicy:
         assert cmd_metadata_policy(args) == 0
         store.list_policies.assert_called_once()
 
+    @pytest.mark.unit
     def test_con_asset(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.get_policies.return_value = [mock.Mock()]
@@ -57,6 +62,7 @@ class TestCmdMetadataPolicy:
 
 
 class TestCmdMemoryCreate:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.save.return_value = True
@@ -67,6 +73,7 @@ class TestCmdMemoryCreate:
         assert rec.kind == "idea"
         assert rec.tags == ("a", "b", "c")
 
+    @pytest.mark.unit
     def test_sin_tags(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.save.return_value = True
@@ -75,6 +82,7 @@ class TestCmdMemoryCreate:
         assert cmd_memory_create(args) == 0
         assert store.save.call_args.args[0].tags == ()
 
+    @pytest.mark.unit
     def test_falla(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.save.return_value = False
@@ -84,6 +92,7 @@ class TestCmdMemoryCreate:
 
 
 class TestCmdMemoryList:
+    @pytest.mark.unit
     def test_vacio(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.list.return_value = []
@@ -92,6 +101,7 @@ class TestCmdMemoryList:
         assert cmd_memory_list(args) == 0
         store.list.assert_called_once_with(kind=None, limit=50)
 
+    @pytest.mark.unit
     def test_con_resultados(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.list.return_value = [mock.Mock()]
@@ -101,6 +111,7 @@ class TestCmdMemoryList:
 
 
 class TestCmdMemoryShow:
+    @pytest.mark.unit
     def test_no_encontrado(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.get.return_value = None
@@ -108,6 +119,7 @@ class TestCmdMemoryShow:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), memory_id="m1")
         assert cmd_memory_show(args) == 1
 
+    @pytest.mark.unit
     def test_encontrado(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.get.return_value = mock.Mock()
@@ -117,6 +129,7 @@ class TestCmdMemoryShow:
 
 
 class TestCmdMemorySearch:
+    @pytest.mark.unit
     def test_sin_resultados(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.search.return_value = []
@@ -124,6 +137,7 @@ class TestCmdMemorySearch:
         args = SimpleNamespace(db_path=str(tmp_path / "db.sqlite"), query="q", kind=None, limit=5)
         assert cmd_memory_search(args) == 0
 
+    @pytest.mark.unit
     def test_con_resultados(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.search.return_value = [mock.Mock()]
@@ -133,6 +147,7 @@ class TestCmdMemorySearch:
 
 
 class TestCmdMemoryLink:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.link_asset.return_value = True
@@ -141,6 +156,7 @@ class TestCmdMemoryLink:
         assert cmd_memory_link(args) == 0
         store.link_asset.assert_called_once_with("m1", "a1")
 
+    @pytest.mark.unit
     def test_falla(self, monkeypatch, tmp_path) -> None:
         store = mock.Mock()
         store.link_asset.return_value = False
@@ -150,6 +166,7 @@ class TestCmdMemoryLink:
 
 
 class TestCmdMetadataRetrieve:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         retriever = mock.Mock()
         ctx = mock.Mock()
@@ -162,6 +179,7 @@ class TestCmdMetadataRetrieve:
 
 
 class TestCmdMetadataContext:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         retriever = mock.Mock()
         monkeypatch.setattr("knowledge.engine.graphrag.SQLiteGraphRetriever", mock.Mock(return_value=retriever))

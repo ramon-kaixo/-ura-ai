@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest.mock import MagicMock
 
 import pytest
@@ -30,31 +31,37 @@ class RegistryStub:
 
 
 class TestResolve:
+    @pytest.mark.unit
     def test_provider_explicito(self) -> None:
         reg = RegistryStub(["ollama", "openai"], "ollama")
         resolve("generate", "openai", reg, DEFAULT_ROUTES)
         reg._getter.assert_called_once_with("openai")
 
+    @pytest.mark.unit
     def test_provider_no_registrado_raise(self) -> None:
         reg = RegistryStub(["ollama"], "ollama")
         with pytest.raises(RuntimeError, match="not in registry"):
             resolve("generate", "gemini", reg, DEFAULT_ROUTES)
 
+    @pytest.mark.unit
     def test_por_ruta(self) -> None:
         reg = RegistryStub(["ollama"], "ollama")
         resolve("generate", None, reg, {"generate": "ollama"})
         reg._getter.assert_called_once_with("ollama")
 
+    @pytest.mark.unit
     def test_ruta_fallback_default(self) -> None:
         reg = RegistryStub(["openai"], "openai")
         resolve("vision", None, reg, {"generate": "ollama"})
         reg._getter.assert_called_once_with("openai")
 
+    @pytest.mark.unit
     def test_sin_ruta_sin_default_raise(self) -> None:
         reg = RegistryStub([], None)
         with pytest.raises(RuntimeError, match="No provider available"):
             resolve("vision", None, reg, {})
 
+    @pytest.mark.unit
     def test_ruta_no_registrada_sin_fallback_raise(self) -> None:
         reg = RegistryStub([], None)
         with pytest.raises(RuntimeError, match="unregistered provider"):
@@ -62,23 +69,28 @@ class TestResolve:
 
 
 class TestResolveName:
+    @pytest.mark.unit
     def test_provider_explicito(self) -> None:
         reg = RegistryStub(["ollama"], "ollama")
         assert resolve_name("generate", "openai", reg, DEFAULT_ROUTES) == "openai"
 
+    @pytest.mark.unit
     def test_por_ruta(self) -> None:
         reg = RegistryStub(["ollama"], "ollama")
         assert resolve_name("generate", None, reg, {"generate": "ollama"}) == "ollama"
 
+    @pytest.mark.unit
     def test_ruta_no_registrada_fallback(self) -> None:
         reg = RegistryStub(["openai"], "openai")
         assert resolve_name("generate", None, reg, {"generate": "ollama"}) == "openai"
 
+    @pytest.mark.unit
     def test_sin_nada_unknown(self) -> None:
         reg = RegistryStub([], None)
         assert resolve_name("vision", None, reg, {}) == "unknown"
 
 
 class TestDefaultRoutes:
+    @pytest.mark.unit
     def test_rutas_por_defecto(self) -> None:
         assert DEFAULT_ROUTES == {"generate": "ollama", "embed": "ollama", "health": "ollama"}

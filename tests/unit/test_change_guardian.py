@@ -1,3 +1,4 @@
+import pytest
 """Tests for core/change_guardian.py."""
 
 import json
@@ -14,18 +15,21 @@ from core.change_guardian import (
 
 class TestGetModifiedTrackedFiles:
     @patch("core.change_guardian._git")
+    @pytest.mark.unit
     def test_returns_files(self, mock_git):
         mock_git.return_value = (True, "file1.py\nfile2.py\n")
         result = _get_modified_tracked_files()
         assert result == ["file1.py", "file2.py"]
 
     @patch("core.change_guardian._git")
+    @pytest.mark.unit
     def test_empty_output(self, mock_git):
         mock_git.return_value = (True, "")
         result = _get_modified_tracked_files()
         assert result == []
 
     @patch("core.change_guardian._git")
+    @pytest.mark.unit
     def test_ignores_whitespace(self, mock_git):
         mock_git.return_value = (True, "  \n  \n")
         result = _get_modified_tracked_files()
@@ -33,10 +37,12 @@ class TestGetModifiedTrackedFiles:
 
 
 class TestLoadPatterns:
+    @pytest.mark.unit
     def test_no_file(self, tmp_path, monkeypatch):
         monkeypatch.setattr("core.change_guardian.PATTERNS_FILE", tmp_path / "no_existe.json")
         assert _load_patterns() == []
 
+    @pytest.mark.unit
     def test_valid_json(self, tmp_path, monkeypatch):
         f = tmp_path / "patterns.json"
         f.write_text('[{"tipo": "test"}]')
@@ -44,6 +50,7 @@ class TestLoadPatterns:
         result = _load_patterns()
         assert result == [{"tipo": "test"}]
 
+    @pytest.mark.unit
     def test_invalid_json(self, tmp_path, monkeypatch):
         f = tmp_path / "bad.json"
         f.write_text("not json")
@@ -52,6 +59,7 @@ class TestLoadPatterns:
 
 
 class TestSavePattern:
+    @pytest.mark.unit
     def test_creates_file(self, tmp_path, monkeypatch):
         f = tmp_path / "patterns.json"
         monkeypatch.setattr("core.change_guardian.PATTERNS_FILE", f)
@@ -62,6 +70,7 @@ class TestSavePattern:
         assert data[0]["tipo_cambio"] == "test"
         assert data[0]["archivos"] == ["a.py"]
 
+    @pytest.mark.unit
     def test_appends(self, tmp_path, monkeypatch):
         f = tmp_path / "patterns.json"
         f.write_text('[{"tipo_cambio": "old"}]')
@@ -73,10 +82,12 @@ class TestSavePattern:
 
 
 class TestGetFailurePatterns:
+    @pytest.mark.unit
     def test_empty(self, tmp_path, monkeypatch):
         monkeypatch.setattr("core.change_guardian.PATTERNS_FILE", tmp_path / "no.json")
         assert get_failure_patterns() == []
 
+    @pytest.mark.unit
     def test_with_data(self, tmp_path, monkeypatch):
         f = tmp_path / "patterns.json"
         f.write_text('[{"tipo_cambio": "x"}]')
@@ -86,10 +97,12 @@ class TestGetFailurePatterns:
 
 
 class TestGetFailureSummary:
+    @pytest.mark.unit
     def test_empty(self, tmp_path, monkeypatch):
         monkeypatch.setattr("core.change_guardian.PATTERNS_FILE", tmp_path / "no.json")
         assert get_failure_summary() == "Sin fallos registrados"
 
+    @pytest.mark.unit
     def test_with_patterns(self, tmp_path, monkeypatch):
         f = tmp_path / "patterns.json"
         f.write_text(json.dumps([

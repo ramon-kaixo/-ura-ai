@@ -5,6 +5,7 @@ Anywhere: ejecuta detect-secrets scan y audita baseline.
 
 from __future__ import annotations
 
+import pytest
 import json
 
 import pytest

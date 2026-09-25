@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -33,17 +34,20 @@ from motor.assistant.vector_memory import VectorMemoryStore
 # ── models ───────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_conversation_mode_valores() -> None:
     assert ConversationMode.CONVERSATION.value == "conversacion"
     assert ConversationMode.WORK.value == "trabajo"
     assert ConversationMode.EXPLANATION.value == "explicacion"
 
 
+@pytest.mark.unit
 def test_user_intent_valores() -> None:
     assert UserIntent.CHAT.value == "chat"
     assert UserIntent.UNKNOWN.value == "unknown"
 
 
+@pytest.mark.unit
 def test_message_defaults() -> None:
     m = Message(role="user", content="hola")
     assert m.timestamp != ""
@@ -51,21 +55,25 @@ def test_message_defaults() -> None:
     assert m.tool_call_id == ""
 
 
+@pytest.mark.unit
 def test_message_rol_invalido() -> None:
     with pytest.raises(ValueError):
         Message(role="robot", content="x")  # type: ignore[arg-type]
 
 
+@pytest.mark.unit
 def test_message_tool_requiere_call_id() -> None:
     with pytest.raises(ValueError):
         Message(role="tool", content="x")
 
 
+@pytest.mark.unit
 def test_message_tool_ok() -> None:
     m = Message(role="tool", content="x", tool_call_id="t1")
     assert m.tool_call_id == "t1"
 
 
+@pytest.mark.unit
 def test_message_token_estimate() -> None:
     m = Message(role="user", content="abcdefgh")  # 8 chars / 4 = 2
     assert m.token_estimate() == 2
@@ -73,6 +81,7 @@ def test_message_token_estimate() -> None:
     assert m.token_estimate(chars_per_token=100) == 1  # min 1
 
 
+@pytest.mark.unit
 def test_conversation_state_defaults() -> None:
     s = ConversationState(conversation_id="c1")
     assert s.created_at != ""
@@ -80,12 +89,14 @@ def test_conversation_state_defaults() -> None:
     assert s.mode == ConversationMode.CONVERSATION
 
 
+@pytest.mark.unit
 def test_conversation_state_con_datos() -> None:
     s = ConversationState(conversation_id="c1", created_at="t", updated_at="u")
     assert s.created_at == "t"
     assert s.updated_at == "u"
 
 
+@pytest.mark.unit
 def test_conversation_add_message() -> None:
     c = Conversation(conversation_id="c1", state=ConversationState(conversation_id="c1"))
     m = c.add_message("user", "hola")
@@ -94,18 +105,21 @@ def test_conversation_add_message() -> None:
     assert c.state.updated_at != ""
 
 
+@pytest.mark.unit
 def test_conversation_add_message_kwargs_invalidos() -> None:
     c = Conversation(conversation_id="c1")
     with pytest.raises(TypeError):
         c.add_message("user", "hola", role="assistant")
 
 
+@pytest.mark.unit
 def test_conversation_add_message_con_kwargs() -> None:
     c = Conversation(conversation_id="c1", state=ConversationState(conversation_id="c1"))
     m = c.add_message("user", "hola", metadata={"src": "x"})
     assert m.metadata == {"src": "x"}
 
 
+@pytest.mark.unit
 def test_conversation_token_count() -> None:
     c = Conversation(conversation_id="c1")
     c.add_message("user", "abcdefgh")
@@ -113,12 +127,14 @@ def test_conversation_token_count() -> None:
     assert c.token_count == 2 + 1
 
 
+@pytest.mark.unit
 def test_conversation_sin_state_add_message() -> None:
     c = Conversation(conversation_id="c1")  # sin state
     c.add_message("user", "hola")
     assert len(c.messages) == 1
 
 
+@pytest.mark.unit
 def test_conversation_last_messages() -> None:
     c = Conversation(conversation_id="c1")
     c.add_message("assistant", "res1")
@@ -128,12 +144,14 @@ def test_conversation_last_messages() -> None:
     assert c.last_assistant_message.content == "res2"
 
 
+@pytest.mark.unit
 def test_conversation_last_messages_vacio() -> None:
     c = Conversation(conversation_id="c1")
     assert c.last_user_message is None
     assert c.last_assistant_message is None
 
 
+@pytest.mark.unit
 def test_conversation_last_user_solo_assistant() -> None:
     c = Conversation(conversation_id="c1")
     c.add_message("assistant", "solo respuesta")
@@ -141,6 +159,7 @@ def test_conversation_last_user_solo_assistant() -> None:
     assert c.last_assistant_message is not None
 
 
+@pytest.mark.unit
 def test_conversation_last_user_varios_assistant() -> None:
     c = Conversation(conversation_id="c1")
     c.add_message("assistant", "res1")
@@ -149,6 +168,7 @@ def test_conversation_last_user_varios_assistant() -> None:
     assert c.last_assistant_message.content == "res2"
 
 
+@pytest.mark.unit
 def test_conversation_last_assistant_solo_user() -> None:
     c = Conversation(conversation_id="c1")
     c.add_message("user", "solo pregunta")
@@ -159,6 +179,7 @@ def test_conversation_last_assistant_solo_user() -> None:
 # ── rag ──────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_rag_sin_disponible() -> None:
     r = RAGContext()
     r._available = False
@@ -169,10 +190,12 @@ def test_rag_sin_disponible() -> None:
     assert asyncio.run(r.retrieve("q")) == ""
 
 
+@pytest.mark.unit
 def test_rag_get_ke_db_path() -> None:
     assert RAGContext._get_ke_db_path() is None or isinstance(RAGContext._get_ke_db_path(), Path)
 
 
+@pytest.mark.unit
 def test_rag_get_ke_db_path_inexistente(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.assistant.rag as rag_mod
 
@@ -187,6 +210,7 @@ def test_rag_get_ke_db_path_inexistente(tmp_path: object, monkeypatch: pytest.Mo
     assert rag_mod.RAGContext._get_ke_db_path() is None  # db no existe en tmp
 
 
+@pytest.mark.unit
 def test_rag_check_available_con_db_inexistente(monkeypatch: pytest.MonkeyPatch) -> None:
     r = RAGContext()
     monkeypatch.setattr(r, "_get_ke_db_path", staticmethod(lambda: None))
@@ -195,6 +219,7 @@ def test_rag_check_available_con_db_inexistente(monkeypatch: pytest.MonkeyPatch)
     assert r._available is False  # db_path None → return sin activar
 
 
+@pytest.mark.unit
 def test_rag_check_available_con_error(monkeypatch: pytest.MonkeyPatch) -> None:
     r = RAGContext()
 
@@ -209,6 +234,7 @@ def test_rag_check_available_con_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r._available is False
 
 
+@pytest.mark.unit
 def test_rag_disponible_con_store(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Store:
         def search(self, query: str, kind: str = "knowledge", limit: int = 3) -> list:
@@ -221,6 +247,7 @@ def test_rag_disponible_con_store(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "contenido útil" in out
 
 
+@pytest.mark.unit
 def test_rag_sin_resultados(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Store:
         def search(self, query: str, kind: str = "knowledge", limit: int = 3) -> list:
@@ -232,6 +259,7 @@ def test_rag_sin_resultados(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r.retrieve_sync("q") == ""
 
 
+@pytest.mark.unit
 def test_rag_error_en_busqueda() -> None:
     class _Store:
         def search(self, query: str, kind: str = "knowledge", limit: int = 3) -> list:
@@ -244,6 +272,7 @@ def test_rag_error_en_busqueda() -> None:
     assert r.retrieve_sync("q") == ""
 
 
+@pytest.mark.unit
 def test_rag_retrieve_async_ok() -> None:
     import asyncio
 
@@ -258,6 +287,7 @@ def test_rag_retrieve_async_ok() -> None:
     assert "contenido async" in out
 
 
+@pytest.mark.unit
 def test_rag_retrieve_async_error() -> None:
     import asyncio
 
@@ -272,6 +302,7 @@ def test_rag_retrieve_async_error() -> None:
     assert asyncio.run(r.retrieve("q")) == ""
 
 
+@pytest.mark.unit
 def test_rag_query_vacia() -> None:
     r = RAGContext()
     r._available = True
@@ -281,6 +312,7 @@ def test_rag_query_vacia() -> None:
 # ── trends ───────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_trends_analiza_temporal_pregunta() -> None:
     t = TrendAwareness()
     r = t.analyze_query("¿cuál es la tendencia actual en IA?", intent="question")
@@ -289,6 +321,7 @@ def test_trends_analiza_temporal_pregunta() -> None:
     assert "web_search" in r.suggested_sources
 
 
+@pytest.mark.unit
 def test_trends_temporal_sin_pregunta() -> None:
     t = TrendAwareness()
     r = t.analyze_query("algo nuevo sobre python")
@@ -296,6 +329,7 @@ def test_trends_temporal_sin_pregunta() -> None:
     assert r.confidence == pytest.approx(0.6)
 
 
+@pytest.mark.unit
 def test_trends_sin_temporal() -> None:
     t = TrendAwareness()
     r = t.analyze_query("explica qué es la programación funcional")
@@ -303,6 +337,7 @@ def test_trends_sin_temporal() -> None:
     assert r.confidence == pytest.approx(0.5)
 
 
+@pytest.mark.unit
 def test_trends_needs_web_search() -> None:
     t = TrendAwareness()
     assert t.needs_web_search("cuéntame lo más reciente") is True
@@ -312,6 +347,7 @@ def test_trends_needs_web_search() -> None:
 # ── tool_plugin ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_tool_plugin_execute_not_implemented() -> None:
     p = ToolPlugin()
     with pytest.raises(NotImplementedError):
@@ -320,6 +356,7 @@ def test_tool_plugin_execute_not_implemented() -> None:
         asyncio.run(p.execute({}))
 
 
+@pytest.mark.unit
 def test_discover_plugins_crea_dir(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.assistant.tool_plugin as tp
 
@@ -329,6 +366,7 @@ def test_discover_plugins_crea_dir(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert d.exists()
 
 
+@pytest.mark.unit
 def test_discover_plugins_carga(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.assistant.tool_plugin as tp
 
@@ -348,6 +386,7 @@ def test_discover_plugins_carga(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert "_privado" not in plugins  # prefijo _ se salta
 
 
+@pytest.mark.unit
 def test_discover_plugins_sin_nombre(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.assistant.tool_plugin as tp
 
@@ -362,6 +401,8 @@ def test_discover_plugins_sin_nombre(tmp_path: object, monkeypatch: pytest.Monke
     assert discover_plugins() == {}
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_discover_plugins_spec_sin_loader(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.assistant.tool_plugin as tp
 
@@ -380,6 +421,7 @@ def test_discover_plugins_spec_sin_loader(tmp_path: object, monkeypatch: pytest.
 # ── intent ───────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_intent_classify_greeting() -> None:
     e = IntentEngine()
     r = e.classify("hola")
@@ -387,54 +429,63 @@ def test_intent_classify_greeting() -> None:
     assert r.confidence >= 0.9
 
 
+@pytest.mark.unit
 def test_intent_classify_farewell() -> None:
     e = IntentEngine()
     r = e.classify("adiós")
     assert r.intent == UserIntent.FAREWELL
 
 
+@pytest.mark.unit
 def test_intent_classify_confirm() -> None:
     e = IntentEngine()
     r = e.classify("vale")
     assert r.intent == UserIntent.CONFIRM
 
 
+@pytest.mark.unit
 def test_intent_classify_reject() -> None:
     e = IntentEngine()
     r = e.classify("no")
     assert r.intent == UserIntent.REJECT
 
 
+@pytest.mark.unit
 def test_intent_classify_repeat() -> None:
     e = IntentEngine()
     r = e.classify("repite")
     assert r.intent == UserIntent.REPEAT
 
 
+@pytest.mark.unit
 def test_intent_classify_correct() -> None:
     e = IntentEngine()
     r = e.classify("corrige eso")
     assert r.intent == UserIntent.CORRECT
 
 
+@pytest.mark.unit
 def test_intent_classify_question() -> None:
     e = IntentEngine()
     r = e.classify("¿qué es la IA?")
     assert r.intent == UserIntent.QUESTION
 
 
+@pytest.mark.unit
 def test_intent_classify_command() -> None:
     e = IntentEngine()
     r = e.classify("busca el archivo config")
     assert r.intent == UserIntent.COMMAND
 
 
+@pytest.mark.unit
 def test_intent_classify_default_chat() -> None:
     e = IntentEngine()
     r = e.classify("me gusta el café por las mañanas")
     assert r.intent == UserIntent.CHAT
 
 
+@pytest.mark.unit
 def test_intent_confianza_menor_no_sobreescribe() -> None:
     e = IntentEngine()
     # "no es correcto" matchea CORRECT (0.85); el "?" final matchea QUESTION (0.8) después → no sobreescribe
@@ -443,6 +494,7 @@ def test_intent_confianza_menor_no_sobreescribe() -> None:
     assert r.confidence == pytest.approx(0.85)
 
 
+@pytest.mark.unit
 def test_intent_classify_vacio() -> None:
     e = IntentEngine()
     r = e.classify("")
@@ -452,6 +504,7 @@ def test_intent_classify_vacio() -> None:
     assert r2.intent == UserIntent.UNKNOWN
 
 
+@pytest.mark.unit
 def test_intent_entities() -> None:
     e = IntentEngine()
     r = e.classify("busca sobre motores diesel")
@@ -472,6 +525,7 @@ def test_intent_entities() -> None:
     assert "path" in r8.entities
 
 
+@pytest.mark.unit
 def test_intent_entities_sin_grupo() -> None:
     # pattern que matchea sin group(1) → except IndexError → group(0)
     e = IntentEngine()
@@ -479,12 +533,14 @@ def test_intent_entities_sin_grupo() -> None:
     assert "number" in entities
 
 
+@pytest.mark.unit
 def test_intent_resolve_references() -> None:
     e = IntentEngine()
     assert e._resolve_references("hazlo ahora") == "ejecuta ahora"
     assert e._resolve_references("eso es lo mismo") == " es "
 
 
+@pytest.mark.unit
 def test_intent_capability() -> None:
     e = IntentEngine()
     assert e.intent_to_capability(UserIntent.COMMAND) == "tools_execute"
@@ -494,6 +550,7 @@ def test_intent_capability() -> None:
     assert e.intent_to_capability(UserIntent.UNKNOWN) == "conversation"
 
 
+@pytest.mark.unit
 def test_intent_extract_action_target() -> None:
     e = IntentEngine()
     a, t = e.extract_action_and_target("crea un informe de ventas")
@@ -503,6 +560,7 @@ def test_intent_extract_action_target() -> None:
     assert a2 == "" and t2 == ""
 
 
+@pytest.mark.unit
 def test_intent_router() -> None:
     r = IntentRouter()
     result = r.route("busca algo")
@@ -510,6 +568,7 @@ def test_intent_router() -> None:
     assert result.entities["capability"] == "tools_execute"
 
 
+@pytest.mark.unit
 def test_intent_result_defaults() -> None:
     r = IntentResult(intent=UserIntent.CHAT, confidence=0.5)
     assert r.entities == {}
@@ -519,11 +578,13 @@ def test_intent_result_defaults() -> None:
 # ── sentiment ────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_sentiment_valores() -> None:
     assert Sentiment.NEUTRAL.value == "neutral"
     assert Sentiment.GRATEFUL.value == "grateful"
 
 
+@pytest.mark.unit
 def test_sentiment_detect_frustrado() -> None:
     d = SentimentDetector()
     r = d.detect("esto no me gusta nada")
@@ -532,6 +593,7 @@ def test_sentiment_detect_frustrado() -> None:
     assert d.should_apologize(r.sentiment) is True
 
 
+@pytest.mark.unit
 def test_sentiment_detect_impaciente() -> None:
     d = SentimentDetector()
     r = d.detect("cuánto falta ya")
@@ -539,6 +601,7 @@ def test_sentiment_detect_impaciente() -> None:
     assert d.should_shorten_response(r.sentiment) is True
 
 
+@pytest.mark.unit
 def test_sentiment_detect_confundido() -> None:
     d = SentimentDetector()
     r = d.detect("no entiendo qué significa")
@@ -546,6 +609,7 @@ def test_sentiment_detect_confundido() -> None:
     assert d.should_apologize(r.sentiment) is True
 
 
+@pytest.mark.unit
 def test_sentiment_detect_satisfecho() -> None:
     d = SentimentDetector()
     r = d.detect("perfecto, justo lo que necesitaba")
@@ -553,6 +617,7 @@ def test_sentiment_detect_satisfecho() -> None:
     assert d.should_offer_help(r.sentiment) is True
 
 
+@pytest.mark.unit
 def test_sentiment_detect_agradecido() -> None:
     d = SentimentDetector()
     r = d.detect("gracias por tu ayuda")
@@ -560,6 +625,7 @@ def test_sentiment_detect_agradecido() -> None:
     assert d.should_offer_help(r.sentiment) is True
 
 
+@pytest.mark.unit
 def test_sentiment_detect_neutral() -> None:
     d = SentimentDetector()
     r = d.detect("mañana lloverá probablemente")
@@ -567,6 +633,7 @@ def test_sentiment_detect_neutral() -> None:
     assert r.confidence == 0.5
 
 
+@pytest.mark.unit
 def test_sentiment_historia_y_tendencia() -> None:
     d = SentimentDetector()
     d.detect("no me gusta", "c1")
@@ -577,6 +644,7 @@ def test_sentiment_historia_y_tendencia() -> None:
     assert d.get_trend("no-existe") == 0.0
 
 
+@pytest.mark.unit
 def test_sentiment_sin_conversation_id() -> None:
     d = SentimentDetector()
     r = d.detect("hola")
@@ -587,6 +655,7 @@ def test_sentiment_sin_conversation_id() -> None:
 # ── implicit_feedback ────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_feedback_rephrase() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     f.analyze("c1", "explica cómo funciona el motor", "resp")
@@ -595,6 +664,7 @@ def test_feedback_rephrase() -> None:
     assert s2["overall_score"] == pytest.approx(-0.2)
 
 
+@pytest.mark.unit
 def test_feedback_repeat() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     f.analyze("c1", "¿qué hora es?")
@@ -603,6 +673,7 @@ def test_feedback_repeat() -> None:
     assert s["overall_score"] == pytest.approx(-0.3)
 
 
+@pytest.mark.unit
 def test_feedback_gracias() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     s = f.analyze("c1", "gracias por todo")
@@ -610,6 +681,7 @@ def test_feedback_gracias() -> None:
     assert s["overall_score"] == pytest.approx(0.3)
 
 
+@pytest.mark.unit
 def test_feedback_normal() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     s = f.analyze("c1", "cuéntame algo interesante")
@@ -622,6 +694,7 @@ def test_feedback_normal() -> None:
     }
 
 
+@pytest.mark.unit
 def test_feedback_is_rephrase() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     assert f._is_rephrase("explica el motor a gasolina", "explica el motor diesel mejor") is True
@@ -629,6 +702,7 @@ def test_feedback_is_rephrase() -> None:
     assert f._is_rephrase("una cosa", "otra totalmente") is False
 
 
+@pytest.mark.unit
 def test_feedback_scores() -> None:
     f = ImplicitFeedback(db_path=":memory:")
     assert f.get_conversation_score("c1") == 0.0
@@ -641,17 +715,20 @@ def test_feedback_scores() -> None:
 # ── vector_memory ────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_vector_store_init_y_count(tmp_path: object) -> None:
     v = VectorMemoryStore(db_path=str(tmp_path / "vm.db"))
     assert v.count() == 0
 
 
+@pytest.mark.unit
 def test_vector_store_contenido_corto() -> None:
     v = VectorMemoryStore(db_path=":memory:")
     v.store("c1", "user", "corto")  # < 10 chars → no guarda
     assert v.count() == 0
 
 
+@pytest.mark.unit
 def test_vector_store_sin_embedding(monkeypatch: pytest.MonkeyPatch) -> None:
     v = VectorMemoryStore(db_path=":memory:")
     monkeypatch.setattr(v, "_embed", lambda text: None)
@@ -659,6 +736,7 @@ def test_vector_store_sin_embedding(monkeypatch: pytest.MonkeyPatch) -> None:
     assert v.count() == 0
 
 
+@pytest.mark.unit
 def test_vector_store_con_embedding() -> None:
     import numpy as np
 
@@ -669,12 +747,14 @@ def test_vector_store_con_embedding() -> None:
     assert v.count() == 2
 
 
+@pytest.mark.unit
 def test_vector_store_search_sin_embed() -> None:
     v = VectorMemoryStore(db_path=":memory:")
     v._embed = lambda text: None
     assert v.search("consulta") == []
 
 
+@pytest.mark.unit
 def test_vector_store_search_sin_rows() -> None:
     import numpy as np
 
@@ -683,6 +763,7 @@ def test_vector_store_search_sin_rows() -> None:
     assert v.search("consulta") == []
 
 
+@pytest.mark.unit
 def test_vector_store_search_con_resultados() -> None:
     import numpy as np
 
@@ -695,6 +776,7 @@ def test_vector_store_search_con_resultados() -> None:
     assert "conversation_id" in res[0]
 
 
+@pytest.mark.unit
 def test_vector_store_search_por_encima_umbral() -> None:
     import numpy as np
 
@@ -713,6 +795,7 @@ def test_vector_store_search_por_encima_umbral() -> None:
     assert all(r["conversation_id"] != "c9" for r in res) or res  # sim 0 no pasa umbral
 
 
+@pytest.mark.unit
 def test_vector_store_cosine() -> None:
     import numpy as np
 
@@ -722,6 +805,7 @@ def test_vector_store_cosine() -> None:
     assert v._cosine(np.zeros(2), np.ones(2)) == 0.0  # norma 0
 
 
+@pytest.mark.unit
 def test_vector_store_programming_error(monkeypatch: pytest.MonkeyPatch) -> None:
     v = VectorMemoryStore(db_path=":memory:")
 
@@ -738,6 +822,7 @@ def test_vector_store_programming_error(monkeypatch: pytest.MonkeyPatch) -> None
     # no lanza (except ProgrammingError: pass)
 
 
+@pytest.mark.unit
 def test_vector_store_embed_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -757,6 +842,7 @@ def test_vector_store_embed_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(emb) == 3
 
 
+@pytest.mark.unit
 def test_vector_store_embed_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -772,6 +858,7 @@ def test_vector_store_embed_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert v._embed("texto") is None  # except → None
 
 
+@pytest.mark.unit
 def test_vector_store_embed_sin_embedding(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -789,6 +876,7 @@ def test_vector_store_embed_sin_embedding(monkeypatch: pytest.MonkeyPatch) -> No
     assert v._embed("texto") is None  # emb vacío → None
 
 
+@pytest.mark.unit
 def test_vector_store_embed_status_no_200(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -809,6 +897,7 @@ def test_vector_store_embed_status_no_200(monkeypatch: pytest.MonkeyPatch) -> No
 # ── proactive_memory ─────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_task_to_dict() -> None:
     t = Task(description="d", conversation_id="c1", priority="alta", status="pending", created_at="t", task_id="id1")
     d = t.to_dict()
@@ -816,11 +905,13 @@ def test_task_to_dict() -> None:
     assert d["priority"] == "alta"
 
 
+@pytest.mark.unit
 def test_task_created_at_default() -> None:
     t = Task(description="d")
     assert t.created_at != ""
 
 
+@pytest.mark.unit
 def test_proactive_add_y_get() -> None:
     p = ProactiveMemory(db_path=":memory:")
     p.add_task("comprar leche", "c1", "alta")
@@ -830,6 +921,7 @@ def test_proactive_add_y_get() -> None:
     assert tasks[0].priority == "alta"
 
 
+@pytest.mark.unit
 def test_proactive_get_all() -> None:
     p = ProactiveMemory(db_path=":memory:")
     p.add_task("t1", "c1")
@@ -838,6 +930,7 @@ def test_proactive_get_all() -> None:
     assert len(tasks) == 2
 
 
+@pytest.mark.unit
 def test_proactive_complete_task() -> None:
     p = ProactiveMemory(db_path=":memory:")
     t = p.add_task("tarea", "c1")
@@ -846,6 +939,7 @@ def test_proactive_complete_task() -> None:
     assert p.get_pending_tasks("c1") == []
 
 
+@pytest.mark.unit
 def test_proactive_detect_trigger() -> None:
     p = ProactiveMemory(db_path=":memory:")
     assert p.detect_task_trigger("recuérdame llamar al médico") == "add_task"
@@ -854,6 +948,7 @@ def test_proactive_detect_trigger() -> None:
     assert p.detect_task_trigger("hola qué tal") is None
 
 
+@pytest.mark.unit
 def test_proactive_suggest() -> None:
     p = ProactiveMemory(db_path=":memory:")
     assert p.suggest_proactive("c1") is None
@@ -866,11 +961,13 @@ def test_proactive_suggest() -> None:
 # ── context ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_context_level_valores() -> None:
     assert ContextLevel.IMMEDIATE.value == 3
     assert ContextLevel.HISTORICAL.value == 1
 
 
+@pytest.mark.unit
 def test_context_item_defaults() -> None:
     i = ContextItem(content="x", level=ContextLevel.IMMEDIATE, source="s")
     assert i.timestamp != ""
@@ -878,27 +975,32 @@ def test_context_item_defaults() -> None:
     assert i.ttl_seconds == 0
 
 
+@pytest.mark.unit
 def test_context_item_expired() -> None:
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
     i = ContextItem(content="x", level=ContextLevel.IMMEDIATE, source="s", timestamp=viejo, ttl_seconds=3600)
     assert i.is_expired is True
 
 
+@pytest.mark.unit
 def test_context_item_no_expired() -> None:
     i = ContextItem(content="x", level=ContextLevel.IMMEDIATE, source="s", ttl_seconds=3600)
     assert i.is_expired is False
 
 
+@pytest.mark.unit
 def test_context_item_ttl_cero() -> None:
     i = ContextItem(content="x", level=ContextLevel.IMMEDIATE, source="s", ttl_seconds=0)
     assert i.is_expired is False
 
 
+@pytest.mark.unit
 def test_context_item_timestamp_sin_tz() -> None:
     i = ContextItem(content="x", level=ContextLevel.IMMEDIATE, source="s", timestamp="2026-08-20T10:00:00", ttl_seconds=0)
     assert i.is_expired is False
 
 
+@pytest.mark.unit
 def test_context_item_sin_tz_con_ttl() -> None:
     # timestamp sin tzinfo + ttl activo → replace con UTC (línea 41)
     i = ContextItem(
@@ -911,17 +1013,20 @@ def test_context_item_sin_tz_con_ttl() -> None:
     assert i.is_expired is True  # hace 1 hora + sin tz → expira
 
 
+@pytest.mark.unit
 def test_context_item_score() -> None:
     i = ContextItem(content="x", level=ContextLevel.CONVERSATION, source="s", priority=0.7)
     assert i.score == pytest.approx(0.7 * 2)
 
 
+@pytest.mark.unit
 def test_historical_adapter_sin_memoria() -> None:
     a = HistoricalMemoryAdapter()
     assert a.query("q") == []
     assert a.is_available() is False
 
 
+@pytest.mark.unit
 def test_historical_adapter_con_memoria() -> None:
     from motor.memory.models import MemoryEntry
 
@@ -936,6 +1041,7 @@ def test_historical_adapter_con_memoria() -> None:
     assert items[0].level == ContextLevel.HISTORICAL
 
 
+@pytest.mark.unit
 def test_historical_adapter_con_memoria_sin_state() -> None:
     class _MemVacio:
         def state_at(self, ts: float):
@@ -953,12 +1059,14 @@ class _MsgStoreContext:
         return list(self._msgs[:limit])
 
 
+@pytest.mark.unit
 def test_context_manager_assemble_vacio() -> None:
     cm = ContextManager(message_store=_MsgStoreContext(), total_token_budget=100)
     msgs = cm.assemble("c1", system_prompt="", query="")
     assert msgs == []
 
 
+@pytest.mark.unit
 def test_context_manager_assemble_con_mensajes() -> None:
     store = _MsgStoreContext(
         [
@@ -971,6 +1079,7 @@ def test_context_manager_assemble_con_mensajes() -> None:
     assert len(msgs) >= 1
 
 
+@pytest.mark.unit
 def test_context_manager_budget_pequeno() -> None:
     store = _MsgStoreContext([Message(role="user", content="x" * 200, timestamp="t")])
     cm = ContextManager(message_store=store, total_token_budget=5)
@@ -978,6 +1087,7 @@ def test_context_manager_budget_pequeno() -> None:
     assert msgs == []  # el item excede el presupuesto
 
 
+@pytest.mark.unit
 def test_context_manager_con_historico() -> None:
     class _MemFake:
         def state_at(self, ts: float):
@@ -993,6 +1103,7 @@ def test_context_manager_con_historico() -> None:
     assert len(msgs) >= 1
 
 
+@pytest.mark.unit
 def test_context_manager_con_historico_sin_query() -> None:
     store = _MsgStoreContext()
     cm = ContextManager(

@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/doctor.py — health check."""
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from pathlib import Path
@@ -19,10 +20,12 @@ def _crear_db(path: Path) -> None:
 
 
 class TestCmdDoctor:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"))
         assert cmd_doctor(args) == 1
 
+    @pytest.mark.unit
     def test_db_sana(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -35,6 +38,7 @@ class TestCmdDoctor:
                                 args = SimpleNamespace(db_path=str(db))
                                 assert cmd_doctor(args) == 0
 
+    @pytest.mark.unit
     def test_schema_version_desactualizada(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -47,6 +51,7 @@ class TestCmdDoctor:
                                 args = SimpleNamespace(db_path=str(db))
                                 assert cmd_doctor(args) == 1  # FAIL schema
 
+    @pytest.mark.unit
     def test_grafos_con_error(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)
@@ -59,6 +64,7 @@ class TestCmdDoctor:
                                 args = SimpleNamespace(db_path=str(db))
                                 assert cmd_doctor(args) == 1  # FAIL graph
 
+    @pytest.mark.unit
     def test_qdrant_no_disponible(self, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         _crear_db(db)

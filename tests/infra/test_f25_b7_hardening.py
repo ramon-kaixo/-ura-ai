@@ -10,6 +10,7 @@ Cubre R07-01 a R07-15:
 
 from __future__ import annotations
 
+import pytest
 import hashlib
 import random
 import sys
@@ -303,6 +304,7 @@ def test_corruption_tombstone_rollback() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_add_100k() -> None:
     """100K versiones en un solo FactHistory."""
     fact = _make_fact()
@@ -316,6 +318,7 @@ def test_benchmark_add_100k() -> None:
     assert t < 5.0, f"100K adds took {t:.1f}s"
 
 
+@pytest.mark.slow
 def test_benchmark_rollback_100k() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base"))
@@ -327,6 +330,7 @@ def test_benchmark_rollback_100k() -> None:
     assert t < 0.01, f"Rollback amid 100K took {t * 1000:.1f}ms"
 
 
+@pytest.mark.slow
 def test_benchmark_version_at_10k() -> None:
     fact = _make_fact()
     h = FactHistory.create(fact, _make_version(fact.fact_id, "v_base", created_at=0))
@@ -551,6 +555,7 @@ def test_rollback_preserves_timeline() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_zipf_distribution() -> None:
     """Benchmark con distribución Zipf (mucha actividad en pocos historiales)."""
     # Crear 100 historiales
@@ -652,6 +657,7 @@ def test_checksum_independent_of_hash_order() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_full_recovery() -> None:
     """Historia → serialize → deserialize → rebuild FactIndex."""
     fact = _make_fact()

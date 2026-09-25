@@ -11,6 +11,7 @@ Dependencias: httpx (instalado) — solo simulado.
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from typing import Any
 
@@ -69,27 +70,33 @@ def _install_get(
 class TestSearXNGSearchProvider:
     """Buscador SearXNG."""
 
+    @pytest.mark.unit
     def test_name(self) -> None:
         assert SearXNGSearchProvider().name == "searxng"
 
+    @pytest.mark.unit
     def test_base_url_por_parametro(self) -> None:
         p = SearXNGSearchProvider(base_url="https://search.example.com")
         assert p._base_url == "https://search.example.com"
 
+    @pytest.mark.unit
     def test_base_url_rstrip_slash(self) -> None:
         p = SearXNGSearchProvider(base_url="https://search.example.com/")
         assert p._base_url == "https://search.example.com"
 
+    @pytest.mark.unit
     def test_base_url_desde_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(mod, "get_secret", lambda name: "https://secret.example.com/")
         p = SearXNGSearchProvider()
         assert p._base_url == "https://secret.example.com"
 
+    @pytest.mark.unit
     def test_base_url_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(mod, "get_secret", lambda name: None)
         p = SearXNGSearchProvider()
         assert p._base_url == DEFAULT_BASE_URL
 
+    @pytest.mark.unit
     def test_search_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls = _install_get(monkeypatch, [_resp(200)])
         results = SearXNGSearchProvider().search("q")
@@ -104,34 +111,42 @@ class TestSearXNGSearchProvider:
         url_used = calls[0][0][0]
         assert url_used == f"{DEFAULT_BASE_URL}/search"
 
+    @pytest.mark.unit
     def test_search_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls = _install_get(monkeypatch, [_resp(200)])
         results = SearXNGSearchProvider().search("q", limit=1)
         assert len(results) == 1
         assert calls[0][1]["params"]["count"] == 1
 
+    @pytest.mark.unit
     def test_campos_faltantes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_get(monkeypatch, [_resp(200)])
         results = SearXNGSearchProvider().search("q")
         assert results[1].published is None
         assert results[1].snippet == ""
 
+    @pytest.mark.unit
     def test_sin_resultados(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_get(monkeypatch, [_resp(200, json_data={"results": []})])
         assert SearXNGSearchProvider().search("q") == []
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_retry_y_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         timeout = httpx.TimeoutException("t")
         _install_get(monkeypatch, [timeout, _resp(200)])
         results = SearXNGSearchProvider(max_retries=2).search("q")
         assert len(results) == 2
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_agota(self, monkeypatch: pytest.MonkeyPatch) -> None:
         timeout = httpx.TimeoutException("t")
         _install_get(monkeypatch, [timeout, timeout, timeout])
         with pytest.raises(RuntimeError, match="failed after 3 attempts"):
             SearXNGSearchProvider(max_retries=2).search("q")
 
+    @pytest.mark.unit
     def test_rate_limited_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rate = httpx.HTTPStatusError(
             "429",
@@ -142,6 +157,7 @@ class TestSearXNGSearchProvider:
         results = SearXNGSearchProvider(max_retries=2).search("q")
         assert len(results) == 2
 
+    @pytest.mark.unit
     def test_rate_limited_agota(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rate = httpx.HTTPStatusError(
             "503",
@@ -152,6 +168,7 @@ class TestSearXNGSearchProvider:
         with pytest.raises(RuntimeError, match="failed after 3 attempts"):
             SearXNGSearchProvider(max_retries=2).search("q")
 
+    @pytest.mark.unit
     def test_http_status_else_raise(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = httpx.HTTPStatusError(
             "500",
@@ -162,12 +179,14 @@ class TestSearXNGSearchProvider:
         with pytest.raises(httpx.HTTPStatusError):
             SearXNGSearchProvider().search("q")
 
+    @pytest.mark.unit
     def test_request_error_retry_y_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = httpx.ConnectError("boom", request=httpx.Request("GET", "http://localhost:8888/search"))
         _install_get(monkeypatch, [err, _resp(200)])
         results = SearXNGSearchProvider(max_retries=2).search("q")
         assert len(results) == 2
 
+    @pytest.mark.unit
     def test_constructor_configurable(self) -> None:
         p = SearXNGSearchProvider(base_url="https://s/", timeout=5, user_agent="UA", max_retries=1)
         assert p._base_url == "https://s"

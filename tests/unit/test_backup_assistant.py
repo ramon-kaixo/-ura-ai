@@ -7,6 +7,7 @@ from scripts.pro.backup_assistant import backup, restore
 
 
 class TestBackupAssistant:
+    @pytest.mark.unit
     def test_backup_creates_dir_and_log(self, tmp_path, monkeypatch):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -18,6 +19,7 @@ class TestBackupAssistant:
         assert (Path(result) / "test.db").exists()
         assert (Path(result) / "backup_log.txt").exists()
 
+    @pytest.mark.unit
     def test_backup_empty_data_dir(self, tmp_path, monkeypatch):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -27,6 +29,7 @@ class TestBackupAssistant:
         assert Path(result).exists()
         assert (Path(result) / "backup_log.txt").exists()
 
+    @pytest.mark.unit
     def test_restore_copies_files(self, tmp_path, monkeypatch):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -38,6 +41,7 @@ class TestBackupAssistant:
         assert (data_dir / "test.db").exists()
         assert (data_dir / "test.db").read_text() == "restored"
 
+    @pytest.mark.unit
     def test_restore_invalid_path_exits(self, tmp_path, monkeypatch, capsys):
         monkeypatch.setattr("scripts.pro.backup_assistant.DATA_DIR", tmp_path / "data")
         with pytest.raises(SystemExit) as exc:

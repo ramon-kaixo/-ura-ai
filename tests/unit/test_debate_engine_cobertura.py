@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import runpy
 import sys
@@ -40,6 +41,7 @@ class TestCallOllamaSinLLM:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_main_cierra_con_exit_code(self, monkeypatch) -> None:
         def _fake_run(coro):
             coro.close()
@@ -52,6 +54,7 @@ class TestMain:
 
 
 class TestMainGuard:
+    @pytest.mark.unit
     def test_guard_main_consensus(self, monkeypatch) -> None:
         fake_logging = types.ModuleType("motor.observability.logging")
         fake_logging.setup_logging = mock.Mock()
@@ -78,6 +81,7 @@ class TestMainGuard:
         assert exc.value.code == 0
         fake_logging.setup_logging.assert_called_once_with(level="WARNING")
 
+    @pytest.mark.unit
     def test_guard_main_con_plan_archivo(self, monkeypatch, tmp_path) -> None:
         plan_file = tmp_path / "plan.json"
         plan_file.write_text(json.dumps({"plan": "plan y"}))

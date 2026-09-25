@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/audit/ — NDJSON y SQLite backends."""
 from __future__ import annotations
+import pytest
 
 import json
 import sqlite3
@@ -23,11 +24,13 @@ class FakeEvent:
 
 
 class TestNDJSONAuditBackend:
+    @pytest.mark.unit
     def test_init_crea_dir(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         assert (tmp_path / "audit" / "audit.ndjson").exists()
         b.close()
 
+    @pytest.mark.unit
     def test_write_y_leer(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent())
@@ -38,6 +41,7 @@ class TestNDJSONAuditBackend:
         assert data["action"] == "read"
         assert data["correlation_id"] == "cid"
 
+    @pytest.mark.unit
     def test_close_idempotente_no_rompe_escritura_anterior(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent(action="status"))
@@ -46,6 +50,7 @@ class TestNDJSONAuditBackend:
         data = json.loads((tmp_path / "audit" / "audit.ndjson").read_text())
         assert data["action"] == "status"
 
+    @pytest.mark.unit
     def test_write_sin_lock_fallback(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         monkeypatch.setattr(b, "_acquire_flock", mock.Mock(return_value=False))
@@ -53,6 +58,7 @@ class TestNDJSONAuditBackend:
         assert b._events_written == 1
         b.close()
 
+    @pytest.mark.unit
     def test_write_oserror(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         monkeypatch.setattr(b, "_acquire_flock", mock.Mock(return_value=True))
@@ -62,17 +68,20 @@ class TestNDJSONAuditBackend:
         assert b._last_error == "disk full"
         b.close()
 
+    @pytest.mark.unit
     def test_flush_noop(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.flush()  # no-op
         b.close()
 
+    @pytest.mark.unit
     def test_health_ok(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         h = b.health_check()
         assert h.healthy is True
         b.close()
 
+    @pytest.mark.unit
     def test_health_error(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         monkeypatch.setattr("knowledge.engine.audit.ndjson_backend.os.access", mock.Mock(return_value=False))
@@ -80,6 +89,7 @@ class TestNDJSONAuditBackend:
         assert h.healthy is False
         b.close()
 
+    @pytest.mark.unit
     def test_read_lines(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent(action="a"))
@@ -91,6 +101,7 @@ class TestNDJSONAuditBackend:
         assert events[0].action == "a"
         b2.close()
 
+    @pytest.mark.unit
     def test_close(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent())
@@ -99,10 +110,12 @@ class TestNDJSONAuditBackend:
 
 
 class TestSQLiteAuditBackend:
+    @pytest.mark.unit
     def test_init(self, tmp_path) -> None:
         b = SQLiteAuditBackend(tmp_path / "db.sqlite")
         assert b._events_written == 0
 
+    @pytest.mark.unit
     def test_write_ok(self, tmp_path, monkeypatch) -> None:
         db = tmp_path / "db.sqlite"
         conn = sqlite3.connect(db)
@@ -120,6 +133,7 @@ class TestSQLiteAuditBackend:
         real_conn.execute.assert_called_once()
         real_conn.commit.assert_called_once()
 
+    @pytest.mark.unit
     def test_write_error(self, tmp_path, monkeypatch) -> None:
         b = SQLiteAuditBackend(tmp_path / "db.sqlite")
         monkeypatch.setattr("knowledge.engine.connection.open_db", mock.Mock(side_effect=OSError("no db")))
@@ -127,10 +141,12 @@ class TestSQLiteAuditBackend:
         assert b._last_error == "no db"
         assert b._events_written == 0
 
+    @pytest.mark.unit
     def test_flush_noop(self, tmp_path) -> None:
         b = SQLiteAuditBackend(tmp_path / "x.sqlite")
         b.flush()
 
+    @pytest.mark.unit
     def test_health(self, tmp_path) -> None:
         b = SQLiteAuditBackend(tmp_path / "x.sqlite")
         b._events_written = 5
@@ -140,6 +156,7 @@ class TestSQLiteAuditBackend:
 
 
 class TestNDJSONRotacion:
+    @pytest.mark.unit
     def test_no_rota_si_pequeno(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b._bytes_written = 100
@@ -148,6 +165,7 @@ class TestNDJSONRotacion:
         assert b._bytes_written == 100
         b.close()
 
+    @pytest.mark.unit
     def test_rota_al_superar(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.MAX_BYTES = 10
@@ -161,6 +179,7 @@ class TestNDJSONRotacion:
         assert b._bytes_written == 0
         b.close()
 
+    @pytest.mark.unit
     def test_rota_con_segmentos(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.MAX_BYTES = 10
@@ -174,6 +193,7 @@ class TestNDJSONRotacion:
         assert b._file.with_suffix(".ndjson.1").exists()  # rotado
         b.close()
 
+    @pytest.mark.unit
     def test_rotacion_error(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.MAX_BYTES = 10
@@ -185,11 +205,13 @@ class TestNDJSONRotacion:
 
 
 class TestNDJSONIngest:
+    @pytest.mark.unit
     def test_ingest_vacio(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         assert b.ingest_into_sqlite(tmp_path / "db.sqlite") == 0
         b.close()
 
+    @pytest.mark.unit
     def test_ingest_ok(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent(action="read"))
@@ -207,6 +229,7 @@ class TestNDJSONIngest:
         assert conn.commit.call_count >= 1
         b2.close()
 
+    @pytest.mark.unit
     def test_ingest_linea_corrupta(self, tmp_path, monkeypatch) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent(action="a"))
@@ -224,6 +247,7 @@ class TestNDJSONIngest:
         assert n == 1  # solo la valida
         b2.close()
 
+    @pytest.mark.unit
     def test_read_segment(self, tmp_path) -> None:
         b = NDJSONAuditBackend(tmp_path / "audit")
         b.write(FakeEvent(action="a"))

@@ -1,5 +1,6 @@
 """Tests para motor/core/web/config.py y motor/assistant/main.py."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -7,6 +8,7 @@ from motor.core.web.config import WebConfig
 
 
 class TestWebConfig:
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         c = WebConfig()
         assert c.default_searcher == "duckduckgo"
@@ -23,6 +25,7 @@ class TestWebConfig:
         assert c.robots_txt_cache_ttl == 3600
         assert c.respect_robots_txt is True
 
+    @pytest.mark.unit
     def test_sobrescribe(self) -> None:
         c = WebConfig(
             {
@@ -39,22 +42,27 @@ class TestWebConfig:
         assert c.respect_robots_txt is False
         assert c.user_agent == "custom-ua"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_str(self) -> None:
         c = WebConfig({"search_timeout": "20"})
         assert c.search_timeout == 20
 
+    @pytest.mark.unit
     def test_none_config(self) -> None:
         c = WebConfig(None)
         assert c.default_searcher == "duckduckgo"
 
 
 class TestAssistantMain:
+    @pytest.mark.unit
     def test_app_estructura(self) -> None:
         from motor.assistant.main import app
 
         assert app.title == "URA Assistant"
         assert app.version == "1.0.0"
 
+    @pytest.mark.unit
     def test_health_endpoint(self) -> None:
         from fastapi.testclient import TestClient
 
@@ -69,6 +77,7 @@ class TestAssistantMain:
         assert data["status"] == "ok"
         assert data["version"] == "1.0.0"
 
+    @pytest.mark.unit
     def test_root_endpoint(self) -> None:
         from fastapi.testclient import TestClient
 
@@ -79,6 +88,7 @@ class TestAssistantMain:
         assert r.status_code == 200
         assert r.json()["name"] == "URA Assistant"
 
+    @pytest.mark.unit
     def test_metrics_endpoint(self) -> None:
         from fastapi.testclient import TestClient
 
@@ -91,6 +101,7 @@ class TestAssistantMain:
         assert r.headers["content-type"].startswith("text/plain")
         assert "# URA metrics" in r.text
 
+    @pytest.mark.unit
     def test_main(self, monkeypatch) -> None:
         import motor.assistant.main as m
 

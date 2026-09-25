@@ -22,12 +22,14 @@ class TestSelfHealingLoop:
             mock_tel.return_value.hardware.return_value = {"ram_libre_mb": 1000}
             yield SelfHealingLoop(), mock_orq, mock_ej, mock_rep, mock_tel
 
+    @pytest.mark.unit
     def test_init(self, loop):
         sl, _, _, _, _ = loop
         assert sl._fallos_consecutivos == 0
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_ejecutar_refactorizar(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, mock_ej, _, _mock_tel = loop
         mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "tests fallando")
@@ -42,6 +44,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_ejecutar_reparar(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, mock_rep, _ = loop
         mock_orq.return_value.decidir.return_value = ("REPARAR", "f821 detectado")
@@ -58,6 +61,7 @@ class TestSelfHealingLoop:
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.time.sleep", return_value=None)
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_ejecutar_pausar(self, mock_subprocess, mock_sleep, mock_conciencia, loop):
         sl, mock_orq, _, _, _ = loop
         mock_orq.return_value.decidir.return_value = ("PAUSAR", "RAM saturada")
@@ -70,6 +74,7 @@ class TestSelfHealingLoop:
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, _, _ = loop
         mock_orq.return_value.decidir.return_value = ("PAUSAR", "RAM saturada")
@@ -82,6 +87,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_fallos_consecutivos_reset(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, _, _ = loop
         mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")
@@ -93,6 +99,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_escanear_f821_filtra_venv(self, mock_subprocess, mock_conciencia, loop):
         sl, _, _, _, _ = loop
         mock_subprocess.return_value.stdout = (
@@ -104,6 +111,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_escanear_f821_json_vacio(self, mock_subprocess, mock_conciencia, loop):
         sl, _, _, _, _ = loop
         mock_subprocess.return_value.stdout = "[]"
@@ -111,6 +119,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_cerrar_reporte_detalle(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, _, mock_tel = loop
         mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")
@@ -126,6 +135,7 @@ class TestSelfHealingLoop:
 
     @patch("motor.core.agents.healing.Conciencia")
     @patch("motor.core.agents.healing.subprocess.run")
+    @pytest.mark.unit
     def test_cerrar_reporte_rollback_suma_fallo(self, mock_subprocess, mock_conciencia, loop):
         sl, mock_orq, _, _, _ = loop
         mock_orq.return_value.decidir.return_value = ("REFACTORIZAR", "ok")

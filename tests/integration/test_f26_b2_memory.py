@@ -12,6 +12,7 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 import threading
@@ -79,12 +80,14 @@ def _make_timeline() -> MemoryTimeline:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_make_entry_id_deterministic() -> None:
     a = make_entry_id("fact_added", ["v1", "v2"], 1000)
     b = make_entry_id("fact_added", ["v1", "v2"], 1000)
     assert a == b
 
 
+@pytest.mark.integration
 def test_make_entry_id_based_on_content() -> None:
     """IDs diferentes para contenido diferente."""
     a = make_entry_id("fact_added", ["v1"], 1000)
@@ -92,24 +95,28 @@ def test_make_entry_id_based_on_content() -> None:
     assert a != b
 
 
+@pytest.mark.integration
 def test_make_entry_id_independent_of_order() -> None:
     a = make_entry_id("fact_added", ["v1", "v2"], 1000)
     b = make_entry_id("fact_added", ["v2", "v1"], 1000)
     assert a == b  # sorted internamente
 
 
+@pytest.mark.integration
 def test_fact_ref_immutable() -> None:
     ref = _make_ref()
     with pytest.raises(AttributeError):
         ref.subject = "changed"  # frozen
 
 
+@pytest.mark.integration
 def test_fact_ref_fields() -> None:
     ref = FactRef(fact_id="f1", version_id="v3", subject="S", predicate="P", object="O")
     assert ref.fact_id == "f1"
     assert ref.version_id == "v3"
 
 
+@pytest.mark.integration
 def test_memory_entry_frozen() -> None:
     entry = _make_entry()
     with pytest.raises(AttributeError):
@@ -121,12 +128,14 @@ def test_memory_entry_frozen() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_timeline_append() -> None:
     tl = MemoryTimeline()
     tl.append(_make_entry())
     assert tl.size == 1
 
 
+@pytest.mark.integration
 def test_timeline_append_duplicate_raises() -> None:
     tl = MemoryTimeline()
     entry = _make_entry()
@@ -135,12 +144,14 @@ def test_timeline_append_duplicate_raises() -> None:
         tl.append(entry)
 
 
+@pytest.mark.integration
 def test_state_at_exact() -> None:
     tl = _make_timeline()
     assert tl.state_at(1000) is not None
     assert tl.state_at(1000).timestamp == 1000
 
 
+@pytest.mark.integration
 def test_state_at_between() -> None:
     tl = _make_timeline()
     entry = tl.state_at(1500)
@@ -148,11 +159,13 @@ def test_state_at_between() -> None:
     assert entry.timestamp == 1000  # el entry en t=1000 es el vigente en t=1500
 
 
+@pytest.mark.integration
 def test_state_at_before_first() -> None:
     tl = _make_timeline()
     assert tl.state_at(500) is None
 
 
+@pytest.mark.integration
 def test_state_at_after_last() -> None:
     tl = _make_timeline()
     entry = tl.state_at(5000)
@@ -160,6 +173,7 @@ def test_state_at_after_last() -> None:
     assert entry.timestamp == 3000
 
 
+@pytest.mark.integration
 def test_state_at_tie_breaking() -> None:
     """Mismo timestamp → prevalece el de mayor entry_id."""
     tl = MemoryTimeline()
@@ -173,23 +187,27 @@ def test_state_at_tie_breaking() -> None:
     assert result.entry_id == max(e1.entry_id, e2.entry_id)
 
 
+@pytest.mark.integration
 def test_by_entity() -> None:
     tl = _make_timeline()
     results = tl.by_entity("apple")
     assert len(results) >= 1
 
 
+@pytest.mark.integration
 def test_by_entity_case_insensitive() -> None:
     tl = _make_timeline()
     assert len(tl.by_entity("APPLE")) >= 1
 
 
+@pytest.mark.integration
 def test_by_time_range() -> None:
     tl = _make_timeline()
     results = tl.by_time(1500, 2500)
     assert len(results) == 1
 
 
+@pytest.mark.integration
 def test_by_event() -> None:
     tl = MemoryTimeline()
     tl.append(_make_entry(event_type=MemoryEventType.FACT_ADDED))
@@ -197,6 +215,7 @@ def test_by_event() -> None:
     assert len(results) == 1
 
 
+@pytest.mark.integration
 def test_get_entry() -> None:
     tl = _make_timeline()
     entry = _make_entry(timestamp=5000)
@@ -204,6 +223,7 @@ def test_get_entry() -> None:
     assert tl.get(entry.entry_id) is entry
 
 
+@pytest.mark.integration
 def test_diff() -> None:
     tl = MemoryTimeline()
     e1 = _make_entry(timestamp=1000, fact_refs=(_make_ref("f1"),))
@@ -221,6 +241,7 @@ def test_diff() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_journal_append_and_read(tmp_path: str) -> None:
     path = Path(tmp_path) / "journal.jsonl"
     j = Journal()
@@ -232,6 +253,7 @@ def test_journal_append_and_read(tmp_path: str) -> None:
     assert len(entries) == 2
 
 
+@pytest.mark.integration
 def test_journal_rotate(tmp_path: str) -> None:
     path = Path(tmp_path) / "journal.jsonl"
     backup = Path(tmp_path) / "journal.bak"
@@ -243,6 +265,7 @@ def test_journal_rotate(tmp_path: str) -> None:
     assert Path(backup).exists()
 
 
+@pytest.mark.integration
 def test_journal_count(tmp_path: str) -> None:
     path = Path(tmp_path) / "journal.jsonl"
     j = Journal()
@@ -257,6 +280,8 @@ def test_journal_count(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_snapshot_save_and_load(tmp_path: str) -> None:
     tl = _make_timeline()
     path = Path(tmp_path) / "snapshot.json"
@@ -267,6 +292,7 @@ def test_snapshot_save_and_load(tmp_path: str) -> None:
     assert len(entries) == 3
 
 
+@pytest.mark.integration
 def test_snapshot_checksum_validation(tmp_path: str) -> None:
     tl = _make_timeline()
     path = Path(tmp_path) / "snapshot.json"
@@ -286,12 +312,14 @@ def test_snapshot_checksum_validation(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_memory_append() -> None:
     m = Memory()
     m.append(_make_entry())
     assert m.timeline.size == 1
 
 
+@pytest.mark.integration
 def test_memory_state_at() -> None:
     m = Memory()
     m.append(_make_entry(timestamp=1000))
@@ -300,6 +328,8 @@ def test_memory_state_at() -> None:
     assert m.state_at(2000).timestamp == 2000
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_memory_load_cycle(tmp_path: str) -> None:
     """Memory → snapshot → load → mismo estado."""
     m1 = Memory()
@@ -313,6 +343,7 @@ def test_memory_load_cycle(tmp_path: str) -> None:
     assert m2.state_at(2000).timestamp == 2000
 
 
+@pytest.mark.integration
 def test_memory_recover_from_snapshot_and_journal(tmp_path: str) -> None:
     """Recuperación desde snapshot + journal."""
     snap_path = Path(tmp_path) / "snap.json"
@@ -338,6 +369,7 @@ def test_memory_recover_from_snapshot_and_journal(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_concurrent_readers_during_append() -> None:
     tl = MemoryTimeline()
     for i in range(10):
@@ -381,6 +413,7 @@ def test_concurrent_readers_during_append() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_deterministic_entry_id() -> None:
     """Mismos datos → mismo entry_id."""
     refs = [_make_ref("f1"), _make_ref("f2")]
@@ -390,6 +423,7 @@ def test_deterministic_entry_id() -> None:
     assert e1.entry_id == e2.entry_id
 
 
+@pytest.mark.integration
 def test_deterministic_state_at() -> None:
     """Misma timeline → mismo resultado en state_at."""
 
@@ -411,6 +445,8 @@ def test_deterministic_state_at() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_benchmark_append_1000() -> None:
     tl = MemoryTimeline()
     start = time.perf_counter()
@@ -421,6 +457,8 @@ def test_benchmark_append_1000() -> None:
     assert t < 0.5, f"1000 appends took {t * 1000:.1f}ms"
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_benchmark_state_at_1000() -> None:
     tl = MemoryTimeline()
     for i in range(1000):
@@ -432,6 +470,8 @@ def test_benchmark_state_at_1000() -> None:
     assert t < 0.5, f"1000 state_at queries took {t * 1000:.1f}ms"
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_benchmark_peak_memory_10k() -> None:
     """RAM estimada para 10K entries."""
     tl = MemoryTimeline()

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 from typing import Any
@@ -118,18 +119,21 @@ def _discover_and_stage_plugin(registry: PluginRegistryV2, plugin: PluginBase, n
 
 
 class TestPipelineDefinition:
+    @pytest.mark.integration
     def test_create_minimal(self):
         p = PipelineDefinition(name="test", stages=[StageDefinition(name="s1", plugin="p1")])
         assert p.name == "test"
         assert len(p.stages) == 1
         assert p.stages[0].name == "s1"
 
+    @pytest.mark.integration
     def test_stage_defaults(self):
         s = StageDefinition(name="s1", plugin="p1")
         assert s.config == {}
         assert s.timeout == 30
         assert s.optional is False
 
+    @pytest.mark.integration
     def test_stage_result_defaults(self):
         r = StageResult(name="s1", ok=True, plugin="p1")
         assert r.output == {}
@@ -141,6 +145,8 @@ class TestPipelineDefinition:
 
 
 class TestPipelineLoader:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_yaml(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
         f.write_text("name: test-pipe\nstages:\n  - name: stage1\n    plugin: plugin1\n")
@@ -151,6 +157,8 @@ class TestPipelineLoader:
         assert p.stages[0].name == "stage1"
         assert p.stages[0].plugin == "plugin1"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_json(self, tmp_path: Path):
         f = tmp_path / "pipe.json"
         f.write_text('{"name": "json-pipe", "stages": [{"name": "s1", "plugin": "p1"}]}')
@@ -158,6 +166,8 @@ class TestPipelineLoader:
         p = loader.load(str(f))
         assert p.name == "json-pipe"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_stage_config(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
         f.write_text(
@@ -168,6 +178,8 @@ class TestPipelineLoader:
         assert p.stages[0].config["key"] == "value"
         assert p.stages[0].config["count"] == 3
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_stage_optional(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
         f.write_text("name: opt-pipe\nstages:\n  - name: s1\n    plugin: p1\n    optional: true\n")
@@ -175,6 +187,7 @@ class TestPipelineLoader:
         p = loader.load(str(f))
         assert p.stages[0].optional is True
 
+    @pytest.mark.integration
     def test_validate_empty_name(self, tmp_path: Path):
         f = tmp_path / "pipe.yaml"
         f.write_text("stages:\n  - name: s1\n    plugin: p1\n")
@@ -184,12 +197,14 @@ class TestPipelineLoader:
         errors = loader.validate(p)
         assert "Pipeline name is required" in errors
 
+    @pytest.mark.integration
     def test_validate_no_stages(self):
         p = PipelineDefinition(name="empty")
         loader = PipelineLoader(PluginRegistryV2())
         errors = loader.validate(p)
         assert "At least one stage is required" in errors
 
+    @pytest.mark.integration
     def test_validate_plugin_not_found(self):
         registry = PluginRegistryV2()
         loader = PipelineLoader(registry)
@@ -212,6 +227,7 @@ class TestPipelineExecutor:
         executor, registry, _ = self._setup()
         return executor, registry
 
+    @pytest.mark.integration
     def test_successful_execution(self):
         executor, registry = self._setup_exec_reg()
         simple = _SimplePlugin("ok_plugin")
@@ -225,6 +241,7 @@ class TestPipelineExecutor:
         assert result.stages[0].ok is True
         assert simple.executed is True
 
+    @pytest.mark.integration
     def test_plugin_not_found(self):
         executor, _ = self._setup_exec_reg()
         p = PipelineDefinition(name="missing", stages=[StageDefinition(name="s1", plugin="no_such")])
@@ -232,6 +249,7 @@ class TestPipelineExecutor:
         assert result.ok is False
         assert "no_such" in result.error
 
+    @pytest.mark.integration
     def test_stage_exception(self):
         executor, registry = self._setup_exec_reg()
         failing = _FailingPlugin("fail_plugin")
@@ -244,6 +262,7 @@ class TestPipelineExecutor:
         assert failing.executed is True
         assert "failed intentionally" in result.error
 
+    @pytest.mark.integration
     def test_context_propagation(self):
         executor, registry = self._setup_exec_reg()
         cp = _ContextPlugin("ctx_plugin")
@@ -259,6 +278,7 @@ class TestPipelineExecutor:
         result2 = executor.execute(p, context=ctx)
         assert result2.ok is True
 
+    @pytest.mark.integration
     def test_rollback_on_failure(self):
         executor, registry = self._setup_exec_reg()
         simple = _SimplePlugin("good_plugin")
@@ -281,6 +301,7 @@ class TestPipelineExecutor:
         assert failing.executed is True
         assert simple.rollback_called is True
 
+    @pytest.mark.integration
     def test_optional_stage_does_not_fail_pipeline(self):
         executor, registry = self._setup_exec_reg()
         failing = _FailingPlugin("opt_fail")
@@ -296,6 +317,7 @@ class TestPipelineExecutor:
         assert len(result.stages) == 1
         assert result.stages[0].ok is False
 
+    @pytest.mark.integration
     def test_before_stage_hook_cancels_via_eventbus(self):
         bus = EventBus()
         registry = PluginRegistryV2()
@@ -317,6 +339,7 @@ class TestPipelineExecutor:
 
 
 class TestPipelineExecutorEventBusEvents:
+    @pytest.mark.integration
     def test_publishes_started_completed(self):
         bus = EventBus()
         registry = PluginRegistryV2()
@@ -335,6 +358,7 @@ class TestPipelineExecutorEventBusEvents:
         assert received[0] == ("started", "events")
         assert received[1] == ("completed", "events")
 
+    @pytest.mark.integration
     def test_publishes_failed_on_error(self):
         bus = EventBus()
         registry = PluginRegistryV2()
@@ -347,6 +371,7 @@ class TestPipelineExecutorEventBusEvents:
         executor.execute(p)
         assert received == ["fail-events"]
 
+    @pytest.mark.integration
     def test_publishes_after_stage(self):
         bus = EventBus()
         registry = PluginRegistryV2()
@@ -364,6 +389,7 @@ class TestPipelineExecutorEventBusEvents:
 
 
 class TestPipelineBenchmark:
+    @pytest.mark.integration
     def test_basic_pipeline_under_100ms(self):
         bus = EventBus()
         registry = PluginRegistryV2()

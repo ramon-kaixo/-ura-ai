@@ -38,22 +38,26 @@ def fake_exec(monkeypatch: pytest.MonkeyPatch) -> FakeExecutor:
     return fe
 
 
+@pytest.mark.unit
 def test_memory_path_default(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("URA_MEMORY_DB", raising=False)
     assert cmd_ura._memory_path() == Path.home() / ".ura" / "memory.db"
 
 
+@pytest.mark.unit
 def test_memory_path_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_MEMORY_DB", "/tmp/mem.db")
     assert cmd_ura._memory_path() == Path("/tmp/mem.db")
 
 
+@pytest.mark.unit
 def test_run_ok() -> None:
     ok, out = cmd_ura._run(["x"], "desc")
     assert ok is True
     assert out == ""
 
 
+@pytest.mark.unit
 def test_run_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cmd_ura, "_executor", FakeExecutor([_res(ok=False, stderr="boom")]))
     ok, err = cmd_ura._run(["x"], "desc")
@@ -62,6 +66,7 @@ def test_run_fail(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestFinalize:
+    @pytest.mark.unit
     def test_ok_con_mensaje(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(stdout="git diff"), _res(stdout="staged_file.py"), _res(stdout="pushed")]
         with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
@@ -69,24 +74,29 @@ class TestFinalize:
         msgs = [c[0] for c in fake_exec.calls]
         assert msgs[0] == "python3"
 
+    @pytest.mark.unit
     def test_test_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(ok=False, stderr="boom")]
         assert cmd_ura.cmd_finalize(None, []) == 1
 
+    @pytest.mark.unit
     def test_compile_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(ok=False, stderr="x")]
         assert cmd_ura.cmd_finalize(None, []) == 1
 
+    @pytest.mark.unit
     def test_schema_errors(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res()]
         with mock.patch("motor.core.config_manager.validate_schema", return_value=["err"]):
             assert cmd_ura.cmd_finalize(None, []) == 1
 
+    @pytest.mark.unit
     def test_router_degradado(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res(), _res(stdout=""), _res(stdout="pushed")]
         with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_finalize(None, []) == 0
 
+    @pytest.mark.unit
     def test_sin_staged_sin_mensaje(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [
             _res(),
@@ -103,6 +113,7 @@ class TestFinalize:
         assert len(commit) == 1
         assert commit[0][-1] == "Pipeline: a.py b.py c.py"
 
+    @pytest.mark.unit
     def test_commit_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(), _res(), _res(), _res(), _res(stdout="a.py"), _res(), _res(ok=False, stderr="x")]
         with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
@@ -110,6 +121,7 @@ class TestFinalize:
 
 
 class TestTest:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         with (
             mock.patch("motor.core.config_manager.validate_schema", return_value=[]),
@@ -117,6 +129,7 @@ class TestTest:
         ):
             assert cmd_ura.cmd_test(None, []) == 0
 
+    @pytest.mark.unit
     def test_errores(self) -> None:
         with (
             mock.patch("motor.core.config_manager.validate_schema", return_value=["e"]),
@@ -126,6 +139,7 @@ class TestTest:
 
 
 class TestSnapshot:
+    @pytest.mark.unit
     def test_escribe_json(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cmd_ura, "ROOT", tmp_path)
         fake_exec.results = [_res(stdout="abc123"), _res(stdout="TODOS LOS TESTS PASARON"), _res(stdout="main")]
@@ -140,43 +154,52 @@ class TestSnapshot:
 
 
 class TestMaintenance:
+    @pytest.mark.unit
     def test_dry_run(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0)]
         assert cmd_ura.cmd_maintenance(None, ["--dry-run"]) == 0
         assert fake_exec.calls[0][0] == "python3"
 
+    @pytest.mark.unit
     def test_ssh(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0)]
         assert cmd_ura.cmd_maintenance(None, []) == 0
         assert fake_exec.calls[0][0] == "ssh"
 
+    @pytest.mark.unit
     def test_d_short(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0)]
         assert cmd_ura.cmd_maintenance(None, ["-d"]) == 0
 
 
+@pytest.mark.unit
 def test_rotate(fake_exec: FakeExecutor) -> None:
     assert cmd_ura.cmd_rotate(None, []) == 0
 
 
+@pytest.mark.unit
 def test_health(fake_exec: FakeExecutor) -> None:
     assert cmd_ura.cmd_health(None, []) == 0
 
 
+@pytest.mark.unit
 def test_system(fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
     assert cmd_ura.cmd_system(None, []) == 0
 
 
+@pytest.mark.unit
 def test_alerts(fake_exec: FakeExecutor) -> None:
     assert cmd_ura.cmd_alerts(None, []) == 0
 
 
 class TestSnc:
+    @pytest.mark.unit
     def test_sin_estado(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cmd_ura.Path, "home", mock.Mock(return_value=tmp_path))
         assert cmd_ura.cmd_snc(None, []) == 0
 
+    @pytest.mark.unit
     def test_con_estado(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         home = tmp_path / "home"
         (home / "URA" / "logs").mkdir(parents=True)
@@ -193,6 +216,7 @@ class TestSnc:
         monkeypatch.setattr(cmd_ura.Path, "home", mock.Mock(return_value=home))
         assert cmd_ura.cmd_snc(None, []) == 0
 
+    @pytest.mark.unit
     def test_estado_corrupto(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         home = tmp_path / "home"
         (home / "URA" / "logs").mkdir(parents=True)
@@ -202,11 +226,13 @@ class TestSnc:
 
 
 class TestDoctor:
+    @pytest.mark.unit
     def test_ok(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cmd_ura.Path, "home", mock.Mock(return_value=tmp_path))
         with mock.patch("motor.core.config_manager.validate_schema", return_value=[]):
             assert cmd_ura.cmd_doctor(None, []) == 0
 
+    @pytest.mark.unit
     def test_con_estado(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         home = tmp_path / "home"
         (home / "URA" / "logs").mkdir(parents=True)
@@ -221,6 +247,7 @@ class TestDoctor:
             assert cmd_ura.cmd_doctor(None, []) == 0
 
 
+@pytest.mark.unit
 def test_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     urlopen = mock.Mock(
         return_value=mock.Mock(
@@ -232,6 +259,7 @@ def test_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
     assert cmd_ura.cmd_metrics(None, []) == 0
 
 
+@pytest.mark.unit
 def test_metrics_error(monkeypatch: pytest.MonkeyPatch) -> None:
     def boom(*_a, **_k):
         raise urllib.error.URLError("down")
@@ -241,11 +269,13 @@ def test_metrics_error(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestDashboard:
+    @pytest.mark.unit
     def test_sin_estado(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cmd_ura.Path, "home", mock.Mock(return_value=tmp_path))
         fake_exec.results = [_res(returncode=0, stdout="l1")]
         assert cmd_ura.cmd_dashboard(None, []) == 0
 
+    @pytest.mark.unit
     def test_con_estado(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         home = tmp_path / "home"
         (home / "URA" / "logs").mkdir(parents=True)
@@ -263,6 +293,7 @@ class TestDashboard:
         fake_exec.results = [_res(returncode=0, stdout="l1")]
         assert cmd_ura.cmd_dashboard(None, []) == 0
 
+    @pytest.mark.unit
     def test_estado_corrupto(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         home = tmp_path / "home"
         (home / "URA" / "logs").mkdir(parents=True)
@@ -272,62 +303,75 @@ class TestDashboard:
 
 
 class TestIndex:
+    @pytest.mark.unit
     def test_ok(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0, stdout='{"ok": true}')]
         assert cmd_ura.cmd_index(None, []) == 0
 
+    @pytest.mark.unit
     def test_force(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0, stdout="{}")]
         assert cmd_ura.cmd_index(None, ["--force"]) == 0
         assert "force=True" in fake_exec.calls[0][2]
 
+    @pytest.mark.unit
     def test_ssh_fail(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=1, stderr="e")]
         assert cmd_ura.cmd_index(None, []) == 1
 
+    @pytest.mark.unit
     def test_json_invalido(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0, stdout="no json")]
         assert cmd_ura.cmd_index(None, []) == 1
 
+    @pytest.mark.unit
     def test_error_en_stats(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(returncode=0, stdout='{"error": "x"}')]
         assert cmd_ura.cmd_index(None, []) == 1
 
 
 class TestAsk:
+    @pytest.mark.unit
     def test_sin_pregunta(self) -> None:
         assert cmd_ura.cmd_ask(None, []) == 1
 
+    @pytest.mark.unit
     def test_ok(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(stdout="respuesta")]
         assert cmd_ura.cmd_ask(None, ["que", "es"]) == 0
         assert fake_exec.calls[0][0] == "ssh"
         assert "que es" in fake_exec.calls[0][2]
 
+    @pytest.mark.unit
     def test_fallback_error(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(ok=False, returncode=0, stderr="x")]
         assert cmd_ura.cmd_ask(None, ["q"]) == 1
 
+    @pytest.mark.unit
     def test_sin_stdout(self, fake_exec: FakeExecutor) -> None:
         fake_exec.results = [_res(ok=False, returncode=2)]
         assert cmd_ura.cmd_ask(None, ["q"]) == 2
 
 
 class TestMemory:
+    @pytest.mark.unit
     def test_solo_health(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         assert cmd_ura.cmd_memory(None, None) == 0
 
+    @pytest.mark.unit
     def test_search(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["search", "hola"])
         assert cmd_ura.cmd_memory(None, args) == 0
 
+    @pytest.mark.unit
     def test_store(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["store", "texto"])
         assert cmd_ura.cmd_memory(None, args) == 0
 
+    @pytest.mark.unit
     def test_web(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["web", "query"])
@@ -336,12 +380,14 @@ class TestMemory:
         ):
             assert cmd_ura.cmd_memory(None, args) == 0
 
+    @pytest.mark.unit
     def test_web_fallback(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["web", "q"])
         with mock.patch("core.mochila.tools.web_search", mock.AsyncMock(side_effect=RuntimeError("x"))):
             assert cmd_ura.cmd_memory(None, args) == 0
 
+    @pytest.mark.unit
     def test_backup(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         monkeypatch.setenv("URA_BACKUP_DIR", str(tmp_path / "bk"))
@@ -349,11 +395,13 @@ class TestMemory:
         assert cmd_ura.cmd_memory(None, args) == 0
         assert (tmp_path / "bk").exists()
 
+    @pytest.mark.unit
     def test_restore_no_existe(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["restore", str(tmp_path / "no.db")])
         assert cmd_ura.cmd_memory(None, args) == 1
 
+    @pytest.mark.unit
     def test_restore_ok(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         monkeypatch.setenv("URA_BACKUP_DIR", str(tmp_path / "bk"))
@@ -362,6 +410,7 @@ class TestMemory:
         args = mock.Mock(raw=["restore", str(src)])
         assert cmd_ura.cmd_memory(None, args) == 0
 
+    @pytest.mark.unit
     def test_help(self, fake_exec: FakeExecutor, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_MEMORY_DB", str(tmp_path / "m.db"))
         args = mock.Mock(raw=["otro"])
@@ -369,11 +418,13 @@ class TestMemory:
 
 
 class TestSystemctl:
+    @pytest.mark.unit
     def test_user_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 0, stdout="x"))
         monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura._systemctl(["status", "x"]).returncode == 0
 
+    @pytest.mark.unit
     def test_fallback_system(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def side_effect(cmd, **kwargs):
             if "--user" in cmd:
@@ -385,35 +436,41 @@ class TestSystemctl:
 
 
 class TestService:
+    @pytest.mark.unit
     def test_no_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 1, stdout="", stderr="")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         assert cmd_ura.cmd_service(None, None) == 1
 
+    @pytest.mark.unit
     def test_list(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 0, stdout="ura-x.service loaded active running")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         args = mock.Mock(raw=["list"])
         assert cmd_ura.cmd_service(None, args) == 0
 
+    @pytest.mark.unit
     def test_accion(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 0, stdout="ok")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         args = mock.Mock(raw=["start", "ura-x"])
         assert cmd_ura.cmd_service(None, args) == 0
 
+    @pytest.mark.unit
     def test_accion_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 1, stderr="failed")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         args = mock.Mock(raw=["stop", "ura-x"])
         assert cmd_ura.cmd_service(None, args) == 0
 
+    @pytest.mark.unit
     def test_accion_sin_servicio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 0, stdout="x", stderr="")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
         args = mock.Mock(raw=["start"])
         assert cmd_ura.cmd_service(None, args) == 0
 
+    @pytest.mark.unit
     def test_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         r = subprocess.CompletedProcess([], 0, stdout="ura-a.service loaded active running")
         monkeypatch.setattr(cmd_ura, "_systemctl", mock.Mock(return_value=r))
@@ -421,12 +478,14 @@ class TestService:
 
 
 class TestAudit:
+    @pytest.mark.unit
     def test_ok_sin_fallos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         data = {"version": "1", "files_scanned": 5, "blocks": {"A": []}, "block_headers": {}}
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 0, stdout=json.dumps(data)))
         monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura.cmd_audit(None, []) == 0
 
+    @pytest.mark.unit
     def test_con_fallos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         data = {
             "version": "1",
@@ -437,6 +496,7 @@ class TestAudit:
         monkeypatch.setattr(subprocess, "run", fake_sp)
         assert cmd_ura.cmd_audit(None, []) == 1
 
+    @pytest.mark.unit
     def test_fallo_script(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_sp = mock.Mock(return_value=subprocess.CompletedProcess([], 1, stdout="", stderr="boom"))
         monkeypatch.setattr(subprocess, "run", fake_sp)
@@ -444,22 +504,27 @@ class TestAudit:
 
 
 class TestAuditVeredicto:
+    @pytest.mark.unit
     def test_fail(self) -> None:
         assert cmd_ura._audit_veredicto(3, 0) == "❌ NO SUPERADO"
 
+    @pytest.mark.unit
     def test_warn(self) -> None:
         assert cmd_ura._audit_veredicto(0, 2) == "⚠️ CON ADVERTENCIAS"
 
+    @pytest.mark.unit
     def test_ok(self) -> None:
         assert cmd_ura._audit_veredicto(0, 0) == "✅ SUPERADO"
 
 
 class TestMemorySearch:
+    @pytest.mark.unit
     def test_sin_raw_llama_usage(self, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
         monkeypatch.setattr(cmd_ura, "_memory_usage", lambda: None)
         cmd_ura._memory_search(mock.Mock(), [])
         assert "uso" in capsys.readouterr().out.lower() or True
 
+    @pytest.mark.unit
     def test_con_query(self, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
         fake_mem = mock.Mock()
         r = mock.Mock()
@@ -474,6 +539,7 @@ class TestMemorySearch:
 
 
 class TestCmdSystemExcept:
+    @pytest.mark.unit
     def test_git_describe_falla(self, monkeypatch: pytest.MonkeyPatch, capsys) -> None:
         import subprocess as _sp
 

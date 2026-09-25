@@ -1,5 +1,6 @@
 """Tests cobertura extraction_service — worker loop (split)."""
 from __future__ import annotations
+import pytest
 
 from _extraction_helpers import (  # noqa: F401
     _DB,
@@ -56,6 +57,7 @@ class TestExtractInWorker:
                 return params[0]
         raise AssertionError("no failed update found")
 
+    @pytest.mark.unit
     def test_extractor_not_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         self._patch_env(monkeypatch, conn, FakeStore(), extractor=None)
@@ -64,6 +66,7 @@ class TestExtractInWorker:
         assert conn.commits >= 1
         assert conn.closed
 
+    @pytest.mark.unit
     def test_success_done(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         store = FakeStore()
@@ -75,6 +78,7 @@ class TestExtractInWorker:
         assert len(store.saved) == 1
         assert conn.closed
 
+    @pytest.mark.unit
     def test_save_false_fails(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         store = FakeStore()
@@ -86,6 +90,7 @@ class TestExtractInWorker:
         assert "AssetStore.save_asset() returned False" in self._failed_error(conn)
         assert conn.closed
 
+    @pytest.mark.unit
     def test_errors_fail(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         result = ExtractionResult(errors=["bad pdf"])
@@ -94,6 +99,7 @@ class TestExtractInWorker:
         assert self._failed_error(conn) == "bad pdf"
         assert conn.closed
 
+    @pytest.mark.unit
     def test_extractor_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
 
@@ -106,6 +112,7 @@ class TestExtractInWorker:
         assert self._failed_error(conn) == "boom"
         assert conn.closed
 
+    @pytest.mark.unit
     def test_save_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
 
@@ -120,6 +127,7 @@ class TestExtractInWorker:
         assert self._failed_error(conn) == "disk full"
         assert conn.closed
 
+    @pytest.mark.unit
     def test_open_db_raises_without_conn(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def raise_open_db(path: Path) -> None:
             raise RuntimeError("cannot open db")
@@ -130,6 +138,7 @@ class TestExtractInWorker:
 
 
 class TestWriteJobs:
+    @pytest.mark.unit
     def test_write_job_done(self) -> None:
         conn = FakeConn()
         _write_job_done(conn, 7, "A1", "markdown", 2.5)
@@ -138,6 +147,7 @@ class TestWriteJobs:
         assert json.loads(params[0]) == {"asset_id": "A1", "asset_type": "markdown", "duration_ms": 2.5}
         assert conn.commits == 1
 
+    @pytest.mark.unit
     def test_write_job_fail(self) -> None:
         conn = FakeConn()
         _write_job_fail(conn, 7, "oops")
@@ -146,6 +156,7 @@ class TestWriteJobs:
         assert params[0] == "oops"
         assert conn.commits == 1
 
+    @pytest.mark.unit
     def test_mark_job_failed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         monkeypatch.setattr(es, "open_db", lambda p: conn)
@@ -158,6 +169,7 @@ class TestWriteJobs:
 
 
 class TestReadJobResult:
+    @pytest.mark.unit
     def test_row_merged(self, monkeypatch: pytest.MonkeyPatch) -> None:
         row = FakeRow(
             {
@@ -172,6 +184,7 @@ class TestReadJobResult:
         assert result == {"status": "done", "asset_id": "A1", "asset_type": "markdown", "duration_ms": 3.0, "error": "warn"}
         assert conn.closed
 
+    @pytest.mark.unit
     def test_row_minimal(self, monkeypatch: pytest.MonkeyPatch) -> None:
         row = FakeRow({"status": "running", "result_data": None, "error": None})
         conn = FakeConn({"SELECT status, result_data, error": [row]})
@@ -179,6 +192,7 @@ class TestReadJobResult:
         assert _read_job_result(_DB, 1) == {"status": "running"}
         assert conn.closed
 
+    @pytest.mark.unit
     def test_no_row(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"SELECT status, result_data, error": [None]})
         monkeypatch.setattr(es, "open_db", lambda p: conn)
@@ -188,6 +202,7 @@ class TestReadJobResult:
 
 
 class TestWorkerLoop:
+    @pytest.mark.unit
     def test_stop_pre_set(self, monkeypatch: pytest.MonkeyPatch) -> None:
         called: list[Any] = []
         monkeypatch.setattr(es, "open_db", lambda p: called.append(p) or FakeConn())
@@ -196,6 +211,7 @@ class TestWorkerLoop:
         _worker_loop(_DB, FakeRegistry(), FakeStore(), stop, {}, threading.Lock(), 1)
         assert called == []
 
+    @pytest.mark.unit
     def test_no_job_then_stop(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"UPDATE op_jobs": [None]})
         thread, stop = _run_loop_in_thread(monkeypatch, conn)
@@ -206,6 +222,7 @@ class TestWorkerLoop:
         assert conn.rollbacks >= 1
         assert any("UPDATE op_jobs" in sql for sql, _ in conn.executed)
 
+    @pytest.mark.unit
     def test_claim_success_processes_job(self, monkeypatch: pytest.MonkeyPatch) -> None:
         stop = threading.Event()
         processed: list[Any] = []
@@ -224,6 +241,7 @@ class TestWorkerLoop:
         assert conn.commits >= 1
         assert conn.closed
 
+    @pytest.mark.unit
     def test_operational_error_fallback_processes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         stop = threading.Event()
         processed: list[Any] = []
@@ -245,6 +263,7 @@ class TestWorkerLoop:
         assert len(processed) == 1
         assert conn.rollbacks >= 1
 
+    @pytest.mark.unit
     def test_operational_error_fallback_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "_POLL_INTERVAL", 0.01)
         stop = threading.Event()
@@ -268,6 +287,7 @@ class TestWorkerLoop:
         assert not thread.is_alive()
         assert len(conns) >= 2
 
+    @pytest.mark.unit
     def test_begin_immediate_error_closes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         conn.add_raise("BEGIN IMMEDIATE", sqlite3.OperationalError("boom"))
@@ -278,6 +298,7 @@ class TestWorkerLoop:
         assert not thread.is_alive()
         assert conn.closed
 
+    @pytest.mark.unit
     def test_open_db_raises_logged(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "_POLL_INTERVAL", 0.01)
         stop = threading.Event()

@@ -1,3 +1,4 @@
+import pytest
 """Tests for scripts/pro/orchestrator.py."""
 import subprocess
 
@@ -5,6 +6,7 @@ from scripts.pro.orchestrator import main
 
 
 class TestOrchestrator:
+    @pytest.mark.unit
     def test_main_suite_passes(self, monkeypatch):
         def fake_run(*a, **k):
             class R:
@@ -17,6 +19,7 @@ class TestOrchestrator:
         monkeypatch.setattr(subprocess, "run", fake_run)
         assert main() == 0
 
+    @pytest.mark.unit
     def test_main_suite_fails(self, monkeypatch):
         def fake_run(*a, **k):
             class R:

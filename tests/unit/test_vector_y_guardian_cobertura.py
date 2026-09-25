@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import time
 from pathlib import Path
@@ -19,6 +20,7 @@ from knowledge.engine.vector_retriever import VectorAugmentedRetriever
 # ── vector_ollama: LRU cache ─────────────────────────────────
 
 
+@pytest.mark.unit
 def test_lru_cache_get_put() -> None:
     c = _LRUCache(ttl=300, maxsize=2)
     assert c.get("k1") is None
@@ -30,6 +32,7 @@ def test_lru_cache_get_put() -> None:
     assert c.size == 2
 
 
+@pytest.mark.unit
 def test_lru_cache_ttl_expirado(monkeypatch: pytest.MonkeyPatch) -> None:
     c = _LRUCache(ttl=1, maxsize=10)
     c.put("k1", [1.0])
@@ -39,6 +42,7 @@ def test_lru_cache_ttl_expirado(monkeypatch: pytest.MonkeyPatch) -> None:
     assert c.size == 0
 
 
+@pytest.mark.unit
 def test_lru_cache_move_to_end() -> None:
     c = _LRUCache(ttl=300, maxsize=2)
     c.put("a", [1.0])
@@ -49,6 +53,7 @@ def test_lru_cache_move_to_end() -> None:
     assert c.get("a") == [1.0]
 
 
+@pytest.mark.unit
 def test_lru_cache_clear() -> None:
     c = _LRUCache()
     c.put("a", [1.0])
@@ -59,11 +64,13 @@ def test_lru_cache_clear() -> None:
 # ── vector_ollama: embedder ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_ollama_embed_sin_textos() -> None:
     e = OllamaEmbedder()
     assert e.embed([]) == []
 
 
+@pytest.mark.unit
 def test_ollama_embed_sin_disponible() -> None:
     e = OllamaEmbedder()
     e._degraded = True
@@ -71,12 +78,14 @@ def test_ollama_embed_sin_disponible() -> None:
     assert e.embed_query("x") == []
 
 
+@pytest.mark.unit
 def test_ollama_embed_single_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     e._cache.put("texto", [0.1, 0.2])
     assert e.embed(["texto"]) == [[0.1, 0.2]]
 
 
+@pytest.mark.unit
 def test_ollama_embed_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     monkeypatch.setattr(vo, "_embed", lambda texts, model: [[0.1, 0.2], [0.3, 0.4]])
@@ -90,12 +99,14 @@ def test_ollama_embed_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert e.vector_size == 2
 
 
+@pytest.mark.unit
 def test_ollama_embed_vacio_devuelto(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     monkeypatch.setattr(vo, "_embed", lambda texts, model: [])
     assert e.embed(["a"]) == []
 
 
+@pytest.mark.unit
 def test_ollama_embed_error(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
 
@@ -109,17 +120,20 @@ def test_ollama_embed_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert e.available is False
 
 
+@pytest.mark.unit
 def test_ollama_embed_query_vacio() -> None:
     e = OllamaEmbedder()
     assert e.embed_query("") == []
 
 
+@pytest.mark.unit
 def test_ollama_embed_query_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     monkeypatch.setattr(vo, "_embed", lambda texts, model: [[0.5]])
     assert e.embed_query("q") == [0.5]
 
 
+@pytest.mark.unit
 def test_ollama_props() -> None:
     e = OllamaEmbedder()
     assert e.vector_size == 0
@@ -128,11 +142,13 @@ def test_ollama_props() -> None:
     e.close()  # no lanza
 
 
+@pytest.mark.unit
 def test_ollama_check_available_sano() -> None:
     e = OllamaEmbedder()
     assert e.check_available() is True  # no degradado → True directo
 
 
+@pytest.mark.unit
 def test_ollama_check_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     e._degraded = True
@@ -140,6 +156,7 @@ def test_ollama_check_backoff(monkeypatch: pytest.MonkeyPatch) -> None:
     assert e.check_available() is False  # backoff activo
 
 
+@pytest.mark.unit
 def test_ollama_check_health_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     e._degraded = True
@@ -150,6 +167,7 @@ def test_ollama_check_health_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert e._backoff == 1.0
 
 
+@pytest.mark.unit
 def test_ollama_check_health_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     e._degraded = True
@@ -159,6 +177,7 @@ def test_ollama_check_health_fail(monkeypatch: pytest.MonkeyPatch) -> None:
     assert e._backoff == 2.0
 
 
+@pytest.mark.unit
 def test_ollama_check_health_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     e = OllamaEmbedder()
     e._degraded = True
@@ -176,6 +195,7 @@ def test_ollama_check_health_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
 # ── vector_qdrant ────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_point_id_unico() -> None:
     assert _point_id() != _point_id()
     assert len(_point_id()) == 16
@@ -230,6 +250,7 @@ def _store(client: _FakeClient | None = None) -> QdrantVectorStore:
     return s
 
 
+@pytest.mark.unit
 def test_qdrant_search_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {"result": [{"id": "a1", "score": 0.9, "payload": {"x": 1}}]})])
     s = _store(fc)
@@ -240,6 +261,7 @@ def test_qdrant_search_ok() -> None:
     assert res[0].metadata == {"x": 1}
 
 
+@pytest.mark.unit
 def test_qdrant_search_con_filter() -> None:
     fc = _FakeClient([_FakeResp(200, {"result": []})])
     s = _store(fc)
@@ -248,17 +270,20 @@ def test_qdrant_search_con_filter() -> None:
     assert fc.calls[0][2]["filter"] == {"must": [{"key": "asset_type", "match": {"value": "pdf"}}]}
 
 
+@pytest.mark.unit
 def test_qdrant_search_degradado() -> None:
     s = _store()
     s._degraded = True
     assert s.search([0.1]) == []
 
 
+@pytest.mark.unit
 def test_qdrant_search_sin_vector() -> None:
     s = _store()
     assert s.search([]) == []
 
 
+@pytest.mark.unit
 def test_qdrant_search_error() -> None:
     import httpx
 
@@ -269,6 +294,7 @@ def test_qdrant_search_error() -> None:
     assert s._degraded is True
 
 
+@pytest.mark.unit
 def test_qdrant_upsert_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {}), _FakeResp(200, {})])  # ensure_collection + put
     s = _store(fc)
@@ -277,17 +303,20 @@ def test_qdrant_upsert_ok() -> None:
     assert fc.calls[0][0] == "put"  # ensure collection
 
 
+@pytest.mark.unit
 def test_qdrant_upsert_vacio() -> None:
     s = _store()
     assert s.upsert([]) == 0
 
 
+@pytest.mark.unit
 def test_qdrant_upsert_degradado() -> None:
     s = _store()
     s._degraded = True
     assert s.upsert([VectorItem(asset_id="a", vector=[0.1], text_preview="")]) == 0
 
 
+@pytest.mark.unit
 def test_qdrant_upsert_error() -> None:
     import httpx
 
@@ -298,29 +327,34 @@ def test_qdrant_upsert_error() -> None:
     assert s._degraded is True
 
 
+@pytest.mark.unit
 def test_qdrant_delete_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {})])
     s = _store(fc)
     assert s.delete(["a1", "a2"]) == 2
 
 
+@pytest.mark.unit
 def test_qdrant_delete_vacio() -> None:
     s = _store()
     assert s.delete([]) == 0
 
 
+@pytest.mark.unit
 def test_qdrant_delete_degradado() -> None:
     s = _store()
     s._degraded = True
     assert s.delete(["a"]) == 0
 
 
+@pytest.mark.unit
 def test_qdrant_count_degradado() -> None:
     s = _store()
     s._degraded = True
     assert s.count() == 0
 
 
+@pytest.mark.unit
 def test_qdrant_ensure_collection_status_error() -> None:
     import httpx
 
@@ -330,6 +364,7 @@ def test_qdrant_ensure_collection_status_error() -> None:
         s._ensure_collection([0.1])
 
 
+@pytest.mark.unit
 def test_qdrant_delete_error() -> None:
     import httpx
 
@@ -340,12 +375,14 @@ def test_qdrant_delete_error() -> None:
     assert s._degraded is True
 
 
+@pytest.mark.unit
 def test_qdrant_count_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {"result": {"count": 7}})])
     s = _store(fc)
     assert s.count() == 7
 
 
+@pytest.mark.unit
 def test_qdrant_count_error() -> None:
     import httpx
 
@@ -355,6 +392,7 @@ def test_qdrant_count_error() -> None:
     assert s.count() == 0
 
 
+@pytest.mark.unit
 def test_qdrant_list_ids_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {"result": {"points": [{"id": "a1"}, {"id": "a2"}], "next_page_offset": "xyz"}})])
     s = _store(fc)
@@ -363,6 +401,7 @@ def test_qdrant_list_ids_ok() -> None:
     assert nxt == "xyz"
 
 
+@pytest.mark.unit
 def test_qdrant_list_ids_con_offset() -> None:
     fc = _FakeClient([_FakeResp(200, {"result": {"points": [], "next_page_offset": None}})])
     s = _store(fc)
@@ -371,12 +410,14 @@ def test_qdrant_list_ids_con_offset() -> None:
     assert nxt is None
 
 
+@pytest.mark.unit
 def test_qdrant_list_ids_degradado() -> None:
     s = _store()
     s._degraded = True
     assert s.list_ids() == ([], None)
 
 
+@pytest.mark.unit
 def test_qdrant_list_ids_error() -> None:
     import httpx
 
@@ -386,11 +427,13 @@ def test_qdrant_list_ids_error() -> None:
     assert s.list_ids() == ([], None)
 
 
+@pytest.mark.unit
 def test_qdrant_check_available_sano() -> None:
     s = _store()
     assert s.check_available() is True
 
 
+@pytest.mark.unit
 def test_qdrant_check_backoff() -> None:
     s = _store()
     s._degraded = True
@@ -398,6 +441,7 @@ def test_qdrant_check_backoff() -> None:
     assert s.check_available() is False
 
 
+@pytest.mark.unit
 def test_qdrant_check_health_ok() -> None:
     fc = _FakeClient([_FakeResp(200, {})])
     s = _store(fc)
@@ -407,6 +451,7 @@ def test_qdrant_check_health_ok() -> None:
     assert s._degraded is False
 
 
+@pytest.mark.unit
 def test_qdrant_check_health_no_200() -> None:
     fc = _FakeClient([_FakeResp(500, {})])
     s = _store(fc)
@@ -417,6 +462,7 @@ def test_qdrant_check_health_no_200() -> None:
     assert s._backoff == 2.0
 
 
+@pytest.mark.unit
 def test_qdrant_check_health_error() -> None:
     import httpx
 
@@ -428,6 +474,7 @@ def test_qdrant_check_health_error() -> None:
     assert s.check_available() is False
 
 
+@pytest.mark.unit
 def test_qdrant_ensure_collection_409() -> None:
     fc = _FakeClient([_FakeResp(409, {})])
     s = _store(fc)
@@ -436,6 +483,7 @@ def test_qdrant_ensure_collection_409() -> None:
     assert fc.calls[0][2]["vectors"]["distance"] == "Cosine"
 
 
+@pytest.mark.unit
 def test_qdrant_ensure_collection_error() -> None:
     import httpx
 
@@ -446,12 +494,14 @@ def test_qdrant_ensure_collection_error() -> None:
         s._ensure_collection([0.1])
 
 
+@pytest.mark.unit
 def test_qdrant_translate_filter() -> None:
     assert QdrantVectorStore._translate_filter({"a": 1, "b": "x"}) == {
         "must": [{"key": "a", "match": {"value": 1}}, {"key": "b", "match": {"value": "x"}}]
     }
 
 
+@pytest.mark.unit
 def test_qdrant_close() -> None:
     fc = _FakeClient()
     s = _store(fc)
@@ -546,6 +596,7 @@ def _res(aid: str) -> object:
     return type("R", (), {"asset_id": aid})()
 
 
+@pytest.mark.unit
 def test_retriever_heuristica_sola() -> None:
     g = _GraphFake([_res("h1"), _res("h2")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -554,6 +605,7 @@ def test_retriever_heuristica_sola() -> None:
     assert res == [store._assets["h1"]]
 
 
+@pytest.mark.unit
 def test_retriever_sin_vector_available() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -562,6 +614,7 @@ def test_retriever_sin_vector_available() -> None:
     assert len(res) == 1
 
 
+@pytest.mark.unit
 def test_retriever_vector_fusion() -> None:
     g = _GraphFake([_res("a"), _res("b")])
     store = _StoreFake({"a": _asset("a"), "b": _asset("b"), "c": _asset("c")})
@@ -572,6 +625,7 @@ def test_retriever_vector_fusion() -> None:
     assert len(res) >= 2
 
 
+@pytest.mark.unit
 def test_retriever_rrf_mismo_asset_en_ambos() -> None:
     g = _GraphFake([_res("a")])
     store = _StoreFake({"a": _asset("a")})
@@ -581,6 +635,7 @@ def test_retriever_rrf_mismo_asset_en_ambos() -> None:
     assert res == [store._assets["a"]]  # score sumado: a domina
 
 
+@pytest.mark.unit
 def test_retriever_vector_sin_resultados() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -590,6 +645,7 @@ def test_retriever_vector_sin_resultados() -> None:
     assert len(res) == 1
 
 
+@pytest.mark.unit
 def test_retriever_vector_error() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -598,6 +654,7 @@ def test_retriever_vector_error() -> None:
     assert len(res) == 1  # degradación graceful
 
 
+@pytest.mark.unit
 def test_retriever_vector_query_vec_vacio() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -618,6 +675,7 @@ def test_retriever_vector_query_vec_vacio() -> None:
     assert not any(c[0] == "search" for c in vs.calls)
 
 
+@pytest.mark.unit
 def test_retriever_vector_result_sin_asset_id() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -627,6 +685,7 @@ def test_retriever_vector_result_sin_asset_id() -> None:
     assert len(res) == 1  # el vector sin id se ignora
 
 
+@pytest.mark.unit
 def test_retriever_use_vector_sin_embedder() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -635,6 +694,7 @@ def test_retriever_use_vector_sin_embedder() -> None:
     assert len(res) == 1  # no disponible → solo heurística
 
 
+@pytest.mark.unit
 def test_retriever_use_vector_sin_store_pero_con_embedder() -> None:
     g = _GraphFake([_res("h1")])
     store = _StoreFake({"h1": _asset("h1")})
@@ -643,6 +703,7 @@ def test_retriever_use_vector_sin_store_pero_con_embedder() -> None:
     assert len(res) == 1  # _vector_available False → solo heurística
 
 
+@pytest.mark.unit
 def test_retriever_upsert_resto_unico_asset() -> None:
     g = _GraphFake()
     store = _StoreFake({"solo": _asset("solo")})
@@ -652,6 +713,7 @@ def test_retriever_upsert_resto_unico_asset() -> None:
     assert stats["upserted"] == 1
 
 
+@pytest.mark.unit
 def test_retriever_upsert_batch_exacto() -> None:
     g = _GraphFake()
     store = _StoreFake({f"a{i}": _asset(f"a{i}") for i in range(4)})
@@ -661,24 +723,28 @@ def test_retriever_upsert_batch_exacto() -> None:
     assert stats["upserted"] == 4
 
 
+@pytest.mark.unit
 def test_retriever_eliminar_huerfanos_sin_store() -> None:
     g = _GraphFake()
     r = VectorAugmentedRetriever(g, _StoreFake(), embedder=_EmbedderFake(), vector_store=None)
     r._eliminar_huerfanos({"x"}, 10, {"deleted": 0})  # store None → return
 
 
+@pytest.mark.unit
 def test_retriever_get_vector_ids_sin_store() -> None:
     g = _GraphFake()
     r = VectorAugmentedRetriever(g, _StoreFake())
     assert r._get_vector_ids() == set()
 
 
+@pytest.mark.unit
 def test_retriever_upsert_batch_sin_backend() -> None:
     g = _GraphFake()
     r = VectorAugmentedRetriever(g, _StoreFake(), embedder=None, vector_store=None)
     r._upsert_batch([_asset("a")], ["t"], {"upserted": 0})  # no lanza
 
 
+@pytest.mark.unit
 def test_retriever_upsert_batch_items_vacios() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1")})
@@ -713,6 +779,7 @@ def test_retriever_upsert_batch_items_vacios() -> None:
     assert stats["upserted"] == 1
 
 
+@pytest.mark.unit
 def test_retriever_rrf_sin_asset_id() -> None:
     g = _GraphFake([type("SinId", (), {})()])  # sin asset_id
     store = _StoreFake()
@@ -720,12 +787,14 @@ def test_retriever_rrf_sin_asset_id() -> None:
     assert r.retrieve_assets("q") == []
 
 
+@pytest.mark.unit
 def test_retriever_reconcile_sin_backend() -> None:
     g = _GraphFake()
     r = VectorAugmentedRetriever(g, _StoreFake())
     assert r.reconcile() == {"to_upsert": 0, "to_delete": 0, "upserted": 0, "deleted": 0}
 
 
+@pytest.mark.unit
 def test_retriever_reconcile_dry_run() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1"), "a2": _asset("a2")})
@@ -737,6 +806,7 @@ def test_retriever_reconcile_dry_run() -> None:
     assert stats["upserted"] == 0
 
 
+@pytest.mark.unit
 def test_retriever_reconcile_real() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1")})
@@ -748,6 +818,7 @@ def test_retriever_reconcile_real() -> None:
     assert stats["deleted"] >= 1
 
 
+@pytest.mark.unit
 def test_retriever_list_assets_error() -> None:
     g = _GraphFake()
 
@@ -762,6 +833,7 @@ def test_retriever_list_assets_error() -> None:
     assert stats["to_upsert"] == 0
 
 
+@pytest.mark.unit
 def test_retriever_upsert_embed_error() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1")})
@@ -771,6 +843,7 @@ def test_retriever_upsert_embed_error() -> None:
     assert stats["upserted"] == 0
 
 
+@pytest.mark.unit
 def test_retriever_upsert_embed_vacio() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1")})
@@ -780,6 +853,7 @@ def test_retriever_upsert_embed_vacio() -> None:
     assert stats["upserted"] == 0
 
 
+@pytest.mark.unit
 def test_retriever_get_vector_ids_error() -> None:
     g = _GraphFake()
     store = _StoreFake()
@@ -795,6 +869,7 @@ def test_retriever_get_vector_ids_error() -> None:
     assert r._get_vector_ids() == set()
 
 
+@pytest.mark.unit
 def test_retriever_get_vector_ids_loop_offset() -> None:
     g = _GraphFake()
 
@@ -809,6 +884,7 @@ def test_retriever_get_vector_ids_loop_offset() -> None:
     assert ids == {"x"}
 
 
+@pytest.mark.unit
 def test_retriever_get_vector_ids_sin_batch() -> None:
     g = _GraphFake()
 
@@ -822,6 +898,7 @@ def test_retriever_get_vector_ids_sin_batch() -> None:
     assert r._get_vector_ids() == set()
 
 
+@pytest.mark.unit
 def test_retriever_upsert_batch_multiple() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1"), "a2": _asset("a2"), "a3": _asset("a3")})
@@ -831,6 +908,7 @@ def test_retriever_upsert_batch_multiple() -> None:
     assert stats["upserted"] == 3  # batch de 2 + resto
 
 
+@pytest.mark.unit
 def test_retriever_upsert_batch_embed_vacio_parcial() -> None:
     g = _GraphFake()
     store = _StoreFake({"a1": _asset("a1")})
@@ -868,6 +946,7 @@ def test_retriever_upsert_batch_embed_vacio_parcial() -> None:
 # ── change_guardian ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_git_comando(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -880,11 +959,14 @@ def test_git_comando(monkeypatch: pytest.MonkeyPatch) -> None:
     assert out == "salida"
 
 
+@pytest.mark.unit
 def test_get_modified_tracked_files(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cg, "_git", lambda *a: (True, "a.py\nb.py\n"))
     assert cg._get_modified_tracked_files() == ["a.py", "b.py"]
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_patterns_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "failure_patterns.json"
     f.write_text(json.dumps([{"tipo": "x"}]))
@@ -892,6 +974,8 @@ def test_load_patterns_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> 
     assert cg._load_patterns() == [{"tipo": "x"}]
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_patterns_corrupto(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "failure_patterns.json"
     f.write_text("{corrupto")
@@ -899,11 +983,14 @@ def test_load_patterns_corrupto(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert cg._load_patterns() == []
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_patterns_no_existe(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cg, "PATTERNS_FILE", Path(str(tmp_path)) / "no.json")
     assert cg._load_patterns() == []
 
 
+@pytest.mark.unit
 def test_save_pattern(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "failure_patterns.json"
     monkeypatch.setattr(cg, "PATTERNS_FILE", f)
@@ -914,6 +1001,7 @@ def test_save_pattern(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None
     assert data[0]["error"] == "error"
 
 
+@pytest.mark.unit
 def test_change_guardian_context_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("test")
     monkeypatch.setattr(g, "_run_tests", lambda: (True, "ok"))
@@ -921,6 +1009,7 @@ def test_change_guardian_context_ok(monkeypatch: pytest.MonkeyPatch) -> None:
         pass  # tests pasan, no rollback
 
 
+@pytest.mark.unit
 def test_change_guardian_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("test")
     monkeypatch.setattr(g, "_rollback", lambda reason: None)
@@ -929,6 +1018,7 @@ def test_change_guardian_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
         raise ValueError(msg)
 
 
+@pytest.mark.unit
 def test_change_guardian_tests_fallan(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("test")
     monkeypatch.setattr(g, "_run_tests", lambda: (False, "falló"))
@@ -937,6 +1027,7 @@ def test_change_guardian_tests_fallan(monkeypatch: pytest.MonkeyPatch) -> None:
         pass
 
 
+@pytest.mark.unit
 def test_run_tests_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -950,6 +1041,8 @@ def test_run_tests_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "3 passed" in error
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_run_tests_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     def _timeout(*a, **k):
         raise __import__("subprocess").TimeoutExpired("pytest", 360)
@@ -961,6 +1054,7 @@ def test_run_tests_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "superaron" in error
 
 
+@pytest.mark.unit
 def test_run_tests_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     def _roto(*a, **k):
         msg = "no pytest"
@@ -973,6 +1067,7 @@ def test_run_tests_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "no pytest" in error
 
 
+@pytest.mark.unit
 def test_rollback_con_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("test")
     llamadas: list = []
@@ -983,6 +1078,7 @@ def test_rollback_con_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     assert any(a[0] == "checkout" for a in llamadas)
 
 
+@pytest.mark.unit
 def test_rollback_sin_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("test")
     llamadas: list = []
@@ -992,6 +1088,7 @@ def test_rollback_sin_cambios(monkeypatch: pytest.MonkeyPatch) -> None:
     g._rollback("razón")
 
 
+@pytest.mark.unit
 def test_validate_and_clean_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("x")
     monkeypatch.setattr(cg, "ChangeGuardian", lambda *a, **k: g)
@@ -999,6 +1096,7 @@ def test_validate_and_clean_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert validate_and_clean() is True
 
 
+@pytest.mark.unit
 def test_validate_and_clean_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("x")
     monkeypatch.setattr(cg, "ChangeGuardian", lambda *a, **k: g)
@@ -1009,6 +1107,7 @@ def test_validate_and_clean_falla(monkeypatch: pytest.MonkeyPatch) -> None:
     assert validate_and_clean() is False
 
 
+@pytest.mark.unit
 def test_validate_and_clean_falla_con_modificados(monkeypatch: pytest.MonkeyPatch) -> None:
     g = ChangeGuardian("x")
     monkeypatch.setattr(cg, "ChangeGuardian", lambda *a, **k: g)
@@ -1021,15 +1120,18 @@ def test_validate_and_clean_falla_con_modificados(monkeypatch: pytest.MonkeyPatc
     assert any(a[0] == "checkout" for a in llamadas)
 
 
+@pytest.mark.unit
 def test_get_failure_patterns() -> None:
     assert isinstance(get_failure_patterns(), list)
 
 
+@pytest.mark.unit
 def test_get_failure_summary_vacio(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(cg, "PATTERNS_FILE", Path(str(tmp_path)) / "no.json")
     assert get_failure_summary() == "Sin fallos registrados"
 
 
+@pytest.mark.unit
 def test_get_failure_summary_con_datos(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "failure_patterns.json"
     f.write_text(json.dumps([{"fecha": "2026-08-20T10:00:00", "tipo_cambio": "fix", "error": "error corto"}]))

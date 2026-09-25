@@ -1,6 +1,7 @@
 """Tests para logger.py y config.py de la tuneladora."""
 
 from __future__ import annotations
+import pytest
 
 import io
 from pathlib import Path
@@ -11,6 +12,7 @@ from scripts.pro.tuneladora.logger import Logger
 
 
 class TestLogger:
+    @pytest.mark.integration
     def test_escribe_archivo_y_stream(self, tmp_path: Path) -> None:
         stream = io.StringIO()
         log = Logger(tmp_path / "logs" / "t.log", stream=stream)
@@ -20,6 +22,7 @@ class TestLogger:
         assert "mensaje de prueba" in content
         assert "INFO" in content
 
+    @pytest.mark.integration
     def test_niveles(self, tmp_path: Path) -> None:
         stream = io.StringIO()
         log = Logger(tmp_path / "t.log", stream=stream)
@@ -32,6 +35,7 @@ class TestLogger:
         assert "ERROR" in out
         assert "DEBUG" in out
 
+    @pytest.mark.integration
     def test_permiso_denegado_no_crashea(self, tmp_path: Path) -> None:
         stream = io.StringIO()
         log = Logger(tmp_path / "t.log", stream=stream)
@@ -39,6 +43,7 @@ class TestLogger:
             log.info("x")  # no debe lanzar
         assert "x" in stream.getvalue()
 
+    @pytest.mark.integration
     def test_report_formateado(self, tmp_path: Path) -> None:
         stream = io.StringIO()
         log = Logger(tmp_path / "t.log", stream=stream)
@@ -48,6 +53,7 @@ class TestLogger:
         assert "linea1" in out
         assert "═" in out
 
+    @pytest.mark.integration
     def test_timestamp_formato(self, tmp_path: Path) -> None:
         stream = io.StringIO()
         log = Logger(tmp_path / "t.log", stream=stream)
@@ -56,6 +62,7 @@ class TestLogger:
 
 
 class TestConfigPyproject:
+    @pytest.mark.integration
     def test_carga_valores(self, tmp_path: Path, monkeypatch) -> None:
         cfg = Configuration()
         pyproject = tmp_path / "pyproject.toml"
@@ -67,11 +74,13 @@ class TestConfigPyproject:
         assert cfg.llm_fallback_model == "test-model"
         assert cfg.unsafe_fixes is False
 
+    @pytest.mark.integration
     def test_sin_pyproject(self, tmp_path: Path, monkeypatch) -> None:
         cfg = Configuration()
         monkeypatch.setattr(cfg, "ura_root", tmp_path)
         cfg._load_from_pyproject()  # no debe lanzar
 
+    @pytest.mark.integration
     def test_pyproject_invalido(self, tmp_path: Path, monkeypatch) -> None:
         cfg = Configuration()
         pyproject = tmp_path / "pyproject.toml"
@@ -79,6 +88,7 @@ class TestConfigPyproject:
         monkeypatch.setattr(cfg, "ura_root", tmp_path)
         cfg._load_from_pyproject()  # no debe lanzar
 
+    @pytest.mark.integration
     def test_propiedades_rutas(self, tmp_path: Path) -> None:
         cfg = Configuration()
         cfg.log_dir = tmp_path / "logs"

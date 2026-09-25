@@ -4,6 +4,7 @@ Mock permitido: DegradedMode (singleton), asyncio.get_running_loop(), llm_embed.
 Mock NO permitido: funciones internas de qdrant_client.py.
 """
 from __future__ import annotations
+import pytest
 
 from unittest.mock import MagicMock, patch
 
@@ -19,10 +20,12 @@ from motor.core.qdrant_client import (
 # ===================================================================
 
 class TestGenerarSparseVector:
+    @pytest.mark.unit
     def test_empty_string(self) -> None:
         result = generar_sparse_vector("")
         assert result == {"indices": [], "values": []}
 
+    @pytest.mark.unit
     def test_basic_tf(self) -> None:
         result = generar_sparse_vector("hola mundo hola")
         indices = result["indices"]
@@ -32,26 +35,31 @@ class TestGenerarSparseVector:
         v = {indices[i]: values[i] for i in range(2)}
         assert set(v.values()) == {2 / 3, 1 / 3}
 
+    @pytest.mark.unit
     def test_max_tokens_truncation(self) -> None:
         tokens = "palabra " * 100
         result = generar_sparse_vector(tokens, max_tokens=5)
         assert len(result["indices"]) <= 5
 
+    @pytest.mark.unit
     def test_special_chars_ignored(self) -> None:
         result = generar_sparse_vector("¡hola! mundo... test")
         v = dict(zip(result["indices"], result["values"], strict=False))
         assert len(v) == 3  # hola, mundo, test
         assert abs(sum(v.values()) - 1.0) < 1e-9
 
+    @pytest.mark.unit
     def test_indices_positive(self) -> None:
         result = generar_sparse_vector("a b c")
         assert all(i >= 0 for i in result["indices"])
 
+    @pytest.mark.unit
     def test_repeated_word_single_token(self) -> None:
         result = generar_sparse_vector("si si si si si")
         assert len(result["indices"]) == 1
         assert result["values"] == [1.0]
 
+    @pytest.mark.unit
     def test_deterministic(self) -> None:
         r1 = generar_sparse_vector("hola mundo")
         r2 = generar_sparse_vector("hola mundo")
@@ -71,6 +79,7 @@ class TestBuildPayload:
         with patch("motor.core.qdrant_client.QdrantClient._conectar"):
             return QdrantClient(config)
 
+    @pytest.mark.unit
     def test_minimal(self) -> None:
         client = self._make_client()
         payload = client._build_payload({"ts": "2026-01-01T00:00:00"})
@@ -88,6 +97,7 @@ class TestBuildPayload:
         assert payload["segfault"] is False
         assert payload["origin_node"] == "ASUS"
 
+    @pytest.mark.unit
     def test_full(self) -> None:
         client = self._make_client()
         incidente = {
@@ -126,6 +136,7 @@ class TestBuildPayload:
         assert payload["signal"] == 9
         assert payload["oom_killed"] is True
 
+    @pytest.mark.unit
     def test_empty_dict_defaults(self) -> None:
         client = self._make_client()
         payload = client._build_payload({})
@@ -153,6 +164,7 @@ class TestHealthLogic:
         return client
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_disponible_false(self, MockDM: MagicMock) -> None:
         client = self._make_client()
         dm_instance = MockDM.instancia.return_value
@@ -161,6 +173,7 @@ class TestHealthLogic:
         dm_instance.mark_degraded.assert_called_with("qdrant")
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_modo_rest_true(self, MockDM: MagicMock) -> None:
         client = self._make_client()
         dm_instance = MockDM.instancia.return_value
@@ -169,6 +182,7 @@ class TestHealthLogic:
         dm_instance.mark_healthy.assert_called_with("qdrant")
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_cliente_none(self, MockDM: MagicMock) -> None:
         client = self._make_client()
         dm_instance = MockDM.instancia.return_value
@@ -177,6 +191,7 @@ class TestHealthLogic:
         dm_instance.mark_degraded.assert_called_with("qdrant")
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_cliente_exception(self, MockDM: MagicMock) -> None:
         client = self._make_client()
         dm_instance = MockDM.instancia.return_value
@@ -186,6 +201,7 @@ class TestHealthLogic:
         dm_instance.mark_degraded.assert_called_with("qdrant")
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_cliente_ok(self, MockDM: MagicMock) -> None:
         client = self._make_client()
         dm_instance = MockDM.instancia.return_value
@@ -194,6 +210,7 @@ class TestHealthLogic:
         dm_instance.mark_healthy.assert_called_with("qdrant")
 
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_disponible_false_no_http(self, MockDM: MagicMock) -> None:
         """Si disponible=False, health retorna False sin tocar cliente."""
         client = self._make_client()
@@ -215,6 +232,7 @@ class TestEliminarFilter:
             return QdrantClient(config)
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.unit
     def test_single_filter_str_value(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {}
@@ -228,6 +246,7 @@ class TestEliminarFilter:
         assert payload["filter"]["must"] == [{"key": "source", "match": {"value": "/path/to/file"}}]
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.unit
     def test_multi_filter(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {}
@@ -239,6 +258,7 @@ class TestEliminarFilter:
         assert len(payload["filter"]["must"]) == 2
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.unit
     def test_empty_filter(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {}
@@ -250,6 +270,7 @@ class TestEliminarFilter:
         assert payload["filter"]["must"] == []
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.unit
     def test_server_error_returns_false(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 500
         client = self._make_client()
@@ -273,6 +294,7 @@ class TestGenerarEmbeddingWrapper:
 
     @patch("motor.core.qdrant_client.asyncio.get_running_loop")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embedding_async")
+    @pytest.mark.unit
     def test_no_loop_calls_asyncio_run(
         self, mock_async: MagicMock, mock_loop: MagicMock
     ) -> None:
@@ -285,6 +307,7 @@ class TestGenerarEmbeddingWrapper:
     @patch("motor.core.qdrant_client.ThreadPoolExecutor")
     @patch("motor.core.qdrant_client.asyncio.get_running_loop")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embedding_async")
+    @pytest.mark.unit
     def test_with_loop_uses_executor(
         self, mock_async: MagicMock, mock_loop: MagicMock, mock_executor: MagicMock
     ) -> None:
@@ -302,6 +325,7 @@ class TestGenerarEmbeddingWrapper:
         executor_instance.submit.assert_called_once()
 
     @patch("motor.core.qdrant_client.llm_embed")
+    @pytest.mark.unit
     def test_generar_embeddings_batch(self, mock_embed: MagicMock) -> None:
         mock_embed.return_value = [[0.5, 0.6]]
         client = self._make_client()

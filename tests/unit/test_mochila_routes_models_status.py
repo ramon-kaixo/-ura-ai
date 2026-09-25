@@ -1,5 +1,6 @@
 """Tests para core/mochila/routes/models.py y status.py."""
 from __future__ import annotations
+import pytest
 
 import time
 from types import SimpleNamespace
@@ -21,6 +22,7 @@ def _state() -> MochilaState:
 
 
 class TestModelsRouter:
+    @pytest.mark.unit
     def test_models_ok(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -44,6 +46,7 @@ class TestModelsRouter:
         assert "ollama/auto" in ids
         assert "ollama/qwen3:32b" in ids
 
+    @pytest.mark.unit
     def test_models_cache(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -62,6 +65,7 @@ class TestModelsRouter:
         client.get("/v1/models")
         assert provider.health.await_count == 1  # cacheada
 
+    @pytest.mark.unit
     def test_models_cache_expira(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -80,6 +84,7 @@ class TestModelsRouter:
         client.get("/v1/models")
         assert provider.health.await_count == 2
 
+    @pytest.mark.unit
     def test_models_provider_sin_modelos(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -99,6 +104,7 @@ class TestModelsRouter:
 
 
 class TestStatusRouter:
+    @pytest.mark.unit
     def test_status_endpoint(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -115,6 +121,7 @@ class TestStatusRouter:
         assert r.status_code == 200
         assert r.json() == {"status": "ok"}
 
+    @pytest.mark.unit
     def test_metrics_endpoint(self) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient

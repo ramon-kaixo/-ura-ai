@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import shutil
 import sqlite3
 import time
@@ -27,10 +28,12 @@ def plugin(engine: mock.Mock) -> CleanupPlugin:
 
 
 class TestCleanupLogs:
+    @pytest.mark.integration
     def test_dir_no_existe(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: Path("/no/existe"))
         assert plugin.cleanup_logs() == {"removed": 0, "reason": "log_dir_not_found"}
 
+    @pytest.mark.integration
     def test_elimina_viejos(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         logs = tmp_path / "URA" / "ura_ia_1972" / "motor" / "observability" / "logs"
         logs.mkdir(parents=True)
@@ -50,6 +53,7 @@ class TestCleanupLogs:
         assert not viejo.exists()
         assert nuevo.exists()
 
+    @pytest.mark.integration
     def test_error_eliminando_silencioso(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         logs = tmp_path / "URA" / "ura_ia_1972" / "motor" / "observability" / "logs"
         logs.mkdir(parents=True)
@@ -66,10 +70,12 @@ class TestCleanupLogs:
 
 
 class TestCleanupEmbeddings:
+    @pytest.mark.integration
     def test_dir_no_existe(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: Path("/no/existe"))
         assert plugin.cleanup_embeddings() == {"removed": 0, "reason": "embeddings_dir_not_found"}
 
+    @pytest.mark.integration
     def test_elimina_huerfanos(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         emb = tmp_path / "URA" / "ura_ia_1972" / "knowledge" / "embeddings"
         docs = tmp_path / "URA" / "ura_ia_1972" / "knowledge" / "documents"
@@ -86,6 +92,7 @@ class TestCleanupEmbeddings:
 
 
 class TestVacuumSqlite:
+    @pytest.mark.integration
     def test_base_no_existe(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(Path, "exists", mock.Mock(return_value=False))
         with mock.patch("sqlite3.connect") as m_conn:
@@ -93,6 +100,7 @@ class TestVacuumSqlite:
         assert result["results"][0]["status"] == "skipped"
         m_conn.assert_not_called()
 
+    @pytest.mark.integration
     def test_vacuum_ok(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         db = tmp_path / "knowledge.db"
         db.write_text("sqlite")
@@ -103,6 +111,7 @@ class TestVacuumSqlite:
         assert result["results"][0]["status"] == "ok"
         conn.execute.assert_called_with("VACUUM")
 
+    @pytest.mark.integration
     def test_vacuum_error(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr("sqlite3.connect", mock.Mock(side_effect=sqlite3.OperationalError("locked")))
         monkeypatch.setattr(Path, "exists", mock.Mock(return_value=True))
@@ -111,6 +120,7 @@ class TestVacuumSqlite:
 
 
 class TestCheckDisk:
+    @pytest.mark.integration
     def test_ok(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(
             shutil,
@@ -121,6 +131,7 @@ class TestCheckDisk:
         assert result["status"] == "ok"
         assert result["percent"] == 50.0
 
+    @pytest.mark.integration
     def test_warning(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(
             shutil,
@@ -131,6 +142,7 @@ class TestCheckDisk:
         assert result["status"] == "warning"
         plugin.engine.log.warning.assert_called()
 
+    @pytest.mark.integration
     def test_error(self, plugin: CleanupPlugin, monkeypatch) -> None:
         monkeypatch.setattr(shutil, "disk_usage", mock.Mock(side_effect=OSError("x")))
         result = plugin.check_disk()
@@ -139,6 +151,7 @@ class TestCheckDisk:
 
 
 class TestDetectDuplicates:
+    @pytest.mark.integration
     def test_ok(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         f = tmp_path / "a.py"
         f.write_text("def foo():\n    x = 1\n    y = 2\n    z = 3\n    return x\n")
@@ -147,6 +160,7 @@ class TestDetectDuplicates:
         assert "groups" in result
         assert "total_funcs" in result
 
+    @pytest.mark.integration
     def test_syntax_error_ignorado(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         f = tmp_path / "b.py"
         f.write_text("def roto(:\n")
@@ -156,6 +170,7 @@ class TestDetectDuplicates:
 
 
 class TestTechDebt:
+    @pytest.mark.integration
     def test_cuenta_todos(self, plugin: CleanupPlugin, tmp_path: Path, monkeypatch) -> None:
         f = tmp_path / "m.py"
         f.write_text("# TODO: x\n# FIXME: y\n# TODO: z\n")
@@ -165,9 +180,11 @@ class TestTechDebt:
 
 
 class TestForense:
+    @pytest.mark.integration
     def test_sin_dir(self, plugin: CleanupPlugin) -> None:
         assert plugin.forense_aislamientos() == {"total": 0, "limpiados": 0, "activos": 0}
 
+    @pytest.mark.integration
     def test_limpia_proceso_muerto(self, plugin: CleanupPlugin, monkeypatch) -> None:
         pid_dir = mock.Mock()
         pid_dir.name = "99999"
@@ -200,31 +217,37 @@ class TestForense:
 
 
 class TestScripts:
+    @pytest.mark.integration
     def test_watermark(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=0)
         assert plugin.watermark() == {"ok": True}
         plugin.engine.run_script.assert_called_once()
 
+    @pytest.mark.integration
     def test_pareto(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=1)
         assert plugin.pareto() == {"ok": False}
 
+    @pytest.mark.integration
     def test_auto_mejora(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=0)
         assert plugin.auto_mejora() == {"ok": True}
 
+    @pytest.mark.integration
     def test_conciencia(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=0)
         assert plugin.conciencia() == {"ok": True}
 
 
 class TestGit:
+    @pytest.mark.integration
     def test_commit_ok(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_git.return_value = SimpleNamespace(returncode=0)
         result = plugin.git_commit("msg")
         assert result["ok"] is True
         assert plugin.engine.run_git.call_args_list[1].args[0] == ["commit", "-m", "msg"]
 
+    @pytest.mark.integration
     def test_commit_default_message(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_git.return_value = SimpleNamespace(returncode=0)
         plugin.git_commit()
@@ -232,12 +255,14 @@ class TestGit:
         assert args[0] == "commit"
         assert "mantenimiento:" in args[2]
 
+    @pytest.mark.integration
     def test_rollback(self, plugin: CleanupPlugin) -> None:
         plugin.git_rollback()
         plugin.engine.run_git.assert_called_with(["checkout", "."])
 
 
 class TestAuditoria:
+    @pytest.mark.integration
     def test_quick_con_json(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(
             returncode=0, stdout='{"score": 80, "bloqueante": false}'
@@ -246,16 +271,19 @@ class TestAuditoria:
         assert result["score"] == 80
         assert result["bloqueante"] is False
 
+    @pytest.mark.integration
     def test_profundo(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=0, stdout="")
         plugin.auditoria(profundo=True)
         assert "--full" in plugin.engine.run_script.call_args[1]["args"]
 
+    @pytest.mark.integration
     def test_json_invalido(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(returncode=0, stdout="no-json")
         result = plugin.auditoria()
         assert result["score"] == 0
 
+    @pytest.mark.integration
     def test_bloqueante_loguea(self, plugin: CleanupPlugin) -> None:
         plugin.engine.run_script.return_value = SimpleNamespace(
             returncode=0, stdout='{"score": 30, "bloqueante": true}'

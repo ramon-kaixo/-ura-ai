@@ -1,5 +1,6 @@
 """Tests Fase 7 — Auto-recovery/Queue (split de test_fase7.py)."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -18,6 +19,7 @@ from _fase7_helpers import (  # noqa: F401
 
 
 class TestQdrantAutoRecovery:
+    @pytest.mark.unit
     def test_check_available_resets_degraded(self, mock_qdrant_client):  # noqa: F811
         store = QdrantVectorStore(collection="test")
         store._degraded = True
@@ -26,6 +28,7 @@ class TestQdrantAutoRecovery:
         assert store.check_available()
         assert store.available
 
+    @pytest.mark.unit
     def test_check_available_4xx_no_recovery(self, mock_qdrant_client):  # noqa: F811
         store = QdrantVectorStore(collection="test")
         store._degraded = True
@@ -36,6 +39,7 @@ class TestQdrantAutoRecovery:
         assert not store.check_available()
         assert not store.available
 
+    @pytest.mark.unit
     def test_check_available_5xx_backoff(self, mock_qdrant_client):  # noqa: F811
         store = QdrantVectorStore(collection="test")
         store._degraded = True
@@ -44,6 +48,7 @@ class TestQdrantAutoRecovery:
         assert not store.check_available()
         assert store._backoff > 1.0
 
+    @pytest.mark.unit
     def test_available_returns_not_degraded(self, mock_qdrant_client):  # noqa: F811
         store = QdrantVectorStore(collection="test")
         assert store.available
@@ -55,6 +60,7 @@ class TestQdrantAutoRecovery:
 
 
 class TestOllamaAutoRecovery:
+    @pytest.mark.unit
     def test_check_available_resets_degraded(self, mock_ollama_health):  # noqa: F811
         embedder = OllamaEmbedder()
         embedder._degraded = True
@@ -63,6 +69,7 @@ class TestOllamaAutoRecovery:
         assert embedder.check_available()
         assert embedder.available
 
+    @pytest.mark.unit
     def test_check_available_failure_backoff(self, mock_ollama_health):  # noqa: F811
         embedder = OllamaEmbedder()
         embedder._degraded = True
@@ -71,6 +78,7 @@ class TestOllamaAutoRecovery:
         assert not embedder.check_available()
         assert embedder._backoff > 1.0
 
+    @pytest.mark.unit
     def test_available_returns_boolean(self, mock_ollama_health):  # noqa: F811
         embedder = OllamaEmbedder()
         assert embedder.available
@@ -83,6 +91,7 @@ class TestOllamaAutoRecovery:
 
 
 class TestExtractionQueue:
+    @pytest.mark.unit
     def test_queue_extract_creates_job(self, tmp_path: Path):
         from knowledge.engine.extraction_service import MetadataExtractionService
 
@@ -111,6 +120,7 @@ class TestExtractionQueue:
         assert row["status"] == "pending"
         assert row["job_type"] == "extraction"
 
+    @pytest.mark.unit
     def test_get_queue_status(self, tmp_path: Path):
         from knowledge.engine.extraction_service import MetadataExtractionService
 
@@ -136,6 +146,7 @@ class TestExtractionQueue:
         status = service.get_queue_status(job_id)
         assert status["status"] == "done"
 
+    @pytest.mark.unit
     def test_get_queue_status_not_found(self, tmp_path: Path):
         from knowledge.engine.extraction_service import MetadataExtractionService
 

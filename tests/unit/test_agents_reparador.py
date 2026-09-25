@@ -1,3 +1,4 @@
+import pytest
 """Tests for core/agents/reparador.py."""
 
 from unittest.mock import MagicMock, patch
@@ -6,6 +7,7 @@ from motor.core.agents.reparador import AgenteReparador
 
 
 class TestReparar:
+    @pytest.mark.unit
     def test_archivo_no_existe(self):
         rep = AgenteReparador()
         ok, nivel, msg = rep.reparar("/tmp/no_existe.py", [])
@@ -15,6 +17,7 @@ class TestReparar:
 
     @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=True)
+    @pytest.mark.unit
     def test_nivel_1_ok(self, mock_n1, mock_copy, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("x = 1")
@@ -28,6 +31,7 @@ class TestReparar:
     @patch("motor.core.agents.reparador.shutil.copy2")
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=True)
+    @pytest.mark.unit
     def test_nivel_2_ok(self, mock_n2, mock_n1, mock_copy, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("x = 1")
@@ -41,6 +45,7 @@ class TestReparar:
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=False)
     @patch.object(AgenteReparador, "_nivel_3", return_value=True)
+    @pytest.mark.unit
     def test_nivel_3_ok(self, mock_n3, mock_n2, mock_n1, mock_copy, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("x = 1")
@@ -54,6 +59,7 @@ class TestReparar:
     @patch.object(AgenteReparador, "_nivel_1", return_value=False)
     @patch.object(AgenteReparador, "_nivel_2", return_value=False)
     @patch.object(AgenteReparador, "_nivel_3", return_value=False)
+    @pytest.mark.unit
     def test_todos_fallan(self, mock_n3, mock_n2, mock_n1, mock_copy, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("x = 1")
@@ -63,6 +69,7 @@ class TestReparar:
         assert nivel == 0
         assert "No se pudo" in msg
 
+    @pytest.mark.unit
     def test_backup_creado(self, tmp_path):
         f = tmp_path / "test.py"
         f.write_text("x = 1")
@@ -73,6 +80,7 @@ class TestReparar:
 
 
 class TestGenerate:
+    @pytest.mark.unit
     def test_con_llm_inyectado(self):
         mock_llm = MagicMock()
         mock_llm.generate.return_value = "fixed code"
@@ -82,6 +90,7 @@ class TestGenerate:
         mock_llm.generate.assert_called_once_with("prompt", model="model", options=None)
 
     @patch("motor.core.llm.generate")
+    @pytest.mark.unit
     def test_fallback_a_motor(self, mock_gen):
         mock_gen.return_value = "motor code"
         rep = AgenteReparador(llm=None)
@@ -91,6 +100,7 @@ class TestGenerate:
 
 
 class TestNiveles:
+    @pytest.mark.unit
     def test_nivel_1_exito(self, tmp_path):
         f = tmp_path / "ok.py"
         f.write_text("x = 1")
@@ -98,6 +108,7 @@ class TestNiveles:
         with patch("motor.core.agents.reparador.subprocess.run", return_value=MagicMock()):
             assert rep._nivel_1(f) is True
 
+    @pytest.mark.unit
     def test_nivel_1_compilation_error(self, tmp_path):
         f = tmp_path / "bad.py"
         f.write_text("x = 1")
@@ -105,6 +116,7 @@ class TestNiveles:
         with patch("motor.core.agents.reparador.subprocess.run", return_value=MagicMock()), patch("builtins.compile", side_effect=SyntaxError("boom")):
                 assert rep._nivel_1(f) is False
 
+    @pytest.mark.unit
     def test_nivel_2_sin_errores(self, tmp_path):
         f = tmp_path / "ok.py"
         f.write_text("x = 1")
@@ -114,6 +126,7 @@ class TestNiveles:
         with patch("motor.core.agents.reparador.subprocess.run", return_value=r):
             assert rep._nivel_2(f, "modelo") is True
 
+    @pytest.mark.unit
     def test_nivel_2_genera_fix(self, tmp_path):
         f = tmp_path / "bad.py"
         f.write_text("missing = valor_no_definido")
@@ -127,6 +140,7 @@ class TestNiveles:
             assert rep._nivel_2(f, "modelo") is True
         assert "x = 1" in f.read_text()
 
+    @pytest.mark.unit
     def test_nivel_3_exito(self, tmp_path):
         f = tmp_path / "bad.py"
         f.write_text("y = indefinido")
@@ -141,6 +155,7 @@ class TestNiveles:
                 assert rep._nivel_3(f) is True
         assert "z = 1" in f.read_text()
 
+    @pytest.mark.unit
     def test_nivel_3_urlopen_error(self, tmp_path):
         f = tmp_path / "bad.py"
         f.write_text("y = indefinido")

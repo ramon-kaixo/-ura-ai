@@ -9,6 +9,7 @@ from motor.events.event import Event, EventPayload
 
 
 class TestEventBusPublish:
+    @pytest.mark.integration
     def test_publish_calls_subscriber(self):
         bus = EventBus()
         received = []
@@ -21,6 +22,8 @@ class TestEventBusPublish:
         assert len(received) == 1
         assert received[0].topic == "test.topic"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_publish_passes_payload(self):
         bus = EventBus()
         received = []
@@ -33,6 +36,7 @@ class TestEventBusPublish:
         bus.publish("test.topic", payload)
         assert received[0] is payload
 
+    @pytest.mark.integration
     def test_publish_does_not_call_unsubscribed(self):
         bus = EventBus()
         received = []
@@ -41,6 +45,7 @@ class TestEventBusPublish:
         bus.publish("test.topic", EventPayload())
         assert len(received) == 0
 
+    @pytest.mark.integration
     def test_publish_isolates_exceptions(self):
         bus = EventBus()
         received = []
@@ -59,12 +64,14 @@ class TestEventBusPublish:
 
 
 class TestEventBusSubscribe:
+    @pytest.mark.integration
     def test_subscribe_returns_id(self):
         bus = EventBus()
         sid = bus.subscribe("t", lambda e: None)
         assert isinstance(sid, str)
         assert len(sid) > 0
 
+    @pytest.mark.integration
     def test_subscribe_pattern_fnmatch(self):
         bus = EventBus()
         received = []
@@ -73,6 +80,7 @@ class TestEventBusSubscribe:
         bus.publish("pipeline.failed", EventPayload())
         assert len(received) == 2
 
+    @pytest.mark.integration
     def test_subscribe_pattern_no_match(self):
         bus = EventBus()
         received = []
@@ -82,6 +90,7 @@ class TestEventBusSubscribe:
 
 
 class TestEventBusUnsubscribe:
+    @pytest.mark.integration
     def test_unsubscribe_removes_exact(self):
         bus = EventBus()
         received = []
@@ -90,6 +99,7 @@ class TestEventBusUnsubscribe:
         bus.publish("t", EventPayload())
         assert len(received) == 0
 
+    @pytest.mark.integration
     def test_unsubscribe_removes_pattern(self):
         bus = EventBus()
         received = []
@@ -98,10 +108,12 @@ class TestEventBusUnsubscribe:
         bus.publish("p.x", EventPayload())
         assert len(received) == 0
 
+    @pytest.mark.integration
     def test_unsubscribe_nonexistent_returns_false(self):
         bus = EventBus()
         assert bus.unsubscribe("nonexistent") is False
 
+    @pytest.mark.integration
     def test_unsubscribe_twice_returns_false(self):
         bus = EventBus()
         sid = bus.subscribe("t", lambda e: None)
@@ -110,6 +122,7 @@ class TestEventBusUnsubscribe:
 
 
 class TestEventBusPriority:
+    @pytest.mark.integration
     def test_higher_priority_called_first(self):
         bus = EventBus()
         order = []
@@ -123,6 +136,7 @@ class TestEventBusPriority:
 
 
 class TestEventBusEmitSync:
+    @pytest.mark.integration
     def test_emit_sync_returns_responses(self):
         bus = EventBus()
         bus.subscribe("t", lambda e: "response_a")
@@ -130,6 +144,7 @@ class TestEventBusEmitSync:
         responses = bus.emit_sync("t", EventPayload())
         assert responses == ["response_a", "response_b"]
 
+    @pytest.mark.integration
     def test_emit_sync_exception_returns_none(self):
         bus = EventBus()
         bus.subscribe("t", lambda e: 42)
@@ -140,16 +155,19 @@ class TestEventBusEmitSync:
 
 
 class TestEventBusCount:
+    @pytest.mark.integration
     def test_count_initial(self):
         bus = EventBus()
         assert bus.count() == 0
 
+    @pytest.mark.integration
     def test_count_after_subscribe(self):
         bus = EventBus()
         bus.subscribe("a", lambda e: None)
         bus.subscribe("b", lambda e: None)
         assert bus.count() == 2
 
+    @pytest.mark.integration
     def test_count_with_topic_filter(self):
         bus = EventBus()
         bus.subscribe("a.x", lambda e: None)
@@ -160,6 +178,7 @@ class TestEventBusCount:
 
 
 class TestEventBusReset:
+    @pytest.mark.integration
     def test_reset_clears_all(self):
         bus = EventBus()
         bus.subscribe("a", lambda e: None)
@@ -170,6 +189,7 @@ class TestEventBusReset:
 
 
 class TestEventBusAsync:
+    @pytest.mark.integration
     def test_publish_async_does_not_block(self):
         bus = EventBus()
         received = []
@@ -188,14 +208,17 @@ class TestEventBusAsync:
 
 
 class TestEventBusEventCreation:
+    @pytest.mark.integration
     def test_event_auto_timestamp(self):
         event = Event(topic="t", payload=EventPayload())
         assert event.timestamp != ""
 
+    @pytest.mark.integration
     def test_event_auto_id(self):
         event = Event(topic="t", payload=EventPayload())
         assert event.id != ""
 
+    @pytest.mark.integration
     def test_event_frozen(self):
         event = Event(topic="t", payload=EventPayload())
         with pytest.raises(Exception):  # noqa: B017

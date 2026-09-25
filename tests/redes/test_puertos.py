@@ -5,6 +5,7 @@ GX10: verifica puertos criticos.
 
 from __future__ import annotations
 
+import pytest
 import json
 from typing import ClassVar
 

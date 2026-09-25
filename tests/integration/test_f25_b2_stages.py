@@ -1,6 +1,7 @@
 """Tests para F25-B2: Implementación PipelineStage."""
 
 from __future__ import annotations
+import pytest
 
 from motor.core.fusion.base import BaseStage
 from motor.core.fusion.config import FusionConfig, make_config_hash
@@ -56,10 +57,12 @@ class _NonDeterministicStage(BaseStage):
         return context
 
 
+@pytest.mark.integration
 def test_pipeline_stage_deterministic_default() -> None:
     assert ExtractionStage().deterministic is True
 
 
+@pytest.mark.integration
 def test_pipeline_stage_deterministic_override() -> None:
     assert _NonDeterministicStage().deterministic is False
 
@@ -67,6 +70,7 @@ def test_pipeline_stage_deterministic_override() -> None:
 # ── B2.2: config_hash ─────────────────────────────────────
 
 
+@pytest.mark.integration
 def test_make_config_hash_deterministic() -> None:
     cfg = FusionConfig()
     h1 = make_config_hash(cfg)
@@ -74,12 +78,14 @@ def test_make_config_hash_deterministic() -> None:
     assert h1 == h2, "config_hash must be deterministic"
 
 
+@pytest.mark.integration
 def test_make_config_hash_length() -> None:
     cfg = FusionConfig()
     h = make_config_hash(cfg)
     assert len(h) == 16, f"Expected 16 hex chars, got {len(h)}"
 
 
+@pytest.mark.integration
 def test_make_config_hash_changes_on_change() -> None:
     a = FusionConfig(max_claims_per_document=10)
     b = FusionConfig(max_claims_per_document=20)
@@ -114,6 +120,7 @@ def _make_context() -> FusionContext:
     )
 
 
+@pytest.mark.integration
 def test_extraction_stage_provenance() -> None:
     stage = ExtractionStage()
     ctx = _make_context()
@@ -126,6 +133,7 @@ def test_extraction_stage_provenance() -> None:
     assert t.output_claims == 1
 
 
+@pytest.mark.integration
 def test_extraction_stage_creates_claims() -> None:
     stage = ExtractionStage()
     ctx = _make_context()
@@ -142,6 +150,7 @@ def test_extraction_stage_creates_claims() -> None:
 # ── B2.4: NormalizationStage ──────────────────────────────
 
 
+@pytest.mark.integration
 def test_normalization_stage() -> None:
     ctx = FusionContext(
         claims=[
@@ -160,6 +169,7 @@ def test_normalization_stage() -> None:
 # ── B2.5: EntityResolutionStage ───────────────────────────
 
 
+@pytest.mark.integration
 def test_rule_based_entity_resolver_known() -> None:
     resolver = RuleBasedEntityResolver()
     entity = resolver.resolve("apple")
@@ -168,6 +178,7 @@ def test_rule_based_entity_resolver_known() -> None:
     assert entity.entity_id != ""
 
 
+@pytest.mark.integration
 def test_rule_based_entity_resolver_unknown() -> None:
     resolver = RuleBasedEntityResolver()
     entity = resolver.resolve("nonexistent_corp_12345")
@@ -175,6 +186,7 @@ def test_rule_based_entity_resolver_unknown() -> None:
     assert entity.entity_id == ""
 
 
+@pytest.mark.integration
 def test_entity_resolution_stage() -> None:
     ctx = FusionContext(
         claims=[
@@ -194,6 +206,7 @@ def test_entity_resolution_stage() -> None:
 # ── B2.6: ConflictDetectionStage ──────────────────────────
 
 
+@pytest.mark.integration
 def test_naive_conflict_resolver_detects() -> None:
     resolver = NaiveConflictResolver()
     claims = [
@@ -219,6 +232,7 @@ def test_naive_conflict_resolver_detects() -> None:
     assert conflicts[0].conflict_type.value == "contradiction"
 
 
+@pytest.mark.integration
 def test_naive_conflict_resolver_no_conflict() -> None:
     resolver = NaiveConflictResolver()
     claims = [
@@ -242,6 +256,7 @@ def test_naive_conflict_resolver_no_conflict() -> None:
     assert len(resolver.detect(claims)) == 0
 
 
+@pytest.mark.integration
 def test_conflict_detection_stage() -> None:
     ctx = FusionContext(
         claims=[
@@ -271,6 +286,7 @@ def test_conflict_detection_stage() -> None:
 # ── B2.7: SourceScoringStage ──────────────────────────────
 
 
+@pytest.mark.integration
 def test_quality_source_scorer() -> None:
     scorer = QualitySourceScorer()
     claim = KnowledgeClaim(
@@ -296,6 +312,7 @@ def test_quality_source_scorer() -> None:
     assert score.overall > 0
 
 
+@pytest.mark.integration
 def test_source_scoring_stage() -> None:
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "test"),
@@ -324,6 +341,7 @@ def test_source_scoring_stage() -> None:
 # ── B2.8: KnowledgeMergerStage ────────────────────────────
 
 
+@pytest.mark.integration
 def test_simple_knowledge_merger() -> None:
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "Apple sells oranges"),
@@ -338,6 +356,7 @@ def test_simple_knowledge_merger() -> None:
     assert facts[0].object == "oranges"
 
 
+@pytest.mark.integration
 def test_knowledge_merger_stage() -> None:
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "Apple sells oranges"),
@@ -354,6 +373,7 @@ def test_knowledge_merger_stage() -> None:
 # ── B2.9: KnowledgeDeltaStage ─────────────────────────────
 
 
+@pytest.mark.integration
 def test_basic_change_detector_added() -> None:
     from motor.core.fusion.models import KnowledgeFact
 
@@ -370,6 +390,7 @@ def test_basic_change_detector_added() -> None:
     assert delta.has_changes
 
 
+@pytest.mark.integration
 def test_basic_change_detector_confirmed() -> None:
     from motor.core.fusion.models import KnowledgeFact
 
@@ -386,6 +407,7 @@ def test_basic_change_detector_confirmed() -> None:
     assert len(delta.facts_updated) == 0
 
 
+@pytest.mark.integration
 def test_knowledge_delta_stage() -> None:
     from motor.core.fusion.models import KnowledgeFact
 
@@ -406,6 +428,7 @@ def test_knowledge_delta_stage() -> None:
 # ── B2.10: MemoryCandidateSelectionStage ──────────────────
 
 
+@pytest.mark.integration
 def test_threshold_selector() -> None:
     from motor.core.fusion.models import KnowledgeFact
 
@@ -421,6 +444,7 @@ def test_threshold_selector() -> None:
     assert selected[0].id == "c"  # highest confidence first
 
 
+@pytest.mark.integration
 def test_memory_candidate_selection_stage() -> None:
     ctx = FusionContext()
     stage = MemoryCandidateSelectionStage()
@@ -431,6 +455,7 @@ def test_memory_candidate_selection_stage() -> None:
 # ── B2.11: config_hash integration ────────────────────────
 
 
+@pytest.mark.integration
 def test_config_hash_in_provenance() -> None:
     cfg = FusionConfig()
     ctx = FusionContext(
@@ -443,6 +468,7 @@ def test_config_hash_in_provenance() -> None:
     assert ctx.provenance.config_hash == make_config_hash(cfg)
 
 
+@pytest.mark.integration
 def test_stage_provenance_has_timestamp() -> None:
     t = StageProvenance(
         stage_name="Test",
@@ -457,6 +483,7 @@ def test_stage_provenance_has_timestamp() -> None:
 # ── D01: Bucket-based conflict detection ──────────────────
 
 
+@pytest.mark.integration
 def test_conflict_detection_buckets_different_subjects() -> None:
     """Claims with different subjects are not compared (no O(n²) across subjects)."""
     claims = [
@@ -475,6 +502,7 @@ def test_conflict_detection_buckets_different_subjects() -> None:
     assert len(conflicts) == 0
 
 
+@pytest.mark.integration
 def test_conflict_detection_buckets_same_subject() -> None:
     """Claims sharing (subject, predicate) are compared."""
     claims = [
@@ -511,6 +539,7 @@ def test_conflict_detection_buckets_same_subject() -> None:
 # ── D02: text_id + evidence_ids ──────────────────────────
 
 
+@pytest.mark.integration
 def test_text_id_in_claim() -> None:
     from motor.core.web.citation.citation import Evidence
 
@@ -537,6 +566,7 @@ def test_text_id_in_claim() -> None:
     assert claim.text_id == "ev1"
 
 
+@pytest.mark.integration
 def test_evidence_ids_in_fact() -> None:
     from motor.core.fusion.models import make_fact_id
 
@@ -553,6 +583,7 @@ def test_evidence_ids_in_fact() -> None:
     assert len(fact.evidence) == 0  # no full Evidence objects
 
 
+@pytest.mark.integration
 def test_extraction_stage_sets_text_id() -> None:
     ctx = _make_context()
     stage = ExtractionStage()
@@ -560,6 +591,7 @@ def test_extraction_stage_sets_text_id() -> None:
     assert result.claims[0].text_id == "ev1"
 
 
+@pytest.mark.integration
 def test_merger_uses_evidence_ids() -> None:
     claim = KnowledgeClaim(
         id=make_claim_id("ev1", "Apple sells oranges"),
@@ -578,6 +610,7 @@ def test_merger_uses_evidence_ids() -> None:
 # ── D03: Complete FusionProvenance ────────────────────────
 
 
+@pytest.mark.integration
 def test_provenance_all_fields_set() -> None:
     """Every stage populates its slice of FusionProvenance."""
     from motor.core.fusion.stages import (

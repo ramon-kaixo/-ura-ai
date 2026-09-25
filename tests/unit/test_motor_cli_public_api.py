@@ -1,13 +1,16 @@
+import pytest
 """Tests para motor/cli/public_api.py — fachada pública del motor."""
 
 from motor.cli import public_api
 
 
+@pytest.mark.unit
 def test_exports_disponibles() -> None:
     for name in public_api.__all__:
         assert hasattr(public_api, name), f"falta {name}"
 
 
+@pytest.mark.unit
 def test_algunos_tipos() -> None:
     assert public_api.UraConfig is not None
     assert public_api.QdrantClient is not None

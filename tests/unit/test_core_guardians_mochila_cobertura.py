@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import asyncio
 import json
 import sys
@@ -34,6 +35,7 @@ from core.stealth_fetcher import _default_headers, _random_ua, fetch, fetch_stea
 # ── path_setup ───────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_setup_path_y_get_root() -> None:
     ps._PROJECT_ROOT = None
     ps.setup_path()
@@ -42,6 +44,7 @@ def test_setup_path_y_get_root() -> None:
     assert str(root) in sys.path
 
 
+@pytest.mark.unit
 def test_setup_path_insert_syspath(monkeypatch: pytest.MonkeyPatch) -> None:
     # forzar que el root NO esté en sys.path → se inserta
     ps._PROJECT_ROOT = None
@@ -51,6 +54,7 @@ def test_setup_path_insert_syspath(monkeypatch: pytest.MonkeyPatch) -> None:
     assert str(ps._PROJECT_ROOT) in ps.sys.path
 
 
+@pytest.mark.unit
 def test_get_project_root_sin_init(monkeypatch: pytest.MonkeyPatch) -> None:
     ps._PROJECT_ROOT = None
     root = ps.get_project_root()
@@ -58,6 +62,7 @@ def test_get_project_root_sin_init(monkeypatch: pytest.MonkeyPatch) -> None:
     assert root.name == Path(__file__).resolve().parents[2].name
 
 
+@pytest.mark.unit
 def test_setup_path_idempotente() -> None:
     ps._PROJECT_ROOT = Path("/fake")
     ps.setup_path()  # ya seteado → return
@@ -67,6 +72,7 @@ def test_setup_path_idempotente() -> None:
 # ── guardian_disco ───────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cargar_config_crea(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
     monkeypatch.setattr(gd, "CONFIG_PATH", Path(str(tmp_path)) / ".nervioso" / "guardian_config.json")
@@ -75,6 +81,7 @@ def test_cargar_config_crea(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -
     assert (Path(str(tmp_path)) / ".nervioso" / "guardian_config.json").exists()
 
 
+@pytest.mark.unit
 def test_cargar_config_lee(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "guardian_config.json"
     f.write_text(json.dumps({"hash_truncar": 32, "patrones": ["*.py"], "excluir": []}))
@@ -83,6 +90,7 @@ def test_cargar_config_lee(tmp_path: object, monkeypatch: pytest.MonkeyPatch) ->
     assert cfg["hash_truncar"] == 32
 
 
+@pytest.mark.unit
 def test_cargar_config_corrupto(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     f = Path(str(tmp_path)) / "guardian_config.json"
     f.write_text("{roto")
@@ -92,6 +100,7 @@ def test_cargar_config_corrupto(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert cfg["hash_truncar"] == 64  # default tras error
 
 
+@pytest.mark.unit
 def test_calcular_hash(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "a.txt"
     f.write_text("contenido")
@@ -100,6 +109,7 @@ def test_calcular_hash(tmp_path: object) -> None:
     assert calcular_hash(f, truncar=8) == h[:8]
 
 
+@pytest.mark.unit
 def test_escanear(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     (Path(str(tmp_path)) / "a.py").write_text("x = 1")
@@ -112,6 +122,7 @@ def test_escanear(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     assert ".venv/interno.py" not in actual
 
 
+@pytest.mark.unit
 def test_escanear_error_acceso(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     (Path(str(tmp_path)) / "a.py").write_text("x")
@@ -119,6 +130,7 @@ def test_escanear_error_acceso(tmp_path: object, monkeypatch: pytest.MonkeyPatch
     assert escanear(DEFAULT_CONFIG) == {}
 
 
+@pytest.mark.unit
 def test_comparar() -> None:
     cambios = comparar({"a.py": "h1", "b.py": "h2"}, {"a.py": "h1", "c.py": "h3"})
     status = {c["status"] for c in cambios}
@@ -127,6 +139,7 @@ def test_comparar() -> None:
     assert any(c["file"] == "b.py" and c["status"] == "FANTASMA" for c in cambios)
 
 
+@pytest.mark.unit
 def test_verificar_escritura_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
@@ -137,11 +150,13 @@ def test_verificar_escritura_ok(tmp_path: object, monkeypatch: pytest.MonkeyPatc
     assert verificar_escritura("a.py", h) is True
 
 
+@pytest.mark.unit
 def test_verificar_escritura_no_existe(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     assert verificar_escritura("no.py", "hash") is False
 
 
+@pytest.mark.unit
 def test_verificar_escritura_hash_distinto(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
@@ -151,6 +166,7 @@ def test_verificar_escritura_hash_distinto(tmp_path: object, monkeypatch: pytest
     assert verificar_escritura("a.py", "0" * 64) is False
 
 
+@pytest.mark.unit
 def test_guardar_snapshot(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "NERVIOSO", Path(str(tmp_path)) / ".nervioso")
     monkeypatch.setattr(gd, "SNAPSHOT", Path(str(tmp_path)) / ".nervioso" / "hashes.json")
@@ -159,6 +175,7 @@ def test_guardar_snapshot(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> 
     assert data["total"] == 1
 
 
+@pytest.mark.unit
 def test_guardar_historial(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(gd, "HISTORIAL", Path(str(tmp_path)) / "hist.jsonl")
     guardar_historial([{"status": "NUEVO"}], 5)
@@ -169,6 +186,7 @@ def test_guardar_historial(tmp_path: object, monkeypatch: pytest.MonkeyPatch) ->
     assert data["nuevos"] == 1
 
 
+@pytest.mark.unit
 def test_guardian_cmd_verify(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     f = Path(str(tmp_path)) / "a.py"
@@ -185,6 +203,7 @@ def test_guardian_cmd_verify(monkeypatch: pytest.MonkeyPatch, tmp_path: object) 
     assert exit_codes == [0, 1]
 
 
+@pytest.mark.unit
 def test_guardian_cmd_init(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     (Path(str(tmp_path)) / "a.py").write_text("x")
@@ -195,6 +214,7 @@ def test_guardian_cmd_init(monkeypatch: pytest.MonkeyPatch, tmp_path: object) ->
     assert snap["total"] >= 1
 
 
+@pytest.mark.unit
 def test_guardian_cmd_scan_inicial(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     (Path(str(tmp_path)) / "a.py").write_text("x")
@@ -206,6 +226,7 @@ def test_guardian_cmd_scan_inicial(monkeypatch: pytest.MonkeyPatch, tmp_path: ob
     assert "cambios_detectados" in snap
 
 
+@pytest.mark.unit
 def test_guardian_main_verify(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     f = Path(str(tmp_path)) / "a.py"
@@ -219,6 +240,7 @@ def test_guardian_main_verify(monkeypatch: pytest.MonkeyPatch, tmp_path: object)
     gd.main()  # no lanza
 
 
+@pytest.mark.unit
 def test_guardian_main_init(monkeypatch: pytest.MonkeyPatch) -> None:
     llamado = {"n": 0}
     monkeypatch.setattr(gd, "_parse_args", lambda: type("A", (), {"verify": None, "init": True, "scan": False})())
@@ -228,6 +250,7 @@ def test_guardian_main_init(monkeypatch: pytest.MonkeyPatch) -> None:
     assert llamado["n"] == 1
 
 
+@pytest.mark.unit
 def test_guardian_main_scan(monkeypatch: pytest.MonkeyPatch) -> None:
     llamado = {"n": 0}
     monkeypatch.setattr(gd, "_parse_args", lambda: type("A", (), {"verify": None, "init": False, "scan": True})())
@@ -237,6 +260,7 @@ def test_guardian_main_scan(monkeypatch: pytest.MonkeyPatch) -> None:
     assert llamado["n"] == 1
 
 
+@pytest.mark.unit
 def test_guardian_main_scan_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None:
     llamado = {"n": 0}
     monkeypatch.setattr(gd, "_parse_args", lambda: type("A", (), {"verify": None, "init": False, "scan": False})())
@@ -246,6 +270,7 @@ def test_guardian_main_scan_por_defecto(monkeypatch: pytest.MonkeyPatch) -> None
     assert llamado["n"] == 1
 
 
+@pytest.mark.unit
 def test_guardian_main_con_verify_no_scan(monkeypatch: pytest.MonkeyPatch) -> None:
     llamado = {"n": 0}
     monkeypatch.setattr(gd, "_parse_args", lambda: type("A", (), {"verify": ["a", "h"], "init": False, "scan": True})())
@@ -255,6 +280,7 @@ def test_guardian_main_con_verify_no_scan(monkeypatch: pytest.MonkeyPatch) -> No
     assert llamado["n"] == 1  # verify gana; no se llega al scan
 
 
+@pytest.mark.unit
 def test_guardian_parse_args_verify() -> None:
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(gd.sys, "argv", ["guardian", "--verify", "a.py", "hash123"])
@@ -267,6 +293,7 @@ def test_guardian_parse_args_verify() -> None:
         monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_guardian_parse_args_scan() -> None:
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(gd.sys, "argv", ["guardian", "--scan", "--json"])
@@ -278,6 +305,7 @@ def test_guardian_parse_args_scan() -> None:
         monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_guardian_cmd_scan_con_previo(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     monkeypatch.setattr(gd, "URA", Path(str(tmp_path)))
     f = Path(str(tmp_path)) / "a.py"
@@ -295,17 +323,20 @@ def test_guardian_cmd_scan_con_previo(monkeypatch: pytest.MonkeyPatch, tmp_path:
 # ── stealth_fetcher ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_random_ua() -> None:
     ua = _random_ua()
     assert ua in sf.USER_AGENTS
 
 
+@pytest.mark.unit
 def test_default_headers() -> None:
     h = _default_headers()
     assert "User-Agent" in h
     assert h["DNT"] == "1"
 
 
+@pytest.mark.unit
 def test_fetch_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Resp:
         is_error = False
@@ -326,6 +357,7 @@ def test_fetch_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch("http://x")) == "<html>ok</html>"
 
 
+@pytest.mark.unit
 def test_fetch_error(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Resp:
         is_error = True
@@ -346,6 +378,7 @@ def test_fetch_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch("http://x")) is None
 
 
+@pytest.mark.unit
 def test_fetch_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Client:
         async def __aenter__(self):
@@ -363,6 +396,7 @@ def test_fetch_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch("http://x")) is None
 
 
+@pytest.mark.unit
 def test_fetch_stealth_sin_playwright(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -378,6 +412,7 @@ def test_fetch_stealth_sin_playwright(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch_stealth("http://x")) is None
 
 
+@pytest.mark.unit
 def test_fetch_stealth_sin_playwright_stealth(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -439,6 +474,7 @@ def test_fetch_stealth_sin_playwright_stealth(monkeypatch: pytest.MonkeyPatch) -
     assert asyncio.run(fetch_stealth("http://x")) is None
 
 
+@pytest.mark.unit
 def test_fetch_stealth_error_general(monkeypatch: pytest.MonkeyPatch) -> None:
     def _boom(*a, **k):
         msg = "playwright roto"
@@ -448,6 +484,7 @@ def test_fetch_stealth_error_general(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch_stealth("http://x")) is None
 
 
+@pytest.mark.unit
 def test_fetch_with_fallback_sin_stealth(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _stealth(*a, **k):
         return None
@@ -465,6 +502,7 @@ def test_fetch_with_fallback_sin_stealth(monkeypatch: pytest.MonkeyPatch) -> Non
     assert asyncio.run(fetch_with_fallback("http://x")) == "resultado"
 
 
+@pytest.mark.unit
 def test_fetch_with_fallback_con_stealth(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _stealth(*a, **k):
         return "html stealth"
@@ -473,6 +511,7 @@ def test_fetch_with_fallback_con_stealth(monkeypatch: pytest.MonkeyPatch) -> Non
     assert asyncio.run(fetch_with_fallback("http://x")) == "html stealth"  # sin fallback
 
 
+@pytest.mark.unit
 def test_fetch_stealth_playwright_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -549,6 +588,7 @@ def test_fetch_stealth_playwright_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch_stealth("http://x")) == "<html>playwright</html>"
 
 
+@pytest.mark.unit
 def test_fetch_stealth_goto_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -609,6 +649,7 @@ def test_fetch_stealth_goto_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(fetch_stealth("http://x")) == "<html>fallback</html>"
 
 
+@pytest.mark.unit
 def test_fetch_stealth_fallback_roto(monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -670,11 +711,13 @@ def test_fetch_stealth_fallback_roto(monkeypatch: pytest.MonkeyPatch) -> None:
 # ── ast_sentinel ─────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_v_resumen_ok() -> None:
     v = V(ok=True, debt=None, errs=[], warns=[], m={})
     assert "[AST] OK" in v.resumen()
 
 
+@pytest.mark.unit
 def test_v_resumen_fail_con_deuda() -> None:
     v = V(ok=False, debt="0xabc", errs=["e1"], warns=["w1"], m={})
     r = v.resumen()
@@ -683,6 +726,7 @@ def test_v_resumen_fail_con_deuda() -> None:
     assert "DEBT_ID: 0xabc" in r
 
 
+@pytest.mark.unit
 def test_sentinel_sintaxis_error() -> None:
     s = ASTSentinel()
     v = s.analizar("def roto(:\n")
@@ -690,6 +734,7 @@ def test_sentinel_sintaxis_error() -> None:
     assert "Syntax" in v.errs[0]
 
 
+@pytest.mark.unit
 def test_sentinel_ok() -> None:
     s = ASTSentinel()
     codigo = 'def f(x: int) -> int:\n    """doc"""\n    return x\n'
@@ -697,6 +742,7 @@ def test_sentinel_ok() -> None:
     assert v.ok is True
 
 
+@pytest.mark.unit
 def test_sentinel_cc_alto() -> None:
     s = ASTSentinel()
     codigo = "def f():\n" + "    if 1:\n        pass\n" * (MAX_CC + 5)
@@ -704,24 +750,28 @@ def test_sentinel_cc_alto() -> None:
     assert any("CC" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_sin_retorno() -> None:
     s = ASTSentinel()
     v = s.analizar("def f(x: int):\n    print(x)\n")
     assert any("sin retorno" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_sin_doc() -> None:
     s = ASTSentinel()
     v = s.analizar("def f(x: int) -> int:\n    return x\n")
     assert any("sin doc" in w for w in v.warns)
 
 
+@pytest.mark.unit
 def test_sentinel_arg_sin_tipo() -> None:
     s = ASTSentinel()
     v = s.analizar("def f(x, y: int) -> int:\n    return y\n")
     assert any("sin tipo" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_estructuras_try() -> None:
     s = ASTSentinel()
     codigo = "def f():\n    try:\n        pass\n    except:\n        pass\n"
@@ -730,24 +780,28 @@ def test_sentinel_estructuras_try() -> None:
     assert any("pass" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_global() -> None:
     s = ASTSentinel()
     v = s.analizar("x = 1\ndef f():\n    global x\n    return x\n", prod=False)
     assert any("global" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_import_prohibido() -> None:
     s = ASTSentinel()
     v = s.analizar("import pickle\nimport marshal\nx = 1\n", prod=False)
     assert any("import:" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_import_from_prohibido() -> None:
     s = ASTSentinel()
     v = s.analizar("from os import system\nx = 1\n", prod=False)
     assert any("os.system" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_todo_fine() -> None:
     s = ASTSentinel()
     codigo = 'def f(x: int) -> int:\n    """doc"""\n    return x\n'
@@ -757,18 +811,21 @@ def test_sentinel_todo_fine() -> None:
     assert v.m["lines"] == 3
 
 
+@pytest.mark.unit
 def test_sentinel_magic_numbers() -> None:
     s = ASTSentinel()
     v = s.analizar("def f() -> int:\n    return 42\n", prod=False)
     assert any("magic 42" in w for w in v.warns)
 
 
+@pytest.mark.unit
 def test_sentinel_async_funcion() -> None:
     s = ASTSentinel()
     v = s.analizar("async def f() -> None:\n    pass\n", prod=False)
     assert v.m["nf"] == 1
 
 
+@pytest.mark.unit
 def test_sentinel_estructuras_for_while() -> None:
     s = ASTSentinel()
     codigo = "def f() -> None:\n    for i in range(3):\n        pass\n    while True:\n        break\n    a = True and False\n"
@@ -776,6 +833,7 @@ def test_sentinel_estructuras_for_while() -> None:
     assert v.ok is True  # CC sube pero no supera MAX_CC
 
 
+@pytest.mark.unit
 def test_sentinel_try_con_tipo() -> None:
     s = ASTSentinel()
     codigo = "def f() -> None:\n    try:\n        pass\n    except ValueError as e:\n        print(e)\n"
@@ -783,6 +841,7 @@ def test_sentinel_try_con_tipo() -> None:
     assert not any("except" in e for e in v.errs)  # handler con tipo → ok
 
 
+@pytest.mark.unit
 def test_sentinel_try_pass() -> None:
     s = ASTSentinel()
     codigo = "def f() -> None:\n    try:\n        pass\n    except Exception as e:\n        pass\n"
@@ -790,18 +849,21 @@ def test_sentinel_try_pass() -> None:
     assert any("pass" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_import_ok() -> None:
     s = ASTSentinel()
     v = s.analizar("import json\nfrom pathlib import Path\nx = 1\n", prod=False)
     assert not any("import:" in e for e in v.errs)
 
 
+@pytest.mark.unit
 def test_sentinel_linea_sin_deuda() -> None:
     s = ASTSentinel()
     v = s.analizar("def f() -> int:\n    return 1\n", prod=False)
     assert not any("deuda" in w for w in v.warns)
 
 
+@pytest.mark.unit
 def test_sentinel_deuda_todo() -> None:
     s = ASTSentinel()
     v = s.analizar("# TODO: arreglar esto\nx = 1\n", prod=False)
@@ -811,6 +873,7 @@ def test_sentinel_deuda_todo() -> None:
 # ── mochila providers/base ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_provider_error() -> None:
     e = ProviderError("msg", "provider", 500)
     assert e.provider == "provider"
@@ -821,12 +884,14 @@ def test_provider_error() -> None:
 # ── mochila status_endpoint ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_fs_bug_status() -> None:
     r = _fs_bug_status()
     assert "estado" in r
     assert "archivos_criticos_perdidos" in r
 
 
+@pytest.mark.unit
 def test_ram_info_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         def __init__(self) -> None:
@@ -852,6 +917,7 @@ def test_ram_info_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["riesgo"] == "medio"
 
 
+@pytest.mark.unit
 def test_ram_info_sin_linea_mem(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Cmd:
         async def communicate(self):
@@ -864,6 +930,7 @@ def test_ram_info_sin_linea_mem(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(_ram_info()) == {"error": "free -g not available"}
 
 
+@pytest.mark.unit
 def test_ram_info_file_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _fake(*a, **k):
         raise FileNotFoundError("free no existe")
@@ -872,6 +939,7 @@ def test_ram_info_file_not_found(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(_ram_info()) == {"error": "free not available"}
 
 
+@pytest.mark.unit
 def test_ram_info_error(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         async def communicate(self):
@@ -885,6 +953,7 @@ def test_ram_info_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(_ram_info()) == {"error": "free -g not available"}
 
 
+@pytest.mark.unit
 def test_timer_status_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         async def communicate(self):
@@ -897,6 +966,7 @@ def test_timer_status_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(_timer_status("svc")) == "active"
 
 
+@pytest.mark.unit
 def test_timer_status_error(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _fake(*a, **k):
         msg = "roto"
@@ -906,6 +976,7 @@ def test_timer_status_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert asyncio.run(_timer_status("svc")) == "unknown"
 
 
+@pytest.mark.unit
 def test_system_status(monkeypatch: pytest.MonkeyPatch) -> None:
     class _CB:
         def estado(self, p: str) -> str:
@@ -941,6 +1012,7 @@ def test_system_status(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r["timers"]["guard"] == "active"
 
 
+@pytest.mark.unit
 def test_alemania_status(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     from core.mochila import status_endpoint as se
 
@@ -952,6 +1024,7 @@ def test_alemania_status(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> N
     assert r["global"] == "ok"
 
 
+@pytest.mark.unit
 def test_alemania_status_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     from core.mochila import status_endpoint as se
 
@@ -960,6 +1033,7 @@ def test_alemania_status_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch
     assert r == {"global": "unknown", "ips": {}, "servicios": {}}
 
 
+@pytest.mark.unit
 def test_tunnel_status(monkeypatch: pytest.MonkeyPatch) -> None:
     from core.mochila import status_endpoint as se
 
@@ -986,6 +1060,7 @@ def test_tunnel_status(monkeypatch: pytest.MonkeyPatch) -> None:
     assert r == {"tunnel_active": True, "searxng_accessible": True}
 
 
+@pytest.mark.unit
 def test_tunnel_status_error(monkeypatch: pytest.MonkeyPatch) -> None:
     from core.mochila import status_endpoint as se
 
@@ -1013,6 +1088,7 @@ def test_tunnel_status_error(monkeypatch: pytest.MonkeyPatch) -> None:
 # ── mochila vram_scheduler ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_vram_detect_max(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -1022,6 +1098,7 @@ def test_vram_detect_max(monkeypatch: pytest.MonkeyPatch) -> None:
     assert VRAMAwareScheduler._detect_max_vram(100) == 24576
 
 
+@pytest.mark.unit
 def test_vram_detect_max_error(monkeypatch: pytest.MonkeyPatch) -> None:
     def _roto(*a, **k):
         msg = "no nvidia"
@@ -1031,6 +1108,7 @@ def test_vram_detect_max_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
 
+@pytest.mark.unit
 def test_vram_detect_max_na(monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -1040,6 +1118,7 @@ def test_vram_detect_max_na(monkeypatch: pytest.MonkeyPatch) -> None:
     assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
 
+@pytest.mark.unit
 def test_vram_available_mb() -> None:
     s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
     s.max_mb = 100
@@ -1047,11 +1126,13 @@ def test_vram_available_mb() -> None:
     assert s.available_mb() == 70
 
 
+@pytest.mark.unit
 def test_vram_estimar_overhead() -> None:
     # 2400 chars → (600)*0.002 = 1.2 → int = 1
     assert VRAMAwareScheduler.estimar_vram({"model": "otro", "prompt": "p" * 2400}) == 512 + 1
 
 
+@pytest.mark.unit
 def test_vram_estimar() -> None:
     assert VRAMAwareScheduler.estimar_vram({"_vram_mb": "5000"}) == 5000
     assert (
@@ -1060,6 +1141,7 @@ def test_vram_estimar() -> None:
     assert VRAMAwareScheduler.estimar_vram({"model": "otro", "messages": "m" * 400}) == 512  # overhead 0
 
 
+@pytest.mark.unit
 def test_vram_acquire_ok() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1076,6 +1158,7 @@ def test_vram_acquire_ok() -> None:
     assert asyncio.run(_main()) is not None
 
 
+@pytest.mark.unit
 def test_vram_acquire_ocupado() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1089,6 +1172,8 @@ def test_vram_acquire_ocupado() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_acquire_sin_vram_timeout() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1103,6 +1188,7 @@ def test_vram_acquire_sin_vram_timeout() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_release() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1115,6 +1201,7 @@ def test_vram_release() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_sync_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1146,6 +1233,8 @@ def test_vram_sync_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._hot_models == {"m1"}
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_sync_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1172,6 +1261,7 @@ def test_vram_sync_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._consecutive_smi_errors >= 1
 
 
+@pytest.mark.unit
 def test_vram_sync_returncode_no_cero(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 1  # nvidia-smi falló
@@ -1198,6 +1288,8 @@ def test_vram_sync_returncode_no_cero(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._current_mb == 999  # returncode != 0 → no actualiza
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_sync_kill_proc_error_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1237,6 +1329,7 @@ def test_vram_sync_kill_proc_error_timeout(monkeypatch: pytest.MonkeyPatch) -> N
     assert s._consecutive_smi_errors == 1
 
 
+@pytest.mark.unit
 def test_vram_sync_kill_error_interno(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1276,6 +1369,7 @@ def test_vram_sync_kill_error_interno(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._consecutive_smi_errors == 1
 
 
+@pytest.mark.unit
 def test_vram_acquire_boot_flujo_real(monkeypatch: pytest.MonkeyPatch) -> None:
     import core.mochila.vram_scheduler as vm
 
@@ -1307,6 +1401,7 @@ def test_vram_acquire_boot_flujo_real(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_sync_communicate_error_kill_roto(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1365,6 +1460,7 @@ def test_vram_sync_communicate_error_kill_roto(monkeypatch: pytest.MonkeyPatch) 
     assert s._current_mb == 10000  # bloqueado
 
 
+@pytest.mark.unit
 def test_vram_loop_once(monkeypatch: pytest.MonkeyPatch) -> None:
     s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
     s._scheduler_log = __import__("logging").getLogger("t")
@@ -1390,6 +1486,7 @@ def test_vram_loop_once(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(s._scheduler_loop_once())  # no lanza
 
 
+@pytest.mark.unit
 def test_vram_loop_once_procesa_cola(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1425,6 +1522,7 @@ def test_vram_loop_once_procesa_cola(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_start_stop_close(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _once() -> None:
         pass
@@ -1448,6 +1546,7 @@ def test_vram_start_stop_close(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_init_real(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     class _R:
         returncode = 0
@@ -1471,6 +1570,8 @@ def test_vram_init_real(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> No
     assert s._active == {}
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_sync_kill_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1505,6 +1606,7 @@ def test_vram_sync_kill_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._consecutive_smi_errors == 1
 
 
+@pytest.mark.unit
 def test_vram_sync_kill_error(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1540,6 +1642,8 @@ def test_vram_sync_kill_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s._consecutive_smi_errors == 1
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_acquire_timeout() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1554,6 +1658,8 @@ def test_vram_acquire_timeout() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_vram_acquire_boot_timeout() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1567,6 +1673,7 @@ def test_vram_acquire_boot_timeout() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_acquire_boot_real() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1610,6 +1717,7 @@ def test_vram_acquire_boot_real() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_loop_con_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _once(self) -> None:
         pass
@@ -1633,6 +1741,7 @@ def test_vram_loop_con_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     assert llamadas["n"] == 2
 
 
+@pytest.mark.unit
 def test_vram_stop_loop_sin_task() -> None:
     async def _main():
         s = VRAMAwareScheduler.__new__(VRAMAwareScheduler)
@@ -1642,6 +1751,7 @@ def test_vram_stop_loop_sin_task() -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_loop_once_con_fut_done(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Proc:
         returncode = 0
@@ -1677,6 +1787,7 @@ def test_vram_loop_once_con_fut_done(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_loop_once_error(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _exec(*a, **k):
         msg = "roto"
@@ -1702,6 +1813,7 @@ def test_vram_loop_once_error(monkeypatch: pytest.MonkeyPatch) -> None:
     asyncio.run(_main())
 
 
+@pytest.mark.unit
 def test_vram_sync_error_tres(monkeypatch: pytest.MonkeyPatch) -> None:
     async def _exec(*a, **k):
         msg = "roto"

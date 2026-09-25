@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import subprocess
 import sys
 from pathlib import Path
@@ -117,6 +118,7 @@ class TestWorkflows:
         step_names = [s.get("name", "") for s in steps]
         assert any("Ruff" in s for s in step_names)
 
+    @pytest.mark.slow
     def test_build_uploads_artifact(self):
         import yaml
 

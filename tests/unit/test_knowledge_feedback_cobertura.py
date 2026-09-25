@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -42,6 +43,7 @@ def db_path(tmp_path: Path) -> Path:
 D1 = "0123456789ab"
 
 
+@pytest.mark.unit
 def test_invalid_doc_id_error() -> None:
     assert issubclass(InvalidDocIdError, ValueError)
 
@@ -50,29 +52,35 @@ def test_invalid_doc_id_error() -> None:
     "doc_id",
     ["", "abc", "0123456789abX", "0123456789abcdef"],
 )
+@pytest.mark.unit
 def test_validate_doc_id_invalidos(doc_id) -> None:
     with pytest.raises(InvalidDocIdError):
         _validate_doc_id(doc_id)
 
 
+@pytest.mark.unit
 def test_validate_doc_id_valido() -> None:
     _validate_doc_id(D1)
 
 
+@pytest.mark.unit
 def test_validate_doc_id_none() -> None:
     with pytest.raises(InvalidDocIdError):
         _validate_doc_id(None)
 
 
+@pytest.mark.unit
 def test_record_rating_fuera_de_rango(db_path) -> None:
     assert record_feedback(db_path, D1, 0) is False
     assert record_feedback(db_path, D1, 6) is False
 
 
+@pytest.mark.unit
 def test_record_doc_id_invalido(db_path) -> None:
     assert record_feedback(db_path, "bad", 3) is False
 
 
+@pytest.mark.unit
 def test_record_nuevo_y_media(db_path) -> None:
     assert record_feedback(db_path, D1, 2) is True
     assert record_feedback(db_path, D1, 4) is True
@@ -84,10 +92,12 @@ def test_record_nuevo_y_media(db_path) -> None:
     assert row["avg_rating"] == pytest.approx(3.0)
 
 
+@pytest.mark.unit
 def test_record_error(db_path, tmp_path) -> None:
     assert record_feedback(tmp_path / "no.db", D1, 3) is False
 
 
+@pytest.mark.unit
 def test_get_feedback(db_path) -> None:
     record_feedback(db_path, D1, 5)
     fb = get_feedback(db_path, D1)
@@ -97,22 +107,27 @@ def test_get_feedback(db_path) -> None:
     assert fb.timestamp
 
 
+@pytest.mark.unit
 def test_get_feedback_no_existe(db_path) -> None:
     assert get_feedback(db_path, D1) is None
 
 
+@pytest.mark.unit
 def test_get_feedback_invalido(db_path) -> None:
     assert get_feedback(db_path, "xx") is None
 
 
+@pytest.mark.unit
 def test_get_feedback_error(tmp_path) -> None:
     assert get_feedback(tmp_path / "no.db", D1) is None
 
 
+@pytest.mark.unit
 def test_overlay_vacio() -> None:
     assert apply_ranking_overlay([], "/no/existe") == []
 
 
+@pytest.mark.unit
 def test_overlay_sin_feedback(db_path) -> None:
     results = [{"doc_id": D1, "score": 1.0}]
     out = apply_ranking_overlay(results, db_path)
@@ -122,6 +137,7 @@ def test_overlay_sin_feedback(db_path) -> None:
     assert results[0] == {"doc_id": D1, "score": 1.0}  # no muta original
 
 
+@pytest.mark.unit
 def test_overlay_con_feedback(db_path) -> None:
     record_feedback(db_path, D1, 5)
     out = apply_ranking_overlay([{"doc_id": D1, "score": 1.0}], db_path)
@@ -130,6 +146,7 @@ def test_overlay_con_feedback(db_path) -> None:
     assert out[0]["n_ratings"] == 1
 
 
+@pytest.mark.unit
 def test_overlay_ordena_y_varios(db_path) -> None:
     d2 = "0123456789ac"
     record_feedback(db_path, D1, 5)
@@ -142,11 +159,13 @@ def test_overlay_ordena_y_varios(db_path) -> None:
     assert out[1]["doc_id"] == d2
 
 
+@pytest.mark.unit
 def test_overlay_error(tmp_path) -> None:
     out = apply_ranking_overlay([{"doc_id": D1, "score": 1.0}], tmp_path / "no.db")
     assert out == [{"doc_id": D1, "score": 1.0}]
 
 
+@pytest.mark.unit
 def test_top_rated(db_path) -> None:
     d2 = "0123456789ac"
     record_feedback(db_path, D1, 5)
@@ -157,14 +176,17 @@ def test_top_rated(db_path) -> None:
     assert tops[0].rating == 5
 
 
+@pytest.mark.unit
 def test_top_rated_vacio(db_path) -> None:
     assert top_rated(db_path) == []
 
 
+@pytest.mark.unit
 def test_top_rated_error(tmp_path) -> None:
     assert top_rated(tmp_path / "no.db") == []
 
 
+@pytest.mark.unit
 def test_feedback_dataclass() -> None:
     fb = Feedback(doc_id=D1, rating=4, timestamp="t")
     assert fb.timestamp == "t"

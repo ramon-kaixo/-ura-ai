@@ -1,6 +1,7 @@
 """Tests para motor.observability.instrumentation (Instrumentation wrappers)."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -80,6 +81,7 @@ class _FakeHooks:
 
 
 class TestWrap:
+    @pytest.mark.unit
     def test_wrap_replaces_method(self):
         bus = _FakeBus()
 
@@ -95,6 +97,7 @@ class TestWrap:
 
 
 class TestInstrumentationInit:
+    @pytest.mark.unit
     def test_snapshot(self):
         inst = Instrumentation()
         snap = inst.snapshot()
@@ -104,6 +107,7 @@ class TestInstrumentationInit:
 
 
 class TestInstrumentEventBus:
+    @pytest.mark.unit
     def test_publish_success_records(self):
         inst = Instrumentation()
         bus = _FakeBus()
@@ -113,6 +117,7 @@ class TestInstrumentEventBus:
         assert inst.metrics.counter("eventbus_published_total", labels={"topic": "tema"}).get() == 1
         assert inst.health.get_status("eventbus") == "healthy"
 
+    @pytest.mark.unit
     def test_publish_failure_records(self):
         inst = Instrumentation()
         bus = _FakeBus()
@@ -122,6 +127,7 @@ class TestInstrumentEventBus:
             bus.publish("tema", {})
         assert inst.metrics.counter("eventbus_failures_total", labels={"topic": "tema"}).get() == 1
 
+    @pytest.mark.unit
     def test_emit_sync_success(self):
         inst = Instrumentation()
         bus = _FakeBus()
@@ -131,6 +137,7 @@ class TestInstrumentEventBus:
         assert bus.calls == ["emit_sync:tema:system"]
         assert inst.metrics.counter("eventbus_emitsync_total", labels={"topic": "tema"}).get() == 1
 
+    @pytest.mark.unit
     def test_emit_sync_failure(self):
         inst = Instrumentation()
         bus = _FakeBus()
@@ -142,6 +149,8 @@ class TestInstrumentEventBus:
 
 
 class TestInstrumentRegistry:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_success(self):
         inst = Instrumentation()
         registry = _FakeRegistry()
@@ -153,6 +162,8 @@ class TestInstrumentRegistry:
         assert inst.health.get_status("plugins") == "healthy"
         assert "plugins" in inst.readiness._dependencies
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_failure(self):
         inst = Instrumentation()
         registry = _FakeRegistry()
@@ -164,6 +175,7 @@ class TestInstrumentRegistry:
 
 
 class TestInstrumentPipeline:
+    @pytest.mark.unit
     def test_execute_success(self):
         inst = Instrumentation()
         executor = _FakeExecutor()
@@ -177,6 +189,7 @@ class TestInstrumentPipeline:
         assert inst.metrics.counter("pipeline_failed_total").get() == 0
         assert inst.health.get_status("pipeline") == "healthy"
 
+    @pytest.mark.unit
     def test_execute_with_rollbacks(self):
         inst = Instrumentation()
         executor = _FakeExecutor()
@@ -190,6 +203,7 @@ class TestInstrumentPipeline:
         assert inst.metrics.counter("pipeline_rollbacks_total", labels={"pipeline": "p1"}).get() == 2
         assert inst.metrics.counter("pipeline_completed_total").get() == 1
 
+    @pytest.mark.unit
     def test_execute_failure(self):
         inst = Instrumentation()
         executor = _FakeExecutor()
@@ -201,6 +215,7 @@ class TestInstrumentPipeline:
 
 
 class TestInstrumentHooks:
+    @pytest.mark.unit
     def test_register_hooks(self):
         inst = Instrumentation()
         hooks = _FakeHooks()
@@ -212,6 +227,7 @@ class TestInstrumentHooks:
 
 
 class TestInstrumentSubprocess:
+    @pytest.mark.unit
     def test_run_success(self):
         inst = Instrumentation()
         executor = _FakeSubprocess()
@@ -223,6 +239,8 @@ class TestInstrumentSubprocess:
         assert inst.metrics.counter("subprocess_timeouts_total", labels={"cmd": "ls"}).get() == 0
         assert inst.metrics.counter("subprocess_errors_total", labels={"cmd": "ls"}).get() == 0
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_run_timeout(self):
         inst = Instrumentation()
         executor = _FakeSubprocess()
@@ -232,6 +250,7 @@ class TestInstrumentSubprocess:
         assert inst.metrics.counter("subprocess_timeouts_total", labels={"cmd": "slow"}).get() == 1
         assert inst.metrics.counter("subprocess_errors_total", labels={"cmd": "slow"}).get() == 1
 
+    @pytest.mark.unit
     def test_run_error(self):
         inst = Instrumentation()
         executor = _FakeSubprocess()
@@ -241,6 +260,7 @@ class TestInstrumentSubprocess:
         assert inst.metrics.counter("subprocess_errors_total", labels={"cmd": "bad"}).get() == 1
         assert inst.metrics.counter("subprocess_timeouts_total", labels={"cmd": "bad"}).get() == 0
 
+    @pytest.mark.unit
     def test_run_empty_cmd(self):
         inst = Instrumentation()
         executor = _FakeSubprocess()

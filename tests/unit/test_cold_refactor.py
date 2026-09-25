@@ -1,6 +1,7 @@
 """Tests para core/cleaner/cold_refactor.py (Capa 3 — deuda tecnica y tuneladora)."""
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -26,6 +27,7 @@ def cr(monkeypatch, tmp_path) -> ColdRefactor:
 
 
 class TestRegistrar:
+    @pytest.mark.unit
     def test_registrar_deuda_crea_skill(self, cr: ColdRefactor, tmp_path) -> None:
         sp = cr.registrar_deuda("D1", "skill1", "codigo", ["w1"])
         assert sp.name == "skill1.py"
@@ -34,10 +36,12 @@ class TestRegistrar:
         assert cola[0]["debt_id"] == "D1"
         assert cola[0]["advertencias_originales"] == ["w1"]
 
+    @pytest.mark.unit
     def test_registrar_limpio(self, cr: ColdRefactor, tmp_path) -> None:
         sp = cr.registrar_limpio("s2", "codigo limpio")
         assert sp.read_text() == "codigo limpio"
 
+    @pytest.mark.unit
     def test_registrar_deuda_reemplaza_mismo_id(self, cr: ColdRefactor, tmp_path) -> None:
         cr.registrar_deuda("D1", "s1", "v1", [])
         cr.registrar_deuda("D1", "s1", "v2", [])
@@ -47,13 +51,16 @@ class TestRegistrar:
 
 
 class TestCola:
+    @pytest.mark.unit
     def test_lista_vacia(self, cr: ColdRefactor) -> None:
         assert cr._l() == []
 
+    @pytest.mark.unit
     def test_lista_corrupta(self, cr: ColdRefactor, tmp_path) -> None:
         (tmp_path / "debt_queue.json").write_text("no json")
         assert cr._l() == []
 
+    @pytest.mark.unit
     def test_estado_deuda(self, cr: ColdRefactor) -> None:
         cr.registrar_deuda("D1", "s1", "c", [])
         e = E("D2", "s2", "p", "c2", [], "ts", resuelto=True)
@@ -61,6 +68,7 @@ class TestCola:
         st = cr.estado_deuda()
         assert st == {"total": 2, "pend": 1, "res": 1, "skills": ["s1"]}
 
+    @pytest.mark.unit
     def test_timestamp_iso(self, cr: ColdRefactor) -> None:
         ts = cr._n()
         assert "T" in ts and ts.endswith("+00:00")

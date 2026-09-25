@@ -1,6 +1,7 @@
 """Tests de cobertura para motor/scanner/collector_asus.py (gate 85%, meta 100)."""
 
 from __future__ import annotations
+import pytest
 
 from unittest.mock import MagicMock, patch
 
@@ -15,6 +16,8 @@ class FakeResult:
 
 class TestEscaneoAsus:
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_sin_host_salta(self, executor: MagicMock) -> None:
         config = MagicMock()
         config.asus_host = ""
@@ -23,6 +26,8 @@ class TestEscaneoAsus:
         executor.run.assert_not_called()
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_todos_ok(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True)
         config = MagicMock()
@@ -34,6 +39,8 @@ class TestEscaneoAsus:
         ct.assert_called_once()
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_excepcion_en_check(self, executor: MagicMock) -> None:
         executor.run.side_effect = RuntimeError("no curl")
         config = MagicMock()
@@ -43,6 +50,8 @@ class TestEscaneoAsus:
         assert r["temp_gpu"] == 0
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_temp_con_error(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True, stdout="")
         config = MagicMock()
@@ -53,6 +62,8 @@ class TestEscaneoAsus:
 
 class TestChecks:
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_ollama_ok(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True)
         assert collector_asus._check_ollama("host") is True
@@ -60,16 +71,22 @@ class TestChecks:
         assert any(f":{collector_asus.PUERTO_OLLAMA}" in c for c in cmd)
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_qdrant_ok(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True)
         assert collector_asus._check_qdrant("host") is True
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_whisper_falla(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=False)
         assert collector_asus._check_whisper("host") is False
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_temp_lee_stdout(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True, stdout="52300\n")
         with patch.object(collector_asus, "get_secret", return_value="root"):
@@ -77,6 +94,8 @@ class TestChecks:
         assert temp == 52.3
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_temp_con_ssh_user(self, executor: MagicMock) -> None:
         executor.run.return_value = FakeResult(ok=True, stdout="41000\n")
         with patch.object(collector_asus, "get_secret", return_value="ramon"):
@@ -85,6 +104,8 @@ class TestChecks:
         assert "ramon@10.0.0.1" in target
 
     @patch("motor.scanner.collector_asus._executor")
+    @pytest.mark.gx10
+    @pytest.mark.unit
     def test_check_temp_error_returns_cero(self, executor: MagicMock) -> None:
         executor.run.side_effect = RuntimeError("ssh failed")
         assert collector_asus._check_temp("host") == 0

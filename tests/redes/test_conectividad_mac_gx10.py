@@ -7,6 +7,7 @@ o verifican localhost (test_puertos.py, test_disponibilidad.py).
 
 from __future__ import annotations
 
+import pytest
 import json
 import urllib.request
 
@@ -22,6 +23,8 @@ class TestMacToGX10Ollama:
 
     OLLAMA_URL = f"http://{GX10_TS_IP}:11434"
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_mac_curl_gx10_ollama(self) -> None:
         """Mac hace curl a GX10:11434/api/tags y obtiene modelos."""
         rc, out, _ = run_cmd(
@@ -33,6 +36,8 @@ class TestMacToGX10Ollama:
         models = data.get("models", [])
         assert len(models) > 0, "GX10 Ollama no tiene modelos disponibles"
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_mac_gx10_ollama_modelos_esperados(self) -> None:
         """Los modelos criticos estan presentes en GX10."""
         rc, out, _ = run_cmd(
@@ -54,6 +59,8 @@ class TestMacToGX10OpenCode:
 
     OPENCODE_URL = f"http://{GX10_TS_IP}:8081"
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_mac_curl_gx10_opencode(self) -> None:
         """Mac hace curl a GX10:8081 y obtiene respuesta HTTP."""
         rc, out, _ = run_cmd(
@@ -73,6 +80,8 @@ class TestMacToGX10ModelRouter:
 
     ROUTER_URL = f"http://{GX10_TS_IP}:11435"
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_mac_curl_gx10_model_router(self) -> None:
         """Mac hace curl a GX10:11435 y obtiene respuesta HTTP."""
         rc, out, _ = run_cmd(
@@ -90,6 +99,8 @@ class TestMacToGX10ModelRouter:
 class TestGX10ServicesBinding:
     """Verifica que servicios criticos en GX10 escuchan en todas las interfaces."""
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_ollama_bound_to_all_interfaces(self) -> None:
         """Ollama debe escuchar en 0.0.0.0 o * (no solo 127.0.0.1)."""
         rc, out, _ = run_cmd("ss -tlnp | grep :11434")
@@ -99,6 +110,8 @@ class TestGX10ServicesBinding:
             f"Ollama no escucha en todas las interfaces: {out.strip()}"
         )
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_opencode_bound_to_all_interfaces(self) -> None:
         """OpenCode debe escuchar en 0.0.0.0 (accesible desde Mac)."""
         rc, out, _ = run_cmd("ss -tlnp | grep :8081")
@@ -108,6 +121,8 @@ class TestGX10ServicesBinding:
             f"OpenCode no escucha en 0.0.0.0: {out.strip()}"
         )
 
+    @pytest.mark.gx10
+    @pytest.mark.mac
     def test_model_router_bound_to_0_0_0_0(self) -> None:
         """Model Router debe estar en 0.0.0.0 (accesible desde Mac)."""
         rc, out, _ = run_cmd("ss -tlnp | grep :11435")

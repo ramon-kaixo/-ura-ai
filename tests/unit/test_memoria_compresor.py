@@ -6,6 +6,7 @@ lista no-dict, items sin "idea", parseo de etiquetas/tipo/herramienta.
 
 from __future__ import annotations
 
+import pytest
 import json
 
 import pytest
@@ -304,11 +305,13 @@ async def test_modelo_default_qwen(monkeypatch) -> None:
 class TestCoberturaCompresorRemanente:
     """Cobertura 100x100: remanentes compresor (TASK-20260814-001)."""
 
+    @pytest.mark.unit
     def test_json_interno_invalido(self) -> None:
         from core.memoria.compresor import _parsear_json_ideas
 
         assert _parsear_json_ideas("texto [no-es-json] resto") is None
 
+    @pytest.mark.unit
     def test_sin_nada(self) -> None:
         from core.memoria.compresor import _parsear_json_ideas
 

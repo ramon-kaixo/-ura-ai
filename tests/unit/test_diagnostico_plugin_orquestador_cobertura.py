@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import ast
 import json
 from pathlib import Path
@@ -35,53 +36,63 @@ from motor.plugin.manifest import (
 # ── correlacion ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_dependencias_definidas() -> None:
     assert "docker" in DEPENDENCIAS
     assert DEPENDENCIAS["sshd"] == ["red"]
 
 
+@pytest.mark.unit
 def test_agrupar_sin_incidentes() -> None:
     assert agrupar_incidentes([]) == []
 
 
+@pytest.mark.unit
 def test_agrupar_con_hw_issues() -> None:
     grupos = agrupar_incidentes([], hw_ok=False, hw_issues=["dmesg error"])
     assert grupos[0]["causa_raiz"] == "hardware"
     assert "sshd" in grupos[0]["servicios_afectados"]
 
 
+@pytest.mark.unit
 def test_agrupar_hw_ok_sin_issues() -> None:
     assert agrupar_incidentes([], hw_ok=False, hw_issues=None) == []
 
 
+@pytest.mark.unit
 def test_agrupar_con_dependencia() -> None:
     grupos = agrupar_incidentes(["docker"])
     assert grupos[0]["causa_raiz"] == "docker"
     assert "container_searxng" in grupos[0]["servicios_afectados"]
 
 
+@pytest.mark.unit
 def test_agrupar_tag_simple() -> None:
     grupos = agrupar_incidentes(["weird_tag"])
     assert grupos[0]["causa_raiz"] == "weird_tag"
     assert grupos[0]["sintomas"] == ["weird_tag detectado"]
 
 
+@pytest.mark.unit
 def test_agrupar_hw_issue_no_duplica() -> None:
     grupos = agrupar_incidentes(["hw_issue", "docker"])
     causas = [g["causa_raiz"] for g in grupos]
     assert causas == ["docker"]  # hw_issue no duplica sin hw_ok=False
 
 
+@pytest.mark.unit
 def test_agrupar_hw_issue_con_hw_ok_false() -> None:
     grupos = agrupar_incidentes(["hw_issue", "docker"], hw_ok=False, hw_issues=["z"])
     causas = [g["causa_raiz"] for g in grupos]
     assert causas == ["hardware", "docker"]  # hw_issue se salta en el loop (procesados)
 
 
+@pytest.mark.unit
 def test_resumir_vacio() -> None:
     assert resumir_incidentes([]) == "Sin incidencias activas"
 
 
+@pytest.mark.unit
 def test_resumir_con_incidentes() -> None:
     s = resumir_incidentes([{"tipo": "A", "subtipo": "x"}, {"tipo": "B"}])
     assert "2 incidencia(s)" in s
@@ -89,6 +100,7 @@ def test_resumir_con_incidentes() -> None:
     assert "[x]" in s
 
 
+@pytest.mark.unit
 def test_resumir_sin_subtipos() -> None:
     s = resumir_incidentes([{"tipo": "A"}])
     assert "A" in s
@@ -103,6 +115,7 @@ class _Cfg:
         self.data_dir = data_dir
 
 
+@pytest.mark.unit
 def test_backup_incidente_ok(tmp_path: object) -> None:
     p = backup_incidente(_Cfg(str(tmp_path)), {"tipo": "X"})
     assert p != ""
@@ -112,6 +125,7 @@ def test_backup_incidente_ok(tmp_path: object) -> None:
     assert "timestamp" in data
 
 
+@pytest.mark.unit
 def test_backup_sin_incidente(tmp_path: object) -> None:
     p = backup_incidente(_Cfg(str(tmp_path)))
     assert p != ""
@@ -119,6 +133,7 @@ def test_backup_sin_incidente(tmp_path: object) -> None:
     assert "incidente" not in data
 
 
+@pytest.mark.unit
 def test_backup_error(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     class _CfgRoto:
         data_dir = str(tmp_path / "no" / "permiso" / "dir" / "anidado")
@@ -144,6 +159,7 @@ class _Scan:
         self.anomalias = kw.get("anomalias", [])
 
 
+@pytest.mark.unit
 def test_buscar_patrones_ok() -> None:
     scan = _Scan(servicios={"svc1": "inactive"}, recursos={"ram_pct": 95})
     incidentes, costes = buscar_patrones(scan, None, None)
@@ -151,6 +167,7 @@ def test_buscar_patrones_ok() -> None:
     assert "ServiceFailure.svc1" in costes
 
 
+@pytest.mark.unit
 def test_incidentes_servicios() -> None:
     scan = _Scan(servicios={"a": "inactive", "b": "failed", "c": "active"})
     incs = _incidentes_servicios(scan)
@@ -158,10 +175,12 @@ def test_incidentes_servicios() -> None:
     assert incs[0]["tipo"] == "ServiceFailure"
 
 
+@pytest.mark.unit
 def test_incidentes_servicios_vacio() -> None:
     assert _incidentes_servicios(_Scan(servicios={"a": "active"})) == []
 
 
+@pytest.mark.unit
 def test_incidentes_recursos() -> None:
     scan = _Scan(recursos={"ram_pct": 95, "disk_pct": 90, "load_1m": 8, "ncpu": 2})
     incs = _incidentes_recursos(scan)
@@ -170,54 +189,64 @@ def test_incidentes_recursos() -> None:
     assert "ram" in subtipos and "disco" in subtipos and "cpu" in subtipos
 
 
+@pytest.mark.unit
 def test_incidentes_recursos_ok() -> None:
     scan = _Scan(recursos={"ram_pct": 10, "disk_pct": 10, "load_1m": 1, "ncpu": 4})
     assert _incidentes_recursos(scan) == []
 
 
+@pytest.mark.unit
 def test_incidentes_recursos_ncpu_cero() -> None:
     scan = _Scan(recursos={"load_1m": 99, "ncpu": 0})
     assert _incidentes_recursos(scan) == []  # ncpu=0 → no cpu check
 
 
+@pytest.mark.unit
 def test_incidentes_red() -> None:
     scan = _Scan(red={"internet": False, "exit_node_online": False})
     incs = _incidentes_red(scan)
     assert len(incs) == 2
 
 
+@pytest.mark.unit
 def test_incidentes_red_ok() -> None:
     assert _incidentes_red(_Scan(red={"internet": True, "exit_node_online": True})) == []
 
 
+@pytest.mark.unit
 def test_incidentes_hardware_dmesg() -> None:
     scan = _Scan(hw_health={"dmesg_errors": ["e1", "e2"]})
     incs = _incidentes_hardware(scan)
     assert any(i["subtipo"] == "dmesg" for i in incs)
 
 
+@pytest.mark.unit
 def test_incidentes_hardware_journal() -> None:
     scan = _Scan(hw_health={"journal_corrupt": 3})
     incs = _incidentes_hardware(scan)
     assert any(i["subtipo"] == "journal" for i in incs)
 
 
+@pytest.mark.unit
 def test_incidentes_hardware_no_ok_vm() -> None:
     scan = _Scan(hw_health={"ok": False, "tipo": "vm", "issues": ["x"]})
     incs = _incidentes_hardware(scan)
     assert any(i["subtipo"] == "vm" for i in incs)
 
 
+@pytest.mark.unit
 def test_incidentes_hardware_no_ok_fisico() -> None:
     scan = _Scan(hw_health={"ok": False, "issues": ["y"]})
     incs = _incidentes_hardware(scan)
     assert any(i["subtipo"] == "fisico" for i in incs)
 
 
+@pytest.mark.unit
 def test_incidentes_hardware_ok() -> None:
     assert _incidentes_hardware(_Scan(hw_health={"ok": True})) == []
 
 
+@pytest.mark.unit
 def test_incidentes_varios() -> None:
     scan = _Scan(
         contenedores_ko=["c1"],
@@ -230,10 +259,12 @@ def test_incidentes_varios() -> None:
     assert len(incs) == 4
 
 
+@pytest.mark.unit
 def test_incidentes_varios_vacio() -> None:
     assert _incidentes_varios(_Scan()) == []
 
 
+@pytest.mark.unit
 def test_calcular_costes() -> None:
     incs = [{"tipo": "A", "subtipo": "x"}, {"tipo": "A", "subtipo": "x"}, {"tipo": "B"}]
     costes = _calcular_costes_historicos(incs)
@@ -244,6 +275,7 @@ def test_calcular_costes() -> None:
 # ── plugin base ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_plugin_meta_defaults() -> None:
     m = PluginMeta(name="p")
     assert m.phase == "always"
@@ -251,6 +283,7 @@ def test_plugin_meta_defaults() -> None:
     assert m.timeout == 30
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_dict() -> None:
     m = PluginMeta.from_dict({"name": "x", "phase": "pre", "blocking": True, "timeout": 5, "description": "d"})
     assert m.name == "x"
@@ -259,12 +292,14 @@ def test_plugin_meta_from_dict() -> None:
     assert m.timeout == 5
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_dict_defaults() -> None:
     m = PluginMeta.from_dict({})
     assert m.name == "unknown"
     assert m.phase == "always"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_dict() -> None:
     src = '__plugin__ = {"name": "mi", "phase": "post"}'
     m = PluginMeta.from_source(src)
@@ -273,6 +308,7 @@ def test_plugin_meta_from_source_dict() -> None:
     assert m.phase == "post"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_constant_dict() -> None:
     src = "__plugin__ = {'name': 'const'}"
     m = PluginMeta.from_source(src)
@@ -280,14 +316,17 @@ def test_plugin_meta_from_source_constant_dict() -> None:
     assert m.name == "const"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_sin_plugin() -> None:
     assert PluginMeta.from_source("x = 1") is None
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_syntax_error() -> None:
     assert PluginMeta.from_source("esto no es python {{{") is None
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_file(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "mi.py"
     f.write_text('__plugin__ = {"name": "mi"}')
@@ -295,6 +334,7 @@ def test_plugin_meta_from_file(tmp_path: object) -> None:
     assert m.name == "mi"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_file_sin_meta(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "sin.py"
     f.write_text("x = 1")
@@ -302,6 +342,7 @@ def test_plugin_meta_from_file_sin_meta(tmp_path: object) -> None:
     assert m.name == "sin"  # fallback al stem
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_file_error(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "roto.py"
 
@@ -314,6 +355,7 @@ def test_plugin_meta_from_file_error(monkeypatch: pytest.MonkeyPatch, tmp_path: 
     assert m.name == "roto"
 
 
+@pytest.mark.unit
 def test_ast_dict_to_dict() -> None:
     tree = ast.parse("d = {'a': 1, 'b': 'x', 'c': [1, 2], 'd': {'e': 2}, 'f': True, 'g': not True}")
     d = None
@@ -328,6 +370,7 @@ def test_ast_dict_to_dict() -> None:
     assert d["g"] is False
 
 
+@pytest.mark.unit
 def test_ast_dict_key_no_string() -> None:
     tree = ast.parse("d = {1: 'x'}")
     for node in ast.walk(tree):
@@ -335,6 +378,7 @@ def test_ast_dict_key_no_string() -> None:
             assert _ast_dict_to_dict(node.value) == {}
 
 
+@pytest.mark.unit
 def test_ast_dict_value_str_legacy() -> None:
     tree = ast.parse("d = {'k': 'v'}")
     for node in ast.walk(tree):
@@ -342,6 +386,7 @@ def test_ast_dict_value_str_legacy() -> None:
             assert _ast_dict_to_dict(node.value) == {"k": "v"}
 
 
+@pytest.mark.unit
 def test_ast_dict_value_expression() -> None:
     # Tuple no se maneja (solo Constant/Str/List/Dict/Name/UnaryOp) → se ignora
     tree = ast.parse("d = {'k': ('a', 'b')}")
@@ -350,6 +395,7 @@ def test_ast_dict_value_expression() -> None:
             assert _ast_dict_to_dict(node.value) == {}
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_assign_multiple() -> None:
     src = "a = 1\n__plugin__ = {'name': 'multi'}"
     m = PluginMeta.from_source(src)
@@ -357,11 +403,13 @@ def test_plugin_meta_from_source_assign_multiple() -> None:
     assert m.name == "multi"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_assign_sin_plugin() -> None:
     src = "a = 1\nb = 2"
     assert PluginMeta.from_source(src) is None
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_con_expr() -> None:
     # node Expr al nivel módulo (no Assign) → se salta
     src = 'funcion(1)\n__plugin__ = {"name": "con-expr"}'
@@ -370,11 +418,13 @@ def test_plugin_meta_from_source_con_expr() -> None:
     assert m.name == "con-expr"
 
 
+@pytest.mark.unit
 def test_plugin_meta_from_source_constant_no_dict() -> None:
     src = "__plugin__ = 42"
     assert PluginMeta.from_source(src) is None
 
 
+@pytest.mark.unit
 def test_ast_dict_key_no_string_otro() -> None:
     # key es Name (no Constant/Str) → continue
     tree = ast.parse("k = 'x'\nd = {k: 'v'}")
@@ -383,6 +433,7 @@ def test_ast_dict_key_no_string_otro() -> None:
             assert _ast_dict_to_dict(node.value) == {}
 
 
+@pytest.mark.unit
 def test_ast_dict_value_str() -> None:
     # value ast.Str legacy → .s
     tree = ast.parse("d = {'k': 'valor'}")
@@ -391,6 +442,7 @@ def test_ast_dict_value_str() -> None:
             assert _ast_dict_to_dict(node.value) == {"k": "valor"}
 
 
+@pytest.mark.unit
 def test_ast_dict_value_name() -> None:
     tree = ast.parse("x = 1\nd = {'k': x}")
     for node in ast.walk(tree):
@@ -398,6 +450,7 @@ def test_ast_dict_value_name() -> None:
             assert _ast_dict_to_dict(node.value) == {"k": "x"}
 
 
+@pytest.mark.unit
 def test_ast_dict_value_not_no_constant() -> None:
     # `not x` con x Name (no Constant) → no entra al if interno
     tree = ast.parse("x = 1\nd = {'k': not x}")
@@ -406,11 +459,13 @@ def test_ast_dict_value_not_no_constant() -> None:
             assert _ast_dict_to_dict(node.value) == {}
 
 
+@pytest.mark.unit
 def test_plugin_entry() -> None:
     e = PluginEntry(meta=PluginMeta(name="p"), path=Path("/x/p.py"))
     assert e.meta.name == "p"
 
 
+@pytest.mark.unit
 def test_plugin_result() -> None:
     r = PluginResult(ok=True, plugin="p", phase="pre")
     assert r.data == {}
@@ -418,6 +473,7 @@ def test_plugin_result() -> None:
     assert r.duration_ms == 0.0
 
 
+@pytest.mark.unit
 def test_plugin_base_init() -> None:
     class _P(PluginBase):
         def on_load(self) -> None:
@@ -436,6 +492,7 @@ def test_plugin_base_init() -> None:
     p.rollback()  # no lanza
 
 
+@pytest.mark.unit
 def test_plugin_base_abstracto() -> None:
     with pytest.raises(TypeError):
         PluginBase()
@@ -444,16 +501,19 @@ def test_plugin_base_abstracto() -> None:
 # ── manifest ─────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_manifest_schema_y_required() -> None:
     assert "name" in MANIFEST_SCHEMA
     assert {"name"} == REQUIRED_FIELDS
 
 
+@pytest.mark.unit
 def test_manifest_error() -> None:
     e = ManifestError("x")
     assert str(e) == "x"
 
 
+@pytest.mark.unit
 def test_manifest_defaults() -> None:
     m = PluginManifest()
     assert m.api_version == "1.0.0"
@@ -461,10 +521,12 @@ def test_manifest_defaults() -> None:
     assert m.hooks == []
 
 
+@pytest.mark.unit
 def test_parse_manifest_no_existe() -> None:
     assert parse_manifest(Path("/no/existe/plugin.yaml")) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_json(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text(json.dumps({"name": "p1", "version": "2.0", "dependencies": {"plugins": ["x"]}, "lifecycle": {"on_load": False}}))
@@ -476,6 +538,7 @@ def test_parse_manifest_json(tmp_path: object) -> None:
     assert m.lifecycle["on_config_change"] is False
 
 
+@pytest.mark.unit
 def test_parse_manifest_json_sin_name(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text('{"version": "1"}')
@@ -483,6 +546,7 @@ def test_parse_manifest_json_sin_name(tmp_path: object) -> None:
     assert m.name == str(tmp_path).split("/")[-1]  # stem del parent
 
 
+@pytest.mark.unit
 def test_parse_manifest_json_campos_desconocidos(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text('{"name": "p", "campo_raro": 1, "otro": 2}')
@@ -490,18 +554,21 @@ def test_parse_manifest_json_campos_desconocidos(tmp_path: object) -> None:
     assert m.name == "p"  # campos desconocidos → log.debug, sin error
 
 
+@pytest.mark.unit
 def test_parse_manifest_json_invalido(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text("{roto")
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_json_no_dict(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text("[1, 2]")
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_yaml(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -517,6 +584,7 @@ def test_parse_manifest_yaml(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     assert m.hooks == ["pre"]
 
 
+@pytest.mark.unit
 def test_parse_manifest_yaml_sin_yaml(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -534,6 +602,7 @@ def test_parse_manifest_yaml_sin_yaml(tmp_path: object, monkeypatch: pytest.Monk
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_yaml_error(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -551,6 +620,7 @@ def test_parse_manifest_yaml_error(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_yaml_no_dict(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import sys
     import types
@@ -564,12 +634,14 @@ def test_parse_manifest_yaml_no_dict(tmp_path: object, monkeypatch: pytest.Monke
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_formato_no_soportado(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.toml"
     f.write_text("x = 1")
     assert parse_manifest(f) is None
 
 
+@pytest.mark.unit
 def test_parse_manifest_lifecycle_no_dict(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "plugin.json"
     f.write_text(json.dumps({"name": "p", "lifecycle": "no-dict"}))
@@ -577,6 +649,7 @@ def test_parse_manifest_lifecycle_no_dict(tmp_path: object) -> None:
     assert m.lifecycle == {"on_load": True, "on_unload": True, "on_config_change": False}
 
 
+@pytest.mark.unit
 def test_find_manifest(tmp_path: object) -> None:
     d = Path(str(tmp_path))
     assert find_manifest(d) is None
@@ -586,6 +659,7 @@ def test_find_manifest(tmp_path: object) -> None:
     assert find_manifest(d).name == "plugin.yaml"  # yaml primero
 
 
+@pytest.mark.unit
 def test_find_manifest_json_solo(tmp_path: object) -> None:
     d = Path(str(tmp_path))
     (d / "plugin.json").write_text("{}")
@@ -595,6 +669,7 @@ def test_find_manifest_json_solo(tmp_path: object) -> None:
 # ── orquestador ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_orquestador_ram_alta() -> None:
     o = AgenteOrquestador()
     accion, razon = o.decidir({"hardware": {"ram_pct": 90}, "f821": 0}, {})
@@ -602,6 +677,7 @@ def test_orquestador_ram_alta() -> None:
     assert "90" in razon
 
 
+@pytest.mark.unit
 def test_orquestador_f821_alto() -> None:
     o = AgenteOrquestador()
     accion, razon = o.decidir({"hardware": {"ram_pct": 10}, "f821": 15}, {})
@@ -609,6 +685,7 @@ def test_orquestador_f821_alto() -> None:
     assert "15" in razon
 
 
+@pytest.mark.unit
 def test_orquestador_refactorizar(monkeypatch: pytest.MonkeyPatch) -> None:
     o = AgenteOrquestador()
     monkeypatch.setattr(o, "_contar_pendientes", lambda: 3)
@@ -617,6 +694,7 @@ def test_orquestador_refactorizar(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "3" in razon
 
 
+@pytest.mark.unit
 def test_orquestador_esperar(monkeypatch: pytest.MonkeyPatch) -> None:
     o = AgenteOrquestador()
     monkeypatch.setattr(o, "_contar_pendientes", lambda: 0)
@@ -624,6 +702,7 @@ def test_orquestador_esperar(monkeypatch: pytest.MonkeyPatch) -> None:
     assert _accion == "ESPERAR"
 
 
+@pytest.mark.unit
 def test_orquestador_contar_pendientes(monkeypatch: pytest.MonkeyPatch) -> None:
     import tempfile
 
@@ -637,6 +716,7 @@ def test_orquestador_contar_pendientes(monkeypatch: pytest.MonkeyPatch) -> None:
     assert AgenteOrquestador._contar_pendientes() == 1  # solo largo.py (>80 líneas)
 
 
+@pytest.mark.unit
 def test_orquestador_contar_pendientes_error(monkeypatch: pytest.MonkeyPatch) -> None:
     class _Roto:
         def rglob(self, pattern: str):
@@ -646,5 +726,6 @@ def test_orquestador_contar_pendientes_error(monkeypatch: pytest.MonkeyPatch) ->
     assert AgenteOrquestador._contar_pendientes() == 0
 
 
+@pytest.mark.unit
 def test_orquestador_modelo() -> None:
     assert orq.MODELOS["orquestador"] == AgenteOrquestador.MODELO

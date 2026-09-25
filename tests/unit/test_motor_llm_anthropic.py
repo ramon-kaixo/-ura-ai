@@ -6,6 +6,7 @@ en el fixture para poder parchear get_secret y httpx.
 """
 from __future__ import annotations
 
+import pytest
 import asyncio
 from unittest import mock
 
@@ -41,6 +42,7 @@ def provider(anthropic_mod):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_capabilities(self, provider) -> None:
         caps = provider.capabilities
         assert caps["chat"] is True
@@ -52,6 +54,7 @@ class TestInit:
         assert caps["max_context"] == 200000
         assert caps["max_output"] == 8192
 
+    @pytest.mark.unit
     def test_defaults(self, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod, "get_secret", side_effect=lambda name, default=None: default):
             p = anthropic_mod.AnthropicProvider()
@@ -61,6 +64,7 @@ class TestInit:
         assert p._temperature == 0.3
         assert p._max_tokens == 1024
 
+    @pytest.mark.unit
     def test_custom_values(self, anthropic_mod) -> None:
         secrets = {
             "ANTHROPIC_API_KEY": "k",
@@ -82,6 +86,7 @@ class TestInit:
         assert p._temperature == 0.9
         assert p._max_tokens == 512
 
+    @pytest.mark.unit
     def test_headers(self, provider) -> None:
         headers = provider._headers()
         assert headers["x-api-key"] == "secret-val"
@@ -100,6 +105,7 @@ class TestGenerate:
         }
         return r
 
+    @pytest.mark.unit
     def test_success(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response()) as post:
             result = provider.generate("prompt")
@@ -113,6 +119,7 @@ class TestGenerate:
         assert post.call_args.kwargs["headers"]["x-api-key"] == "secret-val"
         assert post.call_args.kwargs["timeout"] == 60
 
+    @pytest.mark.unit
     def test_success_strip_y_usage(self, provider, anthropic_mod) -> None:
         """Respuesta con espacios se trima; log_call recibe usage tokens."""
         with (
@@ -126,6 +133,7 @@ class TestGenerate:
         assert log_mock.call_args.kwargs["input_tokens"] == 10
         assert log_mock.call_args.kwargs["output_tokens"] == 5
 
+    @pytest.mark.unit
     def test_options_custom(self, provider, anthropic_mod) -> None:
         """Options custom respetan temperature custom y default max_tokens."""
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response()) as post:
@@ -135,44 +143,53 @@ class TestGenerate:
         assert payload["max_tokens"] == 512
         assert payload["extra"] == 1
 
+    @pytest.mark.unit
     def test_concatenates_text_blocks(self, provider, anthropic_mod) -> None:
         blocks = [{"type": "text", "text": "hola "}, {"type": "text", "text": "mundo"}]
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response(blocks)):
             result = provider.generate("p")
         assert result == "hola mundo"
 
+    @pytest.mark.unit
     def test_ignores_non_text_blocks(self, provider, anthropic_mod) -> None:
         blocks = [{"type": "tool_use", "name": "x"}, {"type": "text", "text": "ok"}]
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response(blocks)):
             result = provider.generate("p")
         assert result == "ok"
 
+    @pytest.mark.unit
     def test_sin_contenido(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response([])):
             result = provider.generate("p")
         assert result == "El modelo no generó ninguna respuesta."
 
+    @pytest.mark.unit
     def test_custom_model(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", return_value=self._response()) as post:
             provider.generate("p", model="claude-x")
         assert post.call_args.kwargs["json"]["model"] == "claude-x"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", side_effect=httpx.TimeoutException("t")):
             result = provider.generate("p")
         assert "tiempo de espera" in result
 
+    @pytest.mark.unit
     def test_http_error(self, provider, anthropic_mod) -> None:
         error = httpx.HTTPStatusError("bad", request=mock.Mock(), response=mock.Mock(status_code=429))
         with mock.patch.object(anthropic_mod.httpx, "post", side_effect=error):
             result = provider.generate("p")
         assert "429" in result
 
+    @pytest.mark.unit
     def test_request_error(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", side_effect=httpx.RequestError("conn")):
             result = provider.generate("p")
         assert "No se pudo conectar" in result
 
+    @pytest.mark.unit
     def test_unexpected_error(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "post", side_effect=RuntimeError("boom")):
             result = provider.generate("p")
@@ -180,10 +197,12 @@ class TestGenerate:
 
 
 class TestEmbed:
+    @pytest.mark.unit
     def test_no_soportado_degradado(self, provider) -> None:
         result = provider.embed(["a", "b"])
         assert result == [[0.0] * FALLBACK_EMBEDDING_DIMENSION, [0.0] * FALLBACK_EMBEDDING_DIMENSION]
 
+    @pytest.mark.unit
     def test_embed_async_degradado(self, provider) -> None:
         result = asyncio.run(provider.embed_async(["a"]))
         assert result == [[0.0] * FALLBACK_EMBEDDING_DIMENSION]
@@ -196,6 +215,7 @@ class TestHealth:
         r.json.return_value = {"data": [{"id": "claude-sonnet"}, {"id": "claude-opus"}]}
         return r
 
+    @pytest.mark.unit
     def test_ok(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "get", return_value=self._ok_response()) as mget:
             result = provider.health()
@@ -207,6 +227,7 @@ class TestHealth:
         assert result["latency_ms"] >= 0
         assert mget.call_args.kwargs["timeout"] == 5
 
+    @pytest.mark.unit
     def test_http_error(self, provider, anthropic_mod) -> None:
         r = mock.Mock()
         r.is_error = True
@@ -217,6 +238,7 @@ class TestHealth:
         assert result["status"] == "error"
         assert result["detail"] == "server error"
 
+    @pytest.mark.unit
     def test_exception(self, provider, anthropic_mod) -> None:
         with mock.patch.object(anthropic_mod.httpx, "get", side_effect=httpx.RequestError("conn")):
             result = provider.health()

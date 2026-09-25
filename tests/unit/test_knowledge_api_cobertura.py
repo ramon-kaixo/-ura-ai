@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -59,6 +60,7 @@ def client(tmp_path: Path, monkeypatch) -> TestClient:
     state.db_path = Path("/tmp/nonexistent")
 
 
+@pytest.mark.unit
 def test_health(client) -> None:
     r = client.get("/health")
     assert r.status_code == 200
@@ -66,6 +68,7 @@ def test_health(client) -> None:
     assert r.json()["schema_version"] == 15
 
 
+@pytest.mark.unit
 def test_health_unhealthy(client, monkeypatch) -> None:
     class _Repo:
         def health_check(self):
@@ -77,6 +80,7 @@ def test_health_unhealthy(client, monkeypatch) -> None:
     assert r.json()["error"] == "Unhealthy"
 
 
+@pytest.mark.unit
 def test_status(client) -> None:
     r = client.get("/status")
     assert r.status_code == 200
@@ -86,6 +90,7 @@ def test_status(client) -> None:
     assert data["graph_version"]["graph_version"] > 0
 
 
+@pytest.mark.unit
 def test_compile_sync_ok(client, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 1)
     r = client.post("/compile/sync")
@@ -93,12 +98,14 @@ def test_compile_sync_ok(client, monkeypatch) -> None:
     assert r.json()["success"] is True
 
 
+@pytest.mark.unit
 def test_compile_sync_conflict(client, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 0)
     r = client.post("/compile/sync")
     assert r.status_code == 409
 
 
+@pytest.mark.unit
 def test_compile_sync_error(client, monkeypatch) -> None:
     def _boom(*a, **k):
         raise RuntimeError("rotura")
@@ -108,6 +115,7 @@ def test_compile_sync_error(client, monkeypatch) -> None:
     assert r.status_code == 500
 
 
+@pytest.mark.unit
 def test_compile_async_202(client, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 1)
     r = client.post("/compile")
@@ -115,12 +123,14 @@ def test_compile_async_202(client, monkeypatch) -> None:
     assert r.json()["success"] is True
 
 
+@pytest.mark.unit
 def test_compile_async_conflict(client, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.request_compile", lambda *a, **k: 0)
     r = client.post("/compile")
     assert r.status_code == 409
 
 
+@pytest.mark.unit
 def test_compile_incremental(client, monkeypatch) -> None:
     class _R:
         success = True
@@ -133,6 +143,8 @@ def test_compile_incremental(client, monkeypatch) -> None:
     assert r.json()["documents_changed"] == 1
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_compile_timeout(client, monkeypatch) -> None:
     import asyncio
 
@@ -144,6 +156,7 @@ def test_compile_timeout(client, monkeypatch) -> None:
     assert r.status_code == 504
 
 
+@pytest.mark.unit
 def test_search_lexical(client) -> None:
     r = client.post("/search", json={"query": "Alpha", "mode": "lexical", "limit": 5})
     assert r.status_code == 200
@@ -153,17 +166,20 @@ def test_search_lexical(client) -> None:
     assert "doc_id" in data["results"][0]
 
 
+@pytest.mark.unit
 def test_search_con_tipo(client) -> None:
     r = client.post("/search", json={"query": "cuerpo", "type": "doc"})
     assert r.status_code == 200
     assert r.json()["total"] >= 1
 
 
+@pytest.mark.unit
 def test_search_mode_invalido(client) -> None:
     r = client.post("/search", json={"query": "x", "mode": "magico"})
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_search_error(client, monkeypatch) -> None:
     def _boom(*a, **k):
         raise RuntimeError("fts rota")
@@ -173,6 +189,7 @@ def test_search_error(client, monkeypatch) -> None:
     assert r.status_code == 500
 
 
+@pytest.mark.unit
 def test_get_document_ok(client) -> None:
     r = client.get("/documents/0123456789aa")
     assert r.status_code == 200
@@ -182,16 +199,19 @@ def test_get_document_ok(client) -> None:
     assert "Cuerpo" in data["body"]
 
 
+@pytest.mark.unit
 def test_get_document_id_invalido(client) -> None:
     r = client.get("/documents/xx")
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_get_document_inexistente(client) -> None:
     r = client.get("/documents/0123456789ff")
     assert r.status_code == 404
 
 
+@pytest.mark.unit
 def test_get_document_error(client, monkeypatch) -> None:
     def _boom(*a, **k):
         raise RuntimeError("rotura")
@@ -201,17 +221,20 @@ def test_get_document_error(client, monkeypatch) -> None:
     assert r.status_code == 500
 
 
+@pytest.mark.unit
 def test_list_rules(client) -> None:
     r = client.get("/rules")
     assert r.status_code == 200
     assert "rules" in r.json()
 
 
+@pytest.mark.unit
 def test_evaluate_rules(client) -> None:
     r = client.post("/rules/eval")
     assert r.status_code in (200, 500)
 
 
+@pytest.mark.unit
 def test_archive(client) -> None:
     r = client.post("/archive")
     assert r.status_code == 200
@@ -220,6 +243,7 @@ def test_archive(client) -> None:
     assert data["files"] >= 1
 
 
+@pytest.mark.unit
 def test_archive_error(client, monkeypatch) -> None:
     def _boom(*a, **k):
         raise ValueError("no es repo git")
@@ -229,82 +253,97 @@ def test_archive_error(client, monkeypatch) -> None:
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_feedback_record(client) -> None:
     r = client.post("/feedback/0123456789aa?rating=5")
     assert r.status_code == 200
     assert r.json()["rating"] == 5
 
 
+@pytest.mark.unit
 def test_feedback_rating_fuera(client) -> None:
     r = client.post("/feedback/0123456789aa?rating=9")
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_feedback_doc_id_invalido(client) -> None:
     r = client.post("/feedback/xx?rating=3")
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_feedback_top(client) -> None:
     r = client.get("/feedback/top?limit=5")
     assert r.status_code == 200
     assert r.json()["total"] == 0
 
 
+@pytest.mark.unit
 def test_feedback_top_limit_invalido(client) -> None:
     r = client.get("/feedback/top?limit=999")
     assert r.status_code == 422
 
 
+@pytest.mark.unit
 def test_lineage(client) -> None:
     r = client.get("/metadata/lineage/0123456789aa")
     assert r.status_code == 200
     assert r.json()["total"] == 0
 
 
+@pytest.mark.unit
 def test_memory_list(client) -> None:
     r = client.get("/memory")
     assert r.status_code == 200
     assert r.json()["total"] == 0
 
 
+@pytest.mark.unit
 def test_memory_get_404(client) -> None:
     r = client.get("/memory/nonexistent")
     assert r.status_code == 404
 
 
+@pytest.mark.unit
 def test_memory_search(client) -> None:
     r = client.post("/memory/search", json={"query": "algo"})
     assert r.status_code == 200
 
 
+@pytest.mark.unit
 def test_memory_link_404(client) -> None:
     r = client.post("/memory/nonexistent/link", json={"asset_id": "0123456789aa"})
     assert r.status_code == 404
 
 
+@pytest.mark.unit
 def test_metadata_context(client) -> None:
     r = client.post("/metadata/context", json={"query": "Alpha"})
     assert r.status_code == 200
     assert "to_dict" in dir(r.json()) or isinstance(r.json(), dict)
 
 
+@pytest.mark.unit
 def test_metadata_retrieve(client) -> None:
     r = client.post("/metadata/retrieve", json={"query": "Alpha", "limit": 5})
     assert r.status_code == 200
 
 
+@pytest.mark.unit
 def test_metrics(client) -> None:
     r = client.get("/metrics")
     assert r.status_code == 200
     assert "text/plain" in r.headers["content-type"]
 
 
+@pytest.mark.unit
 def test_body_size_middleware(client) -> None:
     r = client.post("/search", content=b"x" * (11 * 1024 * 1024), headers={"Content-Type": "application/json"})
     assert r.status_code == 413
 
 
+@pytest.mark.unit
 def test_headers_seguridad(client) -> None:
     r = client.get("/health")
     assert r.headers["X-Content-Type-Options"] == "nosniff"
@@ -312,6 +351,7 @@ def test_headers_seguridad(client) -> None:
     assert "X-Request-Time-Ms" in r.headers
 
 
+@pytest.mark.unit
 def test_auth_activada(client, monkeypatch) -> None:
     import knowledge.engine.api as api_mod
 
@@ -325,6 +365,7 @@ def test_auth_activada(client, monkeypatch) -> None:
     assert r3.status_code == 200
 
 
+@pytest.mark.unit
 def test_app_error_handler() -> None:
     exc = AppError(418, "teapot", "detalle")
     assert exc.status_code == 418

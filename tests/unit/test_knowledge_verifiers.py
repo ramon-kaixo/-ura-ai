@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/knowledge_verifier.py y storage_verifier.py."""
 from __future__ import annotations
 
+import pytest
 import hashlib
 import sqlite3
 from pathlib import Path
@@ -37,11 +38,13 @@ def conn(tmp_path) -> sqlite3.Connection:
 
 
 class TestCheckDuplicateIds:
+    @pytest.mark.unit
     def test_sin_duplicados(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h1')")
         conn.commit()
         assert check_duplicate_ids(conn) == []
 
+    @pytest.mark.unit
     def test_con_duplicados(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h1')")
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p2', 'h2')")
@@ -53,12 +56,14 @@ class TestCheckDuplicateIds:
 
 
 class TestCheckDuplicatePaths:
+    @pytest.mark.unit
     def test_sin_duplicados(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h1')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'h2')")
         conn.commit()
         assert check_duplicate_paths(conn) == []
 
+    @pytest.mark.unit
     def test_con_duplicados(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'mismo', 'h1')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'mismo', 'h2')")
@@ -69,12 +74,14 @@ class TestCheckDuplicatePaths:
 
 
 class TestCheckRepeatedHashes:
+    @pytest.mark.unit
     def test_sin_repetidos(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'hash1')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'hash2')")
         conn.commit()
         assert check_repeated_hashes(conn) == []
 
+    @pytest.mark.unit
     def test_con_repetidos(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'mismohash')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'mismohash')")
@@ -86,6 +93,7 @@ class TestCheckRepeatedHashes:
 
 
 class TestCheckReferentialIntegrity:
+    @pytest.mark.unit
     def test_ok(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'h')")
@@ -93,6 +101,7 @@ class TestCheckReferentialIntegrity:
         conn.commit()
         assert check_referential_integrity(conn) == []
 
+    @pytest.mark.unit
     def test_src_rota(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'h')")
         conn.execute("INSERT INTO kg_edges VALUES ('a', 'b', 'ref')")
@@ -100,6 +109,7 @@ class TestCheckReferentialIntegrity:
         out = check_referential_integrity(conn)
         assert any("KE105" in m for m in out)
 
+    @pytest.mark.unit
     def test_dst_rota(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h')")
         conn.execute("INSERT INTO kg_edges VALUES ('a', 'b', 'ref')")
@@ -109,12 +119,14 @@ class TestCheckReferentialIntegrity:
 
 
 class TestCheckOrphans:
+    @pytest.mark.unit
     def test_sin_huérfanos(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h')")
         conn.execute("INSERT INTO kg_edges VALUES ('a', 'a', 'self')")
         conn.commit()
         assert check_orphans(conn) == []
 
+    @pytest.mark.unit
     def test_con_huérfano(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p1', 'h')")
         conn.execute("INSERT INTO kg_nodes VALUES ('b', 'p2', 'h')")
@@ -125,12 +137,14 @@ class TestCheckOrphans:
 
 
 class TestCheckCycles:
+    @pytest.mark.unit
     def test_sin_ciclos(self, conn) -> None:
         conn.execute("INSERT INTO kg_edges VALUES ('a', 'b', 'r')")
         conn.execute("INSERT INTO kg_edges VALUES ('b', 'c', 'r')")
         conn.commit()
         assert check_cycles(conn) == []
 
+    @pytest.mark.unit
     def test_con_ciclo(self, conn) -> None:
         conn.execute("INSERT INTO kg_edges VALUES ('a', 'b', 'r')")
         conn.execute("INSERT INTO kg_edges VALUES ('b', 'a', 'r')")
@@ -141,6 +155,7 @@ class TestCheckCycles:
 
 
 class TestCheckOntology:
+    @pytest.mark.unit
     def test_ok(self, conn) -> None:
         conn.execute("INSERT INTO kg_ontology_nodes VALUES ('o1', 'padre', NULL)")
         conn.execute("INSERT INTO kg_ontology_nodes VALUES ('o2', 'hijo', 'o1')")
@@ -148,12 +163,14 @@ class TestCheckOntology:
         conn.commit()
         assert check_ontology(conn) == []
 
+    @pytest.mark.unit
     def test_parent_inexistente(self, conn) -> None:
         conn.execute("INSERT INTO kg_ontology_nodes VALUES ('o1', 'hijo', 'nope')")
         conn.commit()
         out = check_ontology(conn)
         assert any("KE107" in m for m in out)
 
+    @pytest.mark.unit
     def test_huérfano_multi(self, conn) -> None:
         conn.execute("INSERT INTO kg_ontology_nodes VALUES ('o1', 'a', NULL)")
         conn.execute("INSERT INTO kg_ontology_nodes VALUES ('o2', 'b', NULL)")
@@ -163,6 +180,7 @@ class TestCheckOntology:
 
 
 class TestVerifyHashes:
+    @pytest.mark.unit
     def test_doc_no_encontrado(self, conn, tmp_path) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'no_existe.md', 'h')")
         conn.commit()
@@ -170,6 +188,7 @@ class TestVerifyHashes:
         assert len(out) == 1
         assert "no encontrado" in out[0]
 
+    @pytest.mark.unit
     def test_hash_correcto(self, conn, tmp_path) -> None:
         doc = tmp_path / "doc.md"
         doc.write_bytes(b"contenido")
@@ -178,6 +197,7 @@ class TestVerifyHashes:
         conn.commit()
         assert verify_hashes(conn, source_dir=tmp_path) == []
 
+    @pytest.mark.unit
     def test_hash_incorrecto(self, conn, tmp_path) -> None:
         doc = tmp_path / "doc.md"
         doc.write_bytes(b"contenido")
@@ -189,6 +209,7 @@ class TestVerifyHashes:
 
 
 class TestCheckPragmas:
+    @pytest.mark.unit
     def test_ok(self, conn) -> None:
         conn.execute("PRAGMA foreign_keys=ON")
         conn.execute("PRAGMA journal_mode=WAL")
@@ -199,6 +220,7 @@ class TestCheckPragmas:
         issues = check_pragmas(conn)
         assert issues == [] or all("KE11" in i for i in issues)  # tolera fk heredado
 
+    @pytest.mark.unit
     def test_issues(self, conn) -> None:
         conn.execute("PRAGMA foreign_keys=OFF")
         conn.execute("PRAGMA synchronous=OFF")
@@ -209,10 +231,12 @@ class TestCheckPragmas:
 
 
 class TestCheckSchema:
+    @pytest.mark.unit
     def test_faltan_tablas(self, conn) -> None:
         out = check_schema(conn)
         assert any("Faltan tablas" in m for m in out)
 
+    @pytest.mark.unit
     def test_tablas_extra(self, conn) -> None:
         conn.execute("CREATE TABLE kg_nodes_fts_config (k TEXT)")
         conn.execute("CREATE TABLE extraña (id INTEGER)")
@@ -222,12 +246,14 @@ class TestCheckSchema:
 
 
 class TestCheckFtsSync:
+    @pytest.mark.unit
     def test_desincronizado(self, conn) -> None:
         conn.execute("INSERT INTO kg_nodes VALUES ('a', 'p', 'h')")
         conn.commit()
         out = check_fts_sync(conn)
         assert any("KE109" in m and "desincronizado" in m for m in out)
 
+    @pytest.mark.unit
     def test_fts_no_accesible(self, conn) -> None:
         conn.execute("DROP TABLE kg_nodes_fts")
         conn.commit()

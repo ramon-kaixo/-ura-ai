@@ -10,6 +10,7 @@ from scripts.pro.backup_f26_memory import cmd_backup, cmd_restore, main
 class TestCmdBackup:
     @patch("motor.memory.save_snapshot")
     @patch("motor.memory.Memory")
+    @pytest.mark.unit
     def test_backup_calls_save_snapshot(self, mock_memory_cls, mock_save):
         mock_memory = MagicMock()
         mock_memory_cls.return_value = mock_memory
@@ -22,6 +23,8 @@ class TestCmdBackup:
 
 class TestCmdRestore:
     @patch("motor.memory.load_snapshot")
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_restore_calls_load_snapshot(self, mock_load, tmp_path):
         p = tmp_path / "backup.json"
         p.write_text("{}")
@@ -30,6 +33,7 @@ class TestCmdRestore:
 
         mock_load.assert_called_once_with(str(p))
 
+    @pytest.mark.unit
     def test_restore_missing_file(self, tmp_path):
         missing = tmp_path / "no_existe.json"
         with pytest.raises(SystemExit) as exc:
@@ -39,23 +43,27 @@ class TestCmdRestore:
 
 class TestMain:
     @patch("scripts.pro.backup_f26_memory.cmd_backup")
+    @pytest.mark.unit
     def test_main_backup(self, mock_backup, monkeypatch):
         monkeypatch.setattr("sys.argv", ["backup_f26_memory.py", "backup", "--path", "/tmp/b.json"])
         main()
         mock_backup.assert_called_once_with("/tmp/b.json")
 
     @patch("scripts.pro.backup_f26_memory.cmd_restore")
+    @pytest.mark.unit
     def test_main_restore(self, mock_restore, monkeypatch):
         monkeypatch.setattr("sys.argv", ["backup_f26_memory.py", "restore", "--path", "/tmp/r.json"])
         main()
         mock_restore.assert_called_once_with("/tmp/r.json")
 
+    @pytest.mark.unit
     def test_main_no_args(self, monkeypatch):
         monkeypatch.setattr("sys.argv", ["backup_f26_memory.py"])
         with pytest.raises(SystemExit) as exc:
             main()
         assert exc.value.code == 1
 
+    @pytest.mark.unit
     def test_main_invalid_command(self, monkeypatch):
         monkeypatch.setattr("sys.argv", ["backup_f26_memory.py", "invalid"])
         with pytest.raises(SystemExit) as exc:

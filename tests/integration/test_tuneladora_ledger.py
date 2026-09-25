@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import sqlite3
 from pathlib import Path
@@ -22,12 +23,14 @@ def ledger(tmp_path: Path) -> ExecutionLedger:
 
 
 class TestExecutionLedger:
+    @pytest.mark.integration
     def test_init_crea_entry(self, ledger: ExecutionLedger) -> None:
         assert ledger._entry["pipeline"] == "mejora"
         assert ledger._entry["result"] == "unknown"
         assert ledger._entry["trigger"] == "manual"
         assert len(ledger._execution_id) == 12
 
+    @pytest.mark.integration
     def test_setters_basicos(self, ledger: ExecutionLedger) -> None:
         ledger.set_trigger("gate")
         ledger.phase_start("static")
@@ -56,11 +59,13 @@ class TestExecutionLedger:
         assert e["result"] == "completed"
         assert e["snapshot_id"] == "snap-1"
 
+    @pytest.mark.integration
     def test_set_git_commit_manual(self, ledger: ExecutionLedger) -> None:
         ledger.set_git_commit(before="abc123", after="def456")
         assert ledger._entry["git_commit_before"] == "abc123"
         assert ledger._entry["git_commit_after"] == "def456"
 
+    @pytest.mark.integration
     def test_set_git_commit_auto(self, ledger: ExecutionLedger, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.ledger.subprocess.run",
@@ -69,6 +74,7 @@ class TestExecutionLedger:
         ledger.set_git_commit()
         assert ledger._entry["git_commit_before"] == "abc123"
 
+    @pytest.mark.integration
     def test_set_git_commit_error_silencioso(self, ledger: ExecutionLedger, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.ledger.subprocess.run",
@@ -76,6 +82,7 @@ class TestExecutionLedger:
         )
         ledger.set_git_commit()  # no debe lanzar
 
+    @pytest.mark.integration
     def test_goal_decision_alternativa(self, ledger: ExecutionLedger) -> None:
         ledger.set_goal({"objetivo": "x"})
         ledger.add_decision("elegir_plugin", {"plugin": "ruff"})
@@ -84,12 +91,14 @@ class TestExecutionLedger:
         assert ledger._entry["decisions"][0]["type"] == "elegir_plugin"
         assert ledger._entry["alternatives"][0]["strategy"] == "ruff"
 
+    @pytest.mark.integration
     def test_plan_evaluacion(self, ledger: ExecutionLedger) -> None:
         ledger.set_plan({"fases": ["a"]})
         ledger.set_evaluation(0.9, "promote", {"cobertura": 90})
         assert ledger._entry["plan"] == {"fases": ["a"]}
         assert ledger._entry["evaluation"]["score"] == 0.9
 
+    @pytest.mark.integration
     def test_patterns_conocimiento(self, ledger: ExecutionLedger) -> None:
         ledger.add_pattern({"tipo": "hotspot"})
         ledger.add_knowledge({"clave": "valor"})
@@ -102,6 +111,7 @@ class TestExecutionLedger:
         assert len(ledger._entry["policies"]) == 1
         assert len(ledger._entry["verifications"]) == 1
 
+    @pytest.mark.integration
     def test_save_escribe_json(self, ledger: ExecutionLedger, tmp_path: Path) -> None:
         ledger.set_result("completed")
         path = ledger.save()
@@ -111,6 +121,7 @@ class TestExecutionLedger:
         assert data["duration_ms"] >= 0
         assert data["end_time"]
 
+    @pytest.mark.integration
     def test_resource_sample(self, ledger: ExecutionLedger, monkeypatch) -> None:
         fake_free = type("R", (), {"returncode": 0, "stdout": "Mem: 100 512 300 20\n"})()
 
@@ -135,6 +146,7 @@ class TestSqlite:
             "errors": ["err1", "err2"],
         }
 
+    @pytest.mark.integration
     def test_save_y_get_history(self, tmp_path: Path) -> None:
         save_execution(self._entry(), tmp_path)
         rows = get_history(tmp_path)
@@ -142,6 +154,7 @@ class TestSqlite:
         assert rows[0]["pipeline"] == "mejora"
         assert rows[0]["status"] == "completed"
 
+    @pytest.mark.integration
     def test_get_history_filtro_pipeline(self, tmp_path: Path) -> None:
         save_execution(self._entry(), tmp_path)
         e2 = dict(self._entry(), execution_id="e2", pipeline="otra")
@@ -150,6 +163,7 @@ class TestSqlite:
         assert len(rows) == 1
         assert rows[0]["execution_id"] == "e1"
 
+    @pytest.mark.integration
     def test_cleanup_history(self, tmp_path: Path) -> None:
         save_execution(self._entry(), tmp_path)
         deleted = cleanup_history(tmp_path, days=90)
@@ -161,5 +175,6 @@ class TestSqlite:
         deleted = cleanup_history(tmp_path, days=90)
         assert deleted == 1
 
+    @pytest.mark.integration
     def test_save_error_silencioso(self, tmp_path: Path) -> None:
         save_execution({"execution_id": "x"}, tmp_path / "no" / "existe")  # no lanza

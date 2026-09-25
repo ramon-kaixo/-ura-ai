@@ -11,6 +11,7 @@ Dependencias: httpx (instalado) — solo simulado.
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from typing import Any
 
@@ -63,6 +64,7 @@ def _install_post(monkeypatch: pytest.MonkeyPatch, responses: list[Any]) -> list
 class TestParseResults:
     """Parsing de HTML de resultados."""
 
+    @pytest.mark.unit
     def test_parse_completo(self) -> None:
         results = _parse_results(_HTML_OK)
         assert len(results) == 2
@@ -71,15 +73,18 @@ class TestParseResults:
         assert results[0]["snippet"] == "Snippet uno."
         assert results[1]["title"] == "Título Dos"
 
+    @pytest.mark.unit
     def test_strips_tags_del_snippet(self) -> None:
         results = _parse_results(_HTML_OK)
         assert "<b>" not in results[0]["snippet"]
         assert "uno" in results[0]["snippet"]
 
+    @pytest.mark.unit
     def test_solo_titulo_sin_url_se_omite(self) -> None:
         html = '<a class="result__a">Titulo huérfano</a>'
         assert _parse_results(html) == []
 
+    @pytest.mark.unit
     def test_campos_faltantes_usar_vacios(self) -> None:
         html = (
             '<a class="result__a" href="https://example.com/1">Título</a>'
@@ -88,6 +93,7 @@ class TestParseResults:
         results = _parse_results(html)
         assert results == [{"title": "Título", "url": "https://example.com/1", "snippet": ""}]
 
+    @pytest.mark.unit
     def test_sin_resultados(self) -> None:
         assert _parse_results("<html></html>") == []
 
@@ -95,9 +101,11 @@ class TestParseResults:
 class TestDuckDuckGoSearchProvider:
     """Buscador DuckDuckGo."""
 
+    @pytest.mark.unit
     def test_name(self) -> None:
         assert DuckDuckGoSearchProvider().name == "duckduckgo"
 
+    @pytest.mark.unit
     def test_search_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         resp = _resp(200, _HTML_OK)
         calls = _install_post(monkeypatch, [resp])
@@ -109,17 +117,21 @@ class TestDuckDuckGoSearchProvider:
         assert calls[0][1]["data"] == {"q": "test query"}
         assert "User-Agent" in calls[0][1]["headers"]
 
+    @pytest.mark.unit
     def test_search_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         resp = _resp(200, _HTML_OK)
         _install_post(monkeypatch, [resp])
         results = DuckDuckGoSearchProvider().search("q", limit=1)
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_search_limit_cero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         resp = _resp(200, _HTML_OK)
         _install_post(monkeypatch, [resp])
         assert DuckDuckGoSearchProvider().search("q", limit=0) == []
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_retry_y_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         timeout = httpx.TimeoutException("t")
         resp = _resp(200, _HTML_OK)
@@ -128,12 +140,15 @@ class TestDuckDuckGoSearchProvider:
         results = provider.search("q")
         assert len(results) == 2
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_agota_reintentos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         timeout = httpx.TimeoutException("t")
         _install_post(monkeypatch, [timeout, timeout, timeout])
         with pytest.raises(RuntimeError, match="failed after 3 attempts"):
             DuckDuckGoSearchProvider(max_retries=2).search("q")
 
+    @pytest.mark.unit
     def test_rate_limited_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rate = httpx.HTTPStatusError(
             "429",
@@ -145,6 +160,7 @@ class TestDuckDuckGoSearchProvider:
         results = DuckDuckGoSearchProvider(max_retries=2).search("q")
         assert len(results) == 2
 
+    @pytest.mark.unit
     def test_rate_limited_agota(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rate = httpx.HTTPStatusError(
             "503",
@@ -155,6 +171,7 @@ class TestDuckDuckGoSearchProvider:
         with pytest.raises(RuntimeError, match="failed after 3 attempts"):
             DuckDuckGoSearchProvider(max_retries=2).search("q")
 
+    @pytest.mark.unit
     def test_http_status_else_raise(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = httpx.HTTPStatusError(
             "500",
@@ -165,6 +182,7 @@ class TestDuckDuckGoSearchProvider:
         with pytest.raises(httpx.HTTPStatusError):
             DuckDuckGoSearchProvider().search("q")
 
+    @pytest.mark.unit
     def test_request_error_retry_y_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         err = httpx.ConnectError("boom", request=httpx.Request("POST", mod.SEARCH_URL))
         resp = _resp(200, _HTML_OK)
@@ -172,12 +190,14 @@ class TestDuckDuckGoSearchProvider:
         results = DuckDuckGoSearchProvider(max_retries=2).search("q")
         assert len(results) == 2
 
+    @pytest.mark.unit
     def test_sin_retries(self, monkeypatch: pytest.MonkeyPatch) -> None:
         timeout = httpx.TimeoutException("t")
         _install_post(monkeypatch, [timeout])
         with pytest.raises(RuntimeError, match="failed after 1 attempts"):
             DuckDuckGoSearchProvider(max_retries=0).search("q")
 
+    @pytest.mark.unit
     def test_constructor_configurable(self) -> None:
         provider = DuckDuckGoSearchProvider(timeout=5, user_agent="UA", max_retries=0)
         assert provider._timeout == 5

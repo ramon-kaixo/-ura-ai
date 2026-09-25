@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import queue
 from pathlib import Path
@@ -34,6 +35,7 @@ def _event(span_id: str = "s1", source: str = "src") -> SpanEvent:
 
 
 class TestInMemoryExporter:
+    @pytest.mark.unit
     def test_emit_flush_close(self) -> None:
         ex = InMemoryExporter()
         assert ex.size() == 0
@@ -52,6 +54,7 @@ class TestInMemoryExporter:
 
 
 class TestFileExporter:
+    @pytest.mark.unit
     def test_emit_flush_escribe(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=0.01)
         try:
@@ -66,6 +69,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_flush_vacio(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=0.01)
         try:
@@ -74,6 +78,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_flush_loop(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=0.01)
         ex.emit(_event("a"))
@@ -83,6 +88,7 @@ class TestFileExporter:
         ex.close()
         assert time == 0
 
+    @pytest.mark.unit
     def test_rotacion_por_tamano(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60, max_file_size=10)
         try:
@@ -96,6 +102,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_rotacion_error_oserror(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60, max_file_size=1)
         try:
@@ -108,6 +115,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_emit_buffer_lleno_drop_head(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), buffer_size=2, flush_interval=0.01)
         try:
@@ -121,6 +129,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_emit_buffer_lleno_drop_new(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), buffer_size=2, flush_interval=0.01, drop_policy="drop_new")
         try:
@@ -133,6 +142,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_close_con_thread(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=0.01)
         ex.emit(_event("a"))
@@ -140,6 +150,7 @@ class TestFileExporter:
         assert ex._file is None
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_doble_start_thread(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -150,6 +161,7 @@ class TestFileExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_flush_loop_error(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -162,6 +174,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_open_file_existente(self, tmp_path: Path) -> None:
         (tmp_path / "trace.0.jsonl").write_text("viejo\n")
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
@@ -173,6 +186,7 @@ class TestFileExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_write_error(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -185,6 +199,7 @@ class TestFileExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_flush_queue_empty_race(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), flush_interval=60)
         try:
@@ -198,6 +213,7 @@ class TestFileExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_emit_drop_head_race(self, tmp_path: Path) -> None:
         ex = FileExporter(path=str(tmp_path), buffer_size=1, flush_interval=60)
         try:
@@ -209,6 +225,7 @@ class TestFileExporter:
 
 
 class TestTraceExporter:
+    @pytest.mark.unit
     def test_emit_flush_escribe(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "traces.jsonl"), flush_interval=0.01)
         try:
@@ -221,6 +238,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_flush_vacio(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=0.01)
         try:
@@ -230,6 +248,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_rotacion(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60, max_file_size=10)
         try:
@@ -245,6 +264,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_rotacion_oserror(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60, max_file_size=1)
         try:
@@ -266,6 +286,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_write_error(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         ex.emit(_event("a"))
@@ -275,6 +296,7 @@ class TestTraceExporter:
             ex.flush()
         ex.close()
 
+    @pytest.mark.unit
     def test_emit_buffer_lleno(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), buffer_size=1, flush_interval=0.01)
         try:
@@ -287,6 +309,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_doble_start_thread(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
@@ -297,6 +320,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_flush_loop_error(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
@@ -310,6 +334,7 @@ class TestTraceExporter:
             ex.close()
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_flush_queue_empty_race(self, tmp_path: Path) -> None:
         ex = TraceExporter(path=str(tmp_path / "t.jsonl"), flush_interval=60)
         try:
@@ -323,6 +348,7 @@ class TestTraceExporter:
         finally:
             ex.close()
 
+    @pytest.mark.unit
     def test_next_path_salta_existentes(self, tmp_path: Path) -> None:
         (tmp_path / "t.jsonl.0").write_text("")
         (tmp_path / "t.jsonl.1").write_text("")
@@ -336,6 +362,7 @@ class TestTraceExporter:
 
 
 class TestLatencyStats:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         st = LatencyStats()
         assert st.count == 0
@@ -343,6 +370,7 @@ class TestLatencyStats:
         assert st.compute_percentiles() == {"p50": 0.0, "p95": 0.0, "p99": 0.0}
         assert st.to_dict()["count"] == 0
 
+    @pytest.mark.unit
     def test_add_y_percentiles(self) -> None:
         st = LatencyStats()
         for i in range(100):
@@ -354,6 +382,7 @@ class TestLatencyStats:
         assert st.count == 101
         assert st.errors == 1
 
+    @pytest.mark.unit
     def test_window_overflow(self) -> None:
         st = LatencyStats(window=5)
         for i in range(10):
@@ -361,6 +390,7 @@ class TestLatencyStats:
         assert st.count == 5
         assert st.durations_ns == [5, 6, 7, 8, 9]
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         st = LatencyStats()
         st.record(1000, error=True)
@@ -369,6 +399,7 @@ class TestLatencyStats:
 
 
 class TestMetricsCollector:
+    @pytest.mark.unit
     def test_record_snapshot(self) -> None:
         mc = MetricsCollector()
         mc.record("http", 100, error=True)
@@ -380,6 +411,7 @@ class TestMetricsCollector:
         assert snap["http"]["errors"] == 1
         assert snap["db"]["p50_ns"] == 50.0
 
+    @pytest.mark.unit
     def test_throughput_y_error_rates(self) -> None:
         mc = MetricsCollector()
         mc.record("a", 10)
@@ -389,11 +421,13 @@ class TestMetricsCollector:
         er = mc.error_rates()
         assert er["a"] == 0.5
 
+    @pytest.mark.unit
     def test_error_rates_vacio(self) -> None:
         mc = MetricsCollector()
         assert mc.error_rates() == {}
         assert mc.throughput() == {}
 
+    @pytest.mark.unit
     def test_clear(self) -> None:
         mc = MetricsCollector()
         mc.record("a", 1)
@@ -402,6 +436,7 @@ class TestMetricsCollector:
 
 
 class TestSpanSinkAbstract:
+    @pytest.mark.unit
     def test_not_implemented(self) -> None:
         from motor.observability.tracing_exporter import _SpanEventSink
 

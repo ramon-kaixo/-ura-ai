@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import time
 
 import pytest
@@ -15,23 +16,28 @@ def stm() -> ShortTermMemory:
 
 
 class TestBasic:
+    @pytest.mark.integration
     def test_set_and_get(self, stm: ShortTermMemory) -> None:
         stm.set("key", "value")
         assert stm.get("key") == "value"
 
+    @pytest.mark.integration
     def test_get_missing(self, stm: ShortTermMemory) -> None:
         assert stm.get("missing") is None
 
+    @pytest.mark.integration
     def test_has(self, stm: ShortTermMemory) -> None:
         stm.set("k", "v")
         assert stm.has("k")
         assert not stm.has("missing")
 
+    @pytest.mark.integration
     def test_delete(self, stm: ShortTermMemory) -> None:
         stm.set("k", "v")
         stm.delete("k")
         assert not stm.has("k")
 
+    @pytest.mark.integration
     def test_clear(self, stm: ShortTermMemory) -> None:
         stm.set("a", 1)
         stm.set("b", 2)
@@ -40,11 +46,13 @@ class TestBasic:
 
 
 class TestTTL:
+    @pytest.mark.integration
     def test_expired_returns_none(self, stm: ShortTermMemory) -> None:
         stm.set("k", "v", ttl=0.001)
         time.sleep(0.01)
         assert stm.get("k") is None
 
+    @pytest.mark.integration
     def test_get_evicts_expired(self, stm: ShortTermMemory) -> None:
         stm.set("k1", "v1", ttl=0.001)
         stm.set("k2", "v2", ttl=300)
@@ -55,12 +63,14 @@ class TestTTL:
 
 
 class TestEviction:
+    @pytest.mark.integration
     def test_max_size_evicts_lru(self, stm: ShortTermMemory) -> None:
         for i in range(12):
             stm.set(f"k{i}", i)
         assert stm.size() <= 10
         assert not stm.has("k0")
 
+    @pytest.mark.integration
     def test_max_size_preserves_recent(self, stm: ShortTermMemory) -> None:
         for i in range(10):
             stm.set(f"k{i}", i)

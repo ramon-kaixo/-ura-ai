@@ -1,12 +1,14 @@
 """Tests para core/agents/cli.py — entry point multi-agente."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
 
 
 class TestAgentsCli:
+    @pytest.mark.unit
     def test_modo_ciclo(self, monkeypatch) -> None:
         from motor.core.agents import cli
 
@@ -16,6 +18,7 @@ class TestAgentsCli:
         cli.main()
         loop.ejecutar.assert_called_once()
 
+    @pytest.mark.unit
     def test_modo_ciclo_json(self, monkeypatch) -> None:
         from motor.core.agents import cli
 
@@ -25,6 +28,7 @@ class TestAgentsCli:
         cli.main()
         loop.ejecutar.assert_called_once()
 
+    @pytest.mark.unit
     def test_modo_orquestar(self, monkeypatch) -> None:
         from motor.core.agents import cli
 
@@ -39,6 +43,7 @@ class TestAgentsCli:
         cli.main()
         orq.decidir.assert_called_once()
 
+    @pytest.mark.unit
     def test_modo_reparar_ok(self, monkeypatch) -> None:
         from motor.core.agents import cli
 
@@ -59,6 +64,7 @@ class TestAgentsCli:
             cli.main()
         assert e.value.code == 0
 
+    @pytest.mark.unit
     def test_modo_reparar_falla(self, monkeypatch) -> None:
         from motor.core.agents import cli
 
@@ -76,6 +82,7 @@ class TestAgentsCli:
             cli.main()
         assert e.value.code == 1
 
+    @pytest.mark.unit
     def test_modo_reparar_json(self, monkeypatch) -> None:
         from motor.core.agents import cli
 

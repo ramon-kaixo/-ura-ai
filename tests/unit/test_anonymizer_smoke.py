@@ -5,11 +5,15 @@ import pytest
 from motor.core.utils.anonymizer import sanitize_text
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import_anonymizer():
     """El módulo importa sin errores."""
     assert sanitize_text is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_anonymizer_sanitize_text():
     """La función no lanza con argumentos básicos."""
     try:
@@ -19,12 +23,16 @@ def test_funcion_anonymizer_sanitize_text():
 
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_sanitize_text_vacio():
     """Cobertura de rama: texto vacío retorna vacío."""
     assert sanitize_text("") == ""
     assert sanitize_text(None) == ""
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_sanitize_text_patrones():
     """Cobertura de ramas: cada patrón regex es ejercitado."""
     casos = [

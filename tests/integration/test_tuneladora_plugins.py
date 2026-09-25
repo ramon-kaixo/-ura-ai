@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import subprocess
 from unittest import mock
 
@@ -26,6 +27,7 @@ def code_quality(engine: PipelineEngine) -> CodeQualityPlugin:
 
 
 class TestCodeQualityPlugin:
+    @pytest.mark.integration
     def test_ruff_check_returns_dict(self, code_quality):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="F821:5 F841:3", stderr="")
@@ -34,6 +36,7 @@ class TestCodeQualityPlugin:
             assert "f821" in result
             assert "f841" in result
 
+    @pytest.mark.integration
     def test_ruff_check_parses_stdout(self, code_quality):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(
@@ -42,6 +45,7 @@ class TestCodeQualityPlugin:
             result = code_quality.ruff_check()
             assert result["f821"] >= 1
 
+    @pytest.mark.integration
     def test_ruff_fix_calls_subprocess(self, code_quality):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
@@ -49,6 +53,7 @@ class TestCodeQualityPlugin:
             assert isinstance(result, dict)
             m.assert_called_once()
 
+    @pytest.mark.integration
     def test_ruff_format_calls_subprocess(self, code_quality):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
@@ -58,6 +63,7 @@ class TestCodeQualityPlugin:
 
 
 class TestHealthPlugin:
+    @pytest.mark.integration
     def test_check_all_returns_dict(self, engine):
         plugin = HealthPlugin(engine)
         with mock.patch("subprocess.run") as m:
@@ -72,6 +78,7 @@ class TestHealthPlugin:
                     assert "ollama" in result
                     assert "ram_usada_mb" in result
 
+    @pytest.mark.integration
     def test_check_all_fallback_on_error(self, engine):
         plugin = HealthPlugin(engine)
         with mock.patch("subprocess.run") as m:
@@ -87,6 +94,7 @@ class TestHealthPlugin:
 
 
 class TestCleanupPlugin:
+    @pytest.mark.integration
     def test_watermark_returns_dict(self, engine):
         plugin = CleanupPlugin(engine)
         with mock.patch("subprocess.run") as m:
@@ -94,6 +102,7 @@ class TestCleanupPlugin:
             result = plugin.watermark()
             assert isinstance(result, dict)
 
+    @pytest.mark.integration
     def test_forense_aislamientos_no_dir(self, engine):
         plugin = CleanupPlugin(engine)
         with mock.patch("pathlib.Path.exists") as m:
@@ -101,6 +110,7 @@ class TestCleanupPlugin:
             result = plugin.forense_aislamientos()
             assert isinstance(result, dict)
 
+    @pytest.mark.integration
     def test_conciencia_returns_dict(self, engine):
         plugin = CleanupPlugin(engine)
         with mock.patch("subprocess.run") as m:
@@ -110,6 +120,7 @@ class TestCleanupPlugin:
 
 
 class TestARQCheckPlugin:
+    @pytest.mark.integration
     def test_check_returns_dict(self, engine):
         plugin = ARQCheckPlugin(engine)
         engine.promotion.record = mock.Mock()
@@ -125,6 +136,8 @@ class TestARQCheckPlugin:
             assert "status" in result
             assert "total_warn" in result
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_check_timeout(self, engine):
         plugin = ARQCheckPlugin(engine)
         with mock.patch("subprocess.run") as m:
@@ -135,6 +148,7 @@ class TestARQCheckPlugin:
 
 
 class TestReportingPlugin:
+    @pytest.mark.integration
     def test_save_maintenance_state(self, engine, tmp_path):
         plugin = ReportingPlugin(engine)
         # Mock config.nervioso to use tmp_path

@@ -7,6 +7,7 @@ Sin dependencias externas: solo motor.core.web + stdlib.
 """
 
 from __future__ import annotations
+import pytest
 
 from motor.core.web.models import Citation, SearchResult, SourceMetadata, WebDocument
 
@@ -14,6 +15,7 @@ from motor.core.web.models import Citation, SearchResult, SourceMetadata, WebDoc
 class TestSearchResult:
     """Resultado de búsqueda."""
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         r = SearchResult(title="T", url="https://example.com/a", snippet="S", source="ddg", score=0.7)
         d = r.to_dict()
@@ -26,10 +28,12 @@ class TestSearchResult:
             "published": None,
         }
 
+    @pytest.mark.unit
     def test_to_dict_con_published(self) -> None:
         r = SearchResult(title="T", url="u", snippet="s", source="x", published="2026-01-01")
         assert r.to_dict()["published"] == "2026-01-01"
 
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         r = SearchResult(title="T", url="u", snippet="s", source="x")
         assert r.score == 0.0
@@ -40,6 +44,7 @@ class TestSearchResult:
 class TestSourceMetadata:
     """Metadatos de fuente."""
 
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         m = SourceMetadata(url="https://example.com/a", domain="example.com")
         assert m.fetch_time_ms == 0.0
@@ -48,6 +53,7 @@ class TestSourceMetadata:
         assert m.status_code == 200
         assert m.error is None
 
+    @pytest.mark.unit
     def test_con_valores(self) -> None:
         m = SourceMetadata(
             url="https://example.com/a",
@@ -62,6 +68,7 @@ class TestSourceMetadata:
 class TestWebDocument:
     """Documento web extraído."""
 
+    @pytest.mark.unit
     def test_to_dict_con_texto(self) -> None:
         doc = WebDocument(url="u", title="T", text="x" * 600, markdown="m" * 500, word_count=600)
         d = doc.to_dict()
@@ -71,6 +78,7 @@ class TestWebDocument:
         assert d["language"] is None
         assert d["quality_score"] == 1.0
 
+    @pytest.mark.unit
     def test_to_dict_sin_texto(self) -> None:
         doc = WebDocument(url="u", title="T")
         d = doc.to_dict()
@@ -78,14 +86,17 @@ class TestWebDocument:
         assert d["markdown"] == ""
         assert d["word_count"] == 0
 
+    @pytest.mark.unit
     def test_to_dict_language(self) -> None:
         doc = WebDocument(url="u", title="T", text="a", language="es")
         assert doc.to_dict()["language"] == "es"
 
+    @pytest.mark.unit
     def test_extracted_at_por_defecto(self) -> None:
         doc = WebDocument(url="u", title="T")
         assert doc.extracted_at > 0
 
+    @pytest.mark.unit
     def test_dataclass_fields_predeterminados(self) -> None:
         doc = WebDocument(url="u", title="T")
         assert doc.html == ""
@@ -99,6 +110,7 @@ class TestWebDocument:
 class TestCitation:
     """Cita."""
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         c = Citation(text="t" * 300, url="https://example.com/a", title="T", source="s")
         d = c.to_dict()
@@ -108,10 +120,12 @@ class TestCitation:
         assert d["source"] == "s"
         assert d["confidence"] == 1.0
 
+    @pytest.mark.unit
     def test_to_dict_confianza_custom(self) -> None:
         c = Citation(text="a", url="u", title="t", source="s", confidence=0.5)
         assert c.to_dict()["confidence"] == 0.5
 
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         c = Citation(text="a", url="u", title="t", source="s")
         assert c.fragment == ""

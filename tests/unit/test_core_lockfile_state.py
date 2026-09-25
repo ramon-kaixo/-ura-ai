@@ -1,5 +1,6 @@
 """Tests para infraestructura core: debate/lockfile, infra/state_manager."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -8,6 +9,7 @@ from core.infra.state_manager import clear_checkpoint, load_checkpoint, save_che
 
 
 class TestDebateLock:
+    @pytest.mark.unit
     def test_acquire_release(self, tmp_path) -> None:
         lock = DebateLock(str(tmp_path / "lock"))
         assert lock.acquire() is True
@@ -15,6 +17,7 @@ class TestDebateLock:
         lock.release()
         assert lock._fd is None
 
+    @pytest.mark.unit
     def test_acquire_conflict(self, tmp_path) -> None:
         path = str(tmp_path / "lock")
         lock1 = DebateLock(path)
@@ -24,16 +27,19 @@ class TestDebateLock:
         assert lock2._fd is None
         lock1.release()
 
+    @pytest.mark.unit
     def test_acquire_error(self, tmp_path) -> None:
         lock = DebateLock(str(tmp_path / "lock"))
         with mock.patch("core.debate.lockfile.os.open", side_effect=OSError("permiso")):
             assert lock.acquire() is False
             assert lock._fd is None
 
+    @pytest.mark.unit
     def test_release_sin_fd(self, tmp_path) -> None:
         lock = DebateLock(str(tmp_path / "lock"))
         lock.release()  # no debe fallar
 
+    @pytest.mark.unit
     def test_context_manager(self, tmp_path) -> None:
         lock = DebateLock(str(tmp_path / "lock"))
         with lock:
@@ -42,6 +48,8 @@ class TestDebateLock:
 
 
 class TestStateManager:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_save_load_roundtrip(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         monkeypatch.setattr("core.infra.state_manager.STATE_FILE", str(f))
@@ -53,22 +61,28 @@ class TestStateManager:
         assert record["attempt"] == 3
         assert "timestamp" in record
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_sin_archivo(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.infra.state_manager.STATE_FILE", str(tmp_path / "nope.json"))
         assert load_checkpoint() is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_corrupto(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         f.write_text("no es json")
         monkeypatch.setattr("core.infra.state_manager.STATE_FILE", str(f))
         assert load_checkpoint() is None
 
+    @pytest.mark.unit
     def test_save_error(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         monkeypatch.setattr("core.infra.state_manager.STATE_FILE", str(f))
         with mock.patch("builtins.open", side_effect=OSError("ro")):
             save_checkpoint("t1", "f", "c")  # no debe lanzar
 
+    @pytest.mark.unit
     def test_clear(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         f.write_text("{}")
@@ -76,10 +90,12 @@ class TestStateManager:
         clear_checkpoint()
         assert not f.exists()
 
+    @pytest.mark.unit
     def test_clear_sin_archivo(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("core.infra.state_manager.STATE_FILE", str(tmp_path / "nope.json"))
         clear_checkpoint()  # no debe fallar
 
+    @pytest.mark.unit
     def test_clear_error(self, monkeypatch, tmp_path) -> None:
         f = tmp_path / "state.json"
         f.write_text("{}")

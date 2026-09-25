@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 from typing import ClassVar
@@ -97,6 +98,7 @@ def _run(monkeypatch, capsys, argv: list[str]) -> int:
 # ── main.py: helpers ────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_resolve_db_path(tmp_path, monkeypatch) -> None:
     from types import SimpleNamespace
 
@@ -107,6 +109,7 @@ def test_resolve_db_path(tmp_path, monkeypatch) -> None:
     assert _resolve_db_path(SimpleNamespace(db_path="")) == DEFAULT_DB_PATH
 
 
+@pytest.mark.unit
 def test_get_conn(tmp_path) -> None:
     db = tmp_path / "conn.db"
     conn = _get_conn(db)
@@ -115,6 +118,7 @@ def test_get_conn(tmp_path) -> None:
     assert db.parent.exists()
 
 
+@pytest.mark.unit
 def test_add_command_y_build_parser() -> None:
     parser = build_parser()
     choices: list[str] = []
@@ -130,6 +134,7 @@ def test_add_command_y_build_parser() -> None:
         assert name in choices
 
 
+@pytest.mark.unit
 def test_parser_default_func(monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, ["ura-knowledge"]) == 1
 
@@ -137,6 +142,7 @@ def test_parser_default_func(monkeypatch, capsys) -> None:
 # ── compile.py ──────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_init(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "init")) == 0
     assert (tmp_path / "k.db").exists()
@@ -146,11 +152,13 @@ def test_cmd_init(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "k2.db"), "init"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_verify(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "verify")) == 0
     assert _run(monkeypatch, capsys, _args(tmp_path, "verify", "--source-dir", str(tmp_path))) in (0, 1)
 
 
+@pytest.mark.unit
 def test_cmd_status(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "status")) == 0
     out = capsys.readouterr().out
@@ -159,6 +167,7 @@ def test_cmd_status(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "no.db"), "status"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_compile(monkeypatch, capsys) -> None:
     calls = []
 
@@ -173,6 +182,7 @@ def test_cmd_compile(monkeypatch, capsys) -> None:
     assert calls[0][0] == "cli"
 
 
+@pytest.mark.unit
 def test_cmd_compile_incremental(monkeypatch, capsys) -> None:
     from types import SimpleNamespace
 
@@ -191,16 +201,19 @@ def test_cmd_compile_incremental(monkeypatch, capsys) -> None:
 # ── audit.py ────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_vacuum(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "vacuum")) == 0
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "n.db"), "vacuum"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_audit_db(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "audit-db")) == 0
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "n.db"), "audit-db"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_audit_db_con_errores(tmp_path, monkeypatch, capsys) -> None:
     db = _mk_db(tmp_path)
     conn = sqlite3.connect(db)
@@ -213,6 +226,7 @@ def test_cmd_audit_db_con_errores(tmp_path, monkeypatch, capsys) -> None:
 # ── search.py ───────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_read(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "read", "n1")) == 0
     out = capsys.readouterr().out
@@ -221,6 +235,7 @@ def test_cmd_read(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "no.db"), "read", "n1"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_search(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "search", "contenido")) == 0
     assert _run(monkeypatch, capsys, _args(tmp_path, "search", "contenido", "--mode", "hybrid", "--type", "doc", "--limit", "2")) == 0
@@ -230,6 +245,7 @@ def test_cmd_search(tmp_path, monkeypatch, capsys) -> None:
     assert "sinresultadosxyz" not in out
 
 
+@pytest.mark.unit
 def test_cmd_related(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "related", "n1", "--relation", "links", "--depth", "2")) == 0
     out = capsys.readouterr().out
@@ -242,10 +258,12 @@ def test_cmd_related(tmp_path, monkeypatch, capsys) -> None:
 # ── rules.py ────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_rules_list(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "rules", "list")) == 0
 
 
+@pytest.mark.unit
 def test_cmd_rules_eval(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "rules", "eval")) in (0, 1)
     assert _run(monkeypatch, capsys, _args(tmp_path, "rules", "eval", "n1")) in (0, 1)
@@ -253,6 +271,7 @@ def test_cmd_rules_eval(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "no.db"), "rules", "eval"]) == 1
 
 
+@pytest.mark.unit
 def test_cmd_deduce(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "deduce")) == 0
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(tmp_path / "no.db"), "deduce"]) == 1
@@ -261,6 +280,7 @@ def test_cmd_deduce(tmp_path, monkeypatch, capsys) -> None:
 # ── feedback.py ─────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_feedback(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "feedback", "rate", "123456789abc", "5")) == 0
     assert _run(monkeypatch, capsys, _args(tmp_path, "feedback", "rate", "123456789abc", "9")) == 1
@@ -272,12 +292,14 @@ def test_cmd_feedback(tmp_path, monkeypatch, capsys) -> None:
 # ── jobs.py / pipeline.py ───────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_job_process(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.compile_worker", lambda **kw: None)
     assert _run(monkeypatch, capsys, _args(tmp_path, "job-process")) == 0
     assert _run(monkeypatch, capsys, _args(tmp_path, "job-process", "--source-dir", str(tmp_path))) == 0
 
 
+@pytest.mark.unit
 def test_cmd_pipeline_run(monkeypatch, capsys, tmp_path) -> None:
     class _Stage:
         error = "boom"
@@ -297,6 +319,7 @@ def test_cmd_pipeline_run(monkeypatch, capsys, tmp_path) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "pipeline", "--source-dir", str(tmp_path))) == 1
 
 
+@pytest.mark.unit
 def test_cmd_pipeline_ok(monkeypatch, capsys, tmp_path) -> None:
     class _Result:
         success = True
@@ -316,6 +339,7 @@ def test_cmd_pipeline_ok(monkeypatch, capsys, tmp_path) -> None:
 # ── agent.py ────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_agent_list_y_run(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr("knowledge.engine.agent.list_agents", lambda: [])
     assert _run(monkeypatch, capsys, _args(tmp_path, "agent", "list")) == 0
@@ -351,6 +375,7 @@ def test_cmd_agent_list_y_run(monkeypatch, capsys, tmp_path) -> None:
 # ── api.py ──────────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
     import os
     import sys
@@ -386,6 +411,7 @@ def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
 # ── archive.py ──────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_archive(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr("knowledge.engine.archiver.archive_source", lambda **kw: None)
     monkeypatch.setattr("knowledge.engine.archiver.list_archives", lambda archive_dir=None: [])
@@ -404,6 +430,7 @@ def test_cmd_archive(monkeypatch, capsys, tmp_path) -> None:
 # ── docs.py / notify.py ─────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_docs_generate(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setattr("knowledge.engine.knowledge_base.generate_knowledge_base", lambda db, output_dir=None: 5)
     assert _run(monkeypatch, capsys, _args(tmp_path, "docs", "generate", "--output", str(tmp_path / "out"))) == 0
@@ -411,6 +438,7 @@ def test_cmd_docs_generate(monkeypatch, capsys, tmp_path) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "docs", "generate")) == 1
 
 
+@pytest.mark.unit
 def test_cmd_notify(monkeypatch, capsys, tmp_path) -> None:
     import knowledge.engine.cli.notify as n
 
@@ -449,15 +477,18 @@ def _seed_memory(db: Path) -> None:
     store.save(MemoryRecord(memory_id="m1", kind="learning", title="Título", content="Contenido", tags=(), related_assets=()))
 
 
+@pytest.mark.unit
 def test_cmd_metadata_lineage(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "metadata", "lineage", "a1")) == 0
 
 
+@pytest.mark.unit
 def test_cmd_metadata_policy(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, _args(tmp_path, "metadata", "policy", "a1")) == 0
     assert _run(monkeypatch, capsys, _args(tmp_path, "metadata", "policy")) == 0
 
 
+@pytest.mark.unit
 def test_cmd_memory(tmp_path, monkeypatch, capsys) -> None:
     db = _mk_db(tmp_path)
     _seed_memory(db)
@@ -469,6 +500,7 @@ def test_cmd_memory(tmp_path, monkeypatch, capsys) -> None:
     assert _run(monkeypatch, capsys, [*argv, "metadata", "memory", "link", "m1", "a1"]) in (0, 1)
 
 
+@pytest.mark.unit
 def test_cmd_metadata_retrieve_context(tmp_path, monkeypatch, capsys) -> None:
     class _Bundle:
         assets: ClassVar[list[object]] = []
@@ -492,6 +524,7 @@ def test_cmd_metadata_retrieve_context(tmp_path, monkeypatch, capsys) -> None:
 # ── doctor.py ───────────────────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_cmd_doctor(tmp_path, monkeypatch, capsys) -> None:
     db = _mk_db(tmp_path)
     assert _run(monkeypatch, capsys, ["ura-knowledge", "--db-path", str(db), "doctor"]) == 0

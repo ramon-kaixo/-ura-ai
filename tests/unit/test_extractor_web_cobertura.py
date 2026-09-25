@@ -9,6 +9,7 @@ _check_ip_blocked, _hash_url_stub, hashlib_content, _compute_web_quality).
 
 from __future__ import annotations
 
+import pytest
 import hashlib
 import socket
 import sys
@@ -164,18 +165,21 @@ def _fake_bs4(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestIdentidadRegistro:
+    @pytest.mark.unit
     def test_identidad(self) -> None:
         assert WebExtractor.id == "web"
         assert WebExtractor.version == "1.0.0"
         assert WebExtractor.supported_mime_types == ["text/html"]
         assert WebExtractor.cost == "O(n)"
 
+    @pytest.mark.unit
     def test_registrado_en_registry(self) -> None:
         assert isinstance(get_registry(), ExtractorRegistry)
         assert isinstance(get_registry().get("web"), WebExtractor)
 
 
 class TestExtract:
+    @pytest.mark.unit
     def test_url_vacia(self) -> None:
         extractor = WebExtractor()
         result = extractor.extract(_source(""))
@@ -184,6 +188,7 @@ class TestExtract:
         assert result.errors == ["Empty URL"]
         assert result.duration_ms >= 0
 
+    @pytest.mark.unit
     def test_degradado_sin_httpx_ni_bs4(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(web, "_HAS_HTTPX", False)
         monkeypatch.setattr(web, "_HAS_BS4", False)
@@ -202,6 +207,7 @@ class TestExtract:
         assert result.asset.asset_id == hashlib.sha256(url.encode()).hexdigest()[:16]
         assert result.asset.metadata["content_sha256"] == hashlib.sha256(url.encode()).hexdigest()
 
+    @pytest.mark.unit
     def test_degradado_solo_sin_bs4(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(web, "_HAS_HTTPX", True)
         monkeypatch.setattr(web, "_HAS_BS4", False)
@@ -211,18 +217,21 @@ class TestExtract:
         assert result.asset is not None
         assert result.asset.metadata["_degraded"] is True
 
+    @pytest.mark.unit
     def test_esquema_no_permitido(self) -> None:
         result = WebExtractor().extract(_source("ftp://example.com/file"))
 
         assert result.asset is None
         assert any("Scheme 'ftp' not allowed" in error for error in result.errors)
 
+    @pytest.mark.unit
     def test_ip_privada_rechazada(self) -> None:
         result = WebExtractor().extract(_source("http://192.168.1.10/x"))
 
         assert result.asset is None
         assert any("blocked network" in error for error in result.errors)
 
+    @pytest.mark.unit
     def test_error_generico(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(url: str) -> None:
             raise RuntimeError("boom interno")
@@ -234,6 +243,7 @@ class TestExtract:
         assert result.asset is None
         assert result.errors == ["Extraction error: boom interno"]
 
+    @pytest.mark.unit
     def test_exitoso(
         self,
         monkeypatch: pytest.MonkeyPatch,
@@ -275,6 +285,7 @@ class TestExtract:
         assert result.asset.asset_type == web.AssetType.API_REFERENCE
         assert result.asset.quality == pytest.approx(1.0)
 
+    @pytest.mark.unit
     def test_redireccion_a_ip_privada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(web, "_HAS_HTTPX", True)
         monkeypatch.setattr(web, "_HAS_BS4", True)
@@ -287,6 +298,7 @@ class TestExtract:
         assert result.asset is None
         assert any("blocked network" in error for error in result.errors)
 
+    @pytest.mark.unit
     def test_error_http_status(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import httpx
 
@@ -307,6 +319,7 @@ class TestExtract:
 
 
 class TestFetchAndExtract:
+    @pytest.mark.unit
     def test_cuerpo_truncado(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(web, "_HAS_HTTPX", True)
         monkeypatch.setattr(web, "_HAS_BS4", True)
@@ -323,6 +336,7 @@ class TestFetchAndExtract:
         assert result.asset.metadata["size"] == web.MAX_BODY_SIZE
         assert result.asset.metadata["content_sha256"] == hashlib.sha256(truncated).hexdigest()
 
+    @pytest.mark.unit
     def test_sin_content_type(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(web, "_HAS_HTTPX", True)
         monkeypatch.setattr(web, "_HAS_BS4", True)
@@ -337,6 +351,7 @@ class TestFetchAndExtract:
 
 
 class TestParseHtml:
+    @pytest.mark.unit
     def test_completo(self) -> None:
         _activate_soup(
             title="Título con espacios  ",
@@ -364,6 +379,7 @@ class TestParseHtml:
         assert metadata["_extractor"] == "web"
         assert metadata["_extractor_version"] == "1.0.0"
 
+    @pytest.mark.unit
     def test_minimo(self) -> None:
         _activate_soup()
 
@@ -376,6 +392,7 @@ class TestParseHtml:
         assert metadata["image_count"] == 0
         assert metadata["link_count"] == 0
 
+    @pytest.mark.unit
     def test_titulo_sin_string_y_meta_sin_content(self) -> None:
         _activate_soup(title="", meta_content="")
 
@@ -384,6 +401,7 @@ class TestParseHtml:
         assert metadata["title"] == ""
         assert metadata["description"] == ""
 
+    @pytest.mark.unit
     def test_enlaces_filtrados_por_prefijo_http(self) -> None:
         _activate_soup(links=("https://a.example.com", "//cdn.example.com/x", "mailto:x@example.com"))
 
@@ -409,36 +427,43 @@ class TestValidateUrl:
             ("http://100.64.1.1/x", PrivateIPBlocked),
         ],
     )
+    @pytest.mark.unit
     def test_urls_bloqueadas(self, url: str, expected: type[SSRFError]) -> None:
         with pytest.raises(expected):
             WebExtractor._validate_url(url)
 
+    @pytest.mark.unit
     def test_ip_publica_ok(self) -> None:
         assert WebExtractor._validate_url(f"http://{_PUBLIC_IP}/ok") is None
 
+    @pytest.mark.unit
     def test_dns_fallo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, socket.gaierror("nodename nor servname provided"))
 
         with pytest.raises(SSRFError, match="DNS resolution failed"):
             WebExtractor._validate_url("https://noexiste.example.com/")
 
+    @pytest.mark.unit
     def test_dns_ip_privada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, [_PRIVATE_IP])
 
         with pytest.raises(PrivateIPBlocked, match="blocked network"):
             WebExtractor._validate_url("https://interna.example.com/")
 
+    @pytest.mark.unit
     def test_dns_ip_publica(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, [_PUBLIC_IP])
 
         assert WebExtractor._validate_url("https://example.com/") is None
 
+    @pytest.mark.unit
     def test_dns_varias_direcciones_una_bloqueada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, [_PUBLIC_IP, _PRIVATE_IP])
 
         with pytest.raises(PrivateIPBlocked):
             WebExtractor._validate_url("https://dual.example.com/")
 
+    @pytest.mark.unit
     def test_dns_resultado_no_ip_se_omite(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, ["not-an-ip"])
 
@@ -450,28 +475,34 @@ class TestValidateRedirectUrl:
         "url",
         ["ftp://example.com/x", "chrome://settings"],
     )
+    @pytest.mark.unit
     def test_esquema_no_permitido(self, url: str) -> None:
         with pytest.raises(URLSchemeBlocked, match="Redirect to blocked scheme"):
             WebExtractor._validate_redirect_url(url)
 
+    @pytest.mark.unit
     def test_ip_literal_publica_ok(self) -> None:
         assert WebExtractor._validate_redirect_url(f"https://{_PUBLIC_IP}/x") is None
 
+    @pytest.mark.unit
     def test_ip_literal_privada(self) -> None:
         with pytest.raises(PrivateIPBlocked):
             WebExtractor._validate_redirect_url(f"http://{_PRIVATE_IP}/x")
 
+    @pytest.mark.unit
     def test_dns_fallo_se_omite(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, socket.gaierror("fail"))
 
         assert WebExtractor._validate_redirect_url("https://noexiste.example.com/") is None
 
+    @pytest.mark.unit
     def test_dns_ip_privada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, [_PRIVATE_IP])
 
         with pytest.raises(PrivateIPBlocked):
             WebExtractor._validate_redirect_url("https://interna.example.com/")
 
+    @pytest.mark.unit
     def test_dns_resultado_no_ip_se_omite(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _mock_dns(monkeypatch, ["not-an-ip"])
 
@@ -479,27 +510,33 @@ class TestValidateRedirectUrl:
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_is_ip_string(self) -> None:
         assert web._is_ip_string("10.0.0.1") is True
         assert web._is_ip_string("2001:db8::1") is True
         assert web._is_ip_string("example.com") is False
         assert web._is_ip_string("") is False
 
+    @pytest.mark.unit
     def test_check_ip_blocked_metadata_cloud(self) -> None:
         with pytest.raises(CloudMetadataBlocked, match="Cloud metadata"):
             web._check_ip_blocked(web.ipaddress.ip_address("169.254.169.254"), "169.254.169.254")
 
+    @pytest.mark.unit
     def test_check_ip_blocked_privada(self) -> None:
         with pytest.raises(PrivateIPBlocked, match=f"IP {_PRIVATE_IP}"):
             web._check_ip_blocked(web.ipaddress.ip_address(_PRIVATE_IP), "interna.example.com")
 
+    @pytest.mark.unit
     def test_check_ip_blocked_publica(self) -> None:
         assert web._check_ip_blocked(web.ipaddress.ip_address(_PUBLIC_IP), "example.com") is None
 
+    @pytest.mark.unit
     def test_hash_url_stub(self) -> None:
         assert web._hash_url_stub("https://example.com") == hashlib.sha256(b"https://example.com").hexdigest()
         assert web._hash_url_stub("a") != web._hash_url_stub("b")
 
+    @pytest.mark.unit
     def test_hashlib_content(self) -> None:
         assert web.hashlib_content(b"abc") == hashlib.sha256(b"abc").hexdigest()
 
@@ -516,5 +553,6 @@ class TestHelpers:
             ({"title": "T", "description": "D", "text_length": 150, "image_count": 1, "link_count": 2, "status_code": 200}, 1.0),
         ],
     )
+    @pytest.mark.unit
     def test_compute_web_quality(self, metadata: dict[str, Any], expected: float) -> None:
         assert web._compute_web_quality(metadata) == pytest.approx(expected)

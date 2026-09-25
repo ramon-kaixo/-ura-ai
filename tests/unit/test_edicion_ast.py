@@ -1,3 +1,4 @@
+import pytest
 """Tests de edición quirúrgica con AST (TASK-20260812-021)."""
 
 import ast
@@ -15,11 +16,13 @@ from edicion_ast import (
 )
 
 
+@pytest.mark.unit
 def test_extraer_firma() -> None:
     firma = extraer_firma("def procesar(datos, limite=10):\n    return datos")
     assert firma == "procesar(datos, limite)"
 
 
+@pytest.mark.unit
 def test_extraer_helpers_solo_helpers() -> None:
     codigo = """def helper1(x):
     return x * 2
@@ -36,6 +39,7 @@ def funcion_principal(z):
     assert len(helpers) == 3
 
 
+@pytest.mark.unit
 def test_insertar_helpers_no_rompe() -> None:
     fuente = """def original(a, b):
     return a + b"""
@@ -46,6 +50,7 @@ def test_insertar_helpers_no_rompe() -> None:
     assert "def original" in resultado
 
 
+@pytest.mark.unit
 def test_validar_firma_preservada() -> None:
     fuente = """def original(a, b):
     return a + b"""
@@ -53,6 +58,7 @@ def test_validar_firma_preservada() -> None:
     assert ok, err
 
 
+@pytest.mark.unit
 def test_validar_firma_perdida() -> None:
     fuente = """def otra(x):
     return x"""
@@ -60,6 +66,7 @@ def test_validar_firma_perdida() -> None:
     assert not ok
 
 
+@pytest.mark.unit
 def test_aplicar_helpers_completo() -> None:
     fuente = """def original(a, b):
     return a + b"""
@@ -75,6 +82,7 @@ def test_aplicar_helpers_completo() -> None:
     assert "helper_suma" in nombres
 
 
+@pytest.mark.unit
 def test_aplicar_sin_helpers_rechaza() -> None:
     fuente = "def original(a, b):\n    return a + b"
     ok, error = aplicar_helpers(fuente, "no hay funciones aqui", "original(a, b)")
@@ -82,14 +90,17 @@ def test_aplicar_sin_helpers_rechaza() -> None:
     assert "sin helpers" in error
 
 
+@pytest.mark.unit
 def test_extraer_firma_sintaxis_rota() -> None:
     assert extraer_firma("def (") == ""
 
 
+@pytest.mark.unit
 def test_extraer_helpers_sintaxis_rota() -> None:
     assert extraer_helpers("def (") == []
 
 
+@pytest.mark.unit
 def test_insertar_helpers_sin_punto_insercion() -> None:
     # Fuente sin funciones (solo codigo suelto) -> inserta al final
     fuente = "x = 1"
@@ -98,6 +109,7 @@ def test_insertar_helpers_sin_punto_insercion() -> None:
     compile(resultado, "<t>", "exec")
 
 
+@pytest.mark.unit
 def test_validar_firma_vacia_ok() -> None:
     # Sin firma original -> solo comprueba sintaxis
     ok, err = validar_archivo("def f():\n    pass", "")
@@ -105,6 +117,7 @@ def test_validar_firma_vacia_ok() -> None:
     assert err == "ok"
 
 
+@pytest.mark.unit
 def test_aplicar_con_funcion_extrae() -> None:
     # aplicar_helpers extrae TODAS las funciones de la respuesta (incl. la
     # principal como helper) y las inserta — no rompe el archivo
@@ -116,6 +129,7 @@ def test_aplicar_con_funcion_extrae() -> None:
     assert "def original" in resultado
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_sintaxis_rota() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -124,6 +138,7 @@ def test_diff_quirurgico_sintaxis_rota() -> None:
     assert "sintaxis" in error
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_sin_funciones() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -132,6 +147,7 @@ def test_diff_quirurgico_sin_funciones() -> None:
     assert "sin funciones" in error
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_solo_principal() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -140,6 +156,7 @@ def test_diff_quirurgico_solo_principal() -> None:
     assert "solo devolvió la principal" in error
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_con_helpers() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -151,6 +168,7 @@ def test_diff_quirurgico_con_helpers() -> None:
     compile(resultado, "<t>", "exec")
 
 
+@pytest.mark.unit
 def test_extraer_helpers_async() -> None:
     codigo = "async def helper_async(x):\n    return x"
     helpers = extraer_helpers(codigo)
@@ -158,12 +176,14 @@ def test_extraer_helpers_async() -> None:
     assert "async def helper_async" in helpers[0]
 
 
+@pytest.mark.unit
 def test_validar_archivo_sintaxis_rota() -> None:
     ok, error = validar_archivo("def (", "f()")
     assert not ok
     assert "sintaxis" in error
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_helpers_vacio() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -173,16 +193,19 @@ def test_diff_quirurgico_helpers_vacio() -> None:
     assert "solo devolvió la principal" in error
 
 
+@pytest.mark.unit
 def test_extraer_helpers_sin_fuente_valida() -> None:
     # get_source_segment con codigo vacio
     assert extraer_helpers("") == []
 
 
+@pytest.mark.unit
 def test_insertar_helpers_vacio_devuelve_original() -> None:
     fuente = "def f():\n    pass"
     assert insertar_helpers(fuente, []) == fuente
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_principal_y_helper() -> None:
     from edicion_ast import diff_quirurgico
 
@@ -195,6 +218,7 @@ def test_diff_quirurgico_principal_y_helper() -> None:
     assert resultado.count("def ") == 2  # helper + original
 
 
+@pytest.mark.unit
 def test_extraer_firma_sin_funcion() -> None:
     """Código sin def -> "" (33)."""
     from edicion_ast import extraer_firma
@@ -202,6 +226,7 @@ def test_extraer_firma_sin_funcion() -> None:
     assert extraer_firma("x = 1\n") == ""
 
 
+@pytest.mark.unit
 def test_extraer_helpers_solo_assigns() -> None:
     """Código sin funciones -> [] (47->46)."""
     from edicion_ast import extraer_helpers
@@ -209,6 +234,7 @@ def test_extraer_helpers_solo_assigns() -> None:
     assert extraer_helpers("x = 1\n") == []
 
 
+@pytest.mark.unit
 def test_extraer_helpers_segmento_vacio(monkeypatch) -> None:
     """get_source_segment vacío -> no appendea (51->46)."""
     import ast
@@ -219,6 +245,7 @@ def test_extraer_helpers_segmento_vacio(monkeypatch) -> None:
     assert extraer_helpers("def h():\n    pass\n") == []
 
 
+@pytest.mark.unit
 def test_extraer_helpers_segmento_error(monkeypatch) -> None:
     """get_source_segment lanza -> continue (53-54)."""
     import ast
@@ -232,6 +259,7 @@ def test_extraer_helpers_segmento_error(monkeypatch) -> None:
     assert extraer_helpers("def h():\n    pass\n") == []
 
 
+@pytest.mark.unit
 def test_insertar_helpers_despues_linea_positiva() -> None:
     """despues_linea > 0 -> no busca def (70->75)."""
     from edicion_ast import insertar_helpers
@@ -241,6 +269,7 @@ def test_insertar_helpers_despues_linea_positiva() -> None:
     assert "def aux()" in r
 
 
+@pytest.mark.unit
 def test_insertar_helpers_con_def(monkeypatch) -> None:
     """Después de buscar def (75->78): la fuente con def y despues_linea<=0."""
     import re
@@ -261,6 +290,7 @@ def test_insertar_helpers_con_def(monkeypatch) -> None:
     assert r.index("def aux") < r.index("def f")
 
 
+@pytest.mark.unit
 def test_aplicar_helpers_firma_perdida() -> None:
     """validacion falla -> (False, error) (118)."""
     from edicion_ast import aplicar_helpers
@@ -272,6 +302,7 @@ def test_aplicar_helpers_firma_perdida() -> None:
     assert "firma" in resultado
 
 
+@pytest.mark.unit
 def test_diff_quirurgico_src_vacio(monkeypatch) -> None:
     """Helper con src vacío -> se ignora; sin helpers y sin principal (155-161)."""
     import ast

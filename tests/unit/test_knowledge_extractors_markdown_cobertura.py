@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -41,6 +42,7 @@ def _source(tmp_path: Path, content: str = MD_FULL) -> AssetSource:
     return AssetSource(kind="filesystem", location=str(p), fetched_at="")
 
 
+@pytest.mark.unit
 def test_extract_ok(tmp_path) -> None:
     src = _source(tmp_path)
     result = MarkdownExtractor().extract(src)
@@ -62,6 +64,7 @@ def test_extract_ok(tmp_path) -> None:
     assert result.duration_ms >= 0
 
 
+@pytest.mark.unit
 def test_extract_archivo_no_existe(tmp_path) -> None:
     src = AssetSource(kind="filesystem", location=str(tmp_path / "no.md"), fetched_at="")
     result = MarkdownExtractor().extract(src)
@@ -69,6 +72,7 @@ def test_extract_archivo_no_existe(tmp_path) -> None:
     assert result.asset is None
 
 
+@pytest.mark.unit
 def test_extract_permiso_denegado(tmp_path) -> None:
     p = tmp_path / "d.md"
     p.write_text("x")
@@ -81,79 +85,95 @@ def test_extract_permiso_denegado(tmp_path) -> None:
         p.chmod(0o644)
 
 
+@pytest.mark.unit
 def test_parse_frontmatter_completo() -> None:
     fm, body = _parse_frontmatter(MD_FULL)
     assert fm == {"title": "Mi Documento", "tags": ["python", "ura"]}
     assert body.startswith("# Título H1")
 
 
+@pytest.mark.unit
 def test_parse_frontmatter_sin() -> None:
     fm, body = _parse_frontmatter("hola")
     assert fm is None
     assert body == "hola"
 
 
+@pytest.mark.unit
 def test_parse_frontmatter_incompleto() -> None:
     fm, body = _parse_frontmatter("---\ntitle: x")
     assert fm is None
     assert body == "---\ntitle: x"
 
 
+@pytest.mark.unit
 def test_parse_frontmatter_yaml_invalido() -> None:
     fm, body = _parse_frontmatter("---\n:: not yaml ::\n---\nresto")
     assert fm is None
     assert body == "---\n:: not yaml ::\n---\nresto"
 
 
+@pytest.mark.unit
 def test_parse_frontmatter_no_dict() -> None:
     fm, body = _parse_frontmatter("---\n- a\n- b\n---\ncuerpo")
     assert fm is None
     assert body == "---\n- a\n- b\n---\ncuerpo"
 
 
+@pytest.mark.unit
 def test_extract_title_desde_fm() -> None:
     assert _extract_title({"title": "T"}, "x") == "T"
 
 
+@pytest.mark.unit
 def test_extract_title_fallback_heading() -> None:
     assert _extract_title(None, "# Hola\nx") == "Hola"
 
 
+@pytest.mark.unit
 def test_extract_title_vacio() -> None:
     assert _extract_title({}, "sin headings") == ""
 
 
+@pytest.mark.unit
 def test_extract_tags_lista() -> None:
     assert _extract_tags({"tags": [1, "dos"]}) == ["1", "dos"]
 
 
+@pytest.mark.unit
 def test_extract_tags_string() -> None:
     assert _extract_tags({"tags": "a, b ,c"}) == ["a", "b", "c"]
 
 
+@pytest.mark.unit
 def test_extract_tags_vacio() -> None:
     assert _extract_tags(None) == []
     assert _extract_tags({"tags": 42}) == []
 
 
+@pytest.mark.unit
 def test_count_words() -> None:
     assert _count_words("hola mundo") == 2
     assert _count_words("") == 0
 
 
+@pytest.mark.unit
 def test_count_headings() -> None:
     assert _count_headings("# a\n## b\n# c") == {"h1": 2, "h2": 1}
     assert _count_headings("sin") == {}
 
 
+@pytest.mark.unit
 def test_find_internal_links() -> None:
     assert _find_internal_links("[x](0123456789ab.md) y [z](000000000000.md)") == ["0123456789ab", "000000000000"]
 
 
+@pytest.mark.unit
 def test_find_external_links() -> None:
     assert _find_external_links("[x](https://a.com) [y](http://b.org)") == ["https://a.com", "http://b.org"]
 
 
+@pytest.mark.unit
 def test_compute_quality() -> None:
     assert _compute_quality([], 0, {}) == 0.3
     assert _compute_quality(["t"], 10, {"h1": 1}) == pytest.approx(0.7)
@@ -161,12 +181,15 @@ def test_compute_quality() -> None:
     assert _compute_quality(["t"], 300, {"h1": 1}) == pytest.approx(1.0)
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_file(tmp_path) -> None:
     p = tmp_path / "b.md"
     p.write_bytes(b"\x00\x01")
     assert _load_file(str(p)) == b"\x00\x01"
 
 
+@pytest.mark.unit
 def test_registry() -> None:
     from knowledge.engine.extractors.base import get_registry
 

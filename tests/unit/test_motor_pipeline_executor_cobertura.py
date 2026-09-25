@@ -1,6 +1,7 @@
 """Tests de cobertura de motor/pipeline/executor.py (PipelineExecutor)."""
 
 from __future__ import annotations
+import pytest
 
 from typing import Any
 
@@ -76,6 +77,7 @@ def _stage(name: str, plugin: str, optional: bool = False) -> StageDefinition:
 
 
 class TestExecute:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _Plugin({"out": 1})}), bus)
@@ -86,12 +88,14 @@ class TestExecute:
         assert res.stages[0].output == {"out": 1}
         assert res.stages[0].duration_ms >= 0
 
+    @pytest.mark.unit
     def test_actualiza_contexto_con_salida_dict(self) -> None:
         plugin = _Plugin({"out": 1})
         exec_ = PipelineExecutor(_registry({"a": plugin}), EventBus())
         exec_.execute(_pipe([_stage("s1", "a")]))
         assert plugin.rollback_called is False
 
+    @pytest.mark.unit
     def test_stage_falla_no_optional_rollback_y_anuncia(self) -> None:
         bus = EventBus()
         ok_plugin = _Plugin({"out": 1})
@@ -105,6 +109,7 @@ class TestExecute:
         assert ok_plugin.rollback_called  # rollback del stage OK previo
         assert seen == ["p"]
 
+    @pytest.mark.unit
     def test_stage_falla_optional_continua(self) -> None:
         bus = EventBus()
         bad = _Plugin(exc=RuntimeError("boom"))
@@ -113,6 +118,7 @@ class TestExecute:
         assert res.ok
         assert not res.stages[0].ok
 
+    @pytest.mark.unit
     def test_excepcion_en_anuncio_publicacion(self) -> None:
         bus = EventBus()
         plugin = _Plugin({"ok": 1})
@@ -139,6 +145,7 @@ class TestExecute:
 
 
 class TestExecuteStage:
+    @pytest.mark.unit
     def test_hook_before_stage_cancela(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _Plugin({"ok": 1})}), bus)
@@ -152,6 +159,7 @@ class TestExecuteStage:
         assert not res.ok
         assert "Cancelled by before_stage hook" in res.error
 
+    @pytest.mark.unit
     def test_plugin_no_encontrado(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({}), bus)
@@ -159,6 +167,7 @@ class TestExecuteStage:
         assert not res.ok
         assert "not found" in res.error
 
+    @pytest.mark.unit
     def test_on_before_stage_cancela(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _OnBefore(None)}), bus)
@@ -166,6 +175,7 @@ class TestExecuteStage:
         assert not res.ok
         assert "Cancelled by plugin.on_before_stage" in res.error
 
+    @pytest.mark.unit
     def test_on_before_stage_raise(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _OnBefore(exc=ValueError("before boom"))}), bus)
@@ -173,6 +183,7 @@ class TestExecuteStage:
         assert not res.ok
         assert "on_before_stage error" in res.error
 
+    @pytest.mark.unit
     def test_salida_no_dict(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _Plugin("string")}), bus)
@@ -180,12 +191,14 @@ class TestExecuteStage:
         assert res.ok
         assert res.output == {}
 
+    @pytest.mark.unit
     def test_on_after_stage_raise_no_falla(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _OnAfter(exc=ValueError("after boom"))}), bus)
         res = exec_._execute_stage(_stage("s1", "a"), {})
         assert res.ok
 
+    @pytest.mark.unit
     def test_execute_raise_falla_stage(self) -> None:
         bus = EventBus()
         exec_ = PipelineExecutor(_registry({"a": _Plugin(exc=ValueError("exec boom"))}), bus)
@@ -195,6 +208,7 @@ class TestExecuteStage:
 
 
 class TestRollback:
+    @pytest.mark.unit
     def test_rollback_exception_no_propaga(self) -> None:
         bus = EventBus()
         ok_plugin = _Plugin({"out": 1})
@@ -204,6 +218,7 @@ class TestRollback:
         res = exec_.execute(_pipe([_stage("s1", "a"), _stage("s2", "b")]))
         assert not res.ok  # el rollback fallido no rompe el resultado
 
+    @pytest.mark.unit
     def test_rollback_plugin_sin_rollback(self) -> None:
         bus = EventBus()
         class _SinRollback:

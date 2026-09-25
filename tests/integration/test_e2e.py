@@ -7,6 +7,7 @@ y no se cae entre peticiones.
 
 from __future__ import annotations
 
+import pytest
 import socket
 import threading
 import time
@@ -60,6 +61,8 @@ def e2e_server(mochila_fake_state: Any) -> Generator[str, None, None]:
     hilo.join(timeout=10)
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_health_servidor_real(e2e_server: str) -> None:
     with httpx.Client(timeout=10.0) as client:
         r = client.get(f"{e2e_server}/health")
@@ -69,6 +72,8 @@ def test_e2e_health_servidor_real(e2e_server: str) -> None:
     assert "fake" in datos["providers"]
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_chat_completions_servidor_real(e2e_server: str) -> None:
     payload = {
         "model": "fake/pepe",
@@ -88,6 +93,8 @@ def test_e2e_chat_completions_servidor_real(e2e_server: str) -> None:
     assert r.headers.get("x-mochila-provider") == "fake"
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_el_sistema_sigue_vivo_tras_peticiones(e2e_server: str) -> None:
     """Varias peticiones seguidas: el servidor no se cae."""
     with httpx.Client(timeout=10.0) as client:
@@ -105,6 +112,8 @@ def test_e2e_el_sistema_sigue_vivo_tras_peticiones(e2e_server: str) -> None:
             assert ChatResponse.model_validate(r2.json()).id.startswith("chatcmpl-")
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_modelos_servidor_real(e2e_server: str) -> None:
     with httpx.Client(timeout=10.0) as client:
         r = client.get(f"{e2e_server}/v1/models")

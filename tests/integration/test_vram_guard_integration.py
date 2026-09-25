@@ -9,6 +9,7 @@ from core.model_router import vram_guard_singleton as vram_guard
 
 
 class TestVRAMGuard:
+    @pytest.mark.integration
     def test_metricas_structure(self) -> None:
         m = vram_guard.metricas()
         assert "max_concurrent" in m
@@ -19,6 +20,7 @@ class TestVRAMGuard:
         assert "total_timeout" in m
         assert "total_processed" in m
 
+    @pytest.mark.integration
     def test_slots_disponibles_property(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=2)
         assert g.slots_disponibles == 2

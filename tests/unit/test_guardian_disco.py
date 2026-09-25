@@ -28,17 +28,20 @@ def aislar_paths(tmp_path, monkeypatch):
 
 
 class TestCalcularHash:
+    @pytest.mark.unit
     def test_sha256_completo(self, tmp_path):
         f = tmp_path / "a.py"
         f.write_text("print('hola')")
         h = calcular_hash(f)
         assert len(h) == 64
 
+    @pytest.mark.unit
     def test_truncado(self, tmp_path):
         f = tmp_path / "a.py"
         f.write_text("x")
         assert len(calcular_hash(f, truncar=12)) == 12
 
+    @pytest.mark.unit
     def test_determinista(self, tmp_path):
         f = tmp_path / "a.py"
         f.write_text("mismo contenido")
@@ -46,57 +49,68 @@ class TestCalcularHash:
 
 
 class TestComparar:
+    @pytest.mark.unit
     def test_nuevo(self):
         cambios = comparar({}, {"a.py": "h1"})
         assert cambios == [{"file": "a.py", "status": "NUEVO", "hash": "h1"}]
 
+    @pytest.mark.unit
     def test_modificado(self):
         cambios = comparar({"a.py": "h1"}, {"a.py": "h2"})
         assert cambios[0]["status"] == "MODIFICADO"
         assert cambios[0]["hash"] == "h2"
 
+    @pytest.mark.unit
     def test_fantasma(self):
         cambios = comparar({"a.py": "h1"}, {})
         assert cambios == [{"file": "a.py", "status": "FANTASMA", "hash": "—"}]
 
+    @pytest.mark.unit
     def test_sin_cambios(self):
         assert comparar({"a.py": "h1"}, {"a.py": "h1"}) == []
 
 
 class TestVerificarEscritura:
+    @pytest.mark.unit
     def test_coincide(self, aislar_paths, monkeypatch):
         (aislar_paths / "f.py").write_text("contenido")
         h = calcular_hash(aislar_paths / "f.py")
         monkeypatch.setattr("core.guardian_disco.cargar_config", lambda: {"hash_truncar": 64})
         assert verificar_escritura("f.py", h) is True
 
+    @pytest.mark.unit
     def test_no_coincide(self, aislar_paths, monkeypatch):
         (aislar_paths / "f.py").write_text("contenido")
         monkeypatch.setattr("core.guardian_disco.cargar_config", lambda: {"hash_truncar": 64})
         assert verificar_escritura("f.py", "deadbeef") is False
 
+    @pytest.mark.unit
     def test_fantasma(self, aislar_paths, monkeypatch):
         monkeypatch.setattr("core.guardian_disco.cargar_config", lambda: {"hash_truncar": 64})
         assert verificar_escritura("no_existe.py", "h") is False
 
+    @pytest.mark.unit
     def test_usar_config_explicita(self, aislar_paths):
         (aislar_paths / "f.py").write_text("x")
         assert verificar_escritura("f.py", "y", config={"hash_truncar": 64}) is False
 
 
 class TestCargarConfig:
+    @pytest.mark.unit
     def test_crea_default_si_no_existe(self, aislar_paths):
         cfg = cargar_config()
         assert "patrones" in cfg
         assert "excluir" in cfg
         assert aislar_paths.joinpath(".nervioso", "guardian_config.json").exists()
 
+    @pytest.mark.unit
     def test_lee_config_existente(self, aislar_paths):
         cfg_path = aislar_paths / ".nervioso" / "guardian_config.json"
         cfg_path.parent.mkdir(parents=True)
         cfg_path.write_text(json.dumps({"patrones": ["*.py"], "excluir": []}))
         assert cargar_config() == {"patrones": ["*.py"], "excluir": []}
 
+    @pytest.mark.unit
     def test_config_corrupta_devuelve_default(self, aislar_paths):
         cfg_path = aislar_paths / ".nervioso" / "guardian_config.json"
         cfg_path.parent.mkdir(parents=True)
@@ -106,17 +120,20 @@ class TestCargarConfig:
 
 
 class TestGuardarSnapshot:
+    @pytest.mark.unit
     def test_escribe_snapshot(self, aislar_paths):
         guardar_snapshot({"total": 1})
         snap = json.loads(aislar_paths.joinpath(".nervioso", "hashes.json").read_text())
         assert snap == {"total": 1}
 
+    @pytest.mark.unit
     def test_no_deja_temp(self, aislar_paths):
         guardar_snapshot({"total": 1})
         assert not aislar_paths.joinpath(".nervioso", "hashes.tmp").exists()
 
 
 class TestGuardarHistorial:
+    @pytest.mark.unit
     def test_append_jsonl(self, aislar_paths):
         cambios = [
             {"file": "a.py", "status": "NUEVO", "hash": "h"},
@@ -132,6 +149,7 @@ class TestGuardarHistorial:
         assert entry["fantasmas"] == 1
         assert entry["total_archivos"] == 10
 
+    @pytest.mark.unit
     def test_append_acumula(self, aislar_paths):
         guardar_historial([], total=1)
         guardar_historial([], total=2)
@@ -140,6 +158,7 @@ class TestGuardarHistorial:
 
 
 class TestEscanear:
+    @pytest.mark.unit
     def test_respeta_patrones_y_exclusiones(self, aislar_paths, monkeypatch):
         (aislar_paths / "app.py").write_text("codigo")
         (aislar_paths / "app.json").write_text("{}")
@@ -153,6 +172,7 @@ class TestEscanear:
         assert "nota.txt" not in actual
         assert not any(".venv" in k for k in actual)
 
+    @pytest.mark.unit
     def test_ignora_inaccesibles(self, aislar_paths, monkeypatch):
         (aislar_paths / "ok.py").write_text("x")
         cfg = {"patrones": ["*.py"], "excluir": [], "hash_truncar": 64}

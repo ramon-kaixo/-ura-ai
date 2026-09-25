@@ -14,6 +14,7 @@ comportamiento lógico (merge, defaults, ramas de error) es el real del módulo.
 
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -62,20 +63,24 @@ def _write_raw(tmp_path: Path, raw: dict[str, Any]) -> Path:
 class TestDetectProfileKey:
     """_detect_profile_key: selección de perfil por SO y hostname."""
 
+    @pytest.mark.unit
     def test_darwin(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cm.platform, "system", lambda: "Darwin")
         assert cm._detect_profile_key() == "darwin_mac"
 
+    @pytest.mark.unit
     def test_linux_asus(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cm.platform, "system", lambda: "Linux")
         monkeypatch.setattr(cm.platform, "node", lambda: "GX10-64C3")
         assert cm._detect_profile_key() == "linux_asus"
 
+    @pytest.mark.unit
     def test_linux_terminal(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cm.platform, "system", lambda: "Linux")
         monkeypatch.setattr(cm.platform, "node", lambda: "macbook-pro")
         assert cm._detect_profile_key() == "linux_terminal"
 
+    @pytest.mark.unit
     def test_sistema_no_soportado(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cm.platform, "system", lambda: "Windows")
         with pytest.raises(RuntimeError, match="no soportado"):
@@ -85,6 +90,7 @@ class TestDetectProfileKey:
 class TestExpandPaths:
     """_expand_paths: expansión de ~ en paths, swarm y allowed_log_dirs."""
 
+    @pytest.mark.unit
     def test_expande_paths_swarm_y_logs(self, tmp_path: Path) -> None:
         base = tmp_path / "ura"
         cfg: dict[str, Any] = {
@@ -98,6 +104,7 @@ class TestExpandPaths:
         assert out["maintenance"]["allowed_log_dirs"][0].startswith(str(Path.home()))
         assert out["maintenance"]["allowed_log_dirs"][1] == str(base.joinpath("b").resolve())
 
+    @pytest.mark.unit
     def test_sin_swarm_ni_allowed_log_dirs(self) -> None:
         cfg: dict[str, Any] = {"paths": {"data": "/x"}}
         out = cm._expand_paths(cfg)
@@ -107,6 +114,7 @@ class TestExpandPaths:
 class TestLoadRawConfig:
     """_load_raw_config: carga del JSON desde _CONFIG_PATH."""
 
+    @pytest.mark.unit
     def test_carga_json(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg_file = _write_raw(tmp_path, {"global_defaults": {"g": 1}})
         monkeypatch.setattr(cm, "_CONFIG_PATH", cfg_file)
@@ -116,6 +124,7 @@ class TestLoadRawConfig:
 class TestLoadConfig:
     """load_config: merge global_defaults + perfil, _raw_profiles y errores."""
 
+    @pytest.mark.unit
     def test_merge_y_expansion(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         raw = {
             "global_defaults": {"g": 1, "shared": "global", "hostname": "default"},
@@ -137,6 +146,7 @@ class TestLoadConfig:
         assert set(cfg["_raw_profiles"]) == {"linux_asus", "darwin_mac", "linux_terminal"}
         assert cfg["paths"]["data"] == str(Path("~/ura").expanduser().resolve())
 
+    @pytest.mark.unit
     def test_perfil_faltante(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg_file = _write_raw(tmp_path, {"global_defaults": {}, "profiles": {"linux_asus": {}}})
         monkeypatch.setattr(cm, "_CONFIG_PATH", cfg_file)
@@ -148,38 +158,47 @@ class TestLoadConfig:
 class TestAccessors:
     """Accesores de solo lectura sobre CONFIG con defaults."""
 
+    @pytest.mark.unit
     def test_get_base_dir(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"paths": {"data": "/opt/ura/data"}})
         assert cm.get_base_dir() == Path("/opt/ura")
 
+    @pytest.mark.unit
     def test_get_ollama_url(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"ollama": {"host": "10.0.0.1", "port": 12345}})
         assert cm.get_ollama_url() == "http://10.0.0.1:12345"
 
+    @pytest.mark.unit
     def test_get_ollama_urls_completas(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"ollama": {"host": "h", "port": 1, "remote_host": "r"}})
         assert cm.get_ollama_urls() == {"primary": "http://h:1", "fallback": "http://r:1"}
 
+    @pytest.mark.unit
     def test_get_ollama_urls_sin_remote_host(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"ollama": {"host": "h", "port": 1}})
         assert cm.get_ollama_urls() == {"primary": "http://h:1", "fallback": "http://h:1"}
 
+    @pytest.mark.unit
     def test_get_ollama_urls_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {})
         assert cm.get_ollama_urls() == {"primary": "http://localhost:11434", "fallback": "http://localhost:11434"}
 
+    @pytest.mark.unit
     def test_get_role(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"role": "server"})
         assert cm.get_role() == "server"
 
+    @pytest.mark.unit
     def test_get_role_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {})
         assert cm.get_role() == "unknown"
 
+    @pytest.mark.unit
     def test_get_hostname(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {"hostname": "gx10-64c3"})
         assert cm.get_hostname() == "gx10-64c3"
 
+    @pytest.mark.unit
     def test_get_hostname_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, {})
         assert cm.get_hostname() == "unknown"
@@ -188,6 +207,7 @@ class TestAccessors:
 class TestValidateConfig:
     """validate_config: existencia y permisos de escritura de directorios."""
 
+    @pytest.mark.unit
     def test_todo_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         data = tmp_path / "data"
         logs = tmp_path / "logs"
@@ -202,6 +222,7 @@ class TestValidateConfig:
         _set_config(monkeypatch, cfg)
         assert cm.validate_config() == []
 
+    @pytest.mark.unit
     def test_directorios_no_existen(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _valid_config()
         cfg["paths"] = {
@@ -223,6 +244,7 @@ class TestValidateConfig:
             f"Directorio log no existe: {tmp_path / 'no-log'}",
         }
 
+    @pytest.mark.unit
     def test_sin_permisos_escritura(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         data = tmp_path / "data"
         logs = tmp_path / "logs"
@@ -240,6 +262,7 @@ class TestValidateConfig:
         _set_config(monkeypatch, cfg)
         assert cm.validate_config() == [f"Sin permisos de escritura: {data}"]
 
+    @pytest.mark.unit
     def test_path_key_faltante(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         data = tmp_path / "data"
         data.mkdir()
@@ -253,16 +276,19 @@ class TestValidateConfig:
 class TestValidateSchema:
     """validate_schema: secciones, keys, perfiles raw y patrones."""
 
+    @pytest.mark.unit
     def test_valido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _set_config(monkeypatch, _valid_config())
         assert cm.validate_schema() == []
 
+    @pytest.mark.unit
     def test_falta_seccion(self, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _valid_config()
         del cfg["ollama"]
         _set_config(monkeypatch, cfg)
         assert cm.validate_schema() == ["Falta seccion requerida: 'ollama'"]
 
+    @pytest.mark.unit
     def test_faltan_keys_y_secciones_escalares(self, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _valid_config()
         del cfg["router"]["port"]
@@ -275,6 +301,7 @@ class TestValidateSchema:
             "Falta seccion requerida: 'cache_ttl'",
         ]
 
+    @pytest.mark.unit
     def test_perfiles_y_patrones_faltantes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _valid_config()
         cfg["_raw_profiles"] = {"linux_asus": {}}
@@ -297,14 +324,17 @@ class TestValidateSchemaJson:
         (conf_dir / "schema.json").write_text(schema, encoding="utf-8")
         (conf_dir / "system_config.json").write_text(raw_config, encoding="utf-8")
 
+    @pytest.mark.unit
     def test_sin_jsonschema(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "jsonschema", None)
         assert cm.validate_schema_json() == []
 
+    @pytest.mark.unit
     def test_schema_no_encontrado(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cm, "_URA_ROOT", tmp_path)
         assert cm.validate_schema_json() == ["Schema file not found: config/schema.json"]
 
+    @pytest.mark.unit
     def test_errores_de_validacion(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         self._write_conf(
             tmp_path,
@@ -314,6 +344,7 @@ class TestValidateSchemaJson:
         monkeypatch.setattr(cm, "_URA_ROOT", tmp_path)
         assert cm.validate_schema_json() == ["foo: 42 is not of type 'string'"]
 
+    @pytest.mark.unit
     def test_json_invalido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         self._write_conf(
             tmp_path,
@@ -323,6 +354,7 @@ class TestValidateSchemaJson:
         monkeypatch.setattr(cm, "_URA_ROOT", tmp_path)
         assert cm.validate_schema_json()[0].startswith("JSON invalido:")
 
+    @pytest.mark.unit
     def test_excepcion_generica(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         self._write_conf(
             tmp_path,

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from unittest import mock
 
@@ -34,6 +35,7 @@ def cfg() -> Configuration:
 
 
 class TestNegativeSyntaxError:
+    @pytest.mark.integration
     def test_py_compile_rejects_bad_syntax(self, cfg):
         bad = Path("/tmp/test_neg_bad_syntax.py")
         bad.write_text("def foo(\n")
@@ -43,6 +45,7 @@ class TestNegativeSyntaxError:
         assert result.status == Status.FAIL
         assert "Syntax error" in result.summary or "syntax" in result.summary
 
+    @pytest.mark.integration
     def test_pipeline_aborts_on_syntax_error(self, cfg):
         bad = Path("/tmp/test_neg_abort_syntax.py")
         bad.write_text("def foo(\n")
@@ -66,6 +69,7 @@ class TestNegativeSyntaxError:
 
 
 class TestNegativeUnusedImport:
+    @pytest.mark.integration
     def test_ruff_rejects_unused_import(self, cfg):
         bad = Path("/tmp/test_neg_unused_import.py")
         bad.write_text("import os\n\nx = 1\n")
@@ -79,6 +83,7 @@ class TestNegativeUnusedImport:
             assert "F401" in result.detail or "unused" in result.detail.lower()
 
     @pytest.mark.slow
+    @pytest.mark.integration
     def test_pipeline_detects_unused_import(self, cfg):
         bad = Path("/tmp/test_neg_pipeline_unused.py")
         bad.write_text("import os\n\nx = 1\n")
@@ -88,6 +93,7 @@ class TestNegativeUnusedImport:
         ruff_results = [r for r in results if r.name == "ruff"]
         assert any(r.status == Status.FAIL for r in ruff_results)
 
+    @pytest.mark.integration
     def test_mode_fix_auto_removes_unused_import(self, cfg, tmp_path):
         (tmp_path / "__init__.py").write_text("")
         bad = tmp_path / "test_fix_unused.py"
@@ -103,6 +109,7 @@ class TestNegativeUnusedImport:
 
 
 class TestNegativeBrokenTest:
+    @pytest.mark.integration
     def test_pytest_rejects_failing_test(self, cfg, tmp_path):
         test_file = tmp_path / "test_neg_broken.py"
         test_file.write_text("def test_should_fail(): assert 1 == 2\n")
@@ -113,6 +120,7 @@ class TestNegativeBrokenTest:
         assert result.status == Status.FAIL
         assert "1 failed" in result.detail or "FAILED" in result.detail or "AssertionError" in result.detail
 
+    @pytest.mark.integration
     def test_pipeline_blocks_on_broken_test(self, cfg, tmp_path):
         src = tmp_path / "src.py"
         src.write_text("def add(a, b): return a + b\n")
@@ -131,6 +139,7 @@ class TestNegativeBrokenTest:
 
 
 class TestNegativeBlastRadius:
+    @pytest.mark.integration
     def test_blast_radius_exceeds_50_files(self, cfg):
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(51)])
         with mock.patch("subprocess.run") as mock_run:
@@ -143,6 +152,7 @@ class TestNegativeBlastRadius:
             results = runner.phase_integrity()
         assert any(r.name == "blast_radius" and r.status == Status.FAIL for r in results)
 
+    @pytest.mark.integration
     def test_blast_radius_under_limit(self, cfg):
         runner = PipelineRunner(cfg, mode="check", files=["a.py", "b.py"])
         with mock.patch("subprocess.run") as mock_run:
@@ -156,6 +166,7 @@ class TestNegativeBlastRadius:
         blast = [r for r in results if r.name == "blast_radius"]
         assert blast and blast[0].status == Status.OK
 
+    @pytest.mark.integration
     def test_blast_radius_edge_50_files(self, cfg):
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(50)])
         with mock.patch("subprocess.run") as mock_run:
@@ -170,6 +181,7 @@ class TestNegativeBlastRadius:
 
 
 class TestNegativeBandit:
+    @pytest.mark.integration
     def test_bandit_rejects_eval(self, cfg):
         bad = Path("/tmp/test_neg_eval.py")
         bad.write_text("user_input = input()\neval(user_input)\n")
@@ -181,6 +193,7 @@ class TestNegativeBandit:
         assert result.status == Status.FAIL
         assert "B307" in result.detail or "Severity: High" in result.detail
 
+    @pytest.mark.integration
     def test_bandit_passes_clean_code(self, cfg):
         clean = Path("/tmp/test_neg_clean.py")
         clean.write_text("x = 42\nprint(x)\n")
@@ -193,6 +206,7 @@ class TestNegativeBandit:
 
 
 class TestNegativeRollback:
+    @pytest.mark.integration
     def test_snapshot_take_and_restore(self, tmp_path):
         snap_dir = tmp_path / ".tuneladora_test"
         snap_dir.mkdir()
@@ -209,6 +223,7 @@ class TestNegativeRollback:
         assert ok
         assert original_file.read_text() == "x = 1\n"
 
+    @pytest.mark.integration
     def test_latest_returns_most_recent(self, tmp_path):
         snap_dir = tmp_path / ".tuneladora_test_latest"
         snap_dir.mkdir()
@@ -219,6 +234,7 @@ class TestNegativeRollback:
         assert latest is not None
         assert "new" in latest.name
 
+    @pytest.mark.integration
     def test_prune_removes_old_snapshots(self, tmp_path):
         snap_dir = tmp_path / ".tuneladora_test_prune"
         snap_dir.mkdir()
@@ -230,6 +246,7 @@ class TestNegativeRollback:
         remaining = sorted((snap_dir / "snapshots").iterdir())
         assert len(remaining) == 30
 
+    @pytest.mark.integration
     def test_pipeline_restores_snapshot_on_fail(self, cfg, tmp_path):
         src = tmp_path / "target.py"
         src.write_text("x = 1\n")
@@ -254,11 +271,14 @@ class TestNegativeRollback:
 
 
 class TestNegativeTimeout:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_timeout_not_applicable(self):
         pytest.skip("Timeout test requiere entorno controlado")
 
 
 class TestNegativeLLMFallback:
+    @pytest.mark.integration
     def test_ruff_failure_creates_pending_entry(self, cfg):
         bad = Path("/tmp/test_neg_llm_fallback.py")
         bad.write_text("import os\n\nx = 1\n")
@@ -274,6 +294,7 @@ class TestNegativeLLMFallback:
         else:
             pytest.skip("ruff no disponible o no falló")
 
+    @pytest.mark.integration
     def test_pending_queue_persists(self, cfg):
         pq = PendingQueue(cfg.knowledge_db)
         n = pq.add(archivo="test.py", herramienta="ruff", severidad="high", error_raw="F401 unused import")
@@ -282,6 +303,7 @@ class TestNegativeLLMFallback:
         assert any(e["archivo"] == "test.py" for e in entries)
         pq.resolve(n, "hecho")
 
+    @pytest.mark.integration
     def test_pending_queue_stats(self, cfg):
         pq = PendingQueue(cfg.knowledge_db)
         stats = pq.stats()

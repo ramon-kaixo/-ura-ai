@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 import textwrap
 from typing import TYPE_CHECKING
@@ -29,11 +30,13 @@ def _write_plugin(path: Path, name: str, phase: str = "always", extra: str = "")
 
 
 class TestPluginRegistryDiscovery:
+    @pytest.mark.integration
     def test_discover_empty_path_returns_zero(self):
         registry = PluginRegistry()
         count = registry.discover(["/tmp/nonexistent_path_xyz_f10"])
         assert count == 0
 
+    @pytest.mark.integration
     def test_discover_valid_plugin(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "hello.py", "hello_world", "pre")
@@ -44,6 +47,7 @@ class TestPluginRegistryDiscovery:
         assert meta.name == "hello_world"
         assert meta.phase == "pre"
 
+    @pytest.mark.integration
     def test_discover_single_file(self, tmp_path: Path):
         registry = PluginRegistry()
         f = tmp_path / "single.py"
@@ -51,6 +55,7 @@ class TestPluginRegistryDiscovery:
         count = registry.discover([str(f)])
         assert count == 1
 
+    @pytest.mark.integration
     def test_discover_ignores_init_files(self, tmp_path: Path):
         registry = PluginRegistry()
         (tmp_path / "__init__.py").write_text("")
@@ -58,12 +63,14 @@ class TestPluginRegistryDiscovery:
         count = registry.discover([str(tmp_path)])
         assert count == 1
 
+    @pytest.mark.integration
     def test_discover_non_py_file(self, tmp_path: Path):
         registry = PluginRegistry()
         (tmp_path / "readme.txt").write_text("not a plugin")
         count = registry.discover([str(tmp_path)])
         assert count == 0
 
+    @pytest.mark.integration
     def test_discover_multiple_dirs(self, tmp_path: Path):
         registry = PluginRegistry()
         d1 = tmp_path / "d1"
@@ -75,6 +82,7 @@ class TestPluginRegistryDiscovery:
         count = registry.discover([str(d1), str(d2)])
         assert count == 2
 
+    @pytest.mark.integration
     def test_duplicate_plugin_name_overwrites(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "first.py", "dup_name")
@@ -84,10 +92,13 @@ class TestPluginRegistryDiscovery:
 
 
 class TestPluginRegistryMetadata:
+    @pytest.mark.integration
     def test_get_meta_nonexistent(self):
         registry = PluginRegistry()
         assert registry.get_meta("no_such_plugin") is None
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_get_meta_without_loading(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "meta_test.py", "meta_test_plugin")
@@ -97,6 +108,7 @@ class TestPluginRegistryMetadata:
         assert meta.phase == "always"
         assert "meta_test_plugin" not in registry.loaded
 
+    @pytest.mark.integration
     def test_plugin_without_meta_fallback(self, tmp_path: Path):
         registry = PluginRegistry()
         f = tmp_path / "no_meta_plugin.py"
@@ -107,6 +119,8 @@ class TestPluginRegistryMetadata:
         assert meta is not None
         assert meta.name == "no_meta_plugin"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_meta_not_loaded_until_get(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "lazy_check.py", "lazy_check")
@@ -115,6 +129,8 @@ class TestPluginRegistryMetadata:
 
 
 class TestPluginRegistryLazyLoad:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_get_triggers_lazy_load(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "lazy_load.py", "lazy_load_plugin")
@@ -124,6 +140,7 @@ class TestPluginRegistryLazyLoad:
         assert plugin is not None
         assert "lazy_load_plugin" in registry.loaded
 
+    @pytest.mark.integration
     def test_get_caches_instance(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "cache_check.py", "cache_check")
@@ -132,12 +149,14 @@ class TestPluginRegistryLazyLoad:
         p2 = registry.get("cache_check")
         assert p1 is p2
 
+    @pytest.mark.integration
     def test_get_nonexistent_returns_none(self):
         registry = PluginRegistry()
         assert registry.get("nonexistent_plugin_f10") is None
 
 
 class TestPluginRegistryExecution:
+    @pytest.mark.integration
     def test_run_phase_ok(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "phase_ok.py", "phase_ok_plugin", "pre")
@@ -148,6 +167,7 @@ class TestPluginRegistryExecution:
         assert results[0].plugin == "phase_ok_plugin"
         assert results[0].data["plugin"] == "phase_ok_plugin"
 
+    @pytest.mark.integration
     def test_run_phase_always_included(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "always_p.py", "always_plugin", "always")
@@ -161,6 +181,7 @@ class TestPluginRegistryExecution:
         assert "pre_plugin" in names
         assert "post_plugin" not in names
 
+    @pytest.mark.integration
     def test_run_phase_empty_phase(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "always_p.py", "always_only", "always")
@@ -169,11 +190,13 @@ class TestPluginRegistryExecution:
         assert len(results) == 1
         assert results[0].plugin == "always_only"
 
+    @pytest.mark.integration
     def test_run_one_nonexistent(self):
         registry = PluginRegistry()
         result = registry.run_one("no_such_plugin_f10")
         assert result is None
 
+    @pytest.mark.integration
     def test_run_one_specific(self, tmp_path: Path):
         registry = PluginRegistry()
         _write_plugin(tmp_path / "a.py", "plugin_a", "pre")
@@ -191,6 +214,7 @@ class TestPluginRegistryDegradedModeIntegration:
         registry = PluginRegistry()
         return registry, dm
 
+    @pytest.mark.integration
     def test_import_failure_marks_degraded(self, tmp_path: Path):
         registry, dm = self._clean_env()
         plugin_name = "import_fail_f10"
@@ -202,6 +226,7 @@ class TestPluginRegistryDegradedModeIntegration:
         assert results[0].ok is False
         assert dm.is_degraded(f"plugin:{plugin_name}")
 
+    @pytest.mark.integration
     def test_execution_failure_marks_degraded(self, tmp_path: Path):
         registry, dm = self._clean_env()
         plugin_name = "exec_fail_f10"
@@ -223,6 +248,8 @@ class _P(PluginBase):
         assert "intentional exec failure f10" in results[0].error
         assert dm.is_degraded(f"plugin:{plugin_name}")
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_execution_failure_recovers_after_healthy_load(self, tmp_path: Path):
         registry, dm = self._clean_env()
         good_name = "good_recovery_f10"
@@ -243,6 +270,7 @@ class _P(PluginBase):
         # Successful load calls mark_healthy — degraded should be cleared
         assert dm.is_degraded(f"plugin:{good_name}") is False
 
+    @pytest.mark.integration
     def test_isolated_plugin_failure(self, tmp_path: Path):
         registry, dm = self._clean_env()
         fail_name = "isolated_fail_f10"
@@ -273,6 +301,7 @@ class _P(PluginBase):
 
 
 class TestPluginRegistryEdgeCases:
+    @pytest.mark.integration
     def test_no_subclass_of_pluginbase_marks_degraded(self, tmp_path: Path):
         registry = PluginRegistry()
         plugin_name = "no_subclass_f10"
@@ -285,6 +314,7 @@ class TestPluginRegistryEdgeCases:
         assert results[0].error == "Plugin load failed"
         assert DegradedMode.instancia().is_degraded(f"plugin:{plugin_name}")
 
+    @pytest.mark.integration
     def test_exception_during_instantiation_marks_degraded(self, tmp_path: Path):
         registry = PluginRegistry()
         plugin_name = "instantiate_fail_f10"

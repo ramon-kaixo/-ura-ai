@@ -6,6 +6,7 @@ smtplib.SMTP (email), socket.getaddrinfo (SSRF DNS) y time.sleep (backoff).
 
 from __future__ import annotations
 
+import pytest
 import json
 import socket
 import sys
@@ -152,26 +153,32 @@ def _reset_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestValidateUrl:
+    @pytest.mark.unit
     def test_ok_public_ip(self) -> None:
         assert _validate_url("https://example.com/hook") == "https://example.com/hook"
 
+    @pytest.mark.unit
     def test_ok_empty_addrs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda host, port=None: [])
         assert _validate_url("https://example.com/hook") == "https://example.com/hook"
 
+    @pytest.mark.unit
     def test_ok_no_hostname(self) -> None:
         assert _validate_url("not-a-url") == "not-a-url"
 
+    @pytest.mark.unit
     def test_private_ipv4(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda host, port=None: _PRIVATE_ADDRS)
         with pytest.raises(SSRFError):
             _validate_url("http://localhost/hook")
 
+    @pytest.mark.unit
     def test_private_ipv6(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda host, port=None: [(10, 1, 6, "", ("::1", 0))])
         with pytest.raises(SSRFError):
             _validate_url("http://[::1]/hook")
 
+    @pytest.mark.unit
     def test_gaierror(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(host: str, port: int | None = None) -> list[Any]:
             raise socket.gaierror("no such host")
@@ -182,6 +189,7 @@ class TestValidateUrl:
 
 
 class TestShouldRetry:
+    @pytest.mark.unit
     def test_connection_error_types(self) -> None:
         assert _should_retry(ConnectionRefusedError("refused"))
         assert _should_retry(ConnectionResetError("reset"))
@@ -189,17 +197,20 @@ class TestShouldRetry:
         assert _should_retry(TimeoutError("timeout"))
         assert _should_retry(ConnectionError("conn"))
 
+    @pytest.mark.unit
     def test_message_keywords(self) -> None:
         assert _should_retry(RuntimeError("request timed out"))
         assert _should_retry(ValueError("status 502 Bad Gateway"))
         assert _should_retry(ValueError("upstream temporarily unavailable"))
 
+    @pytest.mark.unit
     def test_not_transient(self) -> None:
         assert not _should_retry(ValueError("bad request"))
         assert not _should_retry(ValueError(""))
 
 
 class TestBackoff:
+    @pytest.mark.unit
     def test_backoff_delays(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[float] = []
         monkeypatch.setattr(notify.random, "uniform", lambda a, b: 0.4)
@@ -210,18 +221,22 @@ class TestBackoff:
 
 
 class TestRecordMetric:
+    @pytest.mark.unit
     def test_counter_only(self) -> None:
         _record_metric("sent", "webhook", "ok")
 
+    @pytest.mark.unit
     def test_counter_and_histogram(self) -> None:
         _record_metric("sent", "webhook", "ok", duration_ms=123.4)
 
+    @pytest.mark.unit
     def test_import_failure_best_effort(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "prometheus_client", None)
         _record_metric("sent", "webhook", "ok", duration_ms=1.0)
 
 
 class TestFormatters:
+    @pytest.mark.unit
     def test_compile_event_success(self) -> None:
         n = format_compile_event("done", 3, 10, 0)
         assert n.severity == "success"
@@ -229,11 +244,13 @@ class TestFormatters:
         assert n.message == "3 changed, 10 total"
         assert n.fields[2] == ("Errors", "0")
 
+    @pytest.mark.unit
     def test_compile_event_error(self) -> None:
         n = format_compile_event("failed", 1, 10, 2)
         assert n.severity == "error"
         assert n.fields[2] == ("Errors", "2")
 
+    @pytest.mark.unit
     def test_archive_event_truncates_commit(self) -> None:
         n = format_archive_event("snapshot", "abcdef0123456789", 4)
         assert n.title == "Archive: snapshot"
@@ -241,6 +258,7 @@ class TestFormatters:
         assert n.severity == "info"
         assert n.fields == [("Kind", "snapshot"), ("Commit", "abcdef012345"), ("Files", "4")]
 
+    @pytest.mark.unit
     def test_search_event_truncates_query(self) -> None:
         n = format_search_event("q" * 60, 7, 12.6)
         assert n.title == "Search: " + "q" * 50
@@ -248,6 +266,7 @@ class TestFormatters:
         assert n.fields[1] == ("Results", "7")
         assert n.fields[2] == ("Latency", "13ms")
 
+    @pytest.mark.unit
     def test_notification_defaults(self) -> None:
         n = Notification(title="t", message="m")
         assert n.severity == "info"
@@ -256,6 +275,7 @@ class TestFormatters:
 
 
 class TestWebhookNotifier:
+    @pytest.mark.unit
     def test_send_ok_with_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([200])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -273,6 +293,7 @@ class TestWebhookNotifier:
         assert payload["severity"] == "error"
         assert payload["fields"] == {"k": "v"}
 
+    @pytest.mark.unit
     def test_send_ok_without_secret(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([200])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -281,6 +302,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is True
         assert "X-Webhook-Secret" not in fake.calls[0][0].headers
 
+    @pytest.mark.unit
     def test_send_http_4xx_no_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([400])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -289,6 +311,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is False
         assert len(fake.calls) == 1
 
+    @pytest.mark.unit
     def test_send_retryable_status_then_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([500, 503, 200])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -297,6 +320,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is True
         assert len(fake.calls) == 3
 
+    @pytest.mark.unit
     def test_send_retryable_status_exhausted(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([429, 429, 429])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -305,6 +329,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is False
         assert len(fake.calls) == 3
 
+    @pytest.mark.unit
     def test_send_transient_exception_then_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([ConnectionResetError, ConnectionResetError, 200])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -313,6 +338,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is True
         assert len(fake.calls) == 3
 
+    @pytest.mark.unit
     def test_send_transient_exception_exhausted(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([ConnectionResetError, ConnectionResetError, ConnectionResetError])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -321,6 +347,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is False
         assert len(fake.calls) == 3
 
+    @pytest.mark.unit
     def test_send_hard_error_no_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([ValueError])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -329,6 +356,7 @@ class TestWebhookNotifier:
         assert n.send(Notification(title="t", message="m")) is False
         assert len(fake.calls) == 1
 
+    @pytest.mark.unit
     def test_send_ssrf_blocked(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda host, port=None: _PRIVATE_ADDRS)
         n = WebhookNotifier("http://internal/hook")
@@ -344,6 +372,8 @@ class TestSlackNotifier:
         ok = n.send(Notification(title="t", message="m", severity="warning", fields=[("k", "v")]))
         return ok, fake
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_send_ok_payload(self, monkeypatch: pytest.MonkeyPatch) -> None:
         ok, fake = self._send(monkeypatch, [200])
         assert ok is True
@@ -355,6 +385,7 @@ class TestSlackNotifier:
         assert att["fields"] == [{"title": "k", "value": "v", "short": True}]
         assert att["footer"] == "Knowledge Engine"
 
+    @pytest.mark.unit
     def test_send_ok_default_color(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeUrlopen([200])
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -364,16 +395,19 @@ class TestSlackNotifier:
         payload = json.loads(fake.calls[0][0].data)
         assert payload["attachments"][0]["color"] == "#2196F3"
 
+    @pytest.mark.unit
     def test_send_http_fail(self, monkeypatch: pytest.MonkeyPatch) -> None:
         ok, fake = self._send(monkeypatch, [500])
         assert ok is False
         assert len(fake.calls) == 1
 
+    @pytest.mark.unit
     def test_send_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         ok, fake = self._send(monkeypatch, [TimeoutError])
         assert ok is False
         assert len(fake.calls) == 1
 
+    @pytest.mark.unit
     def test_send_ssrf_blocked(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda host, port=None: _PRIVATE_ADDRS)
         monkeypatch.setattr(notify, "Request", FakeRequest)
@@ -383,11 +417,13 @@ class TestSlackNotifier:
 
 
 class TestEmailNotifier:
+    @pytest.mark.unit
     def test_not_configured(self) -> None:
         n = EmailNotifier()
         assert n.configured is False
         assert n.send(Notification(title="t", message="m")) is False
 
+    @pytest.mark.unit
     def test_send_ok_with_login(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_SMTP_HOST", "smtp.example.com")
         monkeypatch.setenv("URA_SMTP_PORT", "465")
@@ -418,6 +454,7 @@ class TestEmailNotifier:
         assert msg["From"] == "ura@example.com"
         assert msg["To"] == "ramon@example.com"
 
+    @pytest.mark.unit
     def test_send_ok_without_user(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_SMTP_HOST", "smtp.example.com")
         monkeypatch.setenv("URA_EMAIL_TO", "ramon@example.com")
@@ -435,6 +472,7 @@ class TestEmailNotifier:
         assert instances[0].port == 587
         assert instances[0].login_called is None
 
+    @pytest.mark.unit
     def test_send_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_SMTP_HOST", "smtp.example.com")
         monkeypatch.setenv("URA_EMAIL_TO", "ramon@example.com")
@@ -443,6 +481,7 @@ class TestEmailNotifier:
         n = EmailNotifier()
         assert n.send(Notification(title="hi", message="body")) is False
 
+    @pytest.mark.unit
     def test_send_failure_unconfigured_never_touches_smtp(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[tuple[str, int]] = []
 
@@ -457,10 +496,12 @@ class TestEmailNotifier:
 
 
 class TestNotificationService:
+    @pytest.mark.unit
     def test_send_empty(self) -> None:
         svc = NotificationService()
         assert svc.send(Notification(title="t", message="m")) == 0
 
+    @pytest.mark.unit
     def test_send_mixed_results(self) -> None:
         svc = NotificationService(max_workers=2)
         svc.add_notifier(FakeNotifier(result=True))
@@ -469,6 +510,7 @@ class TestNotificationService:
         assert svc.notifier_count == 3
         assert svc.send(Notification(title="t", message="m")) == 2
 
+    @pytest.mark.unit
     def test_send_exception_ignored(self) -> None:
         svc = NotificationService()
         svc.add_notifier(FakeNotifier(exc=RuntimeError))
@@ -477,16 +519,19 @@ class TestNotificationService:
 
 
 class TestSingleton:
+    @pytest.mark.unit
     def test_set_and_get(self) -> None:
         svc = NotificationService()
         set_notifier(svc)
         assert get_notifier() is svc
 
+    @pytest.mark.unit
     def test_create_without_email(self) -> None:
         svc = get_notifier()
         assert isinstance(svc, NotificationService)
         assert svc.notifier_count == 0
 
+    @pytest.mark.unit
     def test_create_with_email(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_SMTP_HOST", "smtp.example.com")
         monkeypatch.setenv("URA_EMAIL_TO", "ramon@example.com")
@@ -495,6 +540,7 @@ class TestSingleton:
 
 
 class TestSSRFError:
+    @pytest.mark.unit
     def test_is_value_error(self) -> None:
         assert issubclass(SSRFError, ValueError)
         exc = SSRFError("URL apunta a red privada")

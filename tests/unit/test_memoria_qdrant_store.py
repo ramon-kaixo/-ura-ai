@@ -1,6 +1,7 @@
 """Tests para core/memoria/qdrant_store.py."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -52,6 +53,7 @@ def _idea(hash_origen="h1", idea_text="idea uno") -> Idea:
 
 
 class TestGetClient:
+    @pytest.mark.unit
     def test_singleton(self, monkeypatch) -> None:
         mock_client = mock.Mock()
         monkeypatch.setattr("core.memoria.qdrant_store.QdrantClient", mock.Mock(return_value=mock_client))
@@ -59,6 +61,7 @@ class TestGetClient:
         b = _get_client()
         assert a is b is mock_client
 
+    @pytest.mark.unit
     def test_init_con_host(self, monkeypatch) -> None:
         qdrant_cls = mock.Mock()
         monkeypatch.setattr("core.memoria.qdrant_store.QdrantClient", qdrant_cls)
@@ -87,12 +90,14 @@ class TestEmbed:
 
 
 class TestMakeId:
+    @pytest.mark.unit
     def test_con_hash_origen(self) -> None:
         idea = _idea(hash_origen="abc")
         ident = _make_id(idea)
         assert ident == _make_id(idea)
         assert isinstance(ident, str)
 
+    @pytest.mark.unit
     def test_sin_hash_usa_idea(self) -> None:
         idea = _idea(hash_origen="")
         ident = _make_id(idea)

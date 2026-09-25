@@ -1,3 +1,4 @@
+import pytest
 """Tests para verificar que las 5 rutas de subprocess reparadas en monitor/snc.py
 funcionan correctamente: Popen, PKILL, ps aux, pgrep, ps -p.
 
@@ -33,6 +34,7 @@ Path.chmod = _original_chmod
 class TestCheckBucleCpu:
     """Ejercita la llamada subprocess.run(['ps', 'aux', ...]) línea 415."""
 
+    @pytest.mark.integration
     def test_returns_list_with_mocked_ps(self):
         fake_ps = (
             "USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n"
@@ -45,6 +47,7 @@ class TestCheckBucleCpu:
             assert len(result) == 1
             assert result[0][0] == 1234
 
+    @pytest.mark.integration
     def test_empty_when_no_matching_processes(self):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.stdout = "USER PID %CPU COMM\n"
@@ -57,12 +60,14 @@ class TestCheckOpencodeColgado:
     """Ejercita llamadas subprocess.run(['pgrep', ...]) línea 449
     y subprocess.run(['ps', '-p', ...]) línea 459."""
 
+    @pytest.mark.integration
     def test_returns_none_when_not_running(self):
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.stdout = ""
             result = check_opencode_colgado()
             assert result is None
 
+    @pytest.mark.integration
     def test_returns_pid_when_cpu_high(self):
         with patch("subprocess.run") as mock_run:
 
@@ -79,6 +84,7 @@ class TestCheckOpencodeColgado:
             result = check_opencode_colgado()
             assert result == 1234
 
+    @pytest.mark.integration
     def test_returns_none_when_cpu_low(self):
         with patch("subprocess.run") as mock_run:
 

@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/deduction.py."""
 
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.deduction import Deduction, StateDeductor
 
@@ -13,6 +14,7 @@ def _edge(src: str, dst: str) -> dict:
     return {"src": src, "dst": dst, "relation": "references"}
 
 
+@pytest.mark.unit
 def test_deduce_huerfano() -> None:
     results = StateDeductor().deduce([_node("a1")], [])
     orphans = [r for r in results if r.kind == "orphan"]
@@ -23,11 +25,13 @@ def test_deduce_huerfano() -> None:
     assert o.metadata["type"] == "doc"
 
 
+@pytest.mark.unit
 def test_deduce_no_huerfano_si_tiene_edges() -> None:
     results = StateDeductor().deduce([_node("a1"), _node("a2")], [_edge("a1", "a2")])
     assert [r for r in results if r.kind == "orphan"] == []
 
 
+@pytest.mark.unit
 def test_deduce_cobertura() -> None:
     nodes = [_node("a1", "doc"), _node("a2", "doc"), _node("b1", "spec")]
     results = StateDeductor().deduce(nodes, [])
@@ -38,10 +42,12 @@ def test_deduce_cobertura() -> None:
     assert covers["spec"].confidence == 1.0
 
 
+@pytest.mark.unit
 def test_deduce_cobertura_vacio() -> None:
     assert StateDeductor().deduce([], []) == []
 
 
+@pytest.mark.unit
 def test_deduce_hubs() -> None:
     nodes = [_node("hub"), _node("x1"), _node("x2"), _node("x3")]
     edges = [_edge("x1", "hub"), _edge("x2", "hub"), _edge("x3", "hub"), _edge("x1", "x2")]
@@ -54,17 +60,20 @@ def test_deduce_hubs() -> None:
     assert h.confidence == 1.0
 
 
+@pytest.mark.unit
 def test_deduce_hub_unica_referencia_no() -> None:
     nodes = [_node("hub"), _node("x1")]
     results = StateDeductor().deduce(nodes, [_edge("x1", "hub")])
     assert [r for r in results if r.kind == "dependency"] == []
 
 
+@pytest.mark.unit
 def test_deduce_sin_edges_no_hubs() -> None:
     results = StateDeductor().deduce([_node("a1")], [])
     assert [r for r in results if r.kind == "dependency"] == []
 
 
+@pytest.mark.unit
 def test_deduce_hub_sin_nodo_registrado() -> None:
     results = StateDeductor().deduce([_node("x1"), _node("x2")], [_edge("x1", "fantasma"), _edge("x2", "fantasma")])
     hubs = [r for r in results if r.kind == "dependency"]
@@ -73,6 +82,7 @@ def test_deduce_hub_sin_nodo_registrado() -> None:
     assert hubs[0].metadata["path"] == ""
 
 
+@pytest.mark.unit
 def test_contar() -> None:
     type_counts, src_counts, dst_counts = StateDeductor()._contar(
         [_node("a1"), _node("a2", "spec")],
@@ -85,11 +95,13 @@ def test_contar() -> None:
     assert dst_counts["a2"] == 1
 
 
+@pytest.mark.unit
 def test_contar_sin_tipo() -> None:
     type_counts, _, _ = StateDeductor()._contar([{"id": "x"}], [])
     assert type_counts["unknown"] == 1
 
 
+@pytest.mark.unit
 def test_deduccion_dataclass() -> None:
     d = Deduction(kind="coverage", subject_id="doc", description="d", confidence=0.5, metadata={"k": 1})
     assert d.metadata["k"] == 1

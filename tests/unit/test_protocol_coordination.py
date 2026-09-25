@@ -5,6 +5,7 @@ implementación interna de verify_protocol.py / dispatcher.py.
 """
 
 from __future__ import annotations
+import pytest
 
 import json
 import subprocess
@@ -21,6 +22,7 @@ def _load_coord() -> dict[str, Any]:
         return json.load(f)
 
 
+@pytest.mark.unit
 def test_coordination_json_es_valido() -> None:
     datos = _load_coord()
     assert "modo" in datos
@@ -29,6 +31,7 @@ def test_coordination_json_es_valido() -> None:
     assert "agentes" in datos
 
 
+@pytest.mark.unit
 def test_cada_tarea_esta_en_exactamente_una_cola() -> None:
     datos = _load_coord()
     tareas = set(datos["tareas"])
@@ -43,6 +46,7 @@ def test_cada_tarea_esta_en_exactamente_una_cola() -> None:
         assert tid in vistas, f"{tid} no está en ninguna cola"
 
 
+@pytest.mark.unit
 def test_tareas_aprobadas_tienen_veredicto() -> None:
     datos = _load_coord()
     for tid in datos["colas"].get("aprobadas", []):
@@ -50,6 +54,7 @@ def test_tareas_aprobadas_tienen_veredicto() -> None:
         assert tarea.get("veredicto"), f"{tid} aprobada sin veredicto"
 
 
+@pytest.mark.unit
 def test_tareas_en_revision_tienen_evidencia() -> None:
     datos = _load_coord()
     for tid in datos["colas"].get("en_revision", []):
@@ -57,6 +62,7 @@ def test_tareas_en_revision_tienen_evidencia() -> None:
         assert tarea.get("veredicto") or tarea.get("nota"), f"{tid} en_revision sin veredicto ni nota"
 
 
+@pytest.mark.unit
 def test_agentes_tienen_estado_y_rol() -> None:
     datos = _load_coord()
     for agente, info in datos["agentes"].items():
@@ -64,6 +70,7 @@ def test_agentes_tienen_estado_y_rol() -> None:
         assert "rol_actual" in info, f"{agente} sin rol_actual"
 
 
+@pytest.mark.unit
 def test_no_hay_import_inverso_motor_core() -> None:
     res = subprocess.run(
         ["grep", "-rE", "from core|import core", "--include=*.py", "motor/"],
@@ -75,6 +82,7 @@ def test_no_hay_import_inverso_motor_core() -> None:
     assert res.returncode != 0, f"Quedan imports motor→core:\n{res.stdout}"
 
 
+@pytest.mark.unit
 def test_verify_protocol_pasa_con_coordination_actual() -> None:
     res = subprocess.run(
         [sys.executable, str(ROOT / "scripts" / "pro" / "verify_protocol.py")],

@@ -1,6 +1,7 @@
 """Tests para core/sandbox/docker_orchestrator.py."""
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -15,12 +16,14 @@ from core.sandbox.docker_orchestrator import DockerOrchestrator, ResultadoSandbo
 
 
 class TestResultadoSandbox:
+    @pytest.mark.unit
     def test_resumen_ok(self) -> None:
         r = ResultadoSandbox(True, True, 3, 0, [], "out", "err", 1.5, 10.0, None)
         txt = r.resumen()
         assert "[Sandbox] OK" in txt
         assert "Tests: 3 OK, 0 FAIL" in txt
 
+    @pytest.mark.unit
     def test_resumen_fail_con_fallos(self) -> None:
         r = ResultadoSandbox(False, True, 1, 2, ["test_a"], "out", "err", 1.0, 5.0, "algo fallo")
         txt = r.resumen()
@@ -28,6 +31,7 @@ class TestResultadoSandbox:
         assert "test_a" in txt
         assert "ERROR: algo fallo" in txt
 
+    @pytest.mark.unit
     def test_ts_default(self) -> None:
         r = ResultadoSandbox(True, True, 0, 0, [], "", "", 0, 0, None)
         assert "T" in r.ts
@@ -168,23 +172,27 @@ class TestDockerOrchestrator:
 
 
 class TestStatic:
+    @pytest.mark.unit
     def test_df_genera_dockerfile(self) -> None:
         df = DockerOrchestrator._df("cod", "skill1")
         assert "python:3.12-slim" in df
         assert "pytest" in df
         assert "COPY skills/" in df
 
+    @pytest.mark.unit
     def test_rv_contiene_runner(self) -> None:
         rv = DockerOrchestrator._rv("skill1")
         assert "skill1" in rv
         assert "pytest" in rv
         assert "json" in rv
 
+    @pytest.mark.unit
     def test_docker_info_ok(self, monkeypatch) -> None:
         res = SimpleNamespace(returncode=0)
         monkeypatch.setattr("core.sandbox.docker_orchestrator.subprocess.run", mock.Mock(return_value=res))
         assert DockerOrchestrator._docker() is True
 
+    @pytest.mark.unit
     def test_docker_info_error(self, monkeypatch) -> None:
         monkeypatch.setattr("core.sandbox.docker_orchestrator.subprocess.run", mock.Mock(side_effect=FileNotFoundError("no docker")))
         assert DockerOrchestrator._docker() is False

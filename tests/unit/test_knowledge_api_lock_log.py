@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/ — cli/api, logging_config y lock."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -9,6 +10,7 @@ from knowledge.engine.lock import LockAcquisitionError, compile_lock
 
 
 class TestCmdApi:
+    @pytest.mark.unit
     def test_con_auth(self, monkeypatch) -> None:
         from knowledge.engine.cli.api import cmd_api
 
@@ -26,6 +28,7 @@ class TestCmdApi:
         assert "URA_API_KEY" in __import__("os").environ
         assert uvicorn_run.call_args.args[0] == "knowledge.engine.api:app"
 
+    @pytest.mark.unit
     def test_auth_desde_env(self, monkeypatch) -> None:
         from knowledge.engine.cli.api import cmd_api
 
@@ -41,6 +44,7 @@ class TestCmdApi:
         cmd_api(args)
         assert __import__("os").environ["URA_API_KEY"] == "env-key"
 
+    @pytest.mark.unit
     def test_sin_auth_localhost(self, monkeypatch) -> None:
         from knowledge.engine.cli.api import cmd_api
 
@@ -57,11 +61,13 @@ class TestCmdApi:
 
 
 class TestLoggingConfig:
+    @pytest.mark.unit
     def test_deprecation_warning(self) -> None:
         from motor.observability.logging import setup_logging
 
         setup_logging()
 
+    @pytest.mark.unit
     def test_setup_json(self, monkeypatch) -> None:
         import motor.observability.logging as _mod
 
@@ -71,6 +77,7 @@ class TestLoggingConfig:
         _mod.setup_logging()
         setup_mock.assert_called_once()
 
+    @pytest.mark.unit
     def test_exports(self) -> None:
         from motor.observability.logging import set_correlation_id, setup_logging
 
@@ -79,6 +86,7 @@ class TestLoggingConfig:
 
 
 class TestCompileLock:
+    @pytest.mark.unit
     def test_adquiere_y_libera(self, tmp_path) -> None:
         lock_file = tmp_path / "compile.lock"
         with compile_lock(lock_file):
@@ -87,6 +95,7 @@ class TestCompileLock:
         with compile_lock(lock_file):
             pass
 
+    @pytest.mark.unit
     def test_conflicto(self, tmp_path) -> None:
         lock_file = tmp_path / "compile.lock"
         lock_file.parent.mkdir(parents=True, exist_ok=True)
@@ -103,6 +112,7 @@ class TestCompileLock:
         finally:
             _os.close(fd)
 
+    @pytest.mark.unit
     def test_crea_dir(self, tmp_path) -> None:
         lock_file = tmp_path / "sub" / "compile.lock"
         with compile_lock(lock_file):

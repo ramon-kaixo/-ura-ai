@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sys
 from pathlib import Path
 from unittest import mock
@@ -25,54 +26,65 @@ from scripts.pro.auditoria_paralela import (
 
 @pytest.mark.slow
 class TestChecks:
+    @pytest.mark.integration
     def test_memorias(self) -> None:
         r = check_memorias()
         assert isinstance(r["ok"], bool)
         assert "check" in r
 
+    @pytest.mark.integration
     def test_supervisor(self) -> None:
         r = check_supervisor()
         assert isinstance(r["ok"], bool)
 
+    @pytest.mark.integration
     def test_quality_gate(self) -> None:
         r = check_quality_gate()
         assert r["ok"] is True
         assert r["detail"] == "verdict=ACCEPTED"
 
+    @pytest.mark.integration
     def test_lock_stale(self) -> None:
         r = check_lock_stale()
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_imports_circulares(self) -> None:
         r = check_imports_circulares()
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_secretos(self) -> None:
         r = check_secretos()
         assert isinstance(r["ok"], bool)
         assert "hallazgos" in r["detail"]
 
+    @pytest.mark.integration
     def test_rendimiento(self) -> None:
         r = check_rendimiento()
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_duplicados_estructura(self) -> None:
         r = check_duplicados()
         assert isinstance(r["ok"], bool)
         assert "ADR-220" in r["detail"]
 
+    @pytest.mark.integration
     def test_run_all_estructura(self) -> None:
         report = run_all()
         assert report["total"] == 10
         assert len(report["results"]) == 10
         assert 0 <= report["ok"] <= 10
 
+    @pytest.mark.integration
     def test_check_devuelve_dict(self) -> None:
         from scripts.pro.auditoria_paralela import _check
 
         r = _check("x", True, "detalle")
         assert r == {"check": "x", "ok": True, "detail": "detalle"}
 
+    @pytest.mark.integration
     def test_main_retorna_codigo(self) -> None:
         import auditoria_paralela as ap
 

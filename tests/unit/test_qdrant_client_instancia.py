@@ -1,5 +1,6 @@
 """Tests cobertura motor qdrant_client — instancia/incidentes (split)."""
 from __future__ import annotations
+import pytest
 
 from _qdrant_helpers import (  # noqa: F401
     VECTOR_SIZE_EMBEDDING,
@@ -23,9 +24,11 @@ from _qdrant_helpers import (  # noqa: F401
 
 
 class TestBuscarIncidentes:
+    @pytest.mark.unit
     def test_no_disponible(self, client: QdrantClient) -> None:  # noqa: F811
         assert client.buscar_incidentes() == []
 
+    @pytest.mark.unit
     def test_rest_ok(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -36,6 +39,7 @@ class TestBuscarIncidentes:
             out = client.buscar_incidentes()
         assert out == [{"tipo": "X"}, {"tipo": "Y"}]
 
+    @pytest.mark.unit
     def test_rest_no_200(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -43,6 +47,7 @@ class TestBuscarIncidentes:
             mpost.return_value = FakeResp(500)
             assert client.buscar_incidentes() == []
 
+    @pytest.mark.unit
     def test_rest_error(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -50,6 +55,7 @@ class TestBuscarIncidentes:
             mpost.side_effect = OSError("net")
             assert client.buscar_incidentes() == []
 
+    @pytest.mark.unit
     def test_native_ok(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -60,6 +66,8 @@ class TestBuscarIncidentes:
             out = client.buscar_incidentes(limit=2)
         assert out == [{"a": 1}, {"b": 2}]
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_native_sin_payload(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -69,12 +77,14 @@ class TestBuscarIncidentes:
         with patch.dict(sys.modules, native_modules):
             assert client.buscar_incidentes() == []
 
+    @pytest.mark.unit
     def test_native_sin_cliente(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
         client._cliente = None
         assert client.buscar_incidentes() == []
 
+    @pytest.mark.unit
     def test_native_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -91,6 +101,7 @@ class TestBuscarIncidentes:
 
 
 class TestInstancia:
+    @pytest.mark.unit
     def test_singleton(self, native_modules: dict) -> None:  # noqa: F811
         QdrantClient._instancia = None
         try:
@@ -113,6 +124,7 @@ class TestURAQdrantClient:
         c.is_closed = False
         return c
 
+    @pytest.mark.unit
     def test_get_client_lazy(self) -> None:
         ura = URAQdrantClient("http://test:6333", timeout=5.0)
         fake = self._client()
@@ -126,6 +138,7 @@ class TestURAQdrantClient:
             limits=httpx.Limits(max_keepalive_connections=20, max_connections=100),
         )
 
+    @pytest.mark.unit
     def test_get_client_recreates_when_closed(self) -> None:
         ura = URAQdrantClient()
         a = self._client()
@@ -137,6 +150,7 @@ class TestURAQdrantClient:
         assert c1 is a
         assert c2 is b
 
+    @pytest.mark.unit
     def test_buscar_vectores_ok(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -150,6 +164,7 @@ class TestURAQdrantClient:
         assert args[0][0] == "/collections/colec/points/search"
         assert args[1]["json"] == {"vector": [0.1], "limit": 3, "with_payload": True}
 
+    @pytest.mark.unit
     def test_buscar_vectores_http_error(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -160,6 +175,7 @@ class TestURAQdrantClient:
             out = asyncio.run(ura.buscar_vectores("c", [0.1]))
         assert out == {"result": []}
 
+    @pytest.mark.unit
     def test_buscar_vectores_network_error(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -168,6 +184,7 @@ class TestURAQdrantClient:
             out = asyncio.run(ura.buscar_vectores("c", [0.1]))
         assert out == {"result": []}
 
+    @pytest.mark.unit
     def test_upsert_ok(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -178,6 +195,7 @@ class TestURAQdrantClient:
         assert args[0][0] == "/collections/c/points"
         assert args[1]["json"] == {"points": [{"id": 1}]}
 
+    @pytest.mark.unit
     def test_upsert_error(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -186,6 +204,7 @@ class TestURAQdrantClient:
             n = asyncio.run(ura.upsert_puntos("c", [{"id": 1}]))
         assert n == 0
 
+    @pytest.mark.unit
     def test_close(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -194,6 +213,7 @@ class TestURAQdrantClient:
             asyncio.run(ura.close())
         client.aclose.assert_awaited_once()
 
+    @pytest.mark.unit
     def test_close_closed_client(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -202,6 +222,7 @@ class TestURAQdrantClient:
             asyncio.run(ura.close())
         client.aclose.assert_not_called()
 
+    @pytest.mark.unit
     def test_asegurar_coleccion_hibrida_existe(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -211,6 +232,7 @@ class TestURAQdrantClient:
         assert ok is True
         client.put.assert_not_called()
 
+    @pytest.mark.unit
     def test_asegurar_coleccion_hibrida_crea(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -223,6 +245,7 @@ class TestURAQdrantClient:
         assert payload["vectors"]["size"] == VECTOR_SIZE_EMBEDDING
         assert payload["sparse_vectors"]["bm25"]["modifier"] == "idf"
 
+    @pytest.mark.unit
     def test_asegurar_coleccion_hibrida_get_error(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -232,6 +255,7 @@ class TestURAQdrantClient:
             ok = asyncio.run(ura.asegurar_coleccion_hibrida("c"))
         assert ok is True
 
+    @pytest.mark.unit
     def test_asegurar_coleccion_hibrida_put_error(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -241,6 +265,7 @@ class TestURAQdrantClient:
             ok = asyncio.run(ura.asegurar_coleccion_hibrida("c"))
         assert ok is False
 
+    @pytest.mark.unit
     def test_buscar_hibrido_ok(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811
@@ -255,6 +280,7 @@ class TestURAQdrantClient:
         assert payload["query"] == {"fusion": "rrf"}
         assert payload["limit"] == 5
 
+    @pytest.mark.unit
     def test_buscar_hibrido_fallback_denso(self) -> None:
         ura = URAQdrantClient()
         client = self._client()  # noqa: F811

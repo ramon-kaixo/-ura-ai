@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -58,6 +59,7 @@ def store(db_path: Path) -> SQLiteLineageStore:
     return SQLiteLineageStore(db_path)
 
 
+@pytest.mark.unit
 def test_store_event(store, db_path) -> None:
     assert store.store_lineage_event(EVENT) is True
     conn = sqlite3.connect(db_path)
@@ -72,15 +74,18 @@ def test_store_event(store, db_path) -> None:
     assert (edges[0]["src"], edges[0]["dst"]) == ("a1", "b1")
 
 
+@pytest.mark.unit
 def test_store_event_sin_inputs_outputs(store) -> None:
     assert store.store_lineage_event({"eventType": "START"}) is True
 
 
+@pytest.mark.unit
 def test_store_event_error(tmp_path) -> None:
     bad = SQLiteLineageStore(tmp_path / "no.db")
     assert bad.store_lineage_event(EVENT) is False
 
 
+@pytest.mark.unit
 def test_get_lineage(store) -> None:
     store.store_lineage_event(EVENT)
     rows = store.get_lineage("a1")
@@ -88,25 +93,30 @@ def test_get_lineage(store) -> None:
     assert rows[0]["job_name"] == "compile"
 
 
+@pytest.mark.unit
 def test_get_lineage_vacio(store) -> None:
     assert store.get_lineage("zz") == []
 
 
+@pytest.mark.unit
 def test_get_lineage_error(tmp_path) -> None:
     bad = SQLiteLineageStore(tmp_path / "no.db")
     assert bad.get_lineage("a1") == []
 
 
+@pytest.mark.unit
 def test_get_upstream_por_edges(store) -> None:
     store.store_lineage_event(EVENT)
     assert store.get_upstream("b1") == ["a1", "a2"]
 
 
+@pytest.mark.unit
 def test_get_downstream_por_edges(store) -> None:
     store.store_lineage_event(EVENT)
     assert store.get_downstream("a1") == ["b1"]
 
 
+@pytest.mark.unit
 def test_get_upstream_fallback_sin_tabla(tmp_path) -> None:
     path = tmp_path / "nolin.db"
     conn = sqlite3.connect(path)
@@ -122,6 +132,7 @@ def test_get_upstream_fallback_sin_tabla(tmp_path) -> None:
     assert store.get_upstream("b1") == ["a1", "a2"]
 
 
+@pytest.mark.unit
 def test_get_downstream_fallback_sin_tabla(tmp_path) -> None:
     path = tmp_path / "nolin.db"
     conn = sqlite3.connect(path)
@@ -137,19 +148,23 @@ def test_get_downstream_fallback_sin_tabla(tmp_path) -> None:
     assert store.get_downstream("a1") == ["b1"]
 
 
+@pytest.mark.unit
 def test_get_upstream_vacio(store) -> None:
     assert store.get_upstream("zz") == []
 
 
+@pytest.mark.unit
 def test_get_downstream_vacio(store) -> None:
     assert store.get_downstream("zz") == []
 
 
+@pytest.mark.unit
 def test_get_upstream_sin_tabla_ni_eventos(tmp_path) -> None:
     bad = SQLiteLineageStore(tmp_path / "no.db")
     assert bad.get_upstream("x") == []
 
 
+@pytest.mark.unit
 def test_get_downstream_sin_tabla_ni_eventos(tmp_path) -> None:
     bad = SQLiteLineageStore(tmp_path / "no.db")
     assert bad.get_downstream("x") == []

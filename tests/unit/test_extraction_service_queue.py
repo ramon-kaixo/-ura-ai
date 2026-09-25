@@ -1,5 +1,6 @@
 """Tests cobertura extraction_service — queue/worker lifecycle (split)."""
 from __future__ import annotations
+import pytest
 
 from _extraction_helpers import (  # noqa: F401
     _DB,
@@ -26,6 +27,7 @@ from _extraction_helpers import (  # noqa: F401
 
 
 class TestGetSemaphore:
+    @pytest.mark.unit
     def test_creates_and_reuses(self) -> None:
         _EXTRACTION_SEMAPHORES.clear()
         first = _get_semaphore("ext_a")
@@ -35,6 +37,7 @@ class TestGetSemaphore:
 
 
 class TestGuessMime:
+    @pytest.mark.unit
     def test_all_extensions(self) -> None:
         cases = {
             ".md": "text/markdown",
@@ -63,6 +66,7 @@ class TestGuessMime:
             assert _guess_mime(f"/tmp/file{ext}") == mime
         assert _guess_mime("/tmp/file.MD") == "text/markdown"
 
+    @pytest.mark.unit
     def test_unknown_and_no_ext(self) -> None:
         assert _guess_mime("/tmp/file.unknownext") == "application/octet-stream"
         assert _guess_mime("/tmp/noext") == "application/octet-stream"
@@ -70,11 +74,13 @@ class TestGuessMime:
 
 
 class TestServiceInit:
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         service = MetadataExtractionService(_DB)
         assert service._registry is not None
         assert service._store is not None
 
+    @pytest.mark.unit
     def test_provided(self) -> None:
         registry = FakeRegistry()
         store = FakeStore()
@@ -85,6 +91,7 @@ class TestServiceInit:
 
 
 class TestQueueExtract:
+    @pytest.mark.unit
     def test_insert_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn()
         monkeypatch.setattr(es, "open_db", lambda p: conn)
@@ -97,6 +104,7 @@ class TestQueueExtract:
         assert conn.commits == 1
         assert conn.closed
 
+    @pytest.mark.unit
     def test_integrity_error_row_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"SELECT id FROM op_jobs": [FakeRow({"id": 3})]})
         conn.add_raise("INSERT INTO op_jobs", sqlite3.IntegrityError("UNIQUE constraint failed"))
@@ -106,6 +114,7 @@ class TestQueueExtract:
         assert conn.rollbacks == 1
         assert conn.closed
 
+    @pytest.mark.unit
     def test_integrity_error_row_missing_retry(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"SELECT id FROM op_jobs": [None]})
         conn.add_raise("INSERT INTO op_jobs", sqlite3.IntegrityError("UNIQUE constraint failed"))
@@ -120,6 +129,7 @@ class TestQueueExtract:
 
 
 class TestGetQueueStatus:
+    @pytest.mark.unit
     def test_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         row = FakeRow(
             {
@@ -138,6 +148,7 @@ class TestGetQueueStatus:
         assert status["started_at"] == "2026-01-01"
         assert conn.closed
 
+    @pytest.mark.unit
     def test_not_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({"SELECT status, error, result_data": [None]})
         monkeypatch.setattr(es, "open_db", lambda p: conn)
@@ -148,6 +159,7 @@ class TestGetQueueStatus:
 
 
 class TestStartWorker:
+    @pytest.mark.unit
     def test_starts_thread(self, monkeypatch: pytest.MonkeyPatch) -> None:
         started: list[Any] = []
 
@@ -162,6 +174,7 @@ class TestStartWorker:
         assert started[0][0] == _DB
         service.stop_worker(timeout=1.0)
 
+    @pytest.mark.unit
     def test_already_alive(self, monkeypatch: pytest.MonkeyPatch) -> None:
         called: list[Any] = []
         monkeypatch.setattr(threading, "Thread", lambda *a, **k: called.append(a))
@@ -173,6 +186,7 @@ class TestStartWorker:
 
 
 class TestStopWorker:
+    @pytest.mark.unit
     def test_terminate_and_kill(self) -> None:
         service = _service()
         proc = FakeProc(alive_after_join=True, alive_after_terminate=True)
@@ -185,6 +199,7 @@ class TestStopWorker:
         assert service._worker_stop.is_set()
         assert service._worker_thread.joined
 
+    @pytest.mark.unit
     def test_terminate_only(self) -> None:
         service = _service()
         proc = FakeProc(alive_after_join=True, alive_after_terminate=False)
@@ -194,6 +209,7 @@ class TestStopWorker:
         assert proc.killed == 0
         assert proc.closed
 
+    @pytest.mark.unit
     def test_proc_not_alive(self) -> None:
         service = _service()
         proc = FakeProc(alive=False)
@@ -203,6 +219,7 @@ class TestStopWorker:
         assert proc.killed == 0
         assert proc.closed
 
+    @pytest.mark.unit
     def test_no_thread(self) -> None:
         service = _service()
         service.stop_worker(timeout=0.1)

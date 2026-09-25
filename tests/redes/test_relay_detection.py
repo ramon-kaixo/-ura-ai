@@ -8,6 +8,7 @@ Estos tests detectan y documentan el estado de la conexión.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from tests.infra.conftest import run_cmd
 from tests.redes import GX10_TS_IP, MAC_TS_IP
@@ -25,6 +26,7 @@ class TestTailscaleDirectGX10:
             f"GX10 no aparece en tailscale status: {out.strip()}"
         )
 
+    @pytest.mark.slow
     def test_gx10_to_mac_latency(self) -> None:
         """GX10 ping a Mac: documentar latencia y ruta."""
         rc, out, _ = run_cmd(f"tailscale ping {MAC_TS_IP} 2>&1 | head -3", timeout=15)
@@ -67,6 +69,7 @@ class TestTailscaleDirectMac:
             f"Mac no aparece en tailscale status: {out.strip()}"
         )
 
+    @pytest.mark.slow
     def test_mac_to_gx10_latency(self) -> None:
         """Mac ping a GX10: debe ser directo (<20ms)."""
         rc, out, _ = run_cmd(f"tailscale ping {GX10_TS_IP} 2>&1 | head -3", timeout=15)

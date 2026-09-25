@@ -5,6 +5,7 @@ de proveedores opcionales.
 """
 from __future__ import annotations
 
+import pytest
 import builtins
 from types import SimpleNamespace
 from unittest import mock
@@ -15,6 +16,7 @@ from motor.core.llm._state import LLMState, _get_optional_providers, build_llm_s
 
 
 class TestLLMState:
+    @pytest.mark.unit
     def test_dataclass_campos(self) -> None:
         state = LLMState(
             registry="r",
@@ -33,6 +35,7 @@ class TestLLMState:
 
 
 class TestGetOptionalProviders:
+    @pytest.mark.unit
     def test_importa_todos(self) -> None:
         providers = _get_optional_providers()
         names = [name for _cls, name in providers]
@@ -50,6 +53,7 @@ class TestGetOptionalProviders:
             "motor.core.llm.groq",
         ],
     )
+    @pytest.mark.unit
     def test_falla_import_silencioso(self, modulo: str) -> None:
         real_import = builtins.__import__
 
@@ -65,6 +69,7 @@ class TestGetOptionalProviders:
 
 
 class TestBuildLlmState:
+    @pytest.mark.unit
     def test_config_none_carga_config(self) -> None:
         cfg = SimpleNamespace(llm_provider="ollama")
         with mock.patch("motor.core.config.UraConfig.load", return_value=cfg), mock.patch(
@@ -85,6 +90,7 @@ class TestBuildLlmState:
             ("vllm", "motor.core.llm.vllm.VLLMProvider", "vllm"),
         ],
     )
+    @pytest.mark.unit
     def test_provider_por_config(
         self,
         provider_name: str,
@@ -102,6 +108,7 @@ class TestBuildLlmState:
         assert state.generate == ProvCls.return_value.generate
         assert state.health == ProvCls.return_value.health
 
+    @pytest.mark.unit
     def test_ollama_default_por_config(self) -> None:
         config = SimpleNamespace(llm_provider="ollama")
         with mock.patch("motor.core.llm.ollama.OllamaProvider") as ollama_cls, mock.patch(
@@ -115,6 +122,7 @@ class TestBuildLlmState:
         assert state.generate == ollama_cls.return_value.generate
         assert state.health == ollama_cls.return_value.health
 
+    @pytest.mark.unit
     def test_ollama_registra_opcionales(self) -> None:
         """Con ollama default, los providers opcionales se registran si importan."""
         config = SimpleNamespace(llm_provider="ollama")
@@ -127,6 +135,7 @@ class TestBuildLlmState:
         assert state.default_provider is ollama_cls.return_value
         reg.register.assert_any_call("openai", fake_cls.return_value)
 
+    @pytest.mark.unit
     def test_provider_desconocido_usa_ollama(self) -> None:
         config = SimpleNamespace(llm_provider="weirdo")
         with mock.patch("motor.core.llm.ollama.OllamaProvider") as ollama_cls, mock.patch(
@@ -136,6 +145,7 @@ class TestBuildLlmState:
         assert state.default_provider is ollama_cls.return_value
         reg.register.assert_any_call("ollama", ollama_cls.return_value, default=True)
 
+    @pytest.mark.unit
     def test_error_instanciacion_proveedor_opcional(self) -> None:
         config = SimpleNamespace(llm_provider="ollama")
 

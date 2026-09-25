@@ -104,6 +104,7 @@ ignore = [
 
 [tool.pytest.ini_options]
 markers = [
+    "contract: tests de contratos de API",
     "slow: marks tests as slow",
     "integration: approval tests against live endpoints",
     "unit: tests unitarios aislados",

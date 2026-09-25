@@ -1,6 +1,7 @@
 """Tests para core/debate/debate_engine.py."""
 from __future__ import annotations
 
+import pytest
 import json
 from types import SimpleNamespace
 from unittest import mock
@@ -11,6 +12,7 @@ import core.debate.debate_engine as de
 
 
 class TestLoadConfig:
+    @pytest.mark.unit
     def test_carga_json_valido(self) -> None:
         cfg = de.load_config()
         assert "models" in cfg
@@ -18,23 +20,28 @@ class TestLoadConfig:
 
 
 class TestValidarEsquema:
+    @pytest.mark.unit
     def test_sin_esquema(self) -> None:
         assert de.validar_esquema_salida("cualquier cosa") is True
 
+    @pytest.mark.unit
     def test_json_valido(self, monkeypatch) -> None:
         monkeypatch.setattr(de, "log_event", mock.Mock())
         assert de.validar_esquema_salida('{"score": 0.9, "reason": "ok", "risks": []}', {"score": float, "reason": str, "risks": list}) is True
 
+    @pytest.mark.unit
     def test_con_markdown_json(self, monkeypatch) -> None:
         monkeypatch.setattr(de, "log_event", mock.Mock())
         out = '```json\n{"score": 1.0, "reason": "a", "risks": []}\n```'
         assert de.validar_esquema_salida(out, {"score": float}) is True
 
+    @pytest.mark.unit
     def test_con_markdown_generico(self, monkeypatch) -> None:
         monkeypatch.setattr(de, "log_event", mock.Mock())
         out = '```\n{"score": 1.0, "reason": "a", "risks": []}\n```'
         assert de.validar_esquema_salida(out, {"score": float}) is True
 
+    @pytest.mark.unit
     def test_key_faltante(self, monkeypatch) -> None:
         log = mock.Mock()
         monkeypatch.setattr(de, "log_event", log)
@@ -42,12 +49,14 @@ class TestValidarEsquema:
         assert log.call_args.args[0] == "schema_validation_failed"
         assert "Missing key" in log.call_args.kwargs["reason"]
 
+    @pytest.mark.unit
     def test_tipo_incorrecto(self, monkeypatch) -> None:
         log = mock.Mock()
         monkeypatch.setattr(de, "log_event", log)
         assert de.validar_esquema_salida('{"score": "texto", "reason": "x"}', {"score": float}) is False
         assert "expected float" in log.call_args.kwargs["reason"]
 
+    @pytest.mark.unit
     def test_json_invalido(self, monkeypatch) -> None:
         log = mock.Mock()
         monkeypatch.setattr(de, "log_event", log)
@@ -56,16 +65,19 @@ class TestValidarEsquema:
 
 
 class TestPrompts:
+    @pytest.mark.unit
     def test_primary_con_contexto(self) -> None:
         prompt = de.build_primary_prompt("plan x", {"vram": 10})
         assert "plan x" in prompt
         assert '"vram": 10' in prompt
         assert "arquitecto" in prompt
 
+    @pytest.mark.unit
     def test_primary_sin_contexto(self) -> None:
         prompt = de.build_primary_prompt("plan y")
         assert "No disponible" in prompt
 
+    @pytest.mark.unit
     def test_auditor_con_contexto(self) -> None:
         prompt = de.build_auditor_prompt("plan", {"a": 1})
         assert "ABOGADO DEL DIABLO" in prompt

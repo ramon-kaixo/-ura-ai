@@ -71,10 +71,12 @@ def _make_v2_plugin(
 
 
 class TestPluginBase:
+    @pytest.mark.integration
     def test_abstract_cannot_instantiate(self) -> None:
         with pytest.raises(TypeError):
             PluginBase()  # type: ignore[abstract]
 
+    @pytest.mark.integration
     def test_concrete_plugin_has_default_meta(self) -> None:
         class _Concrete(PluginBase):
             def on_load(self) -> None:
@@ -93,6 +95,7 @@ class TestPluginBase:
         assert p.meta.timeout == 30
         assert p.meta.blocking is False
 
+    @pytest.mark.integration
     def test_repr_includes_name(self) -> None:
         class _Named(PluginBase):
             def on_load(self) -> None:
@@ -106,6 +109,7 @@ class TestPluginBase:
 
         assert repr(_Named()) == "<Plugin _Named>"
 
+    @pytest.mark.integration
     def test_rollback_default_is_noop(self) -> None:
         class _NoRollback(PluginBase):
             def on_load(self) -> None:
@@ -119,6 +123,7 @@ class TestPluginBase:
 
         _NoRollback().rollback({"key": "val"})  # must not raise
 
+    @pytest.mark.integration
     def test_rollback_can_be_overridden(self) -> None:
         class _WithRollback(PluginBase):
             def on_load(self) -> None:
@@ -141,6 +146,7 @@ class TestPluginBase:
         p.rollback({"key": "val"})
         assert p.rolled_back is True
 
+    @pytest.mark.integration
     def test_execute_returns_dict(self) -> None:
         class _Returning(PluginBase):
             def on_load(self) -> None:
@@ -154,6 +160,7 @@ class TestPluginBase:
 
         assert _Returning().execute({"input": "test"}) == {"result": 42, "items": [1, 2, 3]}
 
+    @pytest.mark.integration
     def test_execute_receives_context(self) -> None:
         class _CtxAware(PluginBase):
             def on_load(self) -> None:
@@ -168,6 +175,7 @@ class TestPluginBase:
         result = _CtxAware().execute({"key": "value"})
         assert result["received"] == "value"
 
+    @pytest.mark.integration
     def test_execute_with_none_context(self) -> None:
         class _NoneCtx(PluginBase):
             def on_load(self) -> None:
@@ -181,6 +189,7 @@ class TestPluginBase:
 
         assert _NoneCtx().execute(None)["got_none"] is True
 
+    @pytest.mark.integration
     def test_meta_from_init(self) -> None:
         class _CustomMeta(PluginBase):
             def on_load(self) -> None:
@@ -201,6 +210,7 @@ class TestPluginBase:
         assert p.meta.phase == "pre"
         assert p.meta.timeout == 10
 
+    @pytest.mark.integration
     def test_custom_meta_via_from_dict(self) -> None:
         p = PluginMeta.from_dict({"name": "mymeta", "phase": "post"})
         assert p.name == "mymeta"
@@ -211,6 +221,8 @@ class TestPluginBase:
 
 
 class TestPluginBaseLifecycleHooks:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_on_load_called_during_v2_load(self, tmp_path: Path) -> None:
         d = tmp_path / "lifecycle_test"
         d.mkdir()
@@ -233,6 +245,8 @@ class TestPluginBaseLifecycleHooks:
         assert plugin is not None
         assert type(plugin).load_called is True
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_on_load_failure_does_not_block_load(self, tmp_path: Path) -> None:
         d = tmp_path / "failing_load"
         d.mkdir()
@@ -253,6 +267,8 @@ class TestPluginBaseLifecycleHooks:
         plugin = registry.get("failing_load")
         assert plugin is not None
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_on_unload_called_during_unload(self, tmp_path: Path) -> None:
         d = tmp_path / "unload_test"
         d.mkdir()
@@ -277,6 +293,8 @@ class TestPluginBaseLifecycleHooks:
         assert result is True
         assert type(plugin).unload_called is True
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_on_unload_failure_does_not_block_unload(self, tmp_path: Path) -> None:
         d = tmp_path / "failing_unload"
         d.mkdir()
@@ -299,6 +317,7 @@ class TestPluginBaseLifecycleHooks:
         assert result is True
         assert "failing_unload" not in registry.loaded
 
+    @pytest.mark.integration
     def test_lifecycle_disabled_via_manifest(self, tmp_path: Path) -> None:
         d = tmp_path / "no_lifecycle"
         d.mkdir()
@@ -321,6 +340,7 @@ class TestPluginBaseLifecycleHooks:
         result = registry.unload("no_lifecycle")
         assert result is True
 
+    @pytest.mark.integration
     def test_manifest_assigned_to_instance(self, tmp_path: Path) -> None:
         d = tmp_path / "manifest_attr"
         d.mkdir()
@@ -344,6 +364,7 @@ class TestPluginBaseLifecycleHooks:
         assert manifest.name == "manifest_attr"
         assert manifest.version == "2.0.0"
 
+    @pytest.mark.integration
     def test_legacy_plugin_no_lifecycle_hooks(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "no_hooks_legacy")
@@ -358,6 +379,7 @@ class TestPluginBaseLifecycleHooks:
 
 
 class TestPluginManifestCreation:
+    @pytest.mark.integration
     def test_default_manifest(self) -> None:
         m = PluginManifest()
         assert m.api_version == "1.0.0"
@@ -371,10 +393,12 @@ class TestPluginManifestCreation:
         assert m.phases == ["always"]
         assert m.tags == []
 
+    @pytest.mark.integration
     def test_manifest_with_name(self) -> None:
         m = PluginManifest(name="test-plugin")
         assert m.name == "test-plugin"
 
+    @pytest.mark.integration
     def test_manifest_all_fields(self) -> None:
         m = PluginManifest(
             api_version="2.0.0",
@@ -396,6 +420,7 @@ class TestPluginManifestCreation:
         assert m.phases == ["pre", "post"]
         assert m.tags == ["search", "experimental"]
 
+    @pytest.mark.integration
     def test_manifest_version_types(self) -> None:
         m = PluginManifest(version="0.0.0")
         assert m.version == "0.0.0"
@@ -404,6 +429,7 @@ class TestPluginManifestCreation:
 
 
 class TestPluginManifestParse:
+    @pytest.mark.integration
     def test_parse_yaml(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: test-plugin\nversion: '1.0.0'\napi_version: '1.0.0'\n")
@@ -412,6 +438,7 @@ class TestPluginManifestParse:
         assert manifest.name == "test-plugin"
         assert manifest.version == "1.0.0"
 
+    @pytest.mark.integration
     def test_parse_json(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.json"
         f.write_text('{"name": "json-plugin", "version": "2.0.0", "api_version": "1.0.0"}')
@@ -420,34 +447,41 @@ class TestPluginManifestParse:
         assert manifest.name == "json-plugin"
         assert manifest.version == "2.0.0"
 
+    @pytest.mark.integration
     def test_parse_missing_file(self, tmp_path: Path) -> None:
         assert parse_manifest(tmp_path / "nonexistent.yaml") is None
 
+    @pytest.mark.integration
     def test_parse_empty_yaml(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("")
         assert parse_manifest(f) is None
 
+    @pytest.mark.integration
     def test_parse_invalid_yaml(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: [invalid\n")
         assert parse_manifest(f) is None
 
+    @pytest.mark.integration
     def test_parse_yaml_not_a_dict(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("- just\n- a\n- list\n")
         assert parse_manifest(f) is None
 
+    @pytest.mark.integration
     def test_parse_json_not_a_dict(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.json"
         f.write_text('["just", "a", "list"]')
         assert parse_manifest(f) is None
 
+    @pytest.mark.integration
     def test_parse_unsupported_format(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.toml"
         f.write_text("[plugin]\nname = 'test'\n")
         assert parse_manifest(f) is None
 
+    @pytest.mark.integration
     def test_parse_with_defaults(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: defaults-test\n")
@@ -459,6 +493,7 @@ class TestPluginManifestParse:
         assert manifest.hooks == []
         assert manifest.tags == []
 
+    @pytest.mark.integration
     def test_parse_with_hooks_and_tags(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text(
@@ -470,6 +505,7 @@ class TestPluginManifestParse:
         assert manifest.tags == ["search", "experimental"]
         assert manifest.phases == ["pre", "post"]
 
+    @pytest.mark.integration
     def test_parse_with_dependencies(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text(
@@ -486,6 +522,7 @@ class TestPluginManifestParse:
         assert manifest.dependencies["plugins"][0]["name"] == "base"
         assert manifest.dependencies["python"][0] == "requests>=2.28"
 
+    @pytest.mark.integration
     def test_parse_dependencies_not_dict_fallback(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: bad-dep\ndependencies: 'not-a-dict'\n")
@@ -493,6 +530,7 @@ class TestPluginManifestParse:
         assert manifest is not None
         assert manifest.dependencies == {"plugins": [], "python": []}
 
+    @pytest.mark.integration
     def test_parse_lifecycle_not_dict_fallback(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: bad-lifecycle\nlifecycle: 'not-a-dict'\n")
@@ -500,6 +538,7 @@ class TestPluginManifestParse:
         assert manifest is not None
         assert manifest.lifecycle == {"on_load": True, "on_unload": True, "on_config_change": False}
 
+    @pytest.mark.integration
     def test_parse_without_name_falls_back_to_parent_dir(self, tmp_path: Path) -> None:
         d = tmp_path / "my_plugin_dir"
         d.mkdir()
@@ -509,6 +548,7 @@ class TestPluginManifestParse:
         assert manifest is not None
         assert manifest.name == "my_plugin_dir"
 
+    @pytest.mark.integration
     def test_parse_unknown_fields_logged_but_accepted(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: extra-plugin\nunknown_field: value\nanother_unknown: 42\n")
@@ -518,21 +558,25 @@ class TestPluginManifestParse:
 
 
 class TestFindManifest:
+    @pytest.mark.integration
     def test_find_yaml(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yaml"
         f.write_text("name: test\n")
         assert find_manifest(tmp_path) == f
 
+    @pytest.mark.integration
     def test_find_yml(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.yml"
         f.write_text("name: test\n")
         assert find_manifest(tmp_path) == f
 
+    @pytest.mark.integration
     def test_find_json(self, tmp_path: Path) -> None:
         f = tmp_path / "plugin.json"
         f.write_text('{"name": "test"}')
         assert find_manifest(tmp_path) == f
 
+    @pytest.mark.integration
     def test_find_priority_yaml_over_yml_json(self, tmp_path: Path) -> None:
         yaml_f = tmp_path / "plugin.yaml"
         json_f = tmp_path / "plugin.json"
@@ -540,17 +584,21 @@ class TestFindManifest:
         json_f.write_text('{"name": "json"}')
         assert find_manifest(tmp_path) == yaml_f
 
+    @pytest.mark.integration
     def test_find_none(self, tmp_path: Path) -> None:
         assert find_manifest(tmp_path) is None
 
 
 class TestManifestError:
+    @pytest.mark.integration
     def test_is_exception(self) -> None:
         assert isinstance(ManifestError("msg"), Exception)
 
+    @pytest.mark.integration
     def test_str(self) -> None:
         assert str(ManifestError("something wrong")) == "something wrong"
 
+    @pytest.mark.integration
     def test_circular_dependency_message(self) -> None:
         with pytest.raises(ManifestError, match="circular"):
             raise ManifestError("Dependencia circular: a -> b -> a")
@@ -560,6 +608,7 @@ class TestManifestError:
 
 
 class TestPluginMeta:
+    @pytest.mark.integration
     def test_from_dict_defaults(self) -> None:
         meta = PluginMeta.from_dict({"name": "test"})
         assert meta.name == "test"
@@ -568,6 +617,7 @@ class TestPluginMeta:
         assert meta.timeout == 30
         assert meta.description == ""
 
+    @pytest.mark.integration
     def test_from_dict_all_fields(self) -> None:
         meta = PluginMeta.from_dict(
             {"name": "full", "phase": "pre", "blocking": True, "timeout": 60, "description": "A test plugin"},
@@ -578,15 +628,18 @@ class TestPluginMeta:
         assert meta.timeout == 60
         assert meta.description == "A test plugin"
 
+    @pytest.mark.integration
     def test_from_dict_missing_name_fallback(self) -> None:
         meta = PluginMeta.from_dict({})
         assert meta.name == "unknown"
 
+    @pytest.mark.integration
     def test_from_dict_type_coercion(self) -> None:
         meta = PluginMeta.from_dict({"name": "test", "timeout": "45", "blocking": 1})
         assert meta.timeout == 45
         assert meta.blocking is True
 
+    @pytest.mark.integration
     def test_from_source_valid(self) -> None:
         source = '__plugin__ = {"name": "ast_plugin", "phase": "post", "timeout": 15}\n'
         meta = PluginMeta.from_source(source)
@@ -595,18 +648,22 @@ class TestPluginMeta:
         assert meta.phase == "post"
         assert meta.timeout == 15
 
+    @pytest.mark.integration
     def test_from_source_invalid_syntax(self) -> None:
         assert PluginMeta.from_source("this is not valid python {{{") is None
 
+    @pytest.mark.integration
     def test_from_source_no_plugin_var(self) -> None:
         assert PluginMeta.from_source("x = 1\ny = 2\n") is None
 
+    @pytest.mark.integration
     def test_from_source_with_bool(self) -> None:
         source = '__plugin__ = {"name": "bool_plugin", "blocking": True}\n'
         meta = PluginMeta.from_source(source)
         assert meta is not None
         assert meta.blocking is True
 
+    @pytest.mark.integration
     def test_from_source_with_list(self) -> None:
         source = '__plugin__ = {"name": "list_plugin", "phases": ["pre", "post"]}\n'
         meta = PluginMeta.from_source(source)
@@ -618,9 +675,11 @@ class TestPluginMeta:
 
 
 class TestPluginRegistryDiscover:
+    @pytest.mark.integration
     def test_empty_path_returns_zero(self) -> None:
         assert PluginRegistry().discover(["/nonexistent_path_for_test"]) == 0
 
+    @pytest.mark.integration
     def test_directory_with_plugins(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "p1")
@@ -628,25 +687,30 @@ class TestPluginRegistryDiscover:
         assert registry.discover([str(tmp_path)]) == 2
         assert registry.count() == 2
 
+    @pytest.mark.integration
     def test_single_file(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         f = _make_legacy_plugin(tmp_path, "single")
         assert registry.discover([str(f)]) == 1
 
+    @pytest.mark.integration
     def test_ignores_init_files(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         (tmp_path / "__init__.py").write_text("")
         _make_legacy_plugin(tmp_path, "real")
         assert registry.discover([str(tmp_path)]) == 1
 
+    @pytest.mark.integration
     def test_ignores_non_py_files(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         (tmp_path / "note.txt").write_text("not a plugin")
         assert registry.discover([str(tmp_path)]) == 0
 
+    @pytest.mark.integration
     def test_invalid_path(self) -> None:
         assert PluginRegistry().discover(["/dev/null/nonexistent"]) == 0
 
+    @pytest.mark.integration
     def test_entries_property_returns_copy(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "prop_test")
@@ -655,6 +719,8 @@ class TestPluginRegistryDiscover:
         entries.clear()
         assert registry.count() == 1
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_loaded_empty_after_discover(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "lazy")
@@ -663,9 +729,12 @@ class TestPluginRegistryDiscover:
 
 
 class TestPluginRegistryGet:
+    @pytest.mark.integration
     def test_nonexistent(self) -> None:
         assert PluginRegistry().get("no_such") is None
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_triggers_lazy_load(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "lazy_load")
@@ -675,12 +744,14 @@ class TestPluginRegistryGet:
         assert plugin is not None
         assert "lazy_load" in registry.loaded
 
+    @pytest.mark.integration
     def test_caches_instance(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "cache_test")
         registry.discover([str(tmp_path)])
         assert registry.get("cache_test") is registry.get("cache_test")
 
+    @pytest.mark.integration
     def test_get_meta(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "meta_test", phase="post")
@@ -690,11 +761,13 @@ class TestPluginRegistryGet:
         assert meta.phase == "post"
         assert "meta_test" not in registry.loaded
 
+    @pytest.mark.integration
     def test_get_meta_nonexistent(self) -> None:
         assert PluginRegistry().get_meta("no_such") is None
 
 
 class TestPluginRegistryRun:
+    @pytest.mark.integration
     def test_run_phase_ok(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "run_test", phase="pre")
@@ -706,6 +779,7 @@ class TestPluginRegistryRun:
         assert results[0].phase == "pre"
         assert results[0].duration_ms >= 0
 
+    @pytest.mark.integration
     def test_run_phase_always_included(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "always_p", phase="always")
@@ -719,15 +793,18 @@ class TestPluginRegistryRun:
         assert "pre_p" in names
         assert "post_p" not in names
 
+    @pytest.mark.integration
     def test_run_phase_empty_when_no_matches(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "only_pre", phase="pre")
         registry.discover([str(tmp_path)])
         assert len(registry.run_phase("post")) == 0
 
+    @pytest.mark.integration
     def test_run_phase_empty_registry(self) -> None:
         assert PluginRegistry().run_phase("pre") == []
 
+    @pytest.mark.integration
     def test_run_phase_with_context(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         f = tmp_path / "ctx_plugin.py"
@@ -744,6 +821,7 @@ class TestPluginRegistryRun:
         results = registry.run_phase("pre", {"key": "value"})
         assert results[0].data["received"] == "value"
 
+    @pytest.mark.integration
     def test_run_one_specific(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         _make_legacy_plugin(tmp_path, "a", phase="pre")
@@ -754,11 +832,13 @@ class TestPluginRegistryRun:
         assert result.plugin == "a"
         assert result.ok is True
 
+    @pytest.mark.integration
     def test_run_one_nonexistent(self) -> None:
         assert PluginRegistry().run_one("no_such") is None
 
 
 class TestPluginRegistryDuplicate:
+    @pytest.mark.integration
     def test_duplicate_name_overwrites(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         d1 = tmp_path / "d1"
@@ -772,6 +852,8 @@ class TestPluginRegistryDuplicate:
 
 
 class TestPluginRegistryError:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_failure_returns_none(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         f = tmp_path / "broken.py"
@@ -779,6 +861,7 @@ class TestPluginRegistryError:
         registry.discover([str(tmp_path)])
         assert registry.get("broken") is None
 
+    @pytest.mark.integration
     def test_execution_failure_returns_failed_result(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         f = tmp_path / "fail_exec.py"
@@ -796,6 +879,7 @@ class TestPluginRegistryError:
         assert results[0].ok is False
         assert "execution error" in results[0].error
 
+    @pytest.mark.integration
     def test_no_subclass_returns_error(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         f = tmp_path / "no_subclass.py"
@@ -805,6 +889,7 @@ class TestPluginRegistryError:
         assert results[0].ok is False
         assert results[0].error == "Plugin load failed"
 
+    @pytest.mark.integration
     def test_broken_import_does_not_affect_other_plugins(self, tmp_path: Path) -> None:
         registry = PluginRegistry()
         (tmp_path / "broken.py").write_text(
@@ -834,6 +919,7 @@ class TestPluginRegistryError:
 
 
 class TestRegistryV2Discover:
+    @pytest.mark.integration
     def test_legacy_py_files(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_a")
@@ -841,18 +927,21 @@ class TestRegistryV2Discover:
         assert registry.discover([str(tmp_path)]) == 2
         assert registry.count() == 2
 
+    @pytest.mark.integration
     def test_v2_manifest(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "v2_test")
         assert registry.discover([str(tmp_path)]) == 1
         assert registry.count() == 1
 
+    @pytest.mark.integration
     def test_mixed_legacy_and_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy")
         _make_v2_plugin(tmp_path, "packaged")
         assert registry.discover([str(tmp_path)]) == 2
 
+    @pytest.mark.integration
     def test_ignores_init_and_private(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         (tmp_path / "__init__.py").write_text("")
@@ -860,9 +949,11 @@ class TestRegistryV2Discover:
         _make_legacy_plugin(tmp_path, "visible")
         assert registry.discover([str(tmp_path)]) == 1
 
+    @pytest.mark.integration
     def test_empty_directory(self, tmp_path: Path) -> None:
         assert PluginRegistryV2().discover([str(tmp_path / "empty")]) == 0
 
+    @pytest.mark.integration
     def test_nested_directories(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         sub = tmp_path / "sub" / "nested"
@@ -870,6 +961,7 @@ class TestRegistryV2Discover:
         _make_v2_plugin(sub, "nested_v2")
         assert registry.discover([str(tmp_path)]) == 1
 
+    @pytest.mark.integration
     def test_entry_structure_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "entry_check")
@@ -880,6 +972,7 @@ class TestRegistryV2Discover:
         assert entry.manifest_path is not None
         assert entry.legacy_meta is None
 
+    @pytest.mark.integration
     def test_entry_structure_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_entry")
@@ -893,6 +986,7 @@ class TestRegistryV2Discover:
 
 
 class TestRegistryV2Get:
+    @pytest.mark.integration
     def test_get_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "v2_get")
@@ -901,6 +995,7 @@ class TestRegistryV2Get:
         assert plugin is not None
         assert isinstance(plugin, PluginBase)
 
+    @pytest.mark.integration
     def test_get_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_get")
@@ -908,15 +1003,18 @@ class TestRegistryV2Get:
         plugin = registry.get("legacy_get")
         assert plugin is not None
 
+    @pytest.mark.integration
     def test_get_caches_instance(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "cache_v2")
         registry.discover([str(tmp_path)])
         assert registry.get("cache_v2") is registry.get("cache_v2")
 
+    @pytest.mark.integration
     def test_get_nonexistent(self) -> None:
         assert PluginRegistryV2().get("no_such_plugin") is None
 
+    @pytest.mark.integration
     def test_get_manifest_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "manifest_v2")
@@ -926,6 +1024,7 @@ class TestRegistryV2Get:
         assert manifest.name == "manifest_v2"
         assert manifest.version == "1.0.0"
 
+    @pytest.mark.integration
     def test_get_manifest_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "manifest_legacy")
@@ -934,9 +1033,12 @@ class TestRegistryV2Get:
         assert isinstance(meta, PluginMeta)
         assert meta.name == "manifest_legacy"
 
+    @pytest.mark.integration
     def test_get_manifest_nonexistent(self) -> None:
         assert PluginRegistryV2().get_manifest("no_such") is None
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_loaded_property(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         assert registry.loaded == []
@@ -948,6 +1050,7 @@ class TestRegistryV2Get:
 
 
 class TestRegistryV2Unload:
+    @pytest.mark.integration
     def test_removes_instance(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "unload_v2")
@@ -957,15 +1060,20 @@ class TestRegistryV2Unload:
         assert registry.unload("unload_v2") is True
         assert "unload_v2" not in registry.loaded
 
+    @pytest.mark.integration
     def test_nonexistent_returns_false(self) -> None:
         assert PluginRegistryV2().unload("no_such") is False
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_unload_unloaded_plugin(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "never_loaded")
         registry.discover([str(tmp_path)])
         assert registry.unload("never_loaded") is False
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_unload_twice(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "unload_twice")
@@ -976,6 +1084,7 @@ class TestRegistryV2Unload:
 
 
 class TestRegistryV2Run:
+    @pytest.mark.integration
     def test_run_phase_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "v2_run")
@@ -984,6 +1093,7 @@ class TestRegistryV2Run:
         assert len(results) == 1
         assert results[0].ok is True
 
+    @pytest.mark.integration
     def test_run_phase_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_run", phase="pre")
@@ -992,6 +1102,7 @@ class TestRegistryV2Run:
         assert len(results) == 1
         assert results[0].ok is True
 
+    @pytest.mark.integration
     def test_run_phase_by_manifest_phase(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "phase_v2", phases=["pre"])
@@ -1000,12 +1111,14 @@ class TestRegistryV2Run:
         assert len(results) == 1
         assert results[0].plugin == "phase_v2"
 
+    @pytest.mark.integration
     def test_run_phase_excludes_wrong_phase(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "only_pre", phases=["pre"])
         registry.discover([str(tmp_path)])
         assert len(registry.run_phase("post")) == 0
 
+    @pytest.mark.integration
     def test_run_one_v2(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "run_one_v2")
@@ -1015,9 +1128,11 @@ class TestRegistryV2Run:
         assert result.ok is True
         assert result.plugin == "run_one_v2"
 
+    @pytest.mark.integration
     def test_run_one_nonexistent(self) -> None:
         assert PluginRegistryV2().run_one("no_such") is None
 
+    @pytest.mark.integration
     def test_run_one_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "run_one_legacy", phase="pre")
@@ -1028,18 +1143,21 @@ class TestRegistryV2Run:
 
 
 class TestRegistryV2VersionNegotiation:
+    @pytest.mark.integration
     def test_compatible_api_version(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "compat_v2", api_version="1.0.0")
         registry.discover([str(tmp_path)])
         assert registry.get("compat_v2") is not None
 
+    @pytest.mark.integration
     def test_incompatible_api_version_returns_none(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "incompat", api_version="99.0.0")
         registry.discover([str(tmp_path)])
         assert registry.get("incompat") is None
 
+    @pytest.mark.integration
     def test_minor_newer_than_motor_returns_none(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "minor_newer", api_version="1.5.0")
@@ -1049,6 +1167,7 @@ class TestRegistryV2VersionNegotiation:
         registry.discover([str(tmp_path)])
         assert registry.get("minor_newer") is None
 
+    @pytest.mark.integration
     def test_legacy_plugin_no_version_check(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_no_version")
@@ -1057,6 +1176,7 @@ class TestRegistryV2VersionNegotiation:
 
 
 class TestRegistryV2Duplicate:
+    @pytest.mark.integration
     def test_duplicate_legacy_name(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         sub = tmp_path / "sub"
@@ -1066,12 +1186,14 @@ class TestRegistryV2Duplicate:
         registry.discover([str(tmp_path)])
         assert registry.count() == 1
 
+    @pytest.mark.integration
     def test_duplicate_v2_and_legacy(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "shared_name")
         count = registry.discover([str(tmp_path)])
         assert count >= 1
 
+    @pytest.mark.integration
     def test_invalid_manifest_discovery(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "bad_manifest"
@@ -1090,12 +1212,14 @@ class TestRegistryV2Duplicate:
 
 
 class TestRegistryV2DependencyResolution:
+    @pytest.mark.integration
     def test_no_dependencies(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "standalone")
         registry.discover([str(tmp_path)])
         assert registry._resolve_dependencies("standalone") == ["standalone"]
 
+    @pytest.mark.integration
     def test_with_external_dependency(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "base")
@@ -1116,6 +1240,7 @@ class TestRegistryV2DependencyResolution:
         assert "base" in deps
         assert "with_dep" in deps
 
+    @pytest.mark.integration
     def test_nonexistent_dependency(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "with_missing_dep"
@@ -1135,6 +1260,7 @@ class TestRegistryV2DependencyResolution:
         assert "nonexistent_plugin" in deps
         assert "with_missing_dep" in deps
 
+    @pytest.mark.integration
     def test_empty_string_dependency_skipped(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "empty_dep"
@@ -1152,6 +1278,7 @@ class TestRegistryV2DependencyResolution:
         deps = registry._resolve_dependencies("empty_dep")
         assert "empty_dep" in deps
 
+    @pytest.mark.integration
     def test_dependency_as_dict(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "dict_dep"
@@ -1171,12 +1298,14 @@ class TestRegistryV2DependencyResolution:
         assert "some_dep" in deps
         assert "dict_dep" in deps
 
+    @pytest.mark.integration
     def test_legacy_plugin_dependencies_empty(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_dep")
         registry.discover([str(tmp_path)])
         assert registry._resolve_dependencies("legacy_dep") == ["legacy_dep"]
 
+    @pytest.mark.integration
     def test_circular_dependency_raises(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         for name in ("circ_a", "circ_b"):
@@ -1199,6 +1328,7 @@ class TestRegistryV2DependencyResolution:
 
 
 class TestRegistryV2ErrorHandling:
+    @pytest.mark.integration
     def test_missing_init_py_returns_none(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "no_init"
@@ -1209,6 +1339,7 @@ class TestRegistryV2ErrorHandling:
         registry.discover([str(tmp_path)])
         assert registry.get("no_init") is None
 
+    @pytest.mark.integration
     def test_execution_failure(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "fail_run"
@@ -1230,6 +1361,7 @@ class TestRegistryV2ErrorHandling:
         assert results[0].ok is False
         assert "intentional run failure" in results[0].error
 
+    @pytest.mark.integration
     def test_isolated_plugin_failure(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d_fail = tmp_path / "isolated_fail"
@@ -1272,6 +1404,7 @@ class TestRegistryV2ErrorHandling:
 class TestRegistryV2CapabilityDiscovery:
     """Filter plugins by capability (phase, hook, tag) via entries introspection."""
 
+    @pytest.mark.integration
     def test_find_by_manifest_phase(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "pre_plugin", phases=["pre"])
@@ -1281,6 +1414,7 @@ class TestRegistryV2CapabilityDiscovery:
         assert "pre_plugin" in pre_plugins
         assert "post_plugin" not in pre_plugins
 
+    @pytest.mark.integration
     def test_find_by_hook(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "hook_plugin", hooks=["pre_ingest"])
@@ -1290,6 +1424,7 @@ class TestRegistryV2CapabilityDiscovery:
         assert "hook_plugin" in hook_plugins
         assert "no_hook" not in hook_plugins
 
+    @pytest.mark.integration
     def test_find_by_tag(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         d = tmp_path / "tagged"
@@ -1309,6 +1444,7 @@ class TestRegistryV2CapabilityDiscovery:
         assert "tagged" in tagged
         assert "untagged" not in tagged
 
+    @pytest.mark.integration
     def test_find_by_legacy_phase(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_pre", phase="pre")
@@ -1318,6 +1454,7 @@ class TestRegistryV2CapabilityDiscovery:
         assert "legacy_pre" in pre_plugins
         assert "legacy_post" not in pre_plugins
 
+    @pytest.mark.integration
     def test_find_by_version_range(self, tmp_path: Path) -> None:
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "old_plugin", version="0.5.0")

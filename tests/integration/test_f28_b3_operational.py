@@ -11,6 +11,7 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
 import threading
 import time
 from pathlib import Path
@@ -33,6 +34,7 @@ from motor.memory import Memory, MemoryEntry, MemoryEventType, make_entry_id
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_f25_to_f26_pipeline(tmp_path: str) -> None:
     """FusionPipeline produce Facts que se escriben en F26 Memory."""
     snap = Path(tmp_path) / "snap.json"
@@ -88,6 +90,7 @@ def test_f25_to_f26_pipeline(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_memory_subscription(tmp_path: str) -> None:
     """Suscriptores son notificados cuando nuevos entries llegan a Memory."""
     snap = Path(tmp_path) / "sub_snap.json"
@@ -118,6 +121,7 @@ def test_memory_subscription(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_memory_subscription_concurrent(tmp_path: str) -> None:
     """Múltiples suscriptores bajo escritura concurrente."""
     snap = Path(tmp_path) / "con_snap.json"
@@ -157,6 +161,7 @@ def test_memory_subscription_concurrent(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_chaos_crash_during_write(tmp_path: str) -> None:
     """Simular crash durante escritura a Memory y verificar recuperación."""
     snap = Path(tmp_path) / "chaos_snap.json"
@@ -194,6 +199,7 @@ def test_chaos_crash_during_write(tmp_path: str) -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.integration
 def test_soak_continuous_operation(tmp_path: str) -> None:
     """Operación continua de Memory durante 10K writes."""
     snap = Path(tmp_path) / "soak_snap.json"

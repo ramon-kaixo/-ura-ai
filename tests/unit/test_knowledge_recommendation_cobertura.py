@@ -18,12 +18,14 @@ def validator() -> RecommendationValidator:
     return RecommendationValidator()
 
 
+@pytest.mark.unit
 def test_recommendation_defaults() -> None:
     r = _rec()
     assert r.priority == "medium"
     assert r.metadata == {}
 
 
+@pytest.mark.unit
 def test_validation_result_defaults() -> None:
     v = ValidationResult(valid=True, reason="ok")
     assert v.warnings == []
@@ -42,12 +44,14 @@ def test_validation_result_defaults() -> None:
         ("archive", "b", {"a"}, False, "no existe"),
     ],
 )
+@pytest.mark.unit
 def test_validate_por_tipo(validator, kind, target, nodes, valid, reason) -> None:
     res = validator.validate(_rec(kind=kind, target_id=target), set(nodes), set())
     assert res.valid is valid
     assert reason in res.reason
 
 
+@pytest.mark.unit
 def test_validate_kind_desconocido(validator) -> None:
     res = validator.validate(_rec(kind="delete"), {"a"}, set())
     assert res.valid is False

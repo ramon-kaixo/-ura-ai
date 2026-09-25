@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/cli/ — archive y search."""
 from __future__ import annotations
+import pytest
 
 from types import SimpleNamespace
 from unittest import mock
@@ -14,6 +15,7 @@ from knowledge.engine.cli.search import cmd_read, cmd_related, cmd_search
 
 
 class TestCmdArchiveSource:
+    @pytest.mark.unit
     def test_ok_con_todo(self, monkeypatch, tmp_path) -> None:
         archiver = mock.Mock()
         monkeypatch.setattr("knowledge.engine.archiver.archive_source", archiver)
@@ -27,6 +29,7 @@ class TestCmdArchiveSource:
         archiver.assert_called_once()
         assert archiver.call_args.kwargs["retention_days"] == 30
 
+    @pytest.mark.unit
     def test_ok_sin_opcionales(self, monkeypatch, tmp_path) -> None:
         archiver = mock.Mock()
         monkeypatch.setattr("knowledge.engine.archiver.archive_source", archiver)
@@ -37,11 +40,13 @@ class TestCmdArchiveSource:
 
 
 class TestCmdArchiveList:
+    @pytest.mark.unit
     def test_vacio(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.archiver.list_archives", mock.Mock(return_value=[]))
         args = SimpleNamespace(archive_dir=str(tmp_path / "arc"))
         assert cmd_archive_list(args) == 0
 
+    @pytest.mark.unit
     def test_con_manifests(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.archiver.list_archives", mock.Mock(return_value=[mock.Mock(), mock.Mock()]))
         args = SimpleNamespace(archive_dir=str(tmp_path / "arc"))
@@ -49,11 +54,13 @@ class TestCmdArchiveList:
 
 
 class TestCmdArchiveVerify:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.archiver.verify_archive", mock.Mock(return_value=True))
         args = SimpleNamespace(manifest="m1.json", archive_dir=str(tmp_path / "arc"))
         assert cmd_archive_verify(args) == 0
 
+    @pytest.mark.unit
     def test_falla(self, monkeypatch, tmp_path) -> None:
         monkeypatch.setattr("knowledge.engine.archiver.verify_archive", mock.Mock(return_value=False))
         args = SimpleNamespace(manifest="m1.json", archive_dir=str(tmp_path / "arc"))
@@ -61,6 +68,7 @@ class TestCmdArchiveVerify:
 
 
 class TestCmdArchiveRestore:
+    @pytest.mark.unit
     def test_ok_con_dest(self, monkeypatch, tmp_path) -> None:
         restore = mock.Mock()
         monkeypatch.setattr("knowledge.engine.archiver.restore_source", restore)
@@ -68,6 +76,7 @@ class TestCmdArchiveRestore:
         assert cmd_archive_restore(args) == 0
         assert restore.call_args.kwargs["dest_dir"] == tmp_path / "dest"
 
+    @pytest.mark.unit
     def test_ok_sin_dest(self, monkeypatch, tmp_path) -> None:
         restore = mock.Mock()
         monkeypatch.setattr("knowledge.engine.archiver.restore_source", restore)
@@ -77,10 +86,12 @@ class TestCmdArchiveRestore:
 
 
 class TestCmdRead:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"), doc_id="d1")
         assert cmd_read(args) == 1
 
+    @pytest.mark.unit
     def test_doc_no_encontrado(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -90,6 +101,7 @@ class TestCmdRead:
         args = SimpleNamespace(db_path=str(db), doc_id="d1")
         assert cmd_read(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -102,10 +114,12 @@ class TestCmdRead:
 
 
 class TestCmdSearch:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"), query="q")
         assert cmd_search(args) == 1
 
+    @pytest.mark.unit
     def test_ok_con_filtros(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -117,6 +131,7 @@ class TestCmdSearch:
             assert cmd_search(args) == 0
         reader.search.assert_called_once_with("q", mode="hybrid", filters={"type": "doc"}, limit=5)
 
+    @pytest.mark.unit
     def test_sin_resultados(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -128,10 +143,12 @@ class TestCmdSearch:
 
 
 class TestCmdRelated:
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         args = SimpleNamespace(db_path=str(tmp_path / "nope.sqlite"), doc_id="d1")
         assert cmd_related(args) == 1
 
+    @pytest.mark.unit
     def test_ok(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -142,6 +159,7 @@ class TestCmdRelated:
             args = SimpleNamespace(db_path=str(db), doc_id="d1")
             assert cmd_related(args) == 0
 
+    @pytest.mark.unit
     def test_sin_relacionados(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")
@@ -152,6 +170,7 @@ class TestCmdRelated:
             args = SimpleNamespace(db_path=str(db), doc_id="d1")
             assert cmd_related(args) == 0
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch, tmp_path) -> None:
         db = tmp_path / "db.sqlite"
         db.write_bytes(b"x")

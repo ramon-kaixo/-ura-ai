@@ -5,11 +5,15 @@ import pytest
 from motor.core.fusion.config import FusionConfig, make_config_hash
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import_config():
     """El módulo importa sin errores."""
     assert FusionConfig is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_dataclass_config_FusionConfig():
     """Instanciación con valores por defecto (skip si valida/requiere args)."""
     try:
@@ -19,6 +23,8 @@ def test_dataclass_config_FusionConfig():
     assert inst is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_config_make_config_hash():
     """La función no lanza con argumentos básicos."""
     try:

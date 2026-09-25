@@ -1,6 +1,7 @@
 """Tests de cobertura de motor/pipeline/orchestrator.py (Orchestrator)."""
 
 from __future__ import annotations
+import pytest
 
 import json
 from types import SimpleNamespace
@@ -73,18 +74,21 @@ def _mk(monkeypatch, tmp_path, *, preflight=None, scan=None, diagnose=None, veri
 
 
 class TestRun:
+    @pytest.mark.unit
     def test_preflight_bloqueado(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path, preflight=PreflightResult(ok=False, bloqueado=True, razon="no git"))
         res = orch.run()
         assert not res.ok
         assert "Preflight bloqueado" in res.error
 
+    @pytest.mark.unit
     def test_dry_run(self, monkeypatch, tmp_path, capsys) -> None:
         orch = _mk(monkeypatch, tmp_path)
         res = orch.run(dry_run=True)
         assert res.ok
         assert res.scan is None
 
+    @pytest.mark.unit
     def test_flujo_completo(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path, diagnose=DiagnoseResult(incidentes=[], causas_raiz=[]))
         res = orch.run()
@@ -98,18 +102,21 @@ class TestRun:
         assert line["hostname"] == "test-host"
         assert "perf" in line
 
+    @pytest.mark.unit
     def test_alertas_health_baja(self, monkeypatch, tmp_path, caplog) -> None:
         orch = _mk(monkeypatch, tmp_path, scan=_scan(health_score=85.0))
         with caplog.at_level("ERROR", logger="ura.alerta"):
             orch.run()
         assert any("ALERTA health=85.0" in r.message for r in caplog.records)
 
+    @pytest.mark.unit
     def test_alertas_incidentes(self, monkeypatch, tmp_path, caplog) -> None:
         orch = _mk(monkeypatch, tmp_path, diagnose=DiagnoseResult(incidentes=[{"id": 1}]))
         with caplog.at_level("ERROR", logger="ura.alerta"):
             orch.run()
         assert any("incidentes=1" in r.message for r in caplog.records)
 
+    @pytest.mark.unit
     def test_excepcion_interna(self, monkeypatch, tmp_path) -> None:
         cfg = _Config(str(tmp_path))
 
@@ -130,22 +137,26 @@ class TestRun:
 
 
 class TestSideEffects:
+    @pytest.mark.unit
     def test_registrar_trend_sin_scan(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path)
         orch._registrar_trend(PipelineResult())
         assert not (tmp_path / ARCHIVO_TRENDS).exists()
 
+    @pytest.mark.unit
     def test_registrar_trend_sin_perf(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path)
         orch._registrar_trend(_pipe())
         entry = json.loads((tmp_path / ARCHIVO_TRENDS).read_text())
         assert "perf" not in entry
 
+    @pytest.mark.unit
     def test_escribir_sin_scan_ni_diagnose(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path)
         orch._escribir_side_effects(PipelineResult())
         assert not (tmp_path / ARCHIVO_ESTADO).exists()
 
+    @pytest.mark.unit
     def test_escribir_con_diagnose_sin_scan(self, monkeypatch, tmp_path) -> None:
         orch = _mk(monkeypatch, tmp_path)
         orch._escribir_side_effects(PipelineResult(diagnose=DiagnoseResult(ok=True)))
@@ -154,6 +165,7 @@ class TestSideEffects:
 
 
 class TestEmit:
+    @pytest.mark.unit
     def test_emit_no_lanza(self, monkeypatch, tmp_path) -> None:
         # _emit documenta emision JSON a stdout pero el cuerpo esta vacio
         # (hallazgo registrado; nadie consume el stdout del orquestador).

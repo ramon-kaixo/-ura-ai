@@ -23,6 +23,7 @@ def guardian(tmp_path, monkeypatch):
 
 
 class TestCrearBackupExtras:
+    @pytest.mark.unit
     def test_ruta_ni_archivo_ni_directorio(self, guardian, tmp_path):
         fifo = tmp_path / "pipe"
         os.mkfifo(fifo)
@@ -31,6 +32,7 @@ class TestCrearBackupExtras:
         assert not fifo.is_dir()
         assert guardian._crear_backup(str(fifo)) is False
 
+    @pytest.mark.unit
     def test_error_en_backup(self, guardian, tmp_path):
         f = tmp_path / "cfg.py"
         f.write_text("x")
@@ -39,6 +41,7 @@ class TestCrearBackupExtras:
 
 
 class TestEjecutarSandboxExtras:
+    @pytest.mark.unit
     def test_error_fuera_del_bucle(self, guardian):
         class _StatQueFalla:
             def __iadd__(self, otro):
@@ -51,6 +54,7 @@ class TestEjecutarSandboxExtras:
 
 
 class TestVerificarLicenciaExtras:
+    @pytest.mark.unit
     def test_error_no_str(self, guardian):
         ok, msg = guardian._verificar_licencia(123)
         assert ok is False
@@ -58,34 +62,42 @@ class TestVerificarLicenciaExtras:
 
 
 class TestAutorizarInstalacion:
+    @pytest.mark.unit
     def test_autoriza_sin_precio(self, guardian):
         with patch("builtins.input", return_value="s"):
             assert guardian._autorizar_instalacion("paquete") is True
 
+    @pytest.mark.unit
     def test_deniega_sin_precio(self, guardian):
         with patch("builtins.input", return_value="n"):
             assert guardian._autorizar_instalacion("paquete") is False
 
+    @pytest.mark.unit
     def test_autoriza_con_precio(self, guardian):
         with patch("builtins.input", return_value="sí"):
             assert guardian._autorizar_instalacion("paquete", precio=10.5) is True
 
+    @pytest.mark.unit
     def test_autoriza_con_si(self, guardian):
         with patch("builtins.input", return_value="  SI  "):
             assert guardian._autorizar_instalacion("paquete", precio=1) is True
 
+    @pytest.mark.unit
     def test_error_input(self, guardian):
         with patch("builtins.input", side_effect=EOFError("eof")):
             assert guardian._autorizar_instalacion("paquete") is False
 
 
 class TestReglaInstalacionExtras:
+    @pytest.mark.unit
     def test_no_es_instalacion(self, guardian):
         assert guardian._regla_instalacion("leer archivo") is None
 
+    @pytest.mark.unit
     def test_instalacion_sin_paquete(self, guardian):
         assert guardian._regla_instalacion("pip install") is None
 
+    @pytest.mark.unit
     def test_bloqueada_audita(self, guardian):
         res = guardian._regla_instalacion("brew install pycharm")
         assert res is not None
@@ -96,18 +108,23 @@ class TestReglaInstalacionExtras:
 
 
 class TestReglaCopiaPrevia:
+    @pytest.mark.unit
     def test_no_borrado(self, guardian):
         assert guardian._regla_copia_previa("leer archivo") is None
 
+    @pytest.mark.unit
     def test_borrado_sin_ruta_kwarg(self, guardian):
         assert guardian._regla_copia_previa("rm archivo.txt") == "Backup falló, pero se procede con la acción"
 
+    @pytest.mark.unit
     def test_borrado_ruta_vacia_parsea(self, guardian):
         assert guardian._regla_copia_previa("unlink objetivo", ruta="") == "Backup falló, pero se procede con la acción"
 
+    @pytest.mark.unit
     def test_borrado_palabra_unica(self, guardian):
         assert guardian._regla_copia_previa("delete") is None
 
+    @pytest.mark.unit
     def test_borrado_backup_ok(self, guardian, tmp_path):
         f = tmp_path / "victima.txt"
         f.write_text("datos")
@@ -116,6 +133,7 @@ class TestReglaCopiaPrevia:
 
 
 class TestEjecutarExtras:
+    @pytest.mark.unit
     def test_aviso_backup_fallido(self, guardian):
         with patch.object(guardian, "_ejecutar_sandbox", return_value=(True, "sandbox ok")):
             res = guardian.ejecutar("rm archivo.txt")
@@ -123,6 +141,7 @@ class TestEjecutarExtras:
         assert res["sandbox"] == "sandbox ok"
         assert guardian.stats["backups_creados"] == 0
 
+    @pytest.mark.unit
     def test_formulario_no_dict_pasa(self, guardian):
         with patch.object(guardian, "_ejecutar_sandbox", return_value=(True, "ok")):
             res = guardian.ejecutar("guardar", formulario="no-dict")
@@ -130,11 +149,13 @@ class TestEjecutarExtras:
 
 
 class TestMostrarReglas:
+    @pytest.mark.unit
     def test_mostrar_reglas(self, guardian):
         guardian.mostrar_reglas()
 
 
 class TestSingletonExtras:
+    @pytest.mark.unit
     def test_reset_singleton(self, monkeypatch):
         monkeypatch.setattr("core.guardian_acciones._guardian_instance", None)
         g1 = get_guardian()

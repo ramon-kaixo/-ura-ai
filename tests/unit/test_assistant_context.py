@@ -1,6 +1,7 @@
 """Tests for motor/assistant/context.py — ContextManager."""
 
 from __future__ import annotations
+import pytest
 
 import tempfile
 from pathlib import Path
@@ -11,27 +12,32 @@ from motor.assistant.models import Message
 
 
 class TestContextLevel:
+    @pytest.mark.unit
     def test_level_values(self):
         assert ContextLevel.IMMEDIATE.value == 3
         assert ContextLevel.CONVERSATION.value == 2
         assert ContextLevel.HISTORICAL.value == 1
 
+    @pytest.mark.unit
     def test_level_ordering(self):
         assert ContextLevel.IMMEDIATE > ContextLevel.CONVERSATION
         assert ContextLevel.CONVERSATION > ContextLevel.HISTORICAL
 
 
 class TestContextItem:
+    @pytest.mark.unit
     def test_creation(self):
         item = ContextItem(content="test", level=ContextLevel.IMMEDIATE, source="chat")
         assert item.content == "test"
         assert item.source == "chat"
         assert item.timestamp != ""
 
+    @pytest.mark.unit
     def test_score_combines_priority_and_level(self):
         item = ContextItem(content="a", level=ContextLevel.IMMEDIATE, source="s", priority=0.5)
         assert item.score == 1.5  # 0.5 * 3
 
+    @pytest.mark.unit
     def test_expired(self):
         item = ContextItem(
             content="a",
@@ -42,16 +48,19 @@ class TestContextItem:
         )
         assert item.is_expired
 
+    @pytest.mark.unit
     def test_not_expired(self):
         item = ContextItem(content="a", level=ContextLevel.IMMEDIATE, source="s", ttl_seconds=3600)
         assert not item.is_expired
 
+    @pytest.mark.unit
     def test_no_expiration(self):
         item = ContextItem(content="a", level=ContextLevel.IMMEDIATE, source="s")
         assert not item.is_expired
 
 
 class TestHistoricalMemoryAdapter:
+    @pytest.mark.unit
     def test_no_memory_returns_empty(self):
         adapter = HistoricalMemoryAdapter()
         assert adapter.query("test") == []
@@ -79,25 +88,30 @@ class TestContextManager:
             self.store.append(conv_id, Message(role="user", content=f"message {i}"))
             self.store.append(conv_id, Message(role="assistant", content=f"response {i}"))
 
+    @pytest.mark.unit
     def test_assemble_immediate_context(self):
         self._add_messages(3)
         ctx = self.manager.assemble("c1")
         assert len(ctx) > 0
 
+    @pytest.mark.unit
     def test_assemble_respects_max_turns(self):
         self._add_messages(20)
         ctx = self.manager.assemble("c1")
         assert len(ctx) > 0
 
+    @pytest.mark.unit
     def test_empty_conversation(self):
         ctx = self.manager.assemble("nonexistent")
         assert ctx == []
 
+    @pytest.mark.unit
     def test_assemble_with_system_prompt(self):
         self._add_messages(2)
         ctx = self.manager.assemble("c1", system_prompt="Eres un asistente útil.")
         assert len(ctx) > 0
 
+    @pytest.mark.unit
     def test_different_conversations(self):
         self._add_messages(2, "c1")
         self._add_messages(3, "c2")
@@ -105,6 +119,7 @@ class TestContextManager:
         ctx2 = self.manager.assemble("c2")
         assert len(ctx1) != len(ctx2) or ctx1 != ctx2
 
+    @pytest.mark.unit
     def test_level_scoring(self):
         items = [
             ContextItem(content="recent", level=ContextLevel.IMMEDIATE, source="s1"),
@@ -113,6 +128,7 @@ class TestContextManager:
         items.sort(key=lambda x: x.score, reverse=True)
         assert items[0].source == "s1"
 
+    @pytest.mark.unit
     def test_context_window_integration(self):
         from motor.assistant.context_window import ContextWindow
 

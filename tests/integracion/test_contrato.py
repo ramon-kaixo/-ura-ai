@@ -6,6 +6,7 @@ GX10: verifica contratos de API con servicios reales.
 
 from __future__ import annotations
 
+import pytest
 import json
 
 import pytest

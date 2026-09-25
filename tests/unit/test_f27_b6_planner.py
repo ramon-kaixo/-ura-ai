@@ -10,6 +10,7 @@ Cubre:
 """
 
 from __future__ import annotations
+import pytest
 
 from motor.agents import AgentContext, AgentPlan, AgentTask, PlanStep, RuleBasedPlanner
 
@@ -28,6 +29,7 @@ def _plan_with_steps(*actions: str) -> AgentPlan:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_plan_search_objective() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("search for information about AI"))
@@ -38,6 +40,7 @@ def test_plan_search_objective() -> None:
     assert "search" in actions
 
 
+@pytest.mark.unit
 def test_plan_read_objective() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("read facts about Apple"))
@@ -45,6 +48,7 @@ def test_plan_read_objective() -> None:
     assert "retrieve" in actions
 
 
+@pytest.mark.unit
 def test_plan_write_objective() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("write a summary and save it"))
@@ -53,6 +57,7 @@ def test_plan_write_objective() -> None:
     assert "llm" in actions
 
 
+@pytest.mark.unit
 def test_plan_unknown_objective() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("do something random"))
@@ -60,6 +65,7 @@ def test_plan_unknown_objective() -> None:
     # Siempre debe tener al menos retrieve + respond
 
 
+@pytest.mark.unit
 def test_plan_structure() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("search for data"))
@@ -75,6 +81,7 @@ def test_plan_structure() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_plan_immutable_by_default() -> None:
     p = RuleBasedPlanner()
     plan = p.plan(_task("search"))
@@ -86,6 +93,7 @@ def test_plan_immutable_by_default() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_replan_conserves_completed_steps() -> None:
     p = RuleBasedPlanner()
     plan = _plan_with_steps("retrieve", "search", "llm")
@@ -98,6 +106,7 @@ def test_replan_conserves_completed_steps() -> None:
     assert new_plan.steps[1].action != "search" or len(new_plan.steps) >= 2
 
 
+@pytest.mark.unit
 def test_replan_no_failed_step() -> None:
     """Si no hay paso fallido, se mantiene el plan original."""
     p = RuleBasedPlanner()
@@ -108,6 +117,7 @@ def test_replan_no_failed_step() -> None:
     assert len(new_plan.steps) == len(plan.steps)
 
 
+@pytest.mark.unit
 def test_replan_alternatives() -> None:
     """Replanificación genera alternativas para el paso fallido."""
     p = RuleBasedPlanner()
@@ -124,6 +134,7 @@ def test_replan_alternatives() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_no_external_dependencies() -> None:
     import inspect
 
@@ -142,6 +153,7 @@ def test_no_external_dependencies() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_deterministic_plan() -> None:
     """Mismo objetivo → mismo plan."""
     p = RuleBasedPlanner()

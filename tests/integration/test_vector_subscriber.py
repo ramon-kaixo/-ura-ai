@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -56,6 +57,7 @@ def _make_asset(
 class TestVectorIndexSubscriber:
     """Tests para el suscriptor de indexación vectorial."""
 
+    @pytest.mark.integration
     def test_upserts_on_success(self, mock_asset_store, embedder, vector_store):
         asset = _make_asset()
         mock_asset_store.get_asset.return_value = asset
@@ -79,6 +81,7 @@ class TestVectorIndexSubscriber:
         assert len(args) == 1
         assert args[0].asset_id == "asset-123"
 
+    @pytest.mark.integration
     def test_skips_on_failed_extraction(self, mock_asset_store, embedder, vector_store):
         handler = _make_vector_index_subscriber(
             "/fake/db",
@@ -97,6 +100,7 @@ class TestVectorIndexSubscriber:
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
 
+    @pytest.mark.integration
     def test_skips_when_no_text_preview(self, mock_asset_store, embedder, vector_store):
         asset = _make_asset(has_preview=False)
         mock_asset_store.get_asset.return_value = asset
@@ -117,6 +121,7 @@ class TestVectorIndexSubscriber:
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
 
+    @pytest.mark.integration
     def test_skips_when_asset_not_found(self, mock_asset_store, embedder, vector_store):
         mock_asset_store.get_asset.return_value = None
         handler = _make_vector_index_subscriber(
@@ -136,6 +141,7 @@ class TestVectorIndexSubscriber:
         embedder.embed.assert_not_called()
         vector_store.upsert.assert_not_called()
 
+    @pytest.mark.integration
     def test_handles_embedder_unavailable(self, mock_asset_store, embedder, vector_store):
         asset = _make_asset()
         mock_asset_store.get_asset.return_value = asset
@@ -157,6 +163,7 @@ class TestVectorIndexSubscriber:
         embedder.embed.assert_called_once()
         vector_store.upsert.assert_not_called()  # no vectors → no upsert
 
+    @pytest.mark.integration
     def test_handles_vector_store_unavailable(self, mock_asset_store, embedder, vector_store):
         asset = _make_asset()
         mock_asset_store.get_asset.return_value = asset
@@ -179,6 +186,7 @@ class TestVectorIndexSubscriber:
         vector_store.upsert.assert_called_once()
         # No debe crashear — el handler es best-effort
 
+    @pytest.mark.integration
     def test_truncates_by_max_input_tokens(self, mock_asset_store, embedder, vector_store):
         long_text = "A" * 2000
         asset = _make_asset(preview_text=long_text)
@@ -203,6 +211,7 @@ class TestVectorIndexSubscriber:
         call_text = embedder.embed.call_args[0][0][0]
         assert len(call_text) <= 32  # 8 tokens * 4 chars max
 
+    @pytest.mark.integration
     def test_does_not_truncate_when_max_tokens_unknown(self, mock_asset_store, embedder, vector_store):
         text = "Hello world"
         asset = _make_asset(preview_text=text)

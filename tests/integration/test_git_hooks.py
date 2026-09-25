@@ -14,14 +14,17 @@ def _project_root() -> Path:
 
 
 class TestPostCommitHook:
+    @pytest.mark.integration
     def test_hook_existe(self) -> None:
         hook = _project_root() / "scripts" / "pro" / "hooks" / "post-commit"
         assert hook.exists()
 
+    @pytest.mark.integration
     def test_hook_es_ejecutable(self) -> None:
         hook = _project_root() / "scripts" / "pro" / "hooks" / "post-commit"
         assert os.access(hook, os.X_OK)
 
+    @pytest.mark.integration
     def test_sin_env_no_dispara(self, tmp_path: Path) -> None:
         # Sin URA_TUNELADORA_POST_COMMIT el hook no dispara tuneladora
         repo = tmp_path / "repo"
@@ -35,6 +38,7 @@ class TestPostCommitHook:
         assert r.returncode == 0
         assert not (repo / "triggered").exists()
 
+    @pytest.mark.integration
     def test_con_env_dispara(self, tmp_path: Path) -> None:
         repo = tmp_path / "repo"
         repo.mkdir()
@@ -49,6 +53,7 @@ class TestPostCommitHook:
         assert (repo / "triggered").exists()
 
     @pytest.mark.skipif(sys.platform == "darwin", reason="GNU timeout no disponible en macOS")
+    @pytest.mark.integration
     def test_hook_no_bloquea(self) -> None:
         # El hook real termina rápido (no espera a la tuneladora)
         hook = _project_root() / "scripts" / "pro" / "hooks" / "post-commit"
@@ -63,6 +68,7 @@ class TestPostCommitHook:
 
 
 class TestInstallHooks:
+    @pytest.mark.integration
     def test_install_copia_hooks(self, tmp_path: Path) -> None:
         src = _project_root() / "scripts" / "pro" / "hooks" / "post-commit"
         dst = tmp_path / "post-commit"
@@ -71,6 +77,7 @@ class TestInstallHooks:
         assert dst.exists()
         assert os.access(dst, os.X_OK)
 
+    @pytest.mark.integration
     def test_hook_instalado_en_git(self) -> None:
         installed = _project_root() / ".git" / "hooks" / "post-commit"
         assert installed.exists()
@@ -78,12 +85,14 @@ class TestInstallHooks:
 
 
 class TestMakefileTargets:
+    @pytest.mark.integration
     def test_verify_hooks_target(self) -> None:
         makefile = _project_root() / "Makefile"
         content = makefile.read_text()
         assert "verify-hooks" in content
         assert "install-hooks" in content
 
+    @pytest.mark.integration
     def test_validate_incluye_verify(self) -> None:
         makefile = _project_root() / "Makefile"
         content = makefile.read_text()

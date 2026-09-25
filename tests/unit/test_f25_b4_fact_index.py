@@ -11,6 +11,7 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
 import sys
 import time
 
@@ -43,6 +44,7 @@ def _make_fact(
 # ── B4.1: add_fact ──────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_add_fact() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple")
@@ -50,6 +52,7 @@ def test_add_fact() -> None:
     assert idx.size == 1
 
 
+@pytest.mark.unit
 def test_add_fact_duplicate_raises() -> None:
     idx = FactIndex()
     f = _make_fact("f1")
@@ -58,6 +61,7 @@ def test_add_fact_duplicate_raises() -> None:
         idx.add_fact(f)
 
 
+@pytest.mark.unit
 def test_add_fact_empty_id_raises() -> None:
     idx = FactIndex()
     f = _make_fact("")
@@ -65,6 +69,7 @@ def test_add_fact_empty_id_raises() -> None:
         idx.add_fact(f)
 
 
+@pytest.mark.unit
 def test_add_fact_frozen_raises() -> None:
     idx = FactIndex()
     idx.freeze()
@@ -76,6 +81,7 @@ def test_add_fact_frozen_raises() -> None:
 # ── B4.2: lookup ────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_lookup_found() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple")
@@ -83,11 +89,13 @@ def test_lookup_found() -> None:
     assert idx.lookup("f1") is f
 
 
+@pytest.mark.unit
 def test_lookup_not_found() -> None:
     idx = FactIndex()
     assert idx.lookup("nonexistent") is None
 
 
+@pytest.mark.unit
 def test_lookup_empty_string() -> None:
     idx = FactIndex()
     assert idx.lookup("") is None
@@ -96,6 +104,7 @@ def test_lookup_empty_string() -> None:
 # ── B4.3: lookup_entity ─────────────────────────────────
 
 
+@pytest.mark.unit
 def test_lookup_entity_found() -> None:
     idx = FactIndex()
     f1 = _make_fact("f1", subject="Apple")
@@ -108,6 +117,7 @@ def test_lookup_entity_found() -> None:
     assert f2 in results
 
 
+@pytest.mark.unit
 def test_lookup_entity_case_insensitive() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple")
@@ -116,6 +126,7 @@ def test_lookup_entity_case_insensitive() -> None:
     assert len(idx.lookup_entity("apple")) == 1
 
 
+@pytest.mark.unit
 def test_lookup_entity_not_found() -> None:
     idx = FactIndex()
     assert idx.lookup_entity("nonexistent") == []
@@ -124,6 +135,7 @@ def test_lookup_entity_not_found() -> None:
 # ── B4.4: lookup_predicate ──────────────────────────────
 
 
+@pytest.mark.unit
 def test_lookup_predicate_found() -> None:
     idx = FactIndex()
     f1 = _make_fact("f1", predicate="sells")
@@ -136,6 +148,7 @@ def test_lookup_predicate_found() -> None:
 # ── B4.5: lookup_subject_predicate ──────────────────────
 
 
+@pytest.mark.unit
 def test_lookup_subject_predicate_found() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple", predicate="sells")
@@ -145,6 +158,7 @@ def test_lookup_subject_predicate_found() -> None:
     assert results[0] is f
 
 
+@pytest.mark.unit
 def test_lookup_subject_predicate_no_match() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple", predicate="sells")
@@ -155,6 +169,7 @@ def test_lookup_subject_predicate_no_match() -> None:
 # ── B4.6: lookup_evidence ───────────────────────────────
 
 
+@pytest.mark.unit
 def test_lookup_evidence_found() -> None:
     idx = FactIndex()
     f = _make_fact("f1", evidence_ids=("ev1", "ev2"))
@@ -163,6 +178,7 @@ def test_lookup_evidence_found() -> None:
     assert len(idx.lookup_evidence("ev2")) == 1
 
 
+@pytest.mark.unit
 def test_lookup_evidence_empty_ids() -> None:
     idx = FactIndex()
     f = _make_fact("f1", evidence_ids=())
@@ -173,6 +189,7 @@ def test_lookup_evidence_empty_ids() -> None:
 # ── B4.7: remove_fact ───────────────────────────────────
 
 
+@pytest.mark.unit
 def test_remove_fact() -> None:
     idx = FactIndex()
     f = _make_fact("f1", subject="Apple", evidence_ids=("ev1",))
@@ -185,12 +202,14 @@ def test_remove_fact() -> None:
     assert idx.lookup_evidence("ev1") == []
 
 
+@pytest.mark.unit
 def test_remove_fact_not_found_raises() -> None:
     idx = FactIndex()
     with pytest.raises(KeyError, match="not found"):
         idx.remove_fact("nonexistent")
 
 
+@pytest.mark.unit
 def test_remove_fact_frozen_raises() -> None:
     idx = FactIndex()
     idx.freeze()
@@ -201,12 +220,14 @@ def test_remove_fact_frozen_raises() -> None:
 # ── B4.8: build (batch construction) ────────────────────
 
 
+@pytest.mark.unit
 def test_build_empty() -> None:
     idx = FactIndex.build([])
     assert idx.size == 0
     assert idx.frozen is True
 
 
+@pytest.mark.unit
 def test_build_with_facts() -> None:
     facts = [
         _make_fact("f1", subject="Apple"),
@@ -219,6 +240,7 @@ def test_build_with_facts() -> None:
     assert len(idx.lookup_entity("tesla")) == 1
 
 
+@pytest.mark.unit
 def test_build_skips_duplicates() -> None:
     facts = [
         _make_fact("f1", subject="Apple"),
@@ -231,6 +253,7 @@ def test_build_skips_duplicates() -> None:
     assert len(idx.lookup_entity("tesla")) == 0
 
 
+@pytest.mark.unit
 def test_build_result_is_frozen() -> None:
     idx = FactIndex.build([_make_fact("f1")])
     with pytest.raises(RuntimeError):
@@ -240,6 +263,7 @@ def test_build_result_is_frozen() -> None:
 # ── B4.9: freeze + copy-on-write ────────────────────────
 
 
+@pytest.mark.unit
 def test_freeze_prevents_writes() -> None:
     idx = FactIndex()
     idx.freeze()
@@ -247,6 +271,7 @@ def test_freeze_prevents_writes() -> None:
         idx.add_fact(_make_fact("f1"))
 
 
+@pytest.mark.unit
 def test_copy_produces_mutable_index() -> None:
     idx = FactIndex.build([_make_fact("f1", subject="Apple")])
     mutable = idx.copy()
@@ -255,6 +280,7 @@ def test_copy_produces_mutable_index() -> None:
     assert mutable.size == 2
 
 
+@pytest.mark.unit
 def test_copy_shares_facts() -> None:
     f = _make_fact("f1")
     idx = FactIndex.build([f])
@@ -262,6 +288,7 @@ def test_copy_shares_facts() -> None:
     assert mutable.lookup("f1") is f  # same reference
 
 
+@pytest.mark.unit
 def test_copy_independent_lists() -> None:
     idx = FactIndex.build(
         [
@@ -279,6 +306,7 @@ def test_copy_independent_lists() -> None:
 # ── B4.10: edge cases ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_index_with_no_evidence() -> None:
     idx = FactIndex()
     f = _make_fact("f1", evidence_ids=())
@@ -287,6 +315,7 @@ def test_index_with_no_evidence() -> None:
     assert idx.lookup("f1") is f
 
 
+@pytest.mark.unit
 def test_index_empty_subject_predicate() -> None:
     idx = FactIndex()
     f = KnowledgeFact(
@@ -301,6 +330,7 @@ def test_index_empty_subject_predicate() -> None:
     assert idx.lookup_entity("") == [f]
 
 
+@pytest.mark.unit
 def test_multiple_evidence_same_fact() -> None:
     idx = FactIndex()
     f = _make_fact("f1", evidence_ids=("ev1", "ev2", "ev3"))
@@ -310,6 +340,7 @@ def test_multiple_evidence_same_fact() -> None:
     assert len(idx.lookup_evidence("ev3")) == 1
 
 
+@pytest.mark.unit
 def test_1000_facts_then_lookup() -> None:
     idx = FactIndex()
     facts = [_make_fact(f"f{i}", subject=f"Entity{i % 50}") for i in range(1000)]
@@ -322,6 +353,7 @@ def test_1000_facts_then_lookup() -> None:
 # ── B4.11: determinism ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_build_deterministic() -> None:
     facts = [
         _make_fact("f1", subject="Apple"),
@@ -334,6 +366,7 @@ def test_build_deterministic() -> None:
     assert len(a.lookup_entity("apple")) == len(b.lookup_entity("apple"))
 
 
+@pytest.mark.unit
 def test_lookup_order_deterministic() -> None:
     """Mismos datos de entrada → mismo orden de resultados."""
     f1 = _make_fact("f1", subject="Apple")
@@ -348,6 +381,7 @@ def test_lookup_order_deterministic() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_build_1000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(1000)]
     start = time.perf_counter()
@@ -358,6 +392,7 @@ def test_benchmark_build_1000() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_build_10000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(10000)]
     start = time.perf_counter()
@@ -368,6 +403,7 @@ def test_benchmark_build_10000() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_lookup_10000() -> None:
     facts = [_make_fact(f"f{i}") for i in range(10000)]
     idx = FactIndex.build(facts)
@@ -380,6 +416,7 @@ def test_benchmark_lookup_10000() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_incremental_add() -> None:
     """Incremental update cost O(Δ): adding 100 facts to existing 10K."""
     core = [_make_fact(f"f{i}") for i in range(10000)]
@@ -396,6 +433,7 @@ def test_benchmark_incremental_add() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_memory_estimate() -> None:
     """Estimar footprint de 10K facts en el índice."""
     facts = [_make_fact(f"f{i}", evidence_ids=("ev1", "ev2")) for i in range(10000)]
@@ -425,6 +463,7 @@ def _all_secondary_fact_ids(idx: FactIndex) -> set[str]:
     return ids
 
 
+@pytest.mark.unit
 def test_consistency_after_add() -> None:
     """Todo fact en índices secundarios existe en el primario."""
     idx = FactIndex()
@@ -437,6 +476,7 @@ def test_consistency_after_add() -> None:
         assert idx.lookup(fid) is not None, f"Secondary index references {fid} not in primary"
 
 
+@pytest.mark.unit
 def test_consistency_after_remove() -> None:
     """Ningún fact eliminado permanece en índices secundarios."""
     idx = FactIndex()
@@ -447,6 +487,7 @@ def test_consistency_after_remove() -> None:
     assert "f1" not in secondary_ids, "Removed fact still in secondary index"
 
 
+@pytest.mark.unit
 def test_consistency_after_remove_all() -> None:
     """Eliminar todos los facts → índices secundarios vacíos."""
     idx = FactIndex()
@@ -458,6 +499,7 @@ def test_consistency_after_remove_all() -> None:
     assert _all_secondary_fact_ids(idx) == set()
 
 
+@pytest.mark.unit
 def test_consistency_primary_has_all_secondary_keys() -> None:
     """Para cada fact en primario, todas sus claves existen en secundarios."""
     idx = FactIndex()
@@ -476,6 +518,7 @@ def test_consistency_primary_has_all_secondary_keys() -> None:
                 assert len(idx.lookup_evidence(eid)) > 0, f"Evidence index missing for {eid}"
 
 
+@pytest.mark.unit
 def test_consistency_build_equals_sequential_add() -> None:
     """build(list) produce el mismo estado que add_fact() secuencial."""
     facts = [
@@ -502,6 +545,7 @@ def test_consistency_build_equals_sequential_add() -> None:
     )
 
 
+@pytest.mark.unit
 def test_consistency_copy_preserves_integrity() -> None:
     """copy() preserva la consistencia entre índices."""
     facts = [_make_fact(f"f{i}", subject=f"E{i % 5}") for i in range(20)]
@@ -519,6 +563,7 @@ def test_consistency_copy_preserves_integrity() -> None:
 
 
 @pytest.mark.slow
+@pytest.mark.unit
 def test_benchmark_skewed_distribution() -> None:
     """100 facts para una entidad + 9900 para otras."""
     facts = [_make_fact(f"f{i}", subject="HotEntity") for i in range(100)]

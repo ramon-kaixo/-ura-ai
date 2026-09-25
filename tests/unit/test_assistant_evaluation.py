@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import tempfile
 from pathlib import Path
@@ -20,11 +21,13 @@ def db_path():
 
 
 class TestEvaluator:
+    @pytest.mark.unit
     def test_init_creates_db(self, db_path):
         ev = ConversationEvaluator(db_path)
         tables = ev._conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert any("evaluations" in t for t in tables[0])
 
+    @pytest.mark.unit
     def test_record_and_score(self, db_path):
         ev = ConversationEvaluator(db_path)
         ev.record_metric("conv1", "sentiment", 0.8)
@@ -32,16 +35,19 @@ class TestEvaluator:
         score = ev.get_conversation_score("conv1")
         assert score == 0.7
 
+    @pytest.mark.unit
     def test_empty_score(self, db_path):
         ev = ConversationEvaluator(db_path)
         assert ev.get_conversation_score("nonexistent") == 0.0
 
+    @pytest.mark.unit
     def test_record_with_details(self, db_path):
         ev = ConversationEvaluator(db_path)
         ev.record_metric("conv1", "quality", 0.9, {"reason": "good"})
         rows = ev._conn.execute("SELECT details FROM evaluations").fetchall()
         assert json.loads(rows[0][0]) == {"reason": "good"}
 
+    @pytest.mark.unit
     def test_summary(self, db_path):
         ev = ConversationEvaluator(db_path)
         ev.record_metric("c1", "m1", 1.0)
@@ -54,11 +60,13 @@ class TestEvaluator:
 
 
 class TestPreferences:
+    @pytest.mark.unit
     def test_init_creates_db(self, db_path):
         pref = UserPreferenceLearning(db_path)
         tables = pref._conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert any("interactions" in t for t in tables[0])
 
+    @pytest.mark.unit
     def test_record_and_get_preferences(self, db_path):
         pref = UserPreferenceLearning(db_path)
         pref.record("user1", "saludo", message_length=30)
@@ -66,12 +74,14 @@ class TestPreferences:
         assert prefs["avg_message_length"] == 30
         assert "saludo" in prefs["common_intents"]
 
+    @pytest.mark.unit
     def test_preferences_short_message(self, db_path):
         pref = UserPreferenceLearning(db_path)
         pref.record("user2", "si", message_length=5)
         prefs = pref.get_preferences("user2")
         assert prefs["preferred_length"] == "short"
 
+    @pytest.mark.unit
     def test_preferences_cache(self, db_path):
         pref = UserPreferenceLearning(db_path)
         pref.record("user3", "test", message_length=50)
@@ -79,6 +89,7 @@ class TestPreferences:
         prefs2 = pref.get_preferences("user3")
         assert prefs1 == prefs2
 
+    @pytest.mark.unit
     def test_empty_user_preferences(self, db_path):
         pref = UserPreferenceLearning(db_path)
         prefs = pref.get_preferences("unknown")

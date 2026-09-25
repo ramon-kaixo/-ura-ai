@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import asyncio
 import os
 import threading
@@ -30,6 +31,7 @@ from motor.agents.runner import (
 # ── runner: excepciones ──────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_excepciones_tipificadas() -> None:
     assert issubclass(ToolTimeoutError, ToolError)
     assert issubclass(ToolCancelledError, ToolError)
@@ -42,6 +44,7 @@ def test_excepciones_tipificadas() -> None:
 # ── runner: RateLimiter ──────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_rate_limiter_ok() -> None:
     rl = RateLimiter(max_calls=2, window_seconds=60)
     rl.check("tool1")
@@ -50,6 +53,7 @@ def test_rate_limiter_ok() -> None:
         rl.check("tool1")
 
 
+@pytest.mark.unit
 def test_rate_limiter_limpieza_antiguas() -> None:
     rl = RateLimiter(max_calls=2, window_seconds=60)
     rl._buckets["tool"] = [time.time() - 120]
@@ -82,6 +86,7 @@ def _contrato(name: str, **kw) -> ToolContract:
     return ToolContract(name=name, **kw)
 
 
+@pytest.mark.unit
 def test_register_y_get_contract() -> None:
     r = AgentToolRunner()
     r.register("echo", _AdapterStub(), _contrato("echo", idempotent=True))
@@ -89,12 +94,14 @@ def test_register_y_get_contract() -> None:
     assert c.name == "echo"
 
 
+@pytest.mark.unit
 def test_get_contract_no_registrado() -> None:
     r = AgentToolRunner()
     with pytest.raises(ToolNotFoundError):
         r.get_contract("nope")
 
 
+@pytest.mark.unit
 def test_build_request_no_registrado() -> None:
     r = AgentToolRunner()
     with pytest.raises(ToolNotFoundError):
@@ -104,6 +111,7 @@ def test_build_request_no_registrado() -> None:
 # ── runner: run ──────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_run_ok() -> None:
     r = AgentToolRunner()
     r.register("echo", _AdapterStub({"ok": True}), _contrato("echo"))
@@ -111,6 +119,8 @@ def test_run_ok() -> None:
     assert res == {"ok": True}
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_run_timeout() -> None:
     r = AgentToolRunner()
     r.register("lento", _AdapterStub(delay=5.0), _contrato("lento"))
@@ -118,6 +128,7 @@ def test_run_timeout() -> None:
         r.run("lento", {}, timeout=1)
 
 
+@pytest.mark.unit
 def test_run_perm_error() -> None:
     r = AgentToolRunner()
     r.register("roto", _AdapterStub(error=ValueError("permanente")), _contrato("roto", idempotent=True))
@@ -125,6 +136,7 @@ def test_run_perm_error() -> None:
         r.run("roto", {})
 
 
+@pytest.mark.unit
 def test_run_transient_reintenta() -> None:
     llamadas = {"n": 0}
 
@@ -145,6 +157,7 @@ def test_run_transient_reintenta() -> None:
     assert llamadas["n"] == 2
 
 
+@pytest.mark.unit
 def test_run_transient_agota_reintentos() -> None:
     class _SiempreFalla:
         def run(self, params: dict) -> dict:
@@ -160,6 +173,7 @@ def test_run_transient_agota_reintentos() -> None:
     # el resultado final: "All 3 attempts failed"
 
 
+@pytest.mark.unit
 def test_run_idempotente_sin_reintento() -> None:
     llamadas = {"n": 0}
 
@@ -178,6 +192,7 @@ def test_run_idempotente_sin_reintento() -> None:
     assert llamadas["n"] == 1
 
 
+@pytest.mark.unit
 def test_cancel_tool() -> None:
     r = AgentToolRunner()
     a = _AdapterStub()
@@ -187,6 +202,8 @@ def test_cancel_tool() -> None:
     r.cancel("no-existe")  # no lanza
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_backpressure_timeout() -> None:
     r = AgentToolRunner(max_concurrent_tools=1)
     r.register("lento", _AdapterStub(delay=2.0), _contrato("lento"))
@@ -209,6 +226,7 @@ def test_backpressure_timeout() -> None:
     assert True
 
 
+@pytest.mark.unit
 def test_raise_error_mapping() -> None:
     AgentToolRunner()
     casos = [
@@ -230,6 +248,7 @@ def test_raise_error_mapping() -> None:
 # ── runner: _execute directo ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_execute_single_ok() -> None:
     r = AgentToolRunner()
     a = _AdapterStub({"ok": 1})
@@ -239,6 +258,7 @@ def test_execute_single_ok() -> None:
     assert res.data == {"ok": 1}
 
 
+@pytest.mark.unit
 def test_execute_single_error() -> None:
     r = AgentToolRunner()
     a = _AdapterStub(error=RuntimeError("boom"))
@@ -249,6 +269,8 @@ def test_execute_single_error() -> None:
     assert res.error_type == "RuntimeError"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_execute_single_timeout_cancela() -> None:
     r = AgentToolRunner()
     a = _AdapterStub(delay=5.0)
@@ -259,6 +281,7 @@ def test_execute_single_timeout_cancela() -> None:
     assert a.cancelled is True
 
 
+@pytest.mark.unit
 def test_execute_sin_contrato() -> None:
     r = AgentToolRunner()
     a = _AdapterStub({"ok": 1})
@@ -270,6 +293,7 @@ def test_execute_sin_contrato() -> None:
     assert res.success is True
 
 
+@pytest.mark.unit
 def test_execute_reintentos_y_resultado_final() -> None:
     llamadas = {"n": 0}
 
@@ -292,6 +316,7 @@ def test_execute_reintentos_y_resultado_final() -> None:
 # ── search_logger ────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_log_query_y_read(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_LOG_DIR", str(tmp_path))
     monkeypatch.setattr(sl, "_WRITER", None)
@@ -312,6 +337,7 @@ def test_log_query_y_read(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> 
     assert r["total_chunks"] == 3
 
 
+@pytest.mark.unit
 def test_log_query_sin_resultados(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_LOG_DIR", str(tmp_path))
     monkeypatch.setattr(sl, "_WRITER", None)
@@ -321,6 +347,7 @@ def test_log_query_sin_resultados(tmp_path: object, monkeypatch: pytest.MonkeyPa
     assert records[0]["idiomas"] == []
 
 
+@pytest.mark.unit
 def test_log_query_excepcion(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_LOG_DIR", str(tmp_path))
     monkeypatch.setattr(sl, "_WRITER", None)
@@ -334,10 +361,12 @@ def test_log_query_excepcion(tmp_path: object, monkeypatch: pytest.MonkeyPatch) 
     log_query("x", [], 1.0)  # no lanza
 
 
+@pytest.mark.unit
 def test_read_logs_dir_inexistente() -> None:
     assert read_logs("/no/existe/dir") == []
 
 
+@pytest.mark.unit
 def test_read_logs_lineas_corruptas(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "search_2026-08-20.ndjson"
     f.write_text('{"ts": "t1"}\nno-json\n{"ts": "t2"}\n\n')
@@ -345,6 +374,7 @@ def test_read_logs_lineas_corruptas(tmp_path: object) -> None:
     assert len(records) == 2
 
 
+@pytest.mark.unit
 def test_read_logs_since_y_orden(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "search_2026-08-20.ndjson"
     f.write_text('{"ts": "2026-08-20T10:00:00"}\n{"ts": "2026-08-20T11:00:00"}\n')
@@ -353,6 +383,7 @@ def test_read_logs_since_y_orden(tmp_path: object) -> None:
     assert records[0]["ts"] == "2026-08-20T11:00:00"
 
 
+@pytest.mark.unit
 def test_read_logs_limit(tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "search_2026-08-20.ndjson"
     f.write_text('{"ts": "t1"}\n{"ts": "t2"}\n{"ts": "t3"}\n')
@@ -360,6 +391,7 @@ def test_read_logs_limit(tmp_path: object) -> None:
     assert len(records) == 2
 
 
+@pytest.mark.unit
 def test_log_feedback(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("URA_LOG_DIR", str(tmp_path))
     monkeypatch.setattr(sl, "_WRITER", None)
@@ -370,6 +402,7 @@ def test_log_feedback(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None
     assert records[0]["rating"] == 4
 
 
+@pytest.mark.unit
 def test_log_feedback_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     class _WriterRoto:
         def write(self, record: dict) -> None:
@@ -380,6 +413,7 @@ def test_log_feedback_excepcion(monkeypatch: pytest.MonkeyPatch) -> None:
     log_feedback("t", "q", ["s"])  # no lanza
 
 
+@pytest.mark.unit
 def test_ndjson_writer_rota_archivo(tmp_path: object) -> None:
     w = _NdjsonWriter(str(tmp_path))
     w.write({"ts": "2026-08-20T10:00:00"})
@@ -392,12 +426,14 @@ def test_ndjson_writer_rota_archivo(tmp_path: object) -> None:
     assert len(lines) == 2
 
 
+@pytest.mark.unit
 def test_get_writer_cachea() -> None:
     w1 = _get_writer()
     w2 = _get_writer()
     assert w1 is w2
 
 
+@pytest.mark.unit
 def test_ndjson_writer_reusa_archivo(tmp_path: object) -> None:
     w = _NdjsonWriter(str(tmp_path))
     w.write({"ts": "a"})
@@ -407,6 +443,7 @@ def test_ndjson_writer_reusa_archivo(tmp_path: object) -> None:
     w.close()
 
 
+@pytest.mark.unit
 def test_ndjson_writer_rotar_dia(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     w = _NdjsonWriter(str(tmp_path))
     ayer = (datetime.now(UTC) - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -417,6 +454,7 @@ def test_ndjson_writer_rotar_dia(tmp_path: object, monkeypatch: pytest.MonkeyPat
     w.close()
 
 
+@pytest.mark.unit
 def test_ndjson_writer_write_sin_archivo() -> None:
     w = _NdjsonWriter("/tmp/no-importa")
     w._file = None
@@ -425,6 +463,7 @@ def test_ndjson_writer_write_sin_archivo() -> None:
     w.close()
 
 
+@pytest.mark.unit
 def test_read_logs_oserror(monkeypatch: pytest.MonkeyPatch, tmp_path: object) -> None:
     f = Path(str(tmp_path)) / "search_2026-08-20.ndjson"
     f.write_text('{"ts": "t1"}\n')
@@ -440,6 +479,7 @@ def test_read_logs_oserror(monkeypatch: pytest.MonkeyPatch, tmp_path: object) ->
 # ── watchdog ─────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_auto_dump_sin_psutil(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -459,6 +499,7 @@ def test_auto_dump_sin_psutil(tmp_path: object, monkeypatch: pytest.MonkeyPatch)
     assert d["process"]["pid"] == os.getpid()
 
 
+@pytest.mark.unit
 def test_auto_dump_con_psutil(tmp_path: object) -> None:
     monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(wd, "AUTO_DUMPS_DIR", Path(str(tmp_path)))
@@ -470,6 +511,7 @@ def test_auto_dump_con_psutil(tmp_path: object) -> None:
         monkeypatch.undo()
 
 
+@pytest.mark.unit
 def test_auto_dump_error_escritura(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import datetime as _dt
 
@@ -491,6 +533,7 @@ def test_auto_dump_error_escritura(tmp_path: object, monkeypatch: pytest.MonkeyP
     assert res["function"] == "fn3"
 
 
+@pytest.mark.unit
 def test_auto_dump_psutil_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -518,6 +561,7 @@ def test_auto_dump_psutil_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert "error" in d["process"] or "pid" in d["process"]
 
 
+@pytest.mark.unit
 def test_trigger_rescue_event_bus(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -536,6 +580,7 @@ def test_trigger_rescue_event_bus(tmp_path: object, monkeypatch: pytest.MonkeyPa
     assert publicado["n"] == 1
 
 
+@pytest.mark.unit
 def test_trigger_rescue_sin_event_bus(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -552,6 +597,7 @@ def test_trigger_rescue_sin_event_bus(tmp_path: object, monkeypatch: pytest.Monk
     wd._trigger_rescue("fn5", 5.0)  # no lanza
 
 
+@pytest.mark.unit
 def test_watchdog_sync_ok() -> None:
     @wd.watchdog(timeout=5, on_timeout="log")
     def suma(a: int, b: int) -> int:
@@ -560,6 +606,8 @@ def test_watchdog_sync_ok() -> None:
     assert suma(2, 3) == 5
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_watchdog_sync_timeout_log() -> None:
     @wd.watchdog(timeout=1, on_timeout="log")
     def lenta() -> str:
@@ -570,6 +618,7 @@ def test_watchdog_sync_timeout_log() -> None:
     assert res is None
 
 
+@pytest.mark.unit
 def test_watchdog_sync_raise_en_hilo() -> None:
     @wd.watchdog(timeout=5, on_timeout="raise")
     def falla() -> None:
@@ -580,6 +629,7 @@ def test_watchdog_sync_raise_en_hilo() -> None:
         falla()
 
 
+@pytest.mark.unit
 def test_watchdog_hilo_secundario_ok() -> None:
     """Regresión ADR-100: watchdog en hilo secundario lanzaba TypeError.
 
@@ -602,6 +652,7 @@ def test_watchdog_hilo_secundario_ok() -> None:
     assert resultado.get("v") == 5
 
 
+@pytest.mark.unit
 def test_watchdog_hilo_secundario_excepcion() -> None:
     """Regresión ADR-100: la excepción se propaga en hilo secundario."""
 
@@ -624,6 +675,7 @@ def test_watchdog_hilo_secundario_excepcion() -> None:
     assert ValueError in errores
 
 
+@pytest.mark.unit
 def test_watchdog_async_ok() -> None:
     @wd.watchdog(timeout=5, on_timeout="log")
     async def a_sum(a: int) -> int:
@@ -633,6 +685,8 @@ def test_watchdog_async_ok() -> None:
     assert asyncio.run(a_sum(1)) == 2
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_watchdog_async_timeout() -> None:
     @wd.watchdog(timeout=0.1, on_timeout="log")
     async def a_lenta() -> str:
@@ -642,11 +696,15 @@ def test_watchdog_async_timeout() -> None:
     assert asyncio.run(a_lenta()) is None
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_check_loop_latency() -> None:
     lat = wd.check_loop_latency()
     assert lat >= 0.0
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_check_loop_latency_con_runtime_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import asyncio as _a
 
@@ -662,12 +720,15 @@ def test_check_loop_latency_con_runtime_error(monkeypatch: pytest.MonkeyPatch) -
     _a.run = original
 
 
+@pytest.mark.unit
 def test_async_loop_monitor_stop() -> None:
     m = wd.AsyncLoopMonitor(interval=0.05, threshold_ms=0.001)
     m.stop()
     assert m._stop_event.is_set()
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_timeout_handler_lanza() -> None:
     with pytest.raises(wd._TimeoutError):
         wd._timeout_handler(None, None)  # type: ignore[arg-type]
@@ -676,6 +737,7 @@ def test_timeout_handler_lanza() -> None:
 # ── watchdog: hilo secundario y resto ────────────────────────
 
 
+@pytest.mark.unit
 def test_watchdog_en_hilo_secundario_ok() -> None:
     # ADR-100 resuelto: el wrapper de hilo secundario ya no lanza TypeError
     @wd.watchdog(timeout=5, on_timeout="log")
@@ -689,6 +751,8 @@ def test_watchdog_en_hilo_secundario_ok() -> None:
     assert out.get("v") == 5
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_watchdog_en_hilo_secundario_timeout() -> None:
     # ADR-100: en timeout real, el hilo secundario devuelve None (on_timeout log)
     @wd.watchdog(timeout=1, on_timeout="log")
@@ -703,6 +767,7 @@ def test_watchdog_en_hilo_secundario_timeout() -> None:
     assert out.get("v") is None
 
 
+@pytest.mark.unit
 def test_watchdog_en_hilo_secundario_excepcion() -> None:
     # ADR-100: la excepción se propaga correctamente (ya no TypeError del desempaquetado)
     @wd.watchdog(timeout=5, on_timeout="log")
@@ -724,6 +789,8 @@ def test_watchdog_en_hilo_secundario_excepcion() -> None:
     assert ValueError in errores
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_ejecutar_en_hilo_timeout() -> None:
     def lenta() -> str:
         time.sleep(3)
@@ -735,6 +802,7 @@ def test_ejecutar_en_hilo_timeout() -> None:
     res[0][0].join(timeout=3)
 
 
+@pytest.mark.unit
 def test_ejecutar_en_hilo_ok() -> None:
     def suma(a: int, b: int) -> int:
         return a + b
@@ -745,6 +813,7 @@ def test_ejecutar_en_hilo_ok() -> None:
     assert res[1] is None
 
 
+@pytest.mark.unit
 def test_ejecutar_en_hilo_excepcion() -> None:
     def falla() -> None:
         msg = "int"
@@ -756,10 +825,13 @@ def test_ejecutar_en_hilo_excepcion() -> None:
     assert isinstance(res[1], ValueError)
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_on_timeout() -> None:
     wd._on_timeout("fn-timeout", 5.0, {"ctx": 1})  # no lanza
 
 
+@pytest.mark.unit
 def test_async_loop_monitor_run_stop(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(wd, "AUTO_DUMPS_DIR", Path(str(tmp_path)))
     m = wd.AsyncLoopMonitor(interval=0.05, threshold_ms=100000.0)
@@ -774,6 +846,7 @@ def test_async_loop_monitor_run_stop(tmp_path: object, monkeypatch: pytest.Monke
     t.join()
 
 
+@pytest.mark.unit
 def test_async_loop_monitor_latencia_alta(tmp_path: object, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(wd, "AUTO_DUMPS_DIR", Path(str(tmp_path)))
     m = wd.AsyncLoopMonitor(interval=0.05, threshold_ms=0.001)

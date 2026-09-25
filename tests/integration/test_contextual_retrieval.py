@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import time
 from datetime import UTC, datetime, timedelta
 
@@ -24,6 +25,7 @@ def _make_store(episodes: list[Episode]) -> EpisodeStore:
 
 
 class TestContextQuery:
+    @pytest.mark.integration
     def test_defaults(self):
         q = ContextQuery()
         assert q.text == ""
@@ -32,6 +34,7 @@ class TestContextQuery:
         assert q.offset == 0
         assert q.weights is None
 
+    @pytest.mark.integration
     def test_custom(self):
         q = ContextQuery(text="hello", session_id="s1", tags=["t1"], k=5)
         assert q.text == "hello"
@@ -41,6 +44,7 @@ class TestContextQuery:
 
 
 class TestContextResult:
+    @pytest.mark.integration
     def test_explanation(self):
         r = ContextResult(
             episode=Episode(),
@@ -54,21 +58,25 @@ class TestContextResult:
         assert "rec=0.70" in r.explanation
         assert "imp=0.60" in r.explanation
 
+    @pytest.mark.integration
     def test_explanation_no_semantic(self):
         r = ContextResult(episode=Episode(), recency_score=0.5, importance_score=0.5, confidence_score=0.5, score=0.5)
         assert "sem=" not in r.explanation
 
 
 class TestContextResultList:
+    @pytest.mark.integration
     def test_empty(self):
         rl = ContextResultList()
         assert len(rl) == 0
         assert rl.total == 0
 
+    @pytest.mark.integration
     def test_with_results(self):
         rl = ContextResultList(results=[ContextResult(episode=Episode())], total=1)
         assert len(rl) == 1
 
+    @pytest.mark.integration
     def test_to_dict(self):
         ep = Episode(payload="test content", session_id="s1")
         r = ContextResult(episode=ep, score=0.8)
@@ -79,12 +87,14 @@ class TestContextResultList:
 
 
 class TestContextRetrieverEmpty:
+    @pytest.mark.integration
     def test_empty_store(self):
         store = EpisodeStore()
         retriever = ContextRetriever(store)
         results = retriever.search(ContextQuery())
         assert len(results) == 0
 
+    @pytest.mark.integration
     def test_empty_session(self):
         store = EpisodeStore()
         store.store(Episode(session_id="s1"))
@@ -94,6 +104,7 @@ class TestContextRetrieverEmpty:
 
 
 class TestContextRetrieverBySession:
+    @pytest.mark.integration
     def test_single_session(self):
         store = EpisodeStore()
         store.store(Episode(session_id="s1", payload="a"))
@@ -106,6 +117,7 @@ class TestContextRetrieverBySession:
 
 
 class TestContextRetrieverByTags:
+    @pytest.mark.integration
     def test_tag_filter(self):
         store = EpisodeStore()
         store.store(Episode(tags=["urgent", "bug"], payload="a"))
@@ -115,6 +127,7 @@ class TestContextRetrieverByTags:
         results = retriever.search(ContextQuery(tags=["urgent"]))
         assert len(results) == 2
 
+    @pytest.mark.integration
     def test_tag_matches_any(self):
         store = EpisodeStore()
         store.store(Episode(tags=["a"], payload="x"))
@@ -125,6 +138,7 @@ class TestContextRetrieverByTags:
 
 
 class TestContextRetrieverRanking:
+    @pytest.mark.integration
     def test_importance_ranking(self):
         store = EpisodeStore()
         store.store(Episode(payload="low", importance=0.2, confidence=0.5))
@@ -134,6 +148,7 @@ class TestContextRetrieverRanking:
         assert results[0].episode.payload == "high"
         assert results[1].episode.payload == "low"
 
+    @pytest.mark.integration
     def test_recency_ranking(self):
         store = EpisodeStore()
         now = datetime.now(UTC)
@@ -145,6 +160,7 @@ class TestContextRetrieverRanking:
         results = retriever.search(ContextQuery())
         assert results[0].episode.payload == "recent"
 
+    @pytest.mark.integration
     def test_combined_ranking(self):
         store = EpisodeStore()
         now = datetime.now(UTC)
@@ -182,6 +198,7 @@ class TestContextRetrieverRanking:
 
 
 class TestContextRetrieverLimits:
+    @pytest.mark.integration
     def test_limit(self):
         store = EpisodeStore()
         for i in range(20):
@@ -190,6 +207,7 @@ class TestContextRetrieverLimits:
         results = retriever.search(ContextQuery(k=5))
         assert len(results) == 5
 
+    @pytest.mark.integration
     def test_offset(self):
         store = EpisodeStore()
         for i in range(20):
@@ -203,6 +221,7 @@ class TestContextRetrieverLimits:
 
 
 class TestContextRetrieverExpired:
+    @pytest.mark.integration
     def test_expired_excluded(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=8)).isoformat()
@@ -213,6 +232,7 @@ class TestContextRetrieverExpired:
         assert len(results) == 1
         assert results[0].episode.payload == "fresh"
 
+    @pytest.mark.integration
     def test_expired_auto_deleted(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=8)).isoformat()
@@ -225,6 +245,7 @@ class TestContextRetrieverExpired:
 
 
 class TestContextRetrieverNoEmbedding:
+    @pytest.mark.integration
     def test_no_embedding_graceful(self):
         store = EpisodeStore()
         store.store(Episode(payload="a", importance=0.9, confidence=0.9))
@@ -233,6 +254,7 @@ class TestContextRetrieverNoEmbedding:
         results = retriever.search(ContextQuery(text="some query"))
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_sem_weight_zero(self):
         store = EpisodeStore()
         store.store(Episode(payload="test"))
@@ -242,6 +264,7 @@ class TestContextRetrieverNoEmbedding:
 
 
 class TestContextRetrieverEdgeCases:
+    @pytest.mark.integration
     def test_k_less_than_one(self):
         store = EpisodeStore()
         store.store(Episode())
@@ -249,6 +272,7 @@ class TestContextRetrieverEdgeCases:
         results = retriever.search(ContextQuery(k=0))
         assert len(results) >= 1  # k defaults to 1 minimum
 
+    @pytest.mark.integration
     def test_large_offset(self):
         store = EpisodeStore()
         store.store(Episode())
@@ -256,6 +280,7 @@ class TestContextRetrieverEdgeCases:
         results = retriever.search(ContextQuery(k=10, offset=100))
         assert len(results) == 0
 
+    @pytest.mark.integration
     def test_custom_weights(self):
         store = EpisodeStore()
         store.store(Episode(payload="a", importance=0.5, confidence=0.5))
@@ -264,6 +289,7 @@ class TestContextRetrieverEdgeCases:
         results = retriever.search(q)
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_elapsed_ms(self):
         store = EpisodeStore()
         store.store(Episode())
@@ -274,6 +300,7 @@ class TestContextRetrieverEdgeCases:
 
 class TestContextRetrieverBenchmark:
     @pytest.mark.slow
+    @pytest.mark.integration
     def test_latency_under_50ms(self):
         store = EpisodeStore()
         for i in range(1000):
@@ -287,6 +314,7 @@ class TestContextRetrieverBenchmark:
 
 
 class TestContextRetrieverThreadSafety:
+    @pytest.mark.integration
     def test_concurrent_search(self):
         import concurrent.futures
 

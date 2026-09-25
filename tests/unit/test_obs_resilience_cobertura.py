@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import logging
 import random
@@ -53,19 +54,23 @@ from motor.platform.resilience import (
 # ── tracing_sampler ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_sampling_strategy_valores() -> None:
     assert SamplingStrategy.ALWAYS.value == "always"
     assert SamplingStrategy.PRIORITY.value == "priority"
 
 
+@pytest.mark.unit
 def test_sampler_always() -> None:
     assert Sampler(strategy=SamplingStrategy.ALWAYS).should_sample() is True
 
 
+@pytest.mark.unit
 def test_sampler_never() -> None:
     assert Sampler(strategy=SamplingStrategy.NEVER).should_sample() is False
 
 
+@pytest.mark.unit
 def test_sampler_probabilistic(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(random, "random", lambda: 0.05)
     assert Sampler(strategy=SamplingStrategy.PROBABILISTIC, probability=0.1).should_sample() is True
@@ -73,12 +78,14 @@ def test_sampler_probabilistic(monkeypatch: pytest.MonkeyPatch) -> None:
     assert Sampler(strategy=SamplingStrategy.PROBABILISTIC, probability=0.1).should_sample() is False
 
 
+@pytest.mark.unit
 def test_sampler_adaptive_sin_errores(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(random, "random", lambda: 0.01)
     s = Sampler(strategy=SamplingStrategy.ADAPTIVE, adaptive_min_p=0.05)
     assert s.should_sample() is True  # p=0.05, random 0.01 < 0.05
 
 
+@pytest.mark.unit
 def test_sampler_adaptive_con_errores(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(random, "random", lambda: 0.01)
     s = Sampler(strategy=SamplingStrategy.ADAPTIVE)
@@ -90,6 +97,7 @@ def test_sampler_adaptive_con_errores(monkeypatch: pytest.MonkeyPatch) -> None:
     assert s2.should_sample() is False  # p≈0.36 < 0.99
 
 
+@pytest.mark.unit
 def test_sampler_priority() -> None:
     s = Sampler(strategy=SamplingStrategy.PRIORITY)
     assert s.should_sample({"priority": "critical"}) is True
@@ -98,11 +106,13 @@ def test_sampler_priority() -> None:
     assert s.should_sample(None) is False
 
 
+@pytest.mark.unit
 def test_sampler_desconocido() -> None:
     s = Sampler(strategy="otro")  # type: ignore[assignment]
     assert s.should_sample() is True
 
 
+@pytest.mark.unit
 def test_sampler_record_error() -> None:
     s = Sampler(error_rate_window=2)
     s.record_error(True)
@@ -112,12 +122,14 @@ def test_sampler_record_error() -> None:
     assert s._recent_errors == [False, True]
 
 
+@pytest.mark.unit
 def test_sanitize_tags() -> None:
     tags = {"normal": "valor", "prompt_secreto": "x", "query": "y", "key_api": "z"}
     result = sanitize_tags(tags)
     assert result == {"normal": "valor"}
 
 
+@pytest.mark.unit
 def test_sanitize_tags_truncation() -> None:
     tags = {"k" * 100: "v" * 500}
     result = sanitize_tags(tags)
@@ -125,12 +137,14 @@ def test_sanitize_tags_truncation() -> None:
     assert len(next(iter(result.values()))) == 256
 
 
+@pytest.mark.unit
 def test_sanitize_tags_max_32() -> None:
     tags = {f"tag{i}": "v" for i in range(50)}
     result = sanitize_tags(tags)
     assert len(result) == MAX_TAGS_PER_EVENT
 
 
+@pytest.mark.unit
 def test_sanitize_tags_vacio() -> None:
     assert sanitize_tags({}) == {}
 
@@ -138,6 +152,7 @@ def test_sanitize_tags_vacio() -> None:
 # ── logging ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_json_formatter_basico() -> None:
     f = JSONFormatter(service="ura")
     record = logging.LogRecord("test.logger", logging.INFO, "f.py", 1, "mensaje", None, None)
@@ -149,6 +164,7 @@ def test_json_formatter_basico() -> None:
     assert "timestamp" in out
 
 
+@pytest.mark.unit
 def test_json_formatter_con_excepcion() -> None:
     f = JSONFormatter()
     try:
@@ -161,6 +177,7 @@ def test_json_formatter_con_excepcion() -> None:
     assert "fallo" in out["exception"]["message"]
 
 
+@pytest.mark.unit
 def test_json_formatter_extra_keys() -> None:
     f = JSONFormatter()
     record = logging.LogRecord("x", logging.INFO, "f.py", 1, "msg", None, None)
@@ -169,6 +186,7 @@ def test_json_formatter_extra_keys() -> None:
     assert out["correlation_id"] == "cid123"
 
 
+@pytest.mark.unit
 def test_json_formatter_extra_keys_no_dict() -> None:
     f = JSONFormatter()
     record = logging.LogRecord("x", logging.INFO, "f.py", 1, "msg", None, None)
@@ -177,6 +195,7 @@ def test_json_formatter_extra_keys_no_dict() -> None:
     assert out["message"] == "msg"  # sin extra_keys, no lanza
 
 
+@pytest.mark.unit
 def test_correlation_id() -> None:
     cid = set_correlation_id()
     assert cid != ""
@@ -185,6 +204,7 @@ def test_correlation_id() -> None:
     assert cid2 == "explicito"
 
 
+@pytest.mark.unit
 def test_correlation_id_thread_local() -> None:
     set_correlation_id("main")
 
@@ -197,6 +217,7 @@ def test_correlation_id_thread_local() -> None:
     assert get_correlation_id() == "main"
 
 
+@pytest.mark.unit
 def test_workflow_id() -> None:
     set_workflow_id("wf1")
     assert get_workflow_id() == "wf1"
@@ -204,6 +225,7 @@ def test_workflow_id() -> None:
     assert get_workflow_id() == "wf2"
 
 
+@pytest.mark.unit
 def test_context_filter() -> None:
     set_correlation_id("cid-x")
     set_workflow_id("wf-y")
@@ -213,6 +235,7 @@ def test_context_filter() -> None:
     assert record.extra_keys == {"correlation_id": "cid-x", "workflow_id": "wf-y"}
 
 
+@pytest.mark.unit
 def test_context_filter_sin_contexto() -> None:
     import motor.observability.logging as logmod
 
@@ -227,6 +250,7 @@ def test_context_filter_sin_contexto() -> None:
     logmod._context = __import__("threading").local()
 
 
+@pytest.mark.unit
 def test_setup_logging_json() -> None:
     setup_logging(level="DEBUG", json_output=True, force=True)
     root = logging.getLogger()
@@ -238,6 +262,7 @@ def test_setup_logging_json() -> None:
     root.filters.clear()
 
 
+@pytest.mark.unit
 def test_setup_logging_plain_fmt() -> None:
     setup_logging(level="INFO", json_output=False, fmt="%(message)s", force=True)
     root = logging.getLogger()
@@ -246,6 +271,7 @@ def test_setup_logging_plain_fmt() -> None:
     root.filters.clear()
 
 
+@pytest.mark.unit
 def test_setup_logging_plain_default() -> None:
     setup_logging(level="INFO", json_output=False, force=True)
     root = logging.getLogger()
@@ -254,6 +280,7 @@ def test_setup_logging_plain_default() -> None:
     root.filters.clear()
 
 
+@pytest.mark.unit
 def test_setup_logging_con_handlers() -> None:
     h = logging.StreamHandler()
     setup_logging(level="INFO", handlers=[h], force=True)
@@ -263,6 +290,7 @@ def test_setup_logging_con_handlers() -> None:
     root.filters.clear()
 
 
+@pytest.mark.unit
 def test_setup_logging_sin_force() -> None:
     h = logging.StreamHandler()
     setup_logging(level="INFO", handlers=[h], force=False)
@@ -275,6 +303,7 @@ def test_setup_logging_sin_force() -> None:
 # ── metrics ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_counter() -> None:
     c = Counter("requests", "desc", {"app": "ura"})
     c.inc()
@@ -286,6 +315,7 @@ def test_counter() -> None:
     assert snap["labels"] == {"app": "ura"}
 
 
+@pytest.mark.unit
 def test_gauge() -> None:
     g = Gauge("mem", "desc", {"x": "y"})
     g.set(10.0)
@@ -295,6 +325,7 @@ def test_gauge() -> None:
     assert g.snapshot()["type"] == "gauge"
 
 
+@pytest.mark.unit
 def test_histogram() -> None:
     h = Histogram("lat", buckets=[0.1, 1.0])
     h.observe(0.05)
@@ -308,11 +339,13 @@ def test_histogram() -> None:
     assert snap["sum"] == pytest.approx(5.55, abs=0.01)
 
 
+@pytest.mark.unit
 def test_histogram_default_buckets() -> None:
     h = Histogram("lat")
     assert h._buckets == sorted([0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5, 10])
 
 
+@pytest.mark.unit
 def test_timer() -> None:
     t = Timer("op", "desc")
     with t.time():
@@ -323,6 +356,7 @@ def test_timer() -> None:
     assert snap["count"] == 2
 
 
+@pytest.mark.unit
 def test_timer_context() -> None:
     h = Histogram("h")
     ctx = _TimerContext(h)
@@ -331,6 +365,7 @@ def test_timer_context() -> None:
     assert h.snapshot()["count"] == 1
 
 
+@pytest.mark.unit
 def test_metrics_registry() -> None:
     r = MetricsRegistry()
     c1 = r.counter("c1")
@@ -359,10 +394,12 @@ def test_metrics_registry() -> None:
 # ── metrics_labeled ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_label_key() -> None:
     assert _label_key({"b": "2", "a": "1"}) == "a=1|b=2"
 
 
+@pytest.mark.unit
 def test_labeled_counter() -> None:
     reg = MetricsRegistry()
     lc = LabeledCounter("req", "desc", registry=reg)
@@ -373,6 +410,7 @@ def test_labeled_counter() -> None:
     assert reg.counter("req.source=api").get() == 1
 
 
+@pytest.mark.unit
 def test_labeled_histogram() -> None:
     reg = MetricsRegistry()
     lh = LabeledHistogram("dur", registry=reg)
@@ -381,6 +419,7 @@ def test_labeled_histogram() -> None:
     assert reg.histogram("dur.comp=a").snapshot()["count"] == 2
 
 
+@pytest.mark.unit
 def test_labeled_gauge() -> None:
     reg = MetricsRegistry()
     lg = LabeledGauge("mem", registry=reg)
@@ -389,6 +428,7 @@ def test_labeled_gauge() -> None:
     assert reg.gauge("mem.node=n1").get() == 20.0
 
 
+@pytest.mark.unit
 def test_platform_metrics_registro() -> None:
     pm = PlatformMetrics()
     pm.record_sent("src", "dst", "request", 1024, 12.5)
@@ -405,6 +445,7 @@ def test_platform_metrics_registro() -> None:
     assert pm.health_status._gauges
 
 
+@pytest.mark.unit
 def test_get_platform_metrics_singleton() -> None:
     assert get_platform_metrics() is get_platform_metrics()
 
@@ -412,11 +453,13 @@ def test_get_platform_metrics_singleton() -> None:
 # ── platform/resilience ──────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_circuit_state_valores() -> None:
     assert CircuitState.CLOSED.value == "closed"
     assert CircuitState.HALF_OPEN.value == "half_open"
 
 
+@pytest.mark.unit
 def test_circuit_breaker_open_error() -> None:
     e = CircuitBreakerOpenError("svc", 30.0)
     assert e.provider == "svc"
@@ -424,6 +467,7 @@ def test_circuit_breaker_open_error() -> None:
     assert "svc" in str(e)
 
 
+@pytest.mark.unit
 def test_circuit_breaker_ok() -> None:
     cb = CircuitBreaker("svc")
     assert cb.state == CircuitState.CLOSED
@@ -432,6 +476,7 @@ def test_circuit_breaker_ok() -> None:
     assert cb.is_available is True
 
 
+@pytest.mark.unit
 def test_circuit_breaker_abre_tras_umbral() -> None:
     cb = CircuitBreaker("svc", failure_threshold=2)
 
@@ -448,6 +493,7 @@ def test_circuit_breaker_abre_tras_umbral() -> None:
     assert cb._last_open_time > 0
 
 
+@pytest.mark.unit
 def test_circuit_breaker_open_devuelve_none() -> None:
     cb = CircuitBreaker("svc", failure_threshold=1)
 
@@ -461,6 +507,8 @@ def test_circuit_breaker_open_devuelve_none() -> None:
     assert cb.call(lambda: "x") is None  # OPEN → None
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_circuit_breaker_half_open_tras_timeout() -> None:
     cb = CircuitBreaker("svc", failure_threshold=1, recovery_timeout=0.05)
 
@@ -478,12 +526,14 @@ def test_circuit_breaker_half_open_tras_timeout() -> None:
     assert cb.state == CircuitState.CLOSED
 
 
+@pytest.mark.unit
 def test_circuit_breaker_props() -> None:
     cb = CircuitBreaker("svc", failure_threshold=3, recovery_timeout=30.0)
     assert cb._failure_threshold == 3
     assert cb._last_open_time == 0.0
 
 
+@pytest.mark.unit
 def test_circuit_breaker_reset() -> None:
     cb = CircuitBreaker("svc", failure_threshold=1)
 
@@ -499,6 +549,7 @@ def test_circuit_breaker_reset() -> None:
     assert cb._failure_count == 0
 
 
+@pytest.mark.unit
 def test_backpressure_acquire_release() -> None:
     bp = Backpressure(max_queue=2, semaphore_count=2)
     assert bp.acquire() is True
@@ -511,12 +562,15 @@ def test_backpressure_acquire_release() -> None:
     assert bp.full is False
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_backpressure_timeout() -> None:
     bp = Backpressure(max_queue=1, semaphore_count=0)  # sin permisos
     bp._sem = threading.Semaphore(0)
     assert bp.acquire(timeout=0.01) is False
 
 
+@pytest.mark.unit
 def test_backpressure_cola_llena_release() -> None:
     bp = Backpressure(max_queue=1, semaphore_count=5)
     assert bp.acquire() is True
@@ -528,18 +582,21 @@ def test_backpressure_cola_llena_release() -> None:
     assert bp.acquire() is True  # ahora sí
 
 
+@pytest.mark.unit
 def test_backpressure_release_min_0() -> None:
     bp = Backpressure()
     bp.release()  # sin acquire → no baja de 0
     assert bp.size == 0
 
 
+@pytest.mark.unit
 def test_get_circuit_breaker_singleton() -> None:
     cb1 = get_circuit_breaker("svc-x")
     cb2 = get_circuit_breaker("svc-x")
     assert cb1 is cb2
 
 
+@pytest.mark.unit
 def test_get_backpressure_singleton() -> None:
     bp1 = get_backpressure("bp-x")
     bp2 = get_backpressure("bp-x")

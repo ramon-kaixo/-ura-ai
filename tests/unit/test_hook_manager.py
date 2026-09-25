@@ -63,6 +63,7 @@ import pytest
 pytestmark = pytest.mark.skip(reason="pre-existing: hook system deprecated")
 
 class TestHookManagerRegistration:
+    @pytest.mark.unit
     def test_register_creates_subscription(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -72,6 +73,7 @@ class TestHookManagerRegistration:
         assert bus.count(f"{HOOK_PREFIX}pre_ingest") == 1
         assert bus.count(f"{HOOK_PREFIX}post_search") == 1
 
+    @pytest.mark.unit
     def test_unregister_removes_subscription(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -84,6 +86,7 @@ class TestHookManagerRegistration:
 
 
 class TestHookManagerExecution:
+    @pytest.mark.unit
     def test_hook_is_called(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -93,6 +96,8 @@ class TestHookManagerExecution:
         bus.emit_sync(f"{HOOK_PREFIX}pre_ingest", EventPayload())
         assert len(plugin.pre_ingest_calls) == 1
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_hook_called_via_event_payload(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -104,6 +109,7 @@ class TestHookManagerExecution:
 
 
 class TestHookManagerCancellation:
+    @pytest.mark.unit
     def test_canceling_hook_returns_none(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -115,6 +121,7 @@ class TestHookManagerCancellation:
 
 
 class TestHookManagerExceptionIsolation:
+    @pytest.mark.unit
     def test_failing_hook_does_not_break_other_hooks(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -130,6 +137,7 @@ class TestHookManagerExceptionIsolation:
 
 
 class TestHookManagerCircuitBreaker:
+    @pytest.mark.unit
     def test_after_max_errors_hook_is_unsubscribed(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -143,6 +151,7 @@ class TestHookManagerCircuitBreaker:
         assert bad.count == HOOK_MAX_ERRORS
         assert bus.count(f"{HOOK_PREFIX}pre_ingest") == 0
 
+    @pytest.mark.unit
     def test_degraded_mode_after_hook_failure(self):
         bus = EventBus()
         dm = DegradedMode()
@@ -152,6 +161,7 @@ class TestHookManagerCircuitBreaker:
         bus.emit_sync(f"{HOOK_PREFIX}pre_ingest", EventPayload())
         assert dm.is_degraded("hook:failing:pre_ingest")
 
+    @pytest.mark.unit
     def test_hook_recovers_after_successful_call(self):
         bus = EventBus()
         dm = DegradedMode()

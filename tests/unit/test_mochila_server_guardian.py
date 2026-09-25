@@ -1,10 +1,12 @@
 """Tests cobertura mochila_server — lifespan/guardian/stream (split)."""
 from __future__ import annotations
+import pytest
 
 from _mochila_helpers import FakeProvider, HTTPException, Mock, TestClient, ms, pytest  # noqa: F401
 
 
 class TestLifespan:
+    @pytest.mark.unit
     def test_lifespan_arranca_y_cierra(self, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "init_guardian", lambda: None)
 
@@ -184,18 +186,21 @@ class TestStreamProviderDirecto:
 
 
 class TestProcesarUsage:
+    @pytest.mark.unit
     def test_none_no_llama(self, ms):  # noqa: F811
         spy = Mock()
         ms.cost_tracker.registrar = spy
         ms._procesar_usage(None, "ollama", "m")
         spy.assert_not_called()
 
+    @pytest.mark.unit
     def test_con_uso(self, ms):  # noqa: F811
         spy = Mock()
         ms.cost_tracker.registrar = spy
         ms._procesar_usage({"usage": {"prompt_tokens": 7, "completion_tokens": 3}}, "ollama", "m")
         spy.assert_called_once_with("ollama", "m", 7, 3)
 
+    @pytest.mark.unit
     def test_uso_none_ceros(self, ms):  # noqa: F811
         spy = Mock()
         ms.cost_tracker.registrar = spy
@@ -205,6 +210,7 @@ class TestProcesarUsage:
 
 
 class TestEvaluarGuardian:
+    @pytest.mark.unit
     def test_delta_no_bloquea(self, ms):  # noqa: F811
         class G:
             def evaluar_texto_stream(self, texto):

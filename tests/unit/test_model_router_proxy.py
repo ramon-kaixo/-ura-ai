@@ -12,11 +12,13 @@ from core.model_router import proxy
 
 
 class TestFallbackLog:
+    @pytest.mark.unit
     def test_register_incrementa(self):
         proxy._fallback_log.clear()
         proxy._register_fallback()
         assert len(proxy._fallback_log) == 1
 
+    @pytest.mark.unit
     def test_count_hour_poda_viejos(self):
         proxy._fallback_log.clear()
         proxy._fallback_log.append(time.time() - 7200)  # fuera de la ventana
@@ -24,10 +26,12 @@ class TestFallbackLog:
         assert proxy._fallback_count_last_hour() == 1
         assert len(proxy._fallback_log) == 1
 
+    @pytest.mark.unit
     def test_count_vacio(self):
         proxy._fallback_log.clear()
         assert proxy._fallback_count_last_hour() == 0
 
+    @pytest.mark.unit
     def test_maxlen_3600(self):
         proxy._fallback_log.clear()
         for _ in range(4000):
@@ -36,6 +40,7 @@ class TestFallbackLog:
 
 
 class TestMedirAsusLatency:
+    @pytest.mark.unit
     def test_ok(self):
         with (
             patch("core.model_router.router.get_urls", return_value={"primary": "http://x", "fallback": "http://y"}),
@@ -44,6 +49,7 @@ class TestMedirAsusLatency:
         ):
             assert proxy._measare_asus_latency() == 50.0
 
+    @pytest.mark.unit
     def test_error_devuelve_menos1(self):
         with (
             patch("core.model_router.router.get_urls", return_value={"primary": "http://x"}),
@@ -51,6 +57,7 @@ class TestMedirAsusLatency:
         ):
             assert proxy._measare_asus_latency() == -1.0
 
+    @pytest.mark.unit
     def test_update_actualiza_global(self):
         with (
             patch("core.model_router.proxy._measare_asus_latency", return_value=42.5),
@@ -62,44 +69,54 @@ class TestMedirAsusLatency:
 
 
 class TestBackendLabel:
+    @pytest.mark.unit
     def test_turbo(self):
         with patch("core.model_router.router.POWER_MODE", "TURBO"):
             assert proxy._get_active_backend_label() == "ASUS Remoto"
 
+    @pytest.mark.unit
     def test_eco(self):
         with patch("core.model_router.router.POWER_MODE", "ECO"):
             assert proxy._get_active_backend_label() == "Local Mac"
 
+    @pytest.mark.unit
     def test_auto(self):
         with patch("core.model_router.router.POWER_MODE", "AUTO"):
             assert proxy._get_active_backend_label() == "AUTO (según IP)"
 
 
 class TestEstimateTokens:
+    @pytest.mark.unit
     def test_4_chars_por_token(self):
         assert proxy._estimate_tokens("a" * 16) == 4
 
 
 class TestCheckContextSize:
+    @pytest.mark.unit
     def test_str(self):
         assert proxy._check_context_size("a" * 100000)["level"] == "critical"
 
+    @pytest.mark.unit
     def test_lista_dicts(self):
         msgs = [{"content": "a" * 50000}]
         assert proxy._check_context_size(msgs)["level"] == "warn"
 
+    @pytest.mark.unit
     def test_lista_no_dicts(self):
         msgs = ["a" * 50000]
         assert proxy._check_context_size(msgs)["level"] == "warn"
 
+    @pytest.mark.unit
     def test_none_ok(self):
         assert proxy._check_context_size(None)["level"] == "ok"
 
+    @pytest.mark.unit
     def test_ok(self):
         r = proxy._check_context_size("hola")
         assert r["level"] == "ok"
         assert "Contexto normal" in r["message"]
 
+    @pytest.mark.unit
     def test_chars_contados(self):
         r = proxy._check_context_size("hola")
         assert r["chars"] == 4
@@ -117,33 +134,40 @@ class TestIsLocalIp:
             ("1.2.3.4", False),
         ],
     )
+    @pytest.mark.unit
     def test_prefijos(self, ip, esperado):
         assert proxy._is_local_ip(ip) is esperado
 
 
 class TestResolveMode:
+    @pytest.mark.unit
     def test_turbo_forzado(self):
         with patch("core.model_router.router.POWER_MODE", "TURBO"):
             assert proxy._resolve_mode_for_client("8.8.8.8") == "TURBO"
 
+    @pytest.mark.unit
     def test_eco_forzado(self):
         with patch("core.model_router.router.POWER_MODE", "ECO"):
             assert proxy._resolve_mode_for_client("127.0.0.1") == "ECO"
 
+    @pytest.mark.unit
     def test_auto_local_turbo(self):
         with patch("core.model_router.router.POWER_MODE", "AUTO"):
             assert proxy._resolve_mode_for_client("10.1.1.1") == "TURBO"
 
+    @pytest.mark.unit
     def test_auto_remoto_eco(self):
         with patch("core.model_router.router.POWER_MODE", "AUTO"):
             assert proxy._resolve_mode_for_client("8.8.8.8") == "ECO"
 
 
 class TestResolveOllamaUrl:
+    @pytest.mark.unit
     def test_env_forzada(self, monkeypatch):
         monkeypatch.setenv("OLLAMA_URL", "http://especial:1")
         assert proxy._resolve_ollama_url() == "http://especial:1"
 
+    @pytest.mark.unit
     def test_primary_accesible(self):
         with (
             patch("core.model_router.router.get_urls", return_value={"primary": "http://asus", "fallback": "http://mac"}),
@@ -151,6 +175,7 @@ class TestResolveOllamaUrl:
         ):
             assert proxy._resolve_ollama_url() == "http://asus"
 
+    @pytest.mark.unit
     def test_fallback_en_error(self):
         with (
             patch("core.model_router.router.get_urls", return_value={"primary": "http://asus", "fallback": "http://mac"}),
@@ -169,6 +194,7 @@ class TestProxyRequest:
         resp.read.return_value = body
         return patch("urllib.request.urlopen", return_value=resp)
 
+    @pytest.mark.unit
     def test_ok_devuelve_tuple(self):
         with (
             patch("core.model_router.router.POWER_MODE", "AUTO"),
@@ -179,6 +205,7 @@ class TestProxyRequest:
         assert status == 200
         assert body == b'{"ok": true}'
 
+    @pytest.mark.unit
     def test_ok_registra_metricas_con_modelo(self):
         with (
             patch("core.model_router.router.POWER_MODE", "AUTO"),
@@ -193,6 +220,7 @@ class TestProxyRequest:
         mock_metrics.increment.assert_called_once_with("model_success", {"modelo": "m1", "tipo": "t1"})
         mock_metrics.record_latency.assert_called_once()
 
+    @pytest.mark.unit
     def test_http_error(self):
         err = urllib.error.HTTPError("http://x", 429, "limit", None, None)
         err.read = lambda: b"slow down"
@@ -207,6 +235,7 @@ class TestProxyRequest:
         assert body == b"slow down"
         mock_metrics.record_error.assert_called_with("ollama_request", "http_error", {"status": "429"})
 
+    @pytest.mark.unit
     def test_urlerror_503(self):
         with (
             patch("core.model_router.router.POWER_MODE", "AUTO"),
@@ -219,6 +248,8 @@ class TestProxyRequest:
         assert b'"error"' in body
         assert b"Backend local caido" in body
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_503(self):
         with (
             patch("core.model_router.router.POWER_MODE", "AUTO"),
@@ -231,6 +262,7 @@ class TestProxyRequest:
         assert status == 503
         mock_fb.assert_called_once()
 
+    @pytest.mark.unit
     def test_error_generico_502(self):
         with (
             patch("core.model_router.router.POWER_MODE", "AUTO"),
@@ -242,6 +274,7 @@ class TestProxyRequest:
         assert status == 502
         assert json.loads(body)["error"] == "mal"
 
+    @pytest.mark.unit
     def test_turbo_caido_mensaje_critico(self):
         with (
             patch("core.model_router.router.POWER_MODE", "TURBO"),

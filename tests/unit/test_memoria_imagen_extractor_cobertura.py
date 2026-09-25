@@ -11,6 +11,7 @@ documentado en test_memoria_imagen_extractor.py.
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from typing import Self
 from unittest import mock
@@ -52,6 +53,7 @@ def ie(monkeypatch) -> object:
 
 
 class TestExifPillowGpsInfo:
+    @pytest.mark.unit
     def test_gpsinfo_latitud_longitud(self, ie, tmp_path: Path) -> None:
         """GPSInfo con latitud y longitud -> gps compuesto."""
         ruta = tmp_path / "a.jpg"
@@ -62,6 +64,7 @@ class TestExifPillowGpsInfo:
             out = ie._exif_pillow(ruta)
         assert out["gps"] == "40, 0, 0, -3, 0, 0"
 
+    @pytest.mark.unit
     def test_gpsinfo_solo_latitud(self, ie, tmp_path: Path) -> None:
         """GPSInfo solo con latitud -> gps con latitud y tag desconocido."""
         ruta = tmp_path / "a.jpg"
@@ -72,6 +75,7 @@ class TestExifPillowGpsInfo:
             out = ie._exif_pillow(ruta)
         assert out["gps"] == "41"
 
+    @pytest.mark.unit
     def test_gpsinfo_sin_coordenadas(self, ie, tmp_path: Path) -> None:
         """GPSInfo sin latitud -> gps None (branch vacio)."""
         ruta = tmp_path / "a.jpg"

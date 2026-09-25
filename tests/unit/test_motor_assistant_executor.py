@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import asyncio
 import sqlite3
 from pathlib import Path
@@ -33,11 +34,13 @@ def _result(returncode: int = 0, stdout: str = "out", stderr: str = "err") -> Si
 
 
 class TestToolResult:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         r = ToolResult(True, "out")
         assert r.success and r.output == "out" and r.error == ""
         assert r.to_dict() == {"success": True, "output": "out", "error": ""}
 
+    @pytest.mark.unit
     def test_error(self) -> None:
         r = ToolResult(False, error="boom")
         assert not r.success and r.output == "" and r.error == "boom"
@@ -54,36 +57,42 @@ def _repo_root() -> Path:
 
 
 class TestGitTool:
+    @pytest.mark.unit
     def test_status(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="M file.py"))
         monkeypatch.chdir(_repo_root())
         r = GitTool().status()
         assert r.success and r.output == "M file.py"
 
+    @pytest.mark.unit
     def test_status_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("no git")))
         monkeypatch.chdir(_repo_root())
         r = GitTool().status()
         assert not r.success and r.error == "no git"
 
+    @pytest.mark.unit
     def test_log(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="abc123 feat"))
         monkeypatch.chdir(_repo_root())
         r = GitTool().log(3)
         assert r.success and r.output == "abc123 feat"
 
+    @pytest.mark.unit
     def test_log_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=TimeoutError("lento")))
         monkeypatch.chdir(_repo_root())
         r = GitTool().log()
         assert not r.success and r.error == "lento"
 
+    @pytest.mark.unit
     def test_diff(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="2 files"))
         monkeypatch.chdir(_repo_root())
         r = GitTool().diff()
         assert r.success and r.output == "2 files"
 
+    @pytest.mark.unit
     def test_diff_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("x")))
         monkeypatch.chdir(_repo_root())
@@ -92,18 +101,21 @@ class TestGitTool:
 
 
 class TestGitBranchTool:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="* main"))
         monkeypatch.chdir(_repo_root())
         r = GitBranchTool().execute("")
         assert r.success and r.output == "* main"
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("boom")))
         (tmp_path / ".git").mkdir()
         r = GitBranchTool().execute(str(tmp_path))
         assert not r.success and r.error == "boom"
 
+    @pytest.mark.unit
     def test_repo_invalido(self) -> None:
         """Un repo inexistente se rechaza antes de tocar subprocess."""
         r = GitBranchTool().execute("/no/existe/repo")
@@ -111,18 +123,21 @@ class TestGitBranchTool:
 
 
 class TestGitCommitTool:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(0, "committed", "err"))
         monkeypatch.chdir(_repo_root())
         r = GitCommitTool().execute("msg")
         assert r.success and r.output == "committed"
 
+    @pytest.mark.unit
     def test_falla_returncode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(1, "", "nada que commitear"))
         monkeypatch.chdir(_repo_root())
         r = GitCommitTool().execute("msg")
         assert not r.success and r.output == "nada que commitear"
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("boom")))
         monkeypatch.chdir(_repo_root())
@@ -131,21 +146,25 @@ class TestGitCommitTool:
 
 
 class TestDockerTool:
+    @pytest.mark.unit
     def test_ps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="s1 Up"))
         r = DockerTool().ps()
         assert r.success and r.output == "s1 Up"
 
+    @pytest.mark.unit
     def test_ps_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("no docker")))
         r = DockerTool().ps()
         assert not r.success
 
+    @pytest.mark.unit
     def test_logs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="", stderr="log line"))
         r = DockerTool().logs("c1", 10)
         assert r.success and r.output == "log line"
 
+    @pytest.mark.unit
     def test_logs_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=OSError("boom")))
         r = DockerTool().logs("c1")
@@ -153,15 +172,18 @@ class TestDockerTool:
 
 
 class TestFileReadTool:
+    @pytest.mark.unit
     def test_denegado(self) -> None:
         r = FileReadTool().execute("/tmp/otra_cosa.txt")
         assert not r.success and "Acceso denegado" in r.error
 
+    @pytest.mark.unit
     def test_no_existe(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         r = FileReadTool().execute(str(tmp_path / ".ura" / "nope.txt"))
         assert not r.success and "no encontrado" in r.error
 
+    @pytest.mark.unit
     def test_ok(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         f = tmp_path / ".ura" / "ok.txt"
@@ -170,6 +192,7 @@ class TestFileReadTool:
         r = FileReadTool().execute(str(f))
         assert r.success and r.output == "contenido"
 
+    @pytest.mark.unit
     def test_error_lectura(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         f = tmp_path / ".ura" / "r.txt"
@@ -181,6 +204,7 @@ class TestFileReadTool:
 
 
 class TestSystemInfoTool:
+    @pytest.mark.unit
     def test_psutil(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = SimpleNamespace(
             virtual_memory=lambda: SimpleNamespace(used=2**31, total=8**30, percent=25),
@@ -191,6 +215,7 @@ class TestSystemInfoTool:
         r = SystemInfoTool().execute()
         assert r.success and "RAM" in r.output and "CPU" in r.output and "Disco" in r.output
 
+    @pytest.mark.unit
     def test_sin_psutil(self, monkeypatch: pytest.MonkeyPatch) -> None:
         with mock.patch.dict(sys.modules, {"psutil": None}):
             r = SystemInfoTool().execute()
@@ -201,6 +226,7 @@ class TestSafeCalculator:
     def _eval(self, expr: str) -> str:
         return _SafeCalculator().evaluate(expr)
 
+    @pytest.mark.unit
     def test_aritmetica(self) -> None:
         assert self._eval("2 + 3 * 4") == "14"
         assert self._eval("10 - 3") == "7"
@@ -209,76 +235,93 @@ class TestSafeCalculator:
         assert self._eval("7 % 3") == "1"
         assert self._eval("2 ** 10") == "1024"
 
+    @pytest.mark.unit
     def test_unario(self) -> None:
         assert self._eval("-5") == "-5"
         assert self._eval("+3") == "3"
 
+    @pytest.mark.unit
     def test_funciones_math(self) -> None:
         assert self._eval("sqrt(16)") == "4"
         assert self._eval("abs(-9)") == "9"
         assert self._eval("max(1, 5, 3)") == "5"
         assert self._eval("round(3.7)") == "4"
 
+    @pytest.mark.unit
     def test_float_integro(self) -> None:
         assert self._eval("4.0") == "4"
         assert self._eval("1.5 + 1") == "2.5"
 
+    @pytest.mark.unit
     def test_division_cero(self) -> None:
         with pytest.raises(ZeroDivisionError):
             self._eval("1 / 0")
 
+    @pytest.mark.unit
     def test_nombre_no_definido(self) -> None:
         with pytest.raises(ValueError):
             self._eval("x + 1")
 
+    @pytest.mark.unit
     def test_operador_no_soportado(self) -> None:
         with pytest.raises(ValueError):
             self._eval("1 @ 2")
 
+    @pytest.mark.unit
     def test_llamada_no_permitida(self) -> None:
         with pytest.raises(ValueError):
             self._eval("open(1)")
 
+    @pytest.mark.unit
     def test_syntax_error(self) -> None:
         with pytest.raises(SyntaxError):
             self._eval("1 +")
 
+    @pytest.mark.unit
     def test_nodo_no_soportado(self) -> None:
         with pytest.raises(ValueError, match="no soportada"):
             self._eval("1 < 2")  # ast.Compare
 
+    @pytest.mark.unit
     def test_operador_unario_no_soportado(self) -> None:
         with pytest.raises(ValueError, match="Operador no soportado"):
             self._eval("~3")  # ast.Invert
 
+    @pytest.mark.unit
     def test_constante_numerica(self) -> None:
         assert self._eval("pi") == "3.141592653589793"
         assert self._eval("e") == "2.718281828459045"
 
+    @pytest.mark.unit
     def test_nombre_funcion_no_permitida(self) -> None:
         with pytest.raises(ValueError, match="Funcion no permitida"):
             self._eval("sqrt")  # sqrt es callable, no numerico directo
 
+    @pytest.mark.unit
     def test_resultado_no_numerico(self) -> None:
         with pytest.raises(ValueError, match="Resultado no numerico"):
             self._eval('max("abc")')  # constante str -> resultado str
 
 
 class TestCalculatorTool:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         r = CalculatorTool().execute("   ")
         assert not r.success and r.error == "No expression"
 
+    @pytest.mark.unit
     def test_ok(self) -> None:
         r = CalculatorTool().execute("6 * 7")
         assert r.success and r.output == "42"
 
+    @pytest.mark.unit
     def test_error(self) -> None:
         r = CalculatorTool().execute("1 / 0")
         assert not r.success and "Error" in r.error
 
 
 class TestNoteTool:
+    @pytest.mark.unit
     def test_save_y_list(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.assistant import config
 
@@ -292,6 +335,7 @@ class TestNoteTool:
         lst = t.list_recent(5)
         assert lst.success and "segunda nota" in lst.output and "hola nota" in lst.output
 
+    @pytest.mark.unit
     def test_list_vacia(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.assistant import config
 
@@ -300,6 +344,7 @@ class TestNoteTool:
         r = NoteTool().list_recent()
         assert r.success and r.output == "No hay notas guardadas"
 
+    @pytest.mark.unit
     def test_truncado_500(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         from motor.assistant import config
 
@@ -313,12 +358,14 @@ class TestNoteTool:
 
 
 class TestDateTimeTool:
+    @pytest.mark.unit
     def test_formato(self) -> None:
         r = DateTimeTool().execute()
         assert r.success and r.output.startswith("Son las ")
 
 
 class TestWeatherTool:
+    @pytest.mark.unit
     def test_sin_location_ipapi(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(
@@ -334,6 +381,7 @@ class TestWeatherTool:
 
         asyncio.run(go())
 
+    @pytest.mark.unit
     def test_sin_location_fallback(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(
@@ -348,6 +396,7 @@ class TestWeatherTool:
 
         asyncio.run(go())
 
+    @pytest.mark.unit
     def test_status_error(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(return_value=SimpleNamespace(status_code=500, text=""))
@@ -357,6 +406,7 @@ class TestWeatherTool:
 
         asyncio.run(go())
 
+    @pytest.mark.unit
     def test_exception(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(side_effect=OSError("red caida"))
@@ -368,6 +418,7 @@ class TestWeatherTool:
 
 
 class TestNewsTool:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(
@@ -382,6 +433,7 @@ class TestNewsTool:
 
         asyncio.run(go())
 
+    @pytest.mark.unit
     def test_status_error(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(return_value=SimpleNamespace(status_code=404, text=""))
@@ -391,6 +443,7 @@ class TestNewsTool:
 
         asyncio.run(go())
 
+    @pytest.mark.unit
     def test_exception(self) -> None:
         async def go() -> None:
             m_get = mock.Mock(side_effect=OSError("boom"))
@@ -414,11 +467,13 @@ class TestManager:
     async def _run(self, mgr: ConversationalToolManager, name: str, params: dict | None = None) -> ToolResult:
         return await mgr.execute(name, params)
 
+    @pytest.mark.unit
     def test_git_status(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="M f.py"))
         r = asyncio.run(self._run(mgr, "git_status"))
         assert r.success and r.output == "M f.py"
 
+    @pytest.mark.unit
     def test_git_log_params(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         captured: dict = {}
 
@@ -430,19 +485,23 @@ class TestManager:
         r = asyncio.run(self._run(mgr, "git_log", {"count": 3}))
         assert r.success and "git" in captured["args"]
 
+    @pytest.mark.unit
     def test_docker_ps(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="c1 Up"))
         r = asyncio.run(self._run(mgr, "docker_ps"))
         assert r.success
 
+    @pytest.mark.unit
     def test_datetime(self, mgr: ConversationalToolManager) -> None:
         r = asyncio.run(self._run(mgr, "datetime"))
         assert r.success
 
+    @pytest.mark.unit
     def test_calculator(self, mgr: ConversationalToolManager) -> None:
         r = asyncio.run(self._run(mgr, "calculator", {"expression": "2+2"}))
         assert r.success and r.output == "4"
 
+    @pytest.mark.unit
     def test_read_file(self, mgr: ConversationalToolManager, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)
         f = tmp_path / ".ura" / "a.txt"
@@ -451,6 +510,7 @@ class TestManager:
         r = asyncio.run(self._run(mgr, "read_file", {"path": str(f)}))
         assert r.success and r.output == "hi"
 
+    @pytest.mark.unit
     def test_system_info(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = SimpleNamespace(
             virtual_memory=lambda: SimpleNamespace(used=2**31, total=8**30, percent=25),
@@ -461,6 +521,7 @@ class TestManager:
         r = asyncio.run(self._run(mgr, "system_info"))
         assert r.success
 
+    @pytest.mark.unit
     def test_weather(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             with mock.patch(
@@ -472,6 +533,7 @@ class TestManager:
         r = asyncio.run(go())
         assert r.success
 
+    @pytest.mark.unit
     def test_news(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             with mock.patch(
@@ -483,15 +545,18 @@ class TestManager:
         r = asyncio.run(go())
         assert r.success
 
+    @pytest.mark.unit
     def test_python(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", lambda *a, **k: _result(stdout="OK"))
         r = asyncio.run(self._run(mgr, "python", {"code": "print(1)"}))
         assert r.success and r.output == "OK"
 
+    @pytest.mark.unit
     def test_python_sin_code(self, mgr: ConversationalToolManager) -> None:
         r = asyncio.run(self._run(mgr, "python"))
         assert not r.success and r.error == "No code"
 
+    @pytest.mark.unit
     def test_web_search(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             with mock.patch("motor.assistant.executor.httpx.AsyncClient") as m_client:
@@ -504,10 +569,12 @@ class TestManager:
         r = asyncio.run(go())
         assert r.success and r.output == "hola mundo"
 
+    @pytest.mark.unit
     def test_web_search_sin_query(self, mgr: ConversationalToolManager) -> None:
         r = asyncio.run(self._run(mgr, "web_search"))
         assert not r.success and r.error == "No query"
 
+    @pytest.mark.unit
     def test_plugin_externo(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             plugin = mock.AsyncMock()
@@ -519,6 +586,8 @@ class TestManager:
         assert r.success and r.output == "plugin ok"
         mgr._plugins["mi_plugin"].execute.assert_awaited_once()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_plugins_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.assistant.tool_plugin
 
@@ -526,10 +595,12 @@ class TestManager:
         mgr = ConversationalToolManager()
         assert mgr._plugins == {}
 
+    @pytest.mark.unit
     def test_not_found(self, mgr: ConversationalToolManager) -> None:
         r = asyncio.run(self._run(mgr, "no_existe"))
         assert not r.success and "not found" in r.error
 
+    @pytest.mark.unit
     def test_web_search_error(self, mgr: ConversationalToolManager) -> None:
         async def go() -> ToolResult:
             with mock.patch("motor.assistant.executor.httpx.AsyncClient") as m_client:
@@ -539,11 +610,13 @@ class TestManager:
         r = asyncio.run(go())
         assert not r.success and r.error == "red caida"
 
+    @pytest.mark.unit
     def test_python_error(self, mgr: ConversationalToolManager, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("subprocess.run", mock.Mock(side_effect=TimeoutError("lento")))
         r = asyncio.run(self._run(mgr, "python", {"code": "print(1)"}))
         assert not r.success and r.error == "lento"
 
+    @pytest.mark.unit
     def test_needs_confirmation(self, mgr: ConversationalToolManager) -> None:
         assert mgr.needs_confirmation("python")
         assert mgr.needs_confirmation("git_commit")
@@ -551,6 +624,7 @@ class TestManager:
         assert not mgr.needs_confirmation("git_status")
         assert not mgr.needs_confirmation("git_status", "ver estado")
 
+    @pytest.mark.unit
     def test_list_tools(self, mgr: ConversationalToolManager) -> None:
         tools = mgr.list_tools()
         assert "git_status" in tools and "calculator" in tools and "note_save" in tools

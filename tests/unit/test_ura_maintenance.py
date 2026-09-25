@@ -6,6 +6,7 @@ todo I/O real se simula con monkeypatch.
 
 from __future__ import annotations
 
+import pytest
 import json
 import os
 import subprocess
@@ -41,17 +42,21 @@ def _config(tmp_path: Path) -> dict:
 
 
 class TestLoadConfig:
+    @pytest.mark.unit
     def test_default_when_no_path(self) -> None:
         assert load_config() == DEFAULT_CONFIG
 
+    @pytest.mark.unit
     def test_missing_file_ignored(self) -> None:
         assert load_config("/no/existe/config.json") == DEFAULT_CONFIG
 
+    @pytest.mark.unit
     def test_invalid_json_warns(self, tmp_path: Path) -> None:
         bad = tmp_path / "bad.json"
         bad.write_text("{no json")
         assert load_config(str(bad)) == DEFAULT_CONFIG
 
+    @pytest.mark.unit
     def test_merges_user_config(self, tmp_path: Path) -> None:
         cfg = tmp_path / "cfg.json"
         cfg.write_text(json.dumps({"log_dir": "/tmp/x", "thresholds": {"docker_images": 99}}))
@@ -62,6 +67,7 @@ class TestLoadConfig:
 
 
 class TestSecurityValidator:
+    @pytest.mark.unit
     def test_symlink_rejected(self, tmp_path: Path) -> None:
         target = tmp_path / "real"
         target.write_text("x")
@@ -72,6 +78,7 @@ class TestSecurityValidator:
         assert not ok
         assert "Symlink" in reason
 
+    @pytest.mark.unit
     def test_not_owner_rejected(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _config(tmp_path)
         file = tmp_path / "tmp" / "a.txt"
@@ -82,6 +89,7 @@ class TestSecurityValidator:
         ok, _reason = validator.is_safe_to_delete(str(file))
         assert not ok
 
+    @pytest.mark.unit
     def test_stat_error_propagates_from_is_symlink(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         # Hallazgo F4: is_safe_to_delete lanza OSError si stat falla antes del
         # try/except (is_symlink() -> lstat() no está protegido). Comportamiento
@@ -95,6 +103,7 @@ class TestSecurityValidator:
         with pytest.raises(OSError):
             validator.is_safe_to_delete("/no/existe")
 
+    @pytest.mark.unit
     def test_exclude_pattern_matches(self, tmp_path: Path) -> None:
         file = tmp_path / "tmp" / "data.db"
         file.parent.mkdir(parents=True)
@@ -104,6 +113,7 @@ class TestSecurityValidator:
         assert not ok
         assert "exclude pattern" in reason
 
+    @pytest.mark.unit
     def test_outside_allowed_dir(self, tmp_path: Path) -> None:
         file = tmp_path / "otro" / "a.txt"
         file.parent.mkdir(parents=True)
@@ -113,6 +123,7 @@ class TestSecurityValidator:
         assert not ok
         assert "Outside allowed" in reason
 
+    @pytest.mark.unit
     def test_safe_file_passes(self, tmp_path: Path) -> None:
         file = tmp_path / "tmp" / "a.txt"
         file.parent.mkdir(parents=True)
@@ -123,6 +134,7 @@ class TestSecurityValidator:
 
 
 class TestMaintenanceConfig:
+    @pytest.mark.unit
     def test_fields_copied(self) -> None:
         cfg = MaintenanceConfig(DEFAULT_CONFIG)
         assert cfg.exclude_patterns == DEFAULT_CONFIG["exclude_patterns"]
@@ -130,6 +142,7 @@ class TestMaintenanceConfig:
 
 
 class TestSystemCleaner:
+    @pytest.mark.unit
     def test_get_disk_usage(self) -> None:
         cfg = MaintenanceConfig(DEFAULT_CONFIG)
         validator = SecurityValidator(DEFAULT_CONFIG)
@@ -137,6 +150,7 @@ class TestSystemCleaner:
         usage = cleaner.get_disk_usage("/")
         assert "total" in usage and "used" in usage and "percent" in usage
 
+    @pytest.mark.unit
     def test_get_disk_usage_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = MaintenanceConfig(DEFAULT_CONFIG)
         cleaner = SystemCleaner(cfg, SecurityValidator(DEFAULT_CONFIG))
@@ -147,12 +161,14 @@ class TestSystemCleaner:
         monkeypatch.setattr("shutil.disk_usage", boom)
         assert cleaner.get_disk_usage("/") == {}
 
+    @pytest.mark.unit
     def test_should_clean(self) -> None:
         cfg = MaintenanceConfig(DEFAULT_CONFIG)
         cleaner = SystemCleaner(cfg, SecurityValidator(DEFAULT_CONFIG))
         assert cleaner.should_clean(11.0, "docker_images") is True
         assert cleaner.should_clean(1.0, "docker_images") is False
 
+    @pytest.mark.unit
     def test_record_operation(self) -> None:
         cfg = MaintenanceConfig(DEFAULT_CONFIG)
         cleaner = SystemCleaner(cfg, SecurityValidator(DEFAULT_CONFIG))
@@ -160,11 +176,13 @@ class TestSystemCleaner:
         assert cleaner.operations[0]["operation"] == "prune"
         assert cleaner.space_freed == 1.5
 
+    @pytest.mark.unit
     def test_safe_remove_unsafe_returns_false(self, tmp_path: Path) -> None:
         cfg = MaintenanceConfig(_config(tmp_path))
         cleaner = SystemCleaner(cfg, SecurityValidator(_config(tmp_path)))
         assert cleaner.safe_remove("/etc/passwd") is False
 
+    @pytest.mark.unit
     def test_safe_remove_oserror(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         cfg = _config(tmp_path)
         file = tmp_path / "tmp" / "a.txt"
@@ -178,6 +196,7 @@ class TestSystemCleaner:
         monkeypatch.setattr(os, "remove", boom)
         assert cleaner.safe_remove(str(file)) is False
 
+    @pytest.mark.unit
     def test_safe_rmtree(self, tmp_path: Path) -> None:
         cfg = _config(tmp_path)
         target = tmp_path / "tmp" / "dir"
@@ -193,6 +212,7 @@ class TestLinuxCleaner:
         cfg = _config(tmp_path)
         return LinuxCleaner(MaintenanceConfig(cfg), SecurityValidator(cfg))
 
+    @pytest.mark.unit
     def test_clean_docker_not_installed(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*_a: object, **_k: object) -> None:
             raise FileNotFoundError
@@ -200,21 +220,26 @@ class TestLinuxCleaner:
         monkeypatch.setattr(subprocess, "run", boom)
         assert self._cleaner(tmp_path).clean_docker() == 0
 
+    @pytest.mark.unit
     def test_clean_docker_reclaimed_gb(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("Total reclaimed space: 1.5GB", 0))
         cleaner = self._cleaner(tmp_path)
         assert cleaner.clean_docker() == 1.5
         assert cleaner.operations[0]["operation"] == "docker_prune"
 
+    @pytest.mark.unit
     def test_clean_docker_reclaimed_mb(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("Total reclaimed space: 512MB", 0))
         cleaner = self._cleaner(tmp_path)
         assert cleaner.clean_docker() == pytest.approx(0.5, abs=1e-3)
 
+    @pytest.mark.unit
     def test_clean_docker_no_match(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("nada", 0))
         assert self._cleaner(tmp_path).clean_docker() == 0
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_clean_docker_timeout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*_a: object, **_k: object) -> None:
             raise subprocess.TimeoutExpired("docker", 300)
@@ -222,10 +247,12 @@ class TestLinuxCleaner:
         monkeypatch.setattr(subprocess, "run", boom)
         assert self._cleaner(tmp_path).clean_docker() == 0
 
+    @pytest.mark.unit
     def test_clean_apt_cache_no_apt(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("shutil.which", lambda _c: None)
         assert self._cleaner(tmp_path).clean_apt_cache() == 0
 
+    @pytest.mark.unit
     def test_clean_apt_cache_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("shutil.which", lambda _c: "/usr/bin/apt-get")
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult())
@@ -235,10 +262,12 @@ class TestLinuxCleaner:
         assert cleaner.clean_apt_cache() == 2.0
         assert cleaner.operations[0]["operation"] == "apt_cache"
 
+    @pytest.mark.unit
     def test_clean_pip_cache_no_pip(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("shutil.which", lambda _c: None)
         assert self._cleaner(tmp_path).clean_pip_cache() == 0
 
+    @pytest.mark.unit
     def test_clean_pip_cache_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("shutil.which", lambda c: "/usr/bin/pip3" if c == "pip3" else None)
         cache_file = tmp_path / ".cache" / "pip" / "big.whl"
@@ -257,6 +286,7 @@ class TestLinuxCleaner:
         assert freed == pytest.approx((2048 / (1024**3)), abs=1e-9)
         assert cleaner.operations[0]["operation"] == "pip_cache"
 
+    @pytest.mark.unit
     def test_clean_old_logs_zero_freed_but_removes(self, tmp_path: Path) -> None:
         # Hallazgo F4: el fichero se borra (safe_remove ok) pero el tamaño se
         # lee DESPUÉS del borrado -> stat lanza FileNotFoundError -> except
@@ -272,6 +302,7 @@ class TestLinuxCleaner:
         assert cleaner.clean_old_logs() == 0
         assert not old.exists()
 
+    @pytest.mark.unit
     def test_clean_temp_files_zero_by_design(self, tmp_path: Path) -> None:
         # Hallazgo F4: el tamaño se lee DESPUÉS de os.remove -> FileNotFoundError
         # -> except OSError -> total_freed nunca suma. Bug candidato F5.
@@ -286,21 +317,25 @@ class TestLinuxCleaner:
 
 
 class TestMaintenanceOrchestrator:
+    @pytest.mark.unit
     def test_get_cleaner_linux(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("platform.system", lambda: "Linux")
         orc = MaintenanceOrchestrator()
         assert isinstance(orc.cleaner, LinuxCleaner)
 
+    @pytest.mark.unit
     def test_get_cleaner_darwin(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("platform.system", lambda: "Darwin")
         orc = MaintenanceOrchestrator()
         assert isinstance(orc.cleaner, MacCleaner)
 
+    @pytest.mark.unit
     def test_get_cleaner_unsupported(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("platform.system", lambda: "Windows")
         with pytest.raises(ValueError):
             MaintenanceOrchestrator()
 
+    @pytest.mark.unit
     def test_run_maintenance(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr("platform.system", lambda: "Linux")
         monkeypatch.setattr(um, "LOG_DIR", tmp_path)
@@ -322,6 +357,7 @@ class TestMaintenanceOrchestrator:
         saved = list(tmp_path.glob("maintenance_results_*.json"))
         assert len(saved) == 1
 
+    @pytest.mark.unit
     def test_save_results_error(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr(um, "LOG_DIR", tmp_path / "no_existe_rc")
         orc = MaintenanceOrchestrator()
@@ -333,6 +369,7 @@ class TestMaintenanceOrchestrator:
         monkeypatch.setattr("builtins.open", boom)
         orc._save_results()  # no lanza
 
+    @pytest.mark.unit
     def test_main_returns_zero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class FakeOrc:
             def run_maintenance(self) -> dict:
@@ -341,6 +378,7 @@ class TestMaintenanceOrchestrator:
         monkeypatch.setattr(um, "MaintenanceOrchestrator", FakeOrc)
         assert um.main() == 0
 
+    @pytest.mark.unit
     def test_main_returns_one_on_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class Boom:
             def run_maintenance(self) -> dict:

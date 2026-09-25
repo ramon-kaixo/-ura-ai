@@ -1,6 +1,7 @@
 """Tests para scripts/pro/tuneladora/scheduler_daemon.py y install_service.py."""
 
 from __future__ import annotations
+import pytest
 
 import asyncio
 import threading
@@ -33,12 +34,14 @@ def _run_main_en_thread() -> None:
 
 
 class TestInstallService:
+    @pytest.mark.integration
     def test_no_root(self, monkeypatch) -> None:
         monkeypatch.setattr("os.geteuid", lambda: 1000)
         result = isvc.install_service()
         assert result["ok"] is False
         assert "sudo" in result["error"]
 
+    @pytest.mark.integration
     def test_archivo_no_existe(self, monkeypatch) -> None:
         monkeypatch.setattr("os.geteuid", lambda: 0)
 
@@ -51,6 +54,7 @@ class TestInstallService:
         assert result["ok"] is False
         assert "no encontrado" in result["error"]
 
+    @pytest.mark.integration
     def test_permiso_denegado(self, monkeypatch) -> None:
         monkeypatch.setattr("os.geteuid", lambda: 0)
         monkeypatch.setattr(isvc.shutil, "copy2", mock.Mock(side_effect=PermissionError("nope")))
@@ -58,6 +62,7 @@ class TestInstallService:
         assert result["ok"] is False
         assert result["copy"] == "denied (need sudo)"
 
+    @pytest.mark.integration
     def test_instalacion_ok(self, monkeypatch) -> None:
         monkeypatch.setattr("os.geteuid", lambda: 0)
         monkeypatch.setattr(isvc.shutil, "copy2", mock.Mock())
@@ -74,6 +79,7 @@ class TestInstallService:
         assert result["start"] == "ok"
         assert result["status"] == "active"
 
+    @pytest.mark.integration
     def test_fallo_en_start(self, monkeypatch) -> None:
         monkeypatch.setattr("os.geteuid", lambda: 0)
         monkeypatch.setattr(isvc.shutil, "copy2", mock.Mock())
@@ -92,6 +98,7 @@ class TestInstallService:
 
 
 class TestSchedulerDaemon:
+    @pytest.mark.integration
     def test_shutdown(self) -> None:
         daemon.scheduler = mock.Mock()
         with mock.patch.object(daemon.sys, "exit") as m_exit:
@@ -99,6 +106,7 @@ class TestSchedulerDaemon:
         daemon.scheduler.stop.assert_called_once()
         m_exit.assert_called_with(0)
 
+    @pytest.mark.integration
     def test_main_arranca_y_detiene(self, monkeypatch) -> None:
         scheduler = mock.Mock()
         scheduler.pipeline_count = 3
@@ -115,6 +123,7 @@ class TestSchedulerDaemon:
         scheduler.start.assert_called_once()
         assert scheduler.add_pipeline.call_count == 3
 
+    @pytest.mark.integration
     def test_dashboard_falla_no_crashea(self, monkeypatch) -> None:
         scheduler = mock.Mock()
         monkeypatch.setattr(daemon, "TuneladoraScheduler", mock.Mock(return_value=scheduler))

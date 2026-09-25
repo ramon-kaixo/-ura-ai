@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/verifier.py y knowledge/engine/cli/main.py."""
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from pathlib import Path
@@ -11,13 +12,16 @@ from knowledge.engine.verifier import _safe_check, verify_graph
 
 
 class TestSafeCheck:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         out = _safe_check("WARN", "check1", lambda conn: ["m1", "m2"], None)
         assert out == [("WARN", "check1", "m1"), ("WARN", "check1", "m2")]
 
+    @pytest.mark.unit
     def test_sin_mensajes(self) -> None:
         assert _safe_check("ERROR", "check1", lambda conn: [], None) == []
 
+    @pytest.mark.unit
     def test_operational_error(self) -> None:
         def boom(conn):
             raise sqlite3.OperationalError("no table")
@@ -27,6 +31,7 @@ class TestSafeCheck:
         assert out[0][0] == "ERROR"
         assert "no accesible" in out[0][2]
 
+    @pytest.mark.unit
     def test_oserror(self) -> None:
         def boom(conn):
             raise OSError("disk")
@@ -46,10 +51,12 @@ class TestVerifyGraph:
         conn.commit()
         return conn
 
+    @pytest.mark.unit
     def test_db_no_existe(self, tmp_path) -> None:
         out = verify_graph(tmp_path / "nope.sqlite")
         assert out == [("ERROR", "db_exists", "knowledge.db no existe")]
 
+    @pytest.mark.unit
     def test_db_sana(self, tmp_path, monkeypatch) -> None:
         db = tmp_path / "db.sqlite"
         conn = self._crear_db(db)
@@ -64,6 +71,7 @@ class TestVerifyGraph:
         assert "INFO" in severities
         assert "ERROR" not in severities
 
+    @pytest.mark.unit
     def test_schema_mismatch(self, tmp_path, monkeypatch) -> None:
         db = tmp_path / "db.sqlite"
         conn = self._crear_db(db)
@@ -76,6 +84,7 @@ class TestVerifyGraph:
         out = verify_graph(db)
         assert any(s == "ERROR" and c == "schema_version" for s, c, _ in out)
 
+    @pytest.mark.unit
     def test_check_con_error(self, tmp_path, monkeypatch) -> None:
         db = tmp_path / "db.sqlite"
         conn = self._crear_db(db)
@@ -88,6 +97,7 @@ class TestVerifyGraph:
         out = verify_graph(db)
         assert any(c == "hashes" for _, c, _ in out)
 
+    @pytest.mark.unit
     def test_sin_version(self, tmp_path, monkeypatch) -> None:
         db = tmp_path / "db.sqlite"
         conn = sqlite3.connect(db)
@@ -106,21 +116,25 @@ class TestVerifyGraph:
 
 
 class TestCliMainHelpers:
+    @pytest.mark.unit
     def test_resolve_db_path_arg(self) -> None:
         args = SimpleNamespace(db_path="/tmp/x.sqlite")
         assert _resolve_db_path(args) == Path("/tmp/x.sqlite")
 
+    @pytest.mark.unit
     def test_resolve_db_path_env(self, monkeypatch) -> None:
         monkeypatch.setenv("URA_KNOWLEDGE_DB", "/tmp/env.sqlite")
         args = SimpleNamespace(db_path=None)
         assert _resolve_db_path(args) == Path("/tmp/env.sqlite")
 
+    @pytest.mark.unit
     def test_resolve_db_path_default(self, monkeypatch) -> None:
         monkeypatch.delenv("URA_KNOWLEDGE_DB", raising=False)
         args = SimpleNamespace(db_path=None)
         out = _resolve_db_path(args)
         assert "knowledge.db" in str(out)
 
+    @pytest.mark.unit
     def test_parsers_requieren_cmd_funciones(self) -> None:
         """El CLI debe ser invocable: build_parser construye el árbol completo."""
         import importlib
@@ -132,6 +146,7 @@ class TestCliMainHelpers:
         for esperado in ("init", "verify", "status", "compile", "doctor", "archive"):
             assert esperado in subs, f"falta subcomando {esperado}"
 
+    @pytest.mark.unit
     def test_main_init_bus(self, monkeypatch) -> None:
         bus = mock.Mock()
         monkeypatch.setattr("knowledge.engine.eventbus.get_bus", mock.Mock(return_value=bus))

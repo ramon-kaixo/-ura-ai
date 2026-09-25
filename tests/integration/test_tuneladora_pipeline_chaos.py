@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import os
 import time
 from pathlib import Path
@@ -20,6 +21,7 @@ def cfg() -> Configuration:
 
 
 class TestChaosSyntaxError:
+    @pytest.mark.integration
     def test_syntax_error_aborts(self, cfg):
         bad = Path("/tmp/test_chaos_syntax.py")
         bad.write_text("def foo(\n")
@@ -30,6 +32,7 @@ class TestChaosSyntaxError:
 
 
 class TestChaosBlastRadius:
+    @pytest.mark.integration
     def test_blast_radius_blocks(self, cfg):
         runner = PipelineRunner(cfg, mode="gate", files=[f"f{i}.py" for i in range(51)])
         with mock.patch("subprocess.run") as mock_run:
@@ -44,6 +47,7 @@ class TestChaosBlastRadius:
 
 
 class TestChaosRollbackCreated:
+    @pytest.mark.integration
     def test_rollback_deletes_created_file(self, tmp_path):
         snap_dir = tmp_path / ".tuneladora_chaos"
         snap_dir.mkdir()
@@ -73,6 +77,7 @@ class TestChaosRollbackCreated:
         assert not ia_file.exists()
         assert existing.read_text() == "x = 1\n"
 
+    @pytest.mark.integration
     def test_restore_only_deletes_tracked_files(self, tmp_path):
         snap_dir = tmp_path / ".tuneladora_chaos2"
         snap_dir.mkdir()
@@ -91,6 +96,7 @@ class TestChaosRollbackCreated:
 
 
 class TestChaosTestManipulation:
+    @pytest.mark.integration
     def test_detects_test_manipulation(self, cfg):
         runner = PipelineRunner(cfg, mode="check", files=["src.py", "test_src.py"])
         with mock.patch("subprocess.run") as mock_run:
@@ -103,6 +109,7 @@ class TestChaosTestManipulation:
             results = runner.phase_integrity()
         assert any(r.name == "test_manipulation" and r.status == Status.WARN for r in results)
 
+    @pytest.mark.integration
     def test_skips_when_only_source(self, cfg):
         runner = PipelineRunner(cfg, mode="check", files=["src.py"])
         with mock.patch("subprocess.run") as mock_run:
@@ -115,6 +122,7 @@ class TestChaosTestManipulation:
             results = runner.phase_integrity()
         assert not any(r.name == "test_manipulation" for r in results)
 
+    @pytest.mark.integration
     def test_skips_when_only_tests(self, cfg):
         runner = PipelineRunner(cfg, mode="check", files=["test_src.py"])
         with mock.patch("subprocess.run") as mock_run:
@@ -129,6 +137,7 @@ class TestChaosTestManipulation:
 
 
 class TestChaosLock:
+    @pytest.mark.integration
     def test_lock_prevents_concurrent(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
 
@@ -143,6 +152,7 @@ class TestChaosLock:
         assert runner2._acquire_lock()
         runner2._release_lock()
 
+    @pytest.mark.integration
     def test_lock_cleanup(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
 
@@ -156,6 +166,7 @@ class TestChaosLock:
         assert runner2._acquire_lock()
         runner2._release_lock()
 
+    @pytest.mark.integration
     def test_stale_lock_overwritten(self, tmp_path):
         from scripts.pro.tuneladora.config import Configuration as Cfg
 
@@ -173,6 +184,7 @@ class TestChaosLock:
 
 
 class TestChaosCleanCommit:
+    @pytest.mark.integration
     def test_gate_commits_clean_changes(self, cfg, tmp_path):
         src = tmp_path / "clean.py"
         src.write_text("x = 1\n")
@@ -216,6 +228,7 @@ class TestChaosCleanCommit:
 
 
 class TestChaosAPIDiff:
+    @pytest.mark.integration
     def test_detects_new_function(self, tmp_path, cfg):
         src = tmp_path / "api_test.py"
         src.write_text("def new_func(): pass\n")
@@ -230,6 +243,7 @@ class TestChaosAPIDiff:
             results = runner.phase_api_diff()
         assert any(r.name == "api_diff" for r in results)
 
+    @pytest.mark.integration
     def test_empty_when_no_git_history(self, tmp_path, cfg):
         src = tmp_path / "api_test_new.py"
         src.write_text("x = 1\n")

@@ -22,6 +22,7 @@ def _scan_result(ok: bool = True) -> ScanResult:
 
 
 class TestPipeline:
+    @pytest.mark.unit
     def test_ok(self, config: mock.Mock) -> None:
         orch = mock.Mock()
         orch.run.return_value = _scan_result(ok=True)
@@ -32,6 +33,7 @@ class TestPipeline:
         orch.run.assert_called_once_with(dry_run=True)
         sys_exit.assert_called_once_with(0)
 
+    @pytest.mark.unit
     def test_fail(self, config: mock.Mock) -> None:
         orch = mock.Mock()
         orch.run.return_value = _scan_result(ok=False)
@@ -41,6 +43,7 @@ class TestPipeline:
         sys_exit.assert_called_once_with(1)
 
 
+@pytest.mark.unit
 def test_scan(config: mock.Mock) -> None:
     sc = mock.Mock()
     with mock.patch("motor.cli.cmd_pipeline.Scanner", return_value=sc):
@@ -48,6 +51,7 @@ def test_scan(config: mock.Mock) -> None:
     sc.run.assert_called_once()
 
 
+@pytest.mark.unit
 def test_diagnose(config: mock.Mock) -> None:
     qdrant = mock.Mock()
     diag = mock.Mock()
@@ -60,6 +64,7 @@ def test_diagnose(config: mock.Mock) -> None:
 
 
 class TestCalibrate:
+    @pytest.mark.unit
     def test_baseline_sin_force(self, config: mock.Mock) -> None:
         cal = mock.Mock()
         cal.hay_baseline = True
@@ -69,6 +74,7 @@ class TestCalibrate:
             cmd_pipeline.cmd_calibrate(config, mock.Mock(force=False))
         sys_exit.assert_called_once_with(1)
 
+    @pytest.mark.unit
     def test_force_sin_trends(self, config: mock.Mock, tmp_path: Path) -> None:
         cal = mock.Mock()
         cal.hay_baseline = True
@@ -80,6 +86,7 @@ class TestCalibrate:
         cal.learn.assert_called_once()
         assert cal.learn.call_args[0][1] == []
 
+    @pytest.mark.unit
     def test_con_trends(self, config: mock.Mock, tmp_path: Path) -> None:
         cal = mock.Mock()
         cal.hay_baseline = False

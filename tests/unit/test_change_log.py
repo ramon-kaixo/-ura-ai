@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 
 import pytest
@@ -16,6 +17,7 @@ def _isolate_db(tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestSchema:
+    @pytest.mark.unit
     def test_table_created_on_first_use(self) -> None:
         conn = cl._connect()
         tables = conn.execute(
@@ -24,6 +26,7 @@ class TestSchema:
         conn.close()
         assert ("changes",) in tables
 
+    @pytest.mark.unit
     def test_columns(self) -> None:
         conn = cl._connect()
         cols = {r[1] for r in conn.execute("PRAGMA table_info(changes)")}
@@ -42,6 +45,7 @@ class TestSchema:
 
 
 class TestRecord:
+    @pytest.mark.unit
     def test_record_inserts(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -50,6 +54,7 @@ class TestRecord:
         )
         assert cl.record("abc1234") is True
 
+    @pytest.mark.unit
     def test_record_deduplicates(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -60,10 +65,12 @@ class TestRecord:
         assert cl.record("abc1234") is False
         assert len(cl.query(limit=10)) == 1
 
+    @pytest.mark.unit
     def test_record_empty_subject_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(cl, "_commit_info", lambda h: {"subject": "", "body": "", "files": []})
         assert cl.record("abc1234") is False
 
+    @pytest.mark.unit
     def test_record_detects_tests_and_docs(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -79,6 +86,7 @@ class TestRecord:
         assert entry["tests_passed"] == 1
         assert entry["docs_modified"] == 1
 
+    @pytest.mark.unit
     def test_record_detects_adr_in_subject(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -88,6 +96,7 @@ class TestRecord:
         cl.record("abc1234")
         assert cl.query(limit=1)[0]["adr_ref"] == "42"
 
+    @pytest.mark.unit
     def test_record_actor_default_human(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -97,6 +106,7 @@ class TestRecord:
         cl.record("abc1234")
         assert cl.query(limit=1)[0]["actor"] == "human"
 
+    @pytest.mark.unit
     def test_record_actor_override(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -106,6 +116,7 @@ class TestRecord:
         cl.record("abc1234", actor="ia")
         assert cl.query(limit=1)[0]["actor"] == "ia"
 
+    @pytest.mark.unit
     def test_files_serialized_as_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -118,15 +129,18 @@ class TestRecord:
 
 
 class TestActor:
+    @pytest.mark.unit
     def test_default_human(self) -> None:
         assert cl.get_actor() == "human"
 
+    @pytest.mark.unit
     def test_set_and_get(self) -> None:
         cl.set_actor("ia")
         assert cl.get_actor() == "ia"
 
 
 class TestQuery:
+    @pytest.mark.unit
     def test_query_orders_by_ts_desc(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def fake_info(h: str) -> dict:
             return {"subject": f"fix: cambio {h}", "body": "", "files": []}
@@ -138,6 +152,7 @@ class TestQuery:
         assert entries[0]["commit_hash"] == "commit2"
         assert entries[1]["commit_hash"] == "commit1"
 
+    @pytest.mark.unit
     def test_query_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             cl,
@@ -148,5 +163,6 @@ class TestQuery:
             cl.record(f"c{i}")
         assert len(cl.query(limit=2)) == 2
 
+    @pytest.mark.unit
     def test_query_empty(self) -> None:
         assert cl.query() == []

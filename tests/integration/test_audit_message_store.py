@@ -5,6 +5,7 @@ Targets: thread safety, connection handling, lock coverage, SQL injection.
 
 from __future__ import annotations
 
+import pytest
 import concurrent.futures
 import sqlite3
 import time
@@ -39,6 +40,7 @@ class TestThreadSafety:
     executes on another thread while a write-transaction is in-flight.
     """
 
+    @pytest.mark.integration
     def test_concurrent_read_during_write_triggers_locked_error(self, tmp_path: Path) -> None:
         db = str(tmp_path / "race.db")
         store = MessageStore(db)
@@ -65,6 +67,7 @@ class TestThreadSafety:
         if errors:
             pytest.fail(f"{len(errors)} sqlite3.OperationalError(s) from unprotected read: {errors[0]}")
 
+    @pytest.mark.integration
     def test_get_conversation_outside_lock_sees_partial_data(self, tmp_path: Path) -> None:
         """Without a shared lock a large write can be observed mid-flight."""
         db = str(tmp_path / "partial.db")
@@ -100,6 +103,7 @@ class TestThreadSafety:
         # Neither should happen with proper lock coverage
         assert len(seen_len) == 1
 
+    @pytest.mark.integration
     def test_delete_during_list_returns_stale_data(self, tmp_path: Path) -> None:
         """delete_conversation is locked but list_conversations is not."""
         db = str(tmp_path / "stale.db")
@@ -137,6 +141,7 @@ class TestThreadSafety:
 class TestConnectionHandling:
     """B2: message_store leaks the connection when not explicitly closed."""
 
+    @pytest.mark.integration
     def test_use_after_close_crashes(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "gone.db"))
         store.append("c1", _make_msg("ok"))
@@ -144,6 +149,7 @@ class TestConnectionHandling:
         with pytest.raises(RuntimeError, match="MessageStore is closed"):
             store.append("c2", _make_msg("boom"))
 
+    @pytest.mark.integration
     def test_no_context_manager(self, tmp_path: Path) -> None:
         """Context manager is now implemented."""
         store = MessageStore(str(tmp_path / "leak.db"))
@@ -151,6 +157,7 @@ class TestConnectionHandling:
         assert hasattr(store, "__exit__")
         store.close()
 
+    @pytest.mark.integration
     def test_ensure_connection_exception_leaves_partial_state(self, tmp_path: Path) -> None:
         """If _init_db fails mid-way, __init__ still returns an object."""
         read_only = tmp_path / "ro"
@@ -171,6 +178,7 @@ class TestConnectionHandling:
 class TestSQLInjection:
     """B3: All queries use ? placeholders — confirm edge cases are safe."""
 
+    @pytest.mark.integration
     def test_special_chars_in_conversation_id(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "sqli.db"))
         payloads = [
@@ -192,6 +200,7 @@ class TestSQLInjection:
         assert len(store.list_conversations()) == len(payloads)
         store.close()
 
+    @pytest.mark.integration
     def test_null_byte_in_content(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "nullbyte.db"))
         msg = _make_msg("hello\x00world")
@@ -201,6 +210,7 @@ class TestSQLInjection:
         assert "\x00" in got[0].content
         store.close()
 
+    @pytest.mark.integration
     def test_negative_limit_in_get_conversation(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "negl.db"))
         for i in range(10):
@@ -217,6 +227,7 @@ class TestSQLInjection:
 
 
 class TestLargeData:
+    @pytest.mark.integration
     def test_very_long_message_content(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "big.db"))
         huge = "A" * 10_000_000  # 10 MB
@@ -227,6 +238,7 @@ class TestLargeData:
         assert len(got[0].content) == 10_000_000
         store.close()
 
+    @pytest.mark.integration
     def test_many_conversations_list(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "many.db"))
         for i in range(5000):
@@ -235,6 +247,7 @@ class TestLargeData:
         assert len(convs) == 5000
         store.close()
 
+    @pytest.mark.integration
     def test_very_long_conversation_id(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "longid.db"))
         long_id = "x" * 1_000_000
@@ -250,6 +263,7 @@ class TestLargeData:
 
 
 class TestMetadataEdgeCases:
+    @pytest.mark.integration
     def test_metadata_non_string_keys(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "metakey.db"))
         msg = _make_msg("test")
@@ -259,6 +273,7 @@ class TestMetadataEdgeCases:
         assert len(got) == 1
         store.close()
 
+    @pytest.mark.integration
     def test_metadata_unicode(self, tmp_path: Path) -> None:
         store = MessageStore(str(tmp_path / "metauni.db"))
         msg = _make_msg("test")
@@ -278,6 +293,7 @@ class TestMetadataEdgeCases:
 class TestLockContention:
     """B6: Multiple threads calling append with the lock should not deadlock."""
 
+    @pytest.mark.integration
     def test_high_contention_append(self, tmp_path: Path) -> None:
         db = str(tmp_path / "contention.db")
         store = MessageStore(db)

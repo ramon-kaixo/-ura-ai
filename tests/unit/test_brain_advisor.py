@@ -1,6 +1,7 @@
 """Tests for ArchitectureAdvisor (motor/brain/advisor.py)."""
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -15,6 +16,7 @@ def advisor() -> ArchitectureAdvisor:
 
 
 class TestPropose:
+    @pytest.mark.unit
     def test_propose_returns_list(self, advisor: ArchitectureAdvisor) -> None:
         with patch.object(advisor.analyzer, "analyze_module") as mock_analyze:
             mock_analyze.return_value = [
@@ -25,6 +27,7 @@ class TestPropose:
             assert len(result) == 1
             assert result[0]["type"] == "refactor"
 
+    @pytest.mark.unit
     def test_propose_split_large_file(self, advisor: ArchitectureAdvisor) -> None:
         with patch.object(advisor.analyzer, "analyze_module") as mock_analyze:
             mock_analyze.return_value = [
@@ -35,6 +38,7 @@ class TestPropose:
             assert result[0]["type"] == "split"
             assert result[0]["priority"] == "medium"
 
+    @pytest.mark.unit
     def test_propose_empty_when_clean(self, advisor: ArchitectureAdvisor) -> None:
         with patch.object(advisor.analyzer, "analyze_module") as mock_analyze:
             mock_analyze.return_value = [
@@ -43,6 +47,7 @@ class TestPropose:
             result = advisor.propose("/fake/path")
             assert result == []
 
+    @pytest.mark.unit
     def test_propose_calls_analyze_module(self, advisor: ArchitectureAdvisor) -> None:
         with patch.object(advisor.analyzer, "analyze_module") as mock_analyze:
             mock_analyze.return_value = []

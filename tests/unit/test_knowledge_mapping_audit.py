@@ -1,5 +1,6 @@
 """Tests para knowledge/engine/ontology/mapping.py y audit/backend.py."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -16,12 +17,14 @@ class FakeAsset:
 
 
 class TestMapping:
+    @pytest.mark.unit
     def test_to_schema_jsonld(self, monkeypatch) -> None:
         asset = FakeAsset()
         monkeypatch.setattr("knowledge.engine.ontology.schema_org.asset_to_jsonld", mock.Mock(return_value='{"@type": "Thing"}'))
         out = to_schema_jsonld(asset)
         assert "Thing" in out
 
+    @pytest.mark.unit
     def test_to_dcat(self) -> None:
         asset = FakeAsset()
         out = to_dcat(asset)
@@ -29,17 +32,20 @@ class TestMapping:
         assert out["dcterms:title"] == "Titulo"
         assert out["dcterms:created"] == "2026-01-01"
 
+    @pytest.mark.unit
     def test_to_dcat_sin_titulo(self) -> None:
         asset = FakeAsset(metadata={})
         out = to_dcat(asset)
         assert out["dcterms:title"] == "a1"  # fallback a asset_id
 
+    @pytest.mark.unit
     def test_to_prov(self) -> None:
         asset = FakeAsset()
         out = to_prov(asset)
         assert out["@type"] == "prov:Entity"
         assert out["@id"] == "ura:asset:a1"
 
+    @pytest.mark.unit
     def test_to_openlineage(self) -> None:
         asset = FakeAsset()
         out = to_openlineage(asset, job_name="mi_job", run_id="run1")
@@ -48,11 +54,13 @@ class TestMapping:
         assert out["job"]["name"] == "mi_job"
         assert out["outputs"][0]["name"] == "asset:a1"
 
+    @pytest.mark.unit
     def test_to_openlineage_sin_run_id(self) -> None:
         asset = FakeAsset(asset_id="abc")
         out = to_openlineage(asset)
         assert out["run"]["runId"] == "abc"  # fallback a asset_id
 
+    @pytest.mark.unit
     def test_to_openlineage_metadata_types(self) -> None:
         asset = FakeAsset(metadata={"tags": ["x", "y"], "count": 3, "flag": True})
         out = to_openlineage(asset)
@@ -64,24 +72,28 @@ class TestMapping:
 
 
 class TestAuditBackend:
+    @pytest.mark.unit
     def test_audit_health_defaults(self) -> None:
         h = AuditHealth()
         assert h.healthy is True
         assert h.error == ""
         assert h.events_written == 0
 
+    @pytest.mark.unit
     def test_audit_health_con_valores(self) -> None:
         h = AuditHealth(healthy=False, error="boom", events_written=3)
         assert h.healthy is False
         assert h.error == "boom"
         assert h.events_written == 3
 
+    @pytest.mark.unit
     def test_protocol_contrato(self) -> None:
         """AuditBackend es Protocol sin runtime_checkable — no permite isinstance."""
         assert callable(AuditBackend.write)
         assert callable(AuditBackend.flush)
         assert callable(AuditBackend.health_check)
 
+    @pytest.mark.unit
     def test_record_metric(self, monkeypatch) -> None:
         metrics = mock.Mock()
         metrics.audit_write_failures = mock.Mock()
@@ -90,6 +102,7 @@ class TestAuditBackend:
         record_metric()
         metrics.audit_write_failures.inc.assert_called_once()
 
+    @pytest.mark.unit
     def test_record_metric_sin_metrics(self, monkeypatch) -> None:
         monkeypatch.setattr("knowledge.engine.metrics.audit_write_failures", mock.Mock(side_effect=AttributeError("no")))
         record_metric()  # no debe lanzar

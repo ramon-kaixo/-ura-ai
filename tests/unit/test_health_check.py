@@ -5,6 +5,7 @@ Todo el I/O externo (ssh, urllib, disco) se simula con monkeypatch.
 
 from __future__ import annotations
 
+import pytest
 import http.client
 import subprocess
 from typing import TYPE_CHECKING
@@ -22,14 +23,17 @@ class _FakeResult:
 
 
 class TestSshRun:
+    @pytest.mark.unit
     def test_success_returns_stdout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("  hola  ", 0))
         assert hc.ssh_run("df -h") == "hola"
 
+    @pytest.mark.unit
     def test_nonzero_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("salida", 1))
         assert hc.ssh_run("df -h") == ""
 
+    @pytest.mark.unit
     def test_exception_returns_empty(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*a: object, **k: object) -> None:
             raise subprocess.TimeoutExpired("ssh", 5)
@@ -39,10 +43,12 @@ class TestSshRun:
 
 
 class TestMeasureSshLatency:
+    @pytest.mark.unit
     def test_returns_ms(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(subprocess, "run", lambda *a, **k: _FakeResult("ok", 0))
         assert hc.measure_ssh_latency() >= 0
 
+    @pytest.mark.unit
     def test_exception_returns_minus_one(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*a: object, **k: object) -> None:
             raise OSError("no ssh")
@@ -69,11 +75,13 @@ class _FakeHTTPConnection:
 
 
 class TestMeasureHttpLatency:
+    @pytest.mark.unit
     def test_returns_ms(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _FakeHTTPConnection.exc = None
         monkeypatch.setattr(http.client, "HTTPConnection", _FakeHTTPConnection)
         assert hc.measure_http_latency() >= 0
 
+    @pytest.mark.unit
     def test_exception_returns_minus_one(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _FakeHTTPConnection.exc = OSError("conn refused")
         monkeypatch.setattr(http.client, "HTTPConnection", _FakeHTTPConnection)
@@ -81,12 +89,14 @@ class TestMeasureHttpLatency:
 
 
 class TestCheckDisk:
+    @pytest.mark.unit
     def test_no_output_alerts(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: "")
         alerts, stats = hc.check_disk()
         assert "No se pudo obtener uso de disco" in alerts
         assert stats == {}
 
+    @pytest.mark.unit
     def test_parses_and_alerts_thresholds(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Filesystem Size Used Avail Use% Mounted on\n/dev/sda1 100G 95G 5G 95% /\n/dev/sdb1 200G 100G 100G 50% /home\nbasura"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -97,6 +107,7 @@ class TestCheckDisk:
         assert any("95% usado" in a for a in alerts)
         assert any("solo 5.0GB libres" in a for a in alerts)
 
+    @pytest.mark.unit
     def test_avail_not_g_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Filesystem Size Used Avail Use% Mounted on\n/dev/x 10G 5G 50M 50% /"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -104,6 +115,7 @@ class TestCheckDisk:
         assert stats["/"]["pct"] == 50
         assert alerts == []
 
+    @pytest.mark.unit
     def test_bad_pct_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Filesystem Size Used Avail Use% Mounted on\n/dev/x 10G 5G 1G abc /"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -112,10 +124,12 @@ class TestCheckDisk:
 
 
 class TestCheckRam:
+    @pytest.mark.unit
     def test_no_output(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: "")
         assert hc.check_ram() == ([], {})
 
+    @pytest.mark.unit
     def test_low_mem_alert_in_gb(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Mem: 32Gi 28Gi 3Gi 1Gi 1Gi 2Gi\nSwap: 8Gi 0Gi 8Gi"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -123,12 +137,14 @@ class TestCheckRam:
         assert stats["Mem"]["avail"] == "3Gi"
         assert any("RAM baja" in a for a in alerts)
 
+    @pytest.mark.unit
     def test_low_mem_alert_in_mb_converted(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Mem: 32Gi 28Gi 512Mi 1Gi 1Gi 2Gi"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
         alerts, _stats = hc.check_ram()
         assert any("RAM baja" in a for a in alerts)
 
+    @pytest.mark.unit
     def test_high_mem_no_alert(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "Mem: 32Gi 4Gi 28Gi 1Gi 1Gi 2Gi"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -137,10 +153,13 @@ class TestCheckRam:
 
 
 class TestCheckLoad:
+    @pytest.mark.unit
     def test_no_output(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: "")
         assert hc.check_load() == ([], {})
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_high_load_alert(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "12:00:00 up 10 days, load average: 9.5, 8.0, 5.0"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -148,6 +167,8 @@ class TestCheckLoad:
         assert stats["load"] == [9.5, 8.0, 5.0]
         assert any("CPU load alta" in a for a in alerts)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_normal_load(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "12:00:00 up 10 days, load average: 1.0, 0.8, 0.5"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -156,10 +177,12 @@ class TestCheckLoad:
 
 
 class TestCheckOllamaModels:
+    @pytest.mark.unit
     def test_no_output(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: "")
         assert hc.check_ollama_models() == []
 
+    @pytest.mark.unit
     def test_parses_models(self, monkeypatch: pytest.MonkeyPatch) -> None:
         output = "NAME ID SIZE PROCESSOR UNTIL\nqwen3:32b xyz 20GB 100% CPU 5m"
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: output)
@@ -168,6 +191,7 @@ class TestCheckOllamaModels:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_returns_zero_without_alert_file(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         monkeypatch.setattr(hc, "ALERT_FILE", tmp_path / "alerts.log")
         monkeypatch.setattr(hc, "ssh_run", lambda cmd: "salida normal")
@@ -175,6 +199,7 @@ class TestMain:
         monkeypatch.setattr(hc, "measure_http_latency", lambda: 5.0)
         assert hc.main() == 0
 
+    @pytest.mark.unit
     def test_writes_alert_file_on_problems(self, monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
         alert_file = tmp_path / "alerts.log"
         monkeypatch.setattr(hc, "ALERT_FILE", alert_file)

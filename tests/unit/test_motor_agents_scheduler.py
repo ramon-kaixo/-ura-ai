@@ -1,5 +1,6 @@
 """Tests para motor.agents.scheduler (AgentScheduler, _PriorityQueue)."""
 from __future__ import annotations
+import pytest
 
 import threading
 import time
@@ -29,6 +30,7 @@ def _execution(agent_id: str = "a1", policy: AgentPolicy | None = None, task: Ag
 
 
 class TestPriorityQueue:
+    @pytest.mark.unit
     def test_push_pop_fifo(self):
         q = _PriorityQueue()
         q.push(_execution("a1"))
@@ -38,6 +40,7 @@ class TestPriorityQueue:
         assert q.pop().agent_id == "a2"
         assert q.pop() is None
 
+    @pytest.mark.unit
     def test_pop_priority_order(self):
         q = _PriorityQueue()
         q.push(_execution("normal"))
@@ -45,12 +48,14 @@ class TestPriorityQueue:
         assert q.pop().agent_id == "crit"
         assert q.pop().agent_id == "normal"
 
+    @pytest.mark.unit
     def test_push_unknown_priority_creates(self):
         q = _PriorityQueue()
         q.push(_execution("a1"), priority=7)
         assert q.size_for_priority(7) == 1
         assert q.pop().agent_id == "a1"
 
+    @pytest.mark.unit
     def test_remove(self):
         q = _PriorityQueue()
         q.push(_execution("a1"))
@@ -60,6 +65,7 @@ class TestPriorityQueue:
         assert q.remove("a1") is False
         assert q.pop().agent_id == "a2"
 
+    @pytest.mark.unit
     def test_peek(self):
         q = _PriorityQueue()
         assert q.peek() is None
@@ -70,6 +76,7 @@ class TestPriorityQueue:
         assert q.peek().agent_id == "a2"
         assert q.size() == 2
 
+    @pytest.mark.unit
     def test_size_for_priority(self):
         q = _PriorityQueue()
         q.push(_execution("a1"), priority=0)
@@ -78,6 +85,7 @@ class TestPriorityQueue:
         assert q.size_for_priority(2) == 1
         assert q.size_for_priority(9) == 0
 
+    @pytest.mark.unit
     def test_age_promotes_old(self):
         q = _PriorityQueue()
         with mock.patch("motor.agents.scheduler.time.time", return_value=1000.0):
@@ -92,6 +100,7 @@ class TestPriorityQueue:
         assert q.size_for_priority(2) == 2  # old1 + old2
         assert q.size_for_priority(3) == 0
 
+    @pytest.mark.unit
     def test_age_stops_at_priority_2(self):
         q = _PriorityQueue()
         with mock.patch("motor.agents.scheduler.time.time", return_value=1000.0):
@@ -104,11 +113,13 @@ class TestPriorityQueue:
 
 
 class TestAgentScheduler:
+    @pytest.mark.unit
     def test_init_defaults(self):
         s = AgentScheduler()
         assert s.queue_size == 0
         assert s.running_count == 0
 
+    @pytest.mark.unit
     def test_submit_dispatches(self):
         s = AgentScheduler(max_concurrent=1)
         s.submit(_execution("a1"))
@@ -117,6 +128,7 @@ class TestAgentScheduler:
         s.shutdown(timeout=5)
         assert len(s.shutdown(timeout=5) or []) >= 0
 
+    @pytest.mark.unit
     def test_map_priority(self):
         s = AgentScheduler()
         assert s._map_priority(_execution("x", policy=AgentPolicy(max_duration_seconds=30))) == 0
@@ -124,6 +136,7 @@ class TestAgentScheduler:
         assert s._map_priority(_execution("x", policy=AgentPolicy(max_duration_seconds=300))) == 2
         assert s._map_priority(_execution("x", policy=None)) == 2
 
+    @pytest.mark.unit
     def test_cancel_queued(self):
         s = AgentScheduler(max_concurrent=0)  # no dispatch
         s.submit(_execution("a1"))
@@ -131,12 +144,14 @@ class TestAgentScheduler:
         s.cancel("a1")
         assert s.queue_size == 0
 
+    @pytest.mark.unit
     def test_cancel_running(self):
         s = AgentScheduler(max_concurrent=1)
         s.submit(_execution("a1"))
         s.cancel("a1")
         assert s.running_count <= 1
 
+    @pytest.mark.unit
     def test_shutdown_returns_results(self):
         s = AgentScheduler(max_concurrent=2)
         s.submit(_execution("a1"))
@@ -152,6 +167,7 @@ class TestAgentScheduler:
         assert all(r.state == AgentState.COMPLETED for r in results)
         assert s.running_count == 0
 
+    @pytest.mark.unit
     def test_shutdown_with_deadline_passed(self):
         s = AgentScheduler(max_concurrent=1)
         s.submit(_execution("a1"))
@@ -159,6 +175,7 @@ class TestAgentScheduler:
             results = s.shutdown(timeout=1)
         assert isinstance(results, list)
 
+    @pytest.mark.unit
     def test_max_concurrent_limits(self):
         s = AgentScheduler(max_concurrent=2)
         gate = threading.Event()
@@ -170,12 +187,14 @@ class TestAgentScheduler:
         gate.set()
         s.shutdown(timeout=5)
 
+    @pytest.mark.unit
     def test_shutdown_blocks_new_submissions(self):
         s = AgentScheduler(max_concurrent=0)
         s.shutdown(timeout=1)
         s.submit(_execution("a1"))
         assert s.queue_size == 1  # en cola pero no despachado
 
+    @pytest.mark.unit
     def test_run_execution_success(self):
         s = AgentScheduler()
         execution = _execution("a1")
@@ -188,6 +207,7 @@ class TestAgentScheduler:
         assert result.state == AgentState.COMPLETED
         assert result.task_id == "t1"
 
+    @pytest.mark.unit
     def test_run_execution_error(self):
         s = AgentScheduler()
         execution = _execution("a1")
@@ -202,6 +222,7 @@ class TestAgentScheduler:
         assert result.state == AgentState.FAILED
         assert "boom" in (result.error or "")
 
+    @pytest.mark.unit
     def test_maybe_dispatch_after_shutdown(self):
         s = AgentScheduler(max_concurrent=0)
         s._shutdown = True
@@ -209,6 +230,7 @@ class TestAgentScheduler:
         assert s.running_count == 0
         assert s.queue_size == 1
 
+    @pytest.mark.unit
     def test_submit_runs_in_thread(self):
         s = AgentScheduler(max_concurrent=1)
         execution = _execution("a1")

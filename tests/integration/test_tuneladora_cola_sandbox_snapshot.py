@@ -1,6 +1,7 @@
 """Tests para llm_fallback, pending_queue, sandbox y snapshot de la tuneladora."""
 
 from __future__ import annotations
+import pytest
 
 import json
 import sqlite3
@@ -32,6 +33,7 @@ class TestPendingQueue:
     def _queue(self, tmp_path: Path) -> PendingQueue:
         return PendingQueue(tmp_path / "tuneladora.db")
 
+    @pytest.mark.integration
     def test_add_y_list(self, tmp_path: Path) -> None:
         q = self._queue(tmp_path)
         q.add(archivo="a.py", herramienta="ruff", severidad="high", error_raw="E501", bloque="static")
@@ -40,18 +42,21 @@ class TestPendingQueue:
         assert items[0]["archivo"] == "a.py"
         assert items[0]["estado"] == "pendiente"
 
+    @pytest.mark.integration
     def test_list_filtro_severidad(self, tmp_path: Path) -> None:
         q = self._queue(tmp_path)
         q.add(archivo="a", herramienta="r", severidad="high", error_raw="x")
         q.add(archivo="b", herramienta="r", severidad="low", error_raw="y")
         assert len(q.list_pending(severidad="high")) == 1
 
+    @pytest.mark.integration
     def test_resolve(self, tmp_path: Path) -> None:
         q = self._queue(tmp_path)
         fix_id = q.add(archivo="a", herramienta="r", severidad="high", error_raw="x")
         q.resolve(fix_id, "hecho")
         assert q.list_pending() == []
 
+    @pytest.mark.integration
     def test_record_run_y_stats(self, tmp_path: Path) -> None:
         q = self._queue(tmp_path)
         q.record_run(mode="check", verdict="OK", seconds=1.5, n_files=2)
@@ -61,6 +66,7 @@ class TestPendingQueue:
         assert stats["ok_runs"] == 1
         assert stats["fail_runs"] == 1
 
+    @pytest.mark.integration
     def test_init_falla_modo_degradado(self, tmp_path: Path) -> None:
         with mock.patch.object(PendingQueue, "_ensure_tables", side_effect=sqlite3.Error("boom")):
             q = PendingQueue(tmp_path / "db.sqlite")
@@ -71,6 +77,7 @@ class TestPendingQueue:
 
 
 class TestLLMFallback:
+    @pytest.mark.integration
     def test_analyze_ok(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         q = PendingQueue(tmp_path / "q.db")
@@ -89,6 +96,7 @@ class TestLLMFallback:
         patches = list((cfg.tuneladora_dir / "patches").glob("*.diff"))
         assert len(patches) == 1
 
+    @pytest.mark.integration
     def test_analyze_patch_vacio(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         lf = LLMFallback(cfg, PendingQueue(tmp_path / "q.db"))
@@ -98,6 +106,7 @@ class TestLLMFallback:
         with mock.patch("requests.post", return_value=resp):
             assert lf.analyze("err", str(archivo)) is None
 
+    @pytest.mark.integration
     def test_analyze_ollama_agotado_encola(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         q = PendingQueue(tmp_path / "q.db")
@@ -111,11 +120,13 @@ class TestLLMFallback:
         conn.close()
         assert row == ("imposible", "llm_fallback")
 
+    @pytest.mark.integration
     def test_get_code_context_archivo_inexistente(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         lf = LLMFallback(cfg, PendingQueue(tmp_path / "q.db"))
         assert lf._get_code_context("/no/existe.py") == ""
 
+    @pytest.mark.integration
     def test_analyze_excepcion_general(self, tmp_path: Path) -> None:
         cfg = _cfg(tmp_path)
         lf = LLMFallback(cfg, PendingQueue(tmp_path / "q.db"))
@@ -124,6 +135,7 @@ class TestLLMFallback:
 
 
 class TestSandbox:
+    @pytest.mark.integration
     def test_set_limits(self) -> None:
         import resource
 
@@ -133,6 +145,7 @@ class TestSandbox:
         assert m_set.call_args_list[0][0][0] == resource.RLIMIT_CPU
         assert m_set.call_args_list[1][0][0] == resource.RLIMIT_AS
 
+    @pytest.mark.integration
     def test_preexec(self) -> None:
         with mock.patch("scripts.pro.tuneladora.pipeline.sandbox.set_sandbox_limits") as m_set:
             preexec_fn()
@@ -160,6 +173,7 @@ class TestSnapshotService:
             encoding="utf-8",
         )
 
+    @pytest.mark.integration
     def test_save_ok(self, tmp_path: Path) -> None:
         log_calls: list[str] = []
         self._sistema_map(tmp_path)
@@ -173,6 +187,7 @@ class TestSnapshotService:
         assert payload["files"]["a.py"]["blake2b"] == "abc123"
         assert any("guardado" in l for l in log_calls)
 
+    @pytest.mark.integration
     def test_save_sin_mapa(self, tmp_path: Path) -> None:
         log_calls: list[str] = []
         svc = SnapshotService(tmp_path, log_fn=log_calls.append)
@@ -180,6 +195,7 @@ class TestSnapshotService:
         assert out is not None and out.exists()
         assert json.loads(out.read_text(encoding="utf-8"))["files"] == {}
 
+    @pytest.mark.integration
     def test_save_falla(self, tmp_path: Path) -> None:
         log_calls: list[str] = []
         (tmp_path / "sistema_map.json").write_text("{corrupto", encoding="utf-8")
@@ -187,6 +203,7 @@ class TestSnapshotService:
         assert svc.save("ciclo") is None
         assert any("falló" in l for l in log_calls)
 
+    @pytest.mark.integration
     def test_exists(self, tmp_path: Path) -> None:
         svc = SnapshotService(tmp_path)
         assert svc.exists() is False
@@ -195,6 +212,7 @@ class TestSnapshotService:
         (d / "ultimo_ciclo.json").write_text("{}")
         assert svc.exists() is True
 
+    @pytest.mark.integration
     def test_clean(self, tmp_path: Path) -> None:
         d = tmp_path / "delta_snapshots"
         d.mkdir()

@@ -8,6 +8,7 @@ Usuario → Agent → CapabilityGate → Planner → Scheduler
 """
 
 from __future__ import annotations
+import pytest
 
 from motor.agents import (
     AgentCapability,
@@ -96,6 +97,7 @@ class _IntegrationAudit(AuditLogger):
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_integration_full_flow() -> None:
     """Usuario → Agent → Gate → Planner → Scheduler → ToolRunner → Audit → Result."""
     planner = RuleBasedPlanner()
@@ -128,6 +130,7 @@ def test_integration_full_flow() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_integration_with_knowledge() -> None:
     """ToolRunner puede recuperar Facts simulados."""
     tool_runner = _IntegrationToolRunner()
@@ -141,6 +144,7 @@ def test_integration_with_knowledge() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_integration_with_memory() -> None:
     """ToolRunner puede recuperar memoria simulada."""
     tool_runner = _IntegrationToolRunner()
@@ -153,6 +157,7 @@ def test_integration_with_memory() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_integration_audit_trail() -> None:
     """Toda ejecución produce un audit trail completo."""
     planner = RuleBasedPlanner()
@@ -179,6 +184,7 @@ def test_integration_audit_trail() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_integration_plan_executed() -> None:
     """Los pasos del plan deben ejecutarse a través del ToolRunner."""
     planner = RuleBasedPlanner()

@@ -1,6 +1,7 @@
 """Tests para motor.observability.tracing_platform (TraceContext, span tree)."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -54,6 +55,7 @@ def _span(
 
 
 class TestDropPolicy:
+    @pytest.mark.unit
     def test_values(self):
         assert DropPolicy.DROP_NEWEST == "drop_newest"
         assert DropPolicy.DROP_OLDEST == "drop_oldest"
@@ -61,10 +63,12 @@ class TestDropPolicy:
 
 
 class TestSpanTreeValidation:
+    @pytest.mark.unit
     def test_empty_tree_raises(self):
         with pytest.raises(SpanTreeError, match="Empty"):
             validate_span_tree([])
 
+    @pytest.mark.unit
     def test_valid_tree_passes(self):
         spans = [
             _span(span_id="root", parent="ROOT"),
@@ -72,6 +76,7 @@ class TestSpanTreeValidation:
         ]
         validate_span_tree(spans)
 
+    @pytest.mark.unit
     def test_cycle_raises(self):
         spans = [
             _span(span_id="root", parent="ROOT"),
@@ -81,6 +86,7 @@ class TestSpanTreeValidation:
         with pytest.raises(SpanTreeError, match="cycle"):
             validate_span_tree(spans)
 
+    @pytest.mark.unit
     def test_missing_parent_raises(self):
         spans = [
             _span(span_id="root", parent="ROOT"),
@@ -89,6 +95,7 @@ class TestSpanTreeValidation:
         with pytest.raises(SpanTreeError, match="orphan spans"):
             validate_span_tree(spans)
 
+    @pytest.mark.unit
     def test_multiple_roots_raises(self):
         spans = [
             _span(span_id="r1", parent="ROOT"),
@@ -97,6 +104,7 @@ class TestSpanTreeValidation:
         with pytest.raises(SpanTreeError, match="expected 1 root"):
             validate_span_tree(spans)
 
+    @pytest.mark.unit
     def test_unreachable_span_raises(self):
         spans = [
             _span(span_id="root", parent="ROOT"),
@@ -112,6 +120,7 @@ class TestSpanTreeValidation:
         with pytest.raises(SpanTreeError):
             validate_span_tree(spans)
 
+    @pytest.mark.unit
     def test_multiple_traces_validated(self):
         spans = [
             _span(trace_id="t1", span_id="r1", parent="ROOT"),
@@ -122,6 +131,7 @@ class TestSpanTreeValidation:
 
 
 class TestSpanEvent:
+    @pytest.mark.unit
     def test_to_dict(self):
         event = _span(tags={"a": "b"}, error_code="E1", error_message="msg", duration_ns=5)
         d = event.to_dict()
@@ -132,6 +142,7 @@ class TestSpanEvent:
 
 
 class TestTraceContext:
+    @pytest.mark.unit
     def test_defaults_generate_ids(self):
         ctx = TraceContext(source="a", destination="b")
         assert ctx.trace_id
@@ -140,6 +151,7 @@ class TestTraceContext:
         assert ctx.span_count == 0
         assert ctx.error_count == 0
 
+    @pytest.mark.unit
     def test_explicit_ids(self):
         trace = TraceId.generate()
         corr = CorrelationId("corr-1")
@@ -159,6 +171,7 @@ class TestTraceContext:
         header = ctx.make_header()
         assert header.parent_span_id == parent
 
+    @pytest.mark.unit
     def test_thread_local_trace_id_propagation(self):
         trace = TraceId.generate()
         TraceContext._local.trace_id = trace
@@ -168,6 +181,7 @@ class TestTraceContext:
         finally:
             del TraceContext._local.trace_id
 
+    @pytest.mark.unit
     def test_set_exporter_and_sampler(self):
         ctx = TraceContext(source="a", destination="b")
         exporter = mock.Mock()
@@ -177,6 +191,7 @@ class TestTraceContext:
         assert ctx._exporter is exporter
         assert ctx._sampler is sampler
 
+    @pytest.mark.unit
     def test_make_header_generates_span(self):
         ctx = TraceContext(source="a", destination="b")
         header = ctx.make_header()
@@ -184,12 +199,14 @@ class TestTraceContext:
         assert header.span_id
         assert header.correlation_id == ctx._correlation_id
 
+    @pytest.mark.unit
     def test_make_header_with_span_id(self):
         ctx = TraceContext(source="a", destination="b")
         span = SpanId.generate()
         header = ctx.make_header(span_id=span)
         assert header.span_id == span
 
+    @pytest.mark.unit
     def test_span_success_emits(self):
         exporter = mock.Mock()
         ctx = TraceContext(source="a", destination="b")
@@ -206,6 +223,7 @@ class TestTraceContext:
         assert event.destination == "b"
         assert event.message_type == "op"
 
+    @pytest.mark.unit
     def test_span_exception_records_error_and_reraises(self):
         exporter = mock.Mock()
         ctx = TraceContext(source="a", destination="b")
@@ -217,6 +235,7 @@ class TestTraceContext:
         assert event.error_code == "RuntimeError"
         assert event.error_message == "boom"
 
+    @pytest.mark.unit
     def test_span_nested_parent(self):
         exporter = mock.Mock()
         ctx = TraceContext(source="a", destination="b")
@@ -227,6 +246,7 @@ class TestTraceContext:
         inner, outer = [c.args[0] for c in exporter.emit.call_args_list]
         assert inner.parent_span_id == outer.span_id
 
+    @pytest.mark.unit
     def test_span_restores_parent_after_exception(self):
         ctx = TraceContext(source="a", destination="b", parent_span_id=SpanId.generate())
         original = ctx._parent_span_id
@@ -234,6 +254,7 @@ class TestTraceContext:
             raise RuntimeError("x")
         assert ctx._parent_span_id == original
 
+    @pytest.mark.unit
     def test_emit_skipped_by_sampler(self):
         exporter = mock.Mock()
         sampler = Sampler(strategy=SamplingStrategy.NEVER)
@@ -244,6 +265,7 @@ class TestTraceContext:
             pass
         exporter.emit.assert_not_called()
 
+    @pytest.mark.unit
     def test_emit_records_error_for_adaptive_sampler(self):
         exporter = mock.Mock()
         sampler = mock.Mock()
@@ -258,6 +280,7 @@ class TestTraceContext:
             pass
         sampler.record_error.assert_called_with(False)
 
+    @pytest.mark.unit
     def test_emit_silent_on_exporter_failure(self):
         exporter = mock.Mock()
         exporter.emit.side_effect = RuntimeError("exporter down")
@@ -267,6 +290,7 @@ class TestTraceContext:
             pass
         assert ctx.span_count == 1
 
+    @pytest.mark.unit
     def test_from_header(self):
         trace = TraceId.generate()
         span = SpanId.generate()
@@ -285,6 +309,7 @@ class TestTraceContext:
         assert ctx.causation_id == "caus-x"
         assert ctx._parent_span_id == span
 
+    @pytest.mark.unit
     def test_to_envelope(self):
         ctx = TraceContext(source="a", destination="b")
         envelope = ProtocolEnvelope(
@@ -311,10 +336,13 @@ class TestTraceContext:
 
 
 class TestGlobalMetrics:
+    @pytest.mark.unit
     def test_get_metrics_collector(self):
         assert isinstance(get_metrics_collector(), MetricsCollector)
         assert get_metrics_collector() is get_metrics_collector()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_record_latency(self):
         collector = mock.Mock()
         with mock.patch("motor.observability.tracing_platform._global_collector", collector):

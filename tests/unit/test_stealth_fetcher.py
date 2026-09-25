@@ -1,6 +1,7 @@
 """Tests para core/stealth_fetcher.py."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -16,10 +17,12 @@ from core.stealth_fetcher import (
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_random_ua_siempre_valido(self) -> None:
         for _ in range(50):
             assert _random_ua() in USER_AGENTS
 
+    @pytest.mark.unit
     def test_default_headers(self) -> None:
         headers = _default_headers()
         assert headers["User-Agent"] in USER_AGENTS

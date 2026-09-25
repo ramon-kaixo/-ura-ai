@@ -8,6 +8,7 @@ de etapa son dinámicos dentro de pipeline.py.
 
 from __future__ import annotations
 
+import pytest
 import sys
 import types
 from pathlib import Path
@@ -92,6 +93,7 @@ def _compile_ok(**kwargs: Any) -> SimpleNamespace:
 
 
 class TestRunSnapshot:
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(
             monkeypatch,
@@ -109,6 +111,7 @@ class TestRunSnapshot:
             "skipped": ["skip.txt"],
         }
 
+    @pytest.mark.unit
     def test_error_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _break_import(monkeypatch, "knowledge.engine.scanner")
         result = _run_snapshot(Path("src"))
@@ -118,6 +121,7 @@ class TestRunSnapshot:
 
 
 class TestRunCompile:
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(monkeypatch, "knowledge.engine.compiler", compile_source=_compile_ok)
         result = _run_compile(Path("src"), Path("db"), "cid")
@@ -131,6 +135,7 @@ class TestRunCompile:
             "graph_version": "v1",
         }
 
+    @pytest.mark.unit
     def test_result_fallido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def compile_fail(**kwargs: Any) -> SimpleNamespace:
             return SimpleNamespace(
@@ -147,6 +152,7 @@ class TestRunCompile:
         assert result.success is False
         assert result.output["errors"] == 1
 
+    @pytest.mark.unit
     def test_error_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _break_import(monkeypatch, "knowledge.engine.compiler")
         result = _run_compile(Path("src"), Path("db"))
@@ -155,6 +161,7 @@ class TestRunCompile:
 
 
 class TestRunVerify:
+    @pytest.mark.unit
     def test_sin_errores(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(monkeypatch, "knowledge.engine.verifier", verify_graph=lambda db: [])
         result = _run_verify(Path("db"))
@@ -162,6 +169,7 @@ class TestRunVerify:
         assert result.success is True
         assert result.output == {"checks": 0, "errors": 0}
 
+    @pytest.mark.unit
     def test_con_errores(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(
             monkeypatch,
@@ -172,6 +180,7 @@ class TestRunVerify:
         assert result.success is False
         assert result.output == {"checks": 2, "errors": 1}
 
+    @pytest.mark.unit
     def test_error_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _break_import(monkeypatch, "knowledge.engine.verifier")
         result = _run_verify(Path("db"))
@@ -180,6 +189,7 @@ class TestRunVerify:
 
 
 class TestRunArchive:
+    @pytest.mark.unit
     def test_success_con_commit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(
             monkeypatch,
@@ -199,6 +209,7 @@ class TestRunArchive:
             "sha256": "b" * 16,
         }
 
+    @pytest.mark.unit
     def test_success_sin_commit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(
             monkeypatch,
@@ -213,6 +224,7 @@ class TestRunArchive:
         assert result.success is True
         assert result.output["commit"] == ""
 
+    @pytest.mark.unit
     def test_error_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _break_import(monkeypatch, "knowledge.engine.archiver")
         result = _run_archive(Path("src"), Path("db"))
@@ -221,6 +233,7 @@ class TestRunArchive:
 
 
 class TestRunQdrant:
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install(
             monkeypatch,
@@ -232,6 +245,7 @@ class TestRunQdrant:
         assert result.success is True
         assert result.output == {"synced": 7}
 
+    @pytest.mark.unit
     def test_degradacion_gradual(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(**kwargs: Any) -> Any:
             raise RuntimeError("qdrant down")
@@ -244,6 +258,7 @@ class TestRunQdrant:
 
 
 class TestRunCi:
+    @pytest.mark.unit
     def test_script_not_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "exists", lambda self: False)
         result = _run_ci()
@@ -251,6 +266,7 @@ class TestRunCi:
         assert result.success is False
         assert "not found" in result.error
 
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -262,6 +278,7 @@ class TestRunCi:
         assert result.output["stdout_preview"] == "x" * 300
         assert result.error == ""
 
+    @pytest.mark.unit
     def test_fallo_returncode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -271,6 +288,7 @@ class TestRunCi:
         assert result.success is False
         assert result.error == "boom"
 
+    @pytest.mark.unit
     def test_exception(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def timeout(*args: Any, **kwargs: Any) -> Any:
             raise TimeoutExpired("bash", 300)
@@ -289,6 +307,7 @@ class TestRunRuleEval:
             {"id": "n3", "path": "p3", "frontmatter": "", "body": ""},
         ]
 
+    @pytest.mark.unit
     def test_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         evaluator = FakeRuleEvaluator()
         _install(
@@ -305,6 +324,7 @@ class TestRunRuleEval:
         assert result.success is True
         assert result.output == {"documents": 3, "findings": 2, "errors": 1}
 
+    @pytest.mark.unit
     def test_relaciones_y_frontmatter(self, monkeypatch: pytest.MonkeyPatch) -> None:
         evaluator = FakeRuleEvaluator()
         _install(
@@ -328,6 +348,7 @@ class TestRunRuleEval:
         assert n2["title"] == ""
         assert n2["body"] == ""
 
+    @pytest.mark.unit
     def test_error_import(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _break_import(monkeypatch, "knowledge.engine.connection")
         result = _run_rule_eval(Path("db"))
@@ -336,6 +357,7 @@ class TestRunRuleEval:
 
 
 class TestPipelineInit:
+    @pytest.mark.unit
     def test_defaults_source_dir_y_db_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         seen_source: list[Path] = []
         seen_db: list[Path] = []
@@ -355,6 +377,7 @@ class TestPipelineInit:
         assert seen_source == [Path.cwd()]
         assert seen_db == [Path.home() / "URA" / "ura_ia_1972" / "knowledge" / "knowledge.db"]
 
+    @pytest.mark.unit
     def test_valores_explicitos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         seen_archive: list[Path | None] = []
 
@@ -367,6 +390,7 @@ class TestPipelineInit:
         pipe.run(stages=[Stage.ARCHIVE])
         assert seen_archive == [Path("arch")]
 
+    @pytest.mark.unit
     def test_archive_dir_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         seen_archive: list[Path | None] = []
 
@@ -402,6 +426,7 @@ class TestPipelineRun:
         _install(monkeypatch, "knowledge.engine.connection", open_db=lambda p: FakeRuleConn([], []))
         _install(monkeypatch, "knowledge.engine.rules", RuleEvaluator=FakeRuleEvaluator)
 
+    @pytest.mark.unit
     def test_todas_las_etapas(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._install_todo(monkeypatch)
         monkeypatch.setattr(
@@ -416,6 +441,7 @@ class TestPipelineRun:
         assert [s.stage for s in result.stages] == list(Stage)
         assert all(s.success for s in result.stages)
 
+    @pytest.mark.unit
     def test_stages_explicitos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._install_todo(monkeypatch)
         pipe = Pipeline(source_dir=Path("s"), db_path=Path("db"))
@@ -423,6 +449,7 @@ class TestPipelineRun:
         assert len(result.stages) == 2
         assert [s.stage for s in result.stages] == [Stage.COMPILE, Stage.VERIFY]
 
+    @pytest.mark.unit
     def test_correlation_id_autogenerado(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._install_todo(monkeypatch)
         pipe = Pipeline(source_dir=Path("s"), db_path=Path("db"))
@@ -430,6 +457,7 @@ class TestPipelineRun:
         assert result.correlation_id != ""
         assert len(result.correlation_id) == 32
 
+    @pytest.mark.unit
     def test_stage_desconocido(self) -> None:
         pipe = Pipeline(source_dir=Path("s"), db_path=Path("db"))
         result = pipe.run(stages=["bogus"])  # type: ignore[list-item]
@@ -437,6 +465,7 @@ class TestPipelineRun:
         assert result.success is False
         assert result.stages[0].error == "Unknown stage: bogus"
 
+    @pytest.mark.unit
     def test_overall_fallido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._install_todo(monkeypatch)
         _break_import(monkeypatch, "knowledge.engine.connection")
@@ -446,6 +475,7 @@ class TestPipelineRun:
         assert result.stages[0].success is True
         assert result.stages[2].success is False
 
+    @pytest.mark.unit
     def test_stages_vacio_ejecuta_todas(self, monkeypatch: pytest.MonkeyPatch) -> None:
         self._install_todo(monkeypatch)
         monkeypatch.setattr(
@@ -459,6 +489,7 @@ class TestPipelineRun:
 
 
 class TestRunCompileChain:
+    @pytest.mark.unit
     def test_cadena(self, monkeypatch: pytest.MonkeyPatch) -> None:
         TestPipelineRun._install_todo(self, monkeypatch)
         pipe = Pipeline(source_dir=Path("s"), db_path=Path("db"))

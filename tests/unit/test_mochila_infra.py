@@ -10,6 +10,7 @@ Cubre:
 
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -21,6 +22,7 @@ from core.mochila.helpers import _procesar_usage
 
 
 class TestMochilaState:
+    @pytest.mark.unit
     def test_dataclass_defaults(self) -> None:
         st = MochilaState(providers={}, provider_timeouts={})
         assert st.cache_models == []
@@ -31,6 +33,7 @@ class TestMochilaState:
         assert st.rate_limiter is None
         assert st.cost_tracker is None
 
+    @pytest.mark.unit
     def test_build_state(self) -> None:
         st = build_state()
         assert set(st.providers) == {"ollama", "openrouter", "gemini"}
@@ -46,10 +49,12 @@ class TestMochilaState:
 
 
 class TestMessagesToPrompt:
+    @pytest.mark.unit
     def test_roles_y_contenido_simple(self) -> None:
         msgs = [{"role": "user", "content": "hola"}, {"role": "assistant", "content": "mundo"}]
         assert _messages_to_prompt(msgs) == "<user>hola</user>\n<assistant>mundo</assistant>"
 
+    @pytest.mark.unit
     def test_content_lista_texto(self) -> None:
         msgs = [
             {
@@ -62,15 +67,18 @@ class TestMessagesToPrompt:
         ]
         assert _messages_to_prompt(msgs) == "<user>a\nb</user>"
 
+    @pytest.mark.unit
     def test_content_lista_sin_text(self) -> None:
         msgs = [{"content": [{"type": "image", "url": "x"}]}]
         assert _messages_to_prompt(msgs) == "<user></user>"
 
+    @pytest.mark.unit
     def test_sin_role_ni_content(self) -> None:
         assert _messages_to_prompt([{}]) == "<user></user>"
 
 
 class TestMotorChatAdapter:
+    @pytest.mark.unit
     def test_nombre(self) -> None:
         adapter = _MotorChatAdapter("ollama", mock.Mock())
         assert adapter.nombre == "ollama"
@@ -170,22 +178,26 @@ class TestMotorChatAdapter:
 
 
 class TestProcesarUsage:
+    @pytest.mark.unit
     def test_respuesta_con_usage(self) -> None:
         ct = mock.Mock()
         _procesar_usage({"usage": {"prompt_tokens": 10, "completion_tokens": 5}}, "ollama", "m1", ct)
         ct.registrar.assert_called_once_with("ollama", "m1", 10, 5)
 
     @pytest.mark.slow
+    @pytest.mark.unit
     def test_respuesta_sin_usage(self) -> None:
         ct = mock.Mock()
         _procesar_usage({"usage": None}, "ollama", "m1", ct)
         ct.registrar.assert_called_once_with("ollama", "m1", 0, 0)
 
+    @pytest.mark.unit
     def test_respuesta_none(self) -> None:
         ct = mock.Mock()
         _procesar_usage(None, "ollama", "m1", ct)
         ct.registrar.assert_not_called()
 
+    @pytest.mark.unit
     def test_usage_parcial(self) -> None:
         ct = mock.Mock()
         _procesar_usage({"usage": {"prompt_tokens": 7}}, "ollama", "m1", ct)
@@ -195,6 +207,7 @@ class TestProcesarUsage:
 class TestInterfaces:
     """Protocols runtime_checkable: isinstance con objetos que cumplen el contrato."""
 
+    @pytest.mark.unit
     def test_illm_client(self) -> None:
         from motor.core.interfaces import ILLMClient
 
@@ -207,6 +220,7 @@ class TestInterfaces:
 
         assert isinstance(Cliente(), ILLMClient)
 
+    @pytest.mark.unit
     def test_iexecutor(self) -> None:
         from motor.core.interfaces import IExecutor, IProcessResult
 
@@ -228,6 +242,7 @@ class TestInterfaces:
         assert isinstance(Ejecutor(), IExecutor)
         assert isinstance(Resultado(), IProcessResult)
 
+    @pytest.mark.unit
     def test_iconfig_provider(self) -> None:
         from motor.core.interfaces import IConfigProvider
 
@@ -258,6 +273,7 @@ class TestInterfaces:
         Config = type("Config", (), dict.fromkeys(campos))
         assert isinstance(Config(), IConfigProvider)
 
+    @pytest.mark.unit
     def test_ivector_store(self) -> None:
         from motor.core.interfaces import IVectorStore
 
@@ -270,6 +286,7 @@ class TestInterfaces:
 
         assert isinstance(Store(), IVectorStore)
 
+    @pytest.mark.unit
     def test_isecret_store(self) -> None:
         from motor.core.interfaces import ISecretStore
 
@@ -300,6 +317,7 @@ def mochila_state() -> MochilaState:
 
 
 class TestRoutes:
+    @pytest.mark.unit
     def test_health_router(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -315,6 +333,7 @@ class TestRoutes:
         assert data["status"] == "ok"
         assert set(data["providers"]) == {"ollama", "gemini"}
 
+    @pytest.mark.unit
     def test_breaker_router_status(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -328,6 +347,7 @@ class TestRoutes:
         assert r.status_code == 200
         assert r.json() == {"ollama": {"ok": True}, "gemini": {"ok": True}}
 
+    @pytest.mark.unit
     def test_breaker_router_reset(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -341,6 +361,7 @@ class TestRoutes:
         assert r.status_code == 200
         assert r.json() == {"status": "reset", "provider": "ollama"}
 
+    @pytest.mark.unit
     def test_breaker_router_reset_404(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -353,6 +374,7 @@ class TestRoutes:
         r = client.post("/breaker/reset/noexiste")
         assert r.status_code == 404
 
+    @pytest.mark.unit
     def test_metrics_rate(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -366,6 +388,7 @@ class TestRoutes:
         assert r.status_code == 200
         assert r.json() == {"tokens": 10}
 
+    @pytest.mark.unit
     def test_metrics_rate_404(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -378,6 +401,7 @@ class TestRoutes:
         r = client.get("/metrics/rate/nada")
         assert r.status_code == 404
 
+    @pytest.mark.unit
     def test_metrics_cost(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient
@@ -391,6 +415,7 @@ class TestRoutes:
         assert r.status_code == 200
         assert r.json() == {"total": 0}
 
+    @pytest.mark.unit
     def test_metrics_acquire_vram(self, mochila_state: MochilaState) -> None:
         from fastapi import FastAPI
         from fastapi.testclient import TestClient

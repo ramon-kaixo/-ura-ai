@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/validator.py."""
 
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.models import (
     CompileError,
@@ -60,6 +61,7 @@ def _rel(dst: str, relation: str = "references") -> Relation:
     return Relation(src="a1", dst=dst, relation=relation)
 
 
+@pytest.mark.unit
 def test_validacion_ok() -> None:
     vr = validate_knowledge_object(_obj(_doc()))
     assert vr.valid is True
@@ -67,6 +69,7 @@ def test_validacion_ok() -> None:
     assert vr.warnings == ()
 
 
+@pytest.mark.unit
 def test_doc_type_invalido() -> None:
     vr = validate_knowledge_object(_obj(_doc(doc_type="xxx")))
     assert vr.valid is False
@@ -74,26 +77,31 @@ def test_doc_type_invalido() -> None:
     assert "KE003" in codes
 
 
+@pytest.mark.unit
 def test_doc_type_vacio() -> None:
     vr = validate_knowledge_object(_obj(_doc(doc_type="")))
     assert "KE003" in [e.code for e in vr.errors]
 
 
+@pytest.mark.unit
 def test_valid_types_personalizado() -> None:
     vr = validate_knowledge_object(_obj(_doc(doc_type="x")), valid_types=frozenset({"x"}))
     assert vr.valid is True
 
 
+@pytest.mark.unit
 def test_doc_id_invalido() -> None:
     vr = validate_knowledge_object(_obj(_doc(doc_id="  ")))
     assert "KE009" in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_status_no_estandar() -> None:
     vr = validate_knowledge_object(_obj(_doc(status="pending")))
     assert "KE009" in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_quality_fuera_de_rango() -> None:
     vr = validate_knowledge_object(_obj(_doc(quality=1.5)))
     assert "KE009" in [w.code for w in vr.warnings]
@@ -101,32 +109,38 @@ def test_quality_fuera_de_rango() -> None:
     assert "KE009" in [w.code for w in vr2.warnings]
 
 
+@pytest.mark.unit
 def test_body_corto() -> None:
     vr = validate_knowledge_object(_obj(_doc(body="corto")))
     assert "KE009" in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_body_vacio_sin_warning() -> None:
     vr = validate_knowledge_object(_obj(_doc(body="")))
     assert "KE009" not in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_tags_invalidos() -> None:
     vr = validate_knowledge_object(_obj(_doc(tags=("ok", "", 3))))
     assert "KE009" in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_aliases_invalidos() -> None:
     vr = validate_knowledge_object(_obj(_doc(aliases=("", "  "))))
     assert "KE009" in [w.code for w in vr.warnings]
 
 
+@pytest.mark.unit
 def test_campos_obsoletos() -> None:
     vr = validate_knowledge_object(_obj(_doc(extra={"category": "x", "author": "y"})))
     codes = [w.code for w in vr.warnings]
     assert codes.count("KE204") == 2
 
 
+@pytest.mark.unit
 def test_warn_rango() -> None:
     w: list[CompileError] = []
     _warn_rango(w, "p", "x", 0.5, 0.0, 1.0)
@@ -137,24 +151,28 @@ def test_warn_rango() -> None:
     assert "x fuera de rango" in w[0].message
 
 
+@pytest.mark.unit
 def test_validar_doc_type_directo() -> None:
     errs: list[CompileError] = []
     _validar_doc_type(_doc(doc_type="adr"), VALID_DOC_TYPES, errs)
     assert errs == []
 
 
+@pytest.mark.unit
 def test_validar_warnings_core_directo() -> None:
     w: list[CompileError] = []
     _validar_warnings_core(_doc(), w)
     assert w == []
 
 
+@pytest.mark.unit
 def test_validar_tags_aliases_directo() -> None:
     w: list[CompileError] = []
     _validar_tags_aliases(_doc(tags=("a",), aliases=("b",)), w)
     assert w == []
 
 
+@pytest.mark.unit
 def test_validar_campos_obsoletos_directo() -> None:
     w: list[CompileError] = []
     _validar_campos_obsoletos(_doc(extra={"version": 1}), w)
@@ -162,6 +180,7 @@ def test_validar_campos_obsoletos_directo() -> None:
     assert "version" in w[0].message
 
 
+@pytest.mark.unit
 def test_batch_ok() -> None:
     objs = [_obj(_doc("a1")), _obj(_doc("a2"))]
     valid, errors, warnings = validate_batch(objs)
@@ -170,6 +189,7 @@ def test_batch_ok() -> None:
     assert warnings == []
 
 
+@pytest.mark.unit
 def test_batch_excluye_invalidos() -> None:
     objs = [_obj(_doc("a1")), _obj(_doc("a2", doc_type="bad"))]
     valid, errors, _warnings = validate_batch(objs)
@@ -177,6 +197,7 @@ def test_batch_excluye_invalidos() -> None:
     assert "KE003" in [e.code for e in errors]
 
 
+@pytest.mark.unit
 def test_batch_relacion_inexistente() -> None:
     objs = [_obj(_doc("a1"), relations=(_rel("zz"),))]
     valid, errors, _warnings = validate_batch(objs)
@@ -184,6 +205,7 @@ def test_batch_relacion_inexistente() -> None:
     assert "KE004" in [e.code for e in errors]
 
 
+@pytest.mark.unit
 def test_batch_relacion_dedup() -> None:
     objs = [
         _obj(_doc("a1"), relations=(_rel("zz"), _rel("zz", "depends"))),
@@ -192,30 +214,35 @@ def test_batch_relacion_dedup() -> None:
     assert [e.code for e in errors].count("KE004") == 1
 
 
+@pytest.mark.unit
 def test_batch_relacion_existente() -> None:
     objs = [_obj(_doc("a1"), relations=(_rel("a2"),)), _obj(_doc("a2"))]
     _valid, errors, _warnings = validate_batch(objs)
     assert "KE004" not in [e.code for e in errors]
 
 
+@pytest.mark.unit
 def test_batch_alias_resuelve_relacion() -> None:
     objs = [_obj(_doc("a1"), relations=(_rel("alias-x"),)), _obj(_doc("a2", aliases=("alias-x",)))]
     _valid, errors, _warnings = validate_batch(objs)
     assert "KE004" not in [e.code for e in errors]
 
 
+@pytest.mark.unit
 def test_batch_ids_duplicados() -> None:
     objs = [_obj(_doc("dup")), _obj(_doc("dup"))]
     _valid, errors, _warnings = validate_batch(objs)
     assert "KE101" in [e.code for e in errors]
 
 
+@pytest.mark.unit
 def test_batch_paths_duplicados() -> None:
     objs = [_obj(_doc("a1", path="docs/mismo.md")), _obj(_doc("a2", path="docs/mismo.md"))]
     _valid, _errors, warnings = validate_batch(objs)
     assert "KE007" in [w.code for w in warnings]
 
 
+@pytest.mark.unit
 def test_construir_lookups() -> None:
     objs = [_obj(_doc("a1", aliases=("al1", "  "))), _obj(_doc("a2"))]
     doc_count, path_count, known = _construir_lookups(objs)
@@ -224,6 +251,7 @@ def test_construir_lookups() -> None:
     assert "al1" in known
 
 
+@pytest.mark.unit
 def test_validar_relaciones_directo() -> None:
     errs: list[CompileError] = []
     reported: set[tuple[str, str]] = set()
@@ -232,6 +260,7 @@ def test_validar_relaciones_directo() -> None:
     assert errs[0].code == "KE004"
 
 
+@pytest.mark.unit
 def test_check_duplicados_directo() -> None:
     errs: list[CompileError] = []
     warns: list[CompileError] = []
@@ -240,6 +269,7 @@ def test_check_duplicados_directo() -> None:
     assert "KE007" in [w.code for w in warns]
 
 
+@pytest.mark.unit
 def test_constantes() -> None:
     assert "doc" in VALID_DOC_TYPES
     assert "draft" in VALID_STATUSES

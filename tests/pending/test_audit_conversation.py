@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import concurrent.futures
 import tempfile
 import threading
@@ -288,6 +289,7 @@ class TestLongConversations:
         assert conv is not None
         assert len(conv.messages) == 2000
 
+    @pytest.mark.slow
     def test_store_limit_100_truncates_loaded_conversation(self):
         """Bug: MessageStore.get_conversation hardcodes limit=100.
         Even with max_turns=10000, loading from store returns at most 100 rows."""

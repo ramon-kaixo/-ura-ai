@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from typing import TYPE_CHECKING
 
@@ -49,18 +50,22 @@ def _make_plugin_with_hooks(base: Path, name: str, hook_names: list[str]) -> Pat
 
 
 class TestEventBusCompat:
+    @pytest.mark.integration
     def test_api_compatibility_ok(self):
         assert check_api_compatibility("1.0.0", "1.0.0") is True
         assert check_api_compatibility("1.0.0", "1.1.0") is True
         assert check_api_compatibility("1.5.0", "1.0.0") is False
 
+    @pytest.mark.integration
     def test_api_compatibility_legacy(self):
         assert check_api_compatibility("", "1.0.0", allow_legacy=True) is True
 
+    @pytest.mark.integration
     def test_plugin_dependency_exact(self):
         assert check_plugin_dependency("dep", "==1.0.0", "1.0.0") is True
         assert check_plugin_dependency("dep", "==1.0.0", "1.0.1") is False
 
+    @pytest.mark.integration
     def test_plugin_dependency_range(self):
         assert check_plugin_dependency("dep", ">=1.0.0", "1.5.0") is True
         assert check_plugin_dependency("dep", ">=2.0.0", "1.5.0") is False
@@ -69,6 +74,7 @@ class TestEventBusCompat:
 
 
 class TestIntegrationEventBusHookManager:
+    @pytest.mark.integration
     def test_hook_integration(self, tmp_path: Path):
         bus = EventBus()
         dm = DegradedMode.instancia()
@@ -82,6 +88,7 @@ class TestIntegrationEventBusHookManager:
 
 
 class TestIntegrationEventBusDegradedMode:
+    @pytest.mark.integration
     def test_degraded_mode_after_bad_hook(self, tmp_path: Path):
         bus = EventBus()
         dm = DegradedMode()
@@ -113,6 +120,7 @@ class TestIntegrationEventBusDegradedMode:
 
 
 class TestIntegrationRegistryWithExecutor:
+    @pytest.mark.integration
     def test_registry_plugin_uses_executor(self, tmp_path: Path):
         registry = PluginRegistryV2()
         d = tmp_path / "exec_plugin"
@@ -139,6 +147,7 @@ class TestIntegrationRegistryWithExecutor:
 
 
 class TestIntegrationFullCycle:
+    @pytest.mark.integration
     def test_full_cycle(self, tmp_path: Path):
         bus = EventBus()
         dm = DegradedMode.instancia()

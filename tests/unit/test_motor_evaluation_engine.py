@@ -22,6 +22,7 @@ def _retriever(query_text: str) -> list[str]:
 
 
 class TestRetrievalResult:
+    @pytest.mark.unit
     def test_slots(self) -> None:
         r = RetrievalResult("q1", ["a"], 5.0)
         assert r.query_id == "q1"
@@ -30,6 +31,7 @@ class TestRetrievalResult:
 
 
 class TestEvaluationRun:
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         run = EvaluationRun("corpus", "cfg", {"recall@10": 1.0}, [{"q": 1}], 123.0, {"mean": 5.0})
         d = run.to_dict()
@@ -39,6 +41,7 @@ class TestEvaluationRun:
 
 
 class TestEvaluationEngine:
+    @pytest.mark.unit
     def test_registros_y_listas(self) -> None:
         e = EvaluationEngine()
         c = _corpus()
@@ -47,6 +50,7 @@ class TestEvaluationEngine:
         assert e.list_corpora() == ["c1"]
         assert e.list_retrievers() == ["r1"]
 
+    @pytest.mark.unit
     def test_evaluate(self) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
@@ -68,12 +72,14 @@ class TestEvaluationEngine:
         assert run.config_name == "r1"
         assert run.corpus_name == "c1"
 
+    @pytest.mark.unit
     def test_latencia_stats_vacio(self) -> None:
         from motor.core.evaluation.evaluator import _latencia_stats
 
         stats = _latencia_stats([])
         assert stats == {"mean_ms": 0.0, "min_ms": 0.0, "max_ms": 0.0}
 
+    @pytest.mark.unit
     def test_agregar_sin_queries(self) -> None:
         from motor.core.evaluation.evaluator import _agregar
 
@@ -81,18 +87,21 @@ class TestEvaluationEngine:
         assert agg["map"] == 0.0
         assert agg["recall@5"] == 0.0
 
+    @pytest.mark.unit
     def test_evaluate_corpus_no_existe(self) -> None:
         e = EvaluationEngine()
         e.register_retriever("r1", _retriever)
         with pytest.raises(ValueError, match="Corpus not found"):
             e.evaluate("nope", "r1")
 
+    @pytest.mark.unit
     def test_evaluate_retriever_no_existe(self) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
         with pytest.raises(ValueError, match="Retriever not found"):
             e.evaluate("c1", "nope")
 
+    @pytest.mark.unit
     def test_evaluate_relevance_scores(self) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
@@ -100,6 +109,7 @@ class TestEvaluationEngine:
         run = e.evaluate("c1", "r1", k=2, relevance_scores=True)
         assert run is not None
 
+    @pytest.mark.unit
     def test_max_results(self) -> None:
         e = EvaluationEngine()
         e._max_results = 2
@@ -109,6 +119,7 @@ class TestEvaluationEngine:
             e.evaluate("c1", "r1")
         assert len(e._results) == 2
 
+    @pytest.mark.unit
     def test_compare(self) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
@@ -124,6 +135,8 @@ class TestEvaluationEngine:
             assert info["config"] in {"r1", "r2"}
             assert isinstance(info["value"], float)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_get_results_y_save_load(self, tmp_path) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
@@ -137,6 +150,7 @@ class TestEvaluationEngine:
         e2.load_results(p)
         assert len(e2.get_results()) == 1
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         e = EvaluationEngine()
         e.register_corpus("c1", _corpus())
@@ -147,12 +161,14 @@ class TestEvaluationEngine:
 
 
 class TestExperiment:
+    @pytest.mark.unit
     def test_propiedades(self) -> None:
         exp = Experiment("exp1", _corpus(), "desc")
         assert exp.name == "exp1"
         assert exp.configs == []
         assert exp.results == []
 
+    @pytest.mark.unit
     def test_add_config_y_run(self) -> None:
         exp = Experiment("exp1", _corpus())
         exp.add_config("bm25", _retriever, {"k1": 1.2}, "config bm25")
@@ -162,6 +178,7 @@ class TestExperiment:
         assert all(isinstance(r, ExperimentResult) for r in results)
         assert exp.results == results
 
+    @pytest.mark.unit
     def test_compare_despues_run(self) -> None:
         exp = Experiment("exp1", _corpus())
         exp.add_config("bm25", _retriever)
@@ -185,10 +202,12 @@ class TestExperiment:
         assert comp["general_ranking"][1]["rank"] == 2
         assert "elapsed_seconds" in comp
 
+    @pytest.mark.unit
     def test_compare_sin_results(self) -> None:
         exp = Experiment("exp1", _corpus())
         assert exp.compare() == {"error": "no results", "configs": []}
 
+    @pytest.mark.unit
     def test_report(self) -> None:
         exp = Experiment("exp1", _corpus())
         exp.add_config("bm25", _retriever)
@@ -197,10 +216,13 @@ class TestExperiment:
         assert "Experimento: exp1" in rep
         assert "Ganador" in rep
 
+    @pytest.mark.unit
     def test_report_sin_results(self) -> None:
         exp = Experiment("exp1", _corpus())
         assert "Error" in exp.report()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_to_dict_save_load(self, tmp_path) -> None:
         exp = Experiment("exp1", _corpus())
         exp.add_config("bm25", _retriever)
@@ -218,6 +240,7 @@ class TestExperiment:
         assert len(loaded["results"]) == 1
         assert loaded["experiment"] == "exp1"
 
+    @pytest.mark.unit
     def test_report_detalle(self) -> None:
         exp = Experiment("exp1", _corpus())
         exp.add_config("bm25", _retriever)
@@ -233,6 +256,7 @@ class TestExperiment:
 
 
 class TestExperimentConfig:
+    @pytest.mark.unit
     def test_acepta_args(self) -> None:
         cfg = ExperimentConfig("name", lambda q: [], {"k": 1}, "d")
         assert cfg.name == "name"

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -24,27 +25,32 @@ class _Stat:
 
 
 class TestCheckDisk:
+    @pytest.mark.integration
     def test_ok(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("os.statvfs", lambda p: _Stat(bavail=5_000_000, blocks=10_000_000))
         r = detector.check_disk()
         assert r.status == "ok"
         assert r.value is not None
 
+    @pytest.mark.integration
     def test_warning(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("os.statvfs", lambda p: _Stat(bavail=3_000_000, blocks=10_000_000))
         r = detector.check_disk()
         assert r.status == "warning"
 
+    @pytest.mark.integration
     def test_critical(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("os.statvfs", lambda p: _Stat(bavail=1_000_000, blocks=10_000_000))
         r = detector.check_disk()
         assert r.status == "critical"
 
+    @pytest.mark.integration
     def test_error(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("os.statvfs", mock.Mock(side_effect=OSError("x")))
         r = detector.check_disk()
         assert r.status == "error"
 
+    @pytest.mark.integration
     def test_auto_cleanup_si_muy_critico(self, detector, monkeypatch) -> None:
         detector.engine = mock.Mock()
         calls = {"n": 0}
@@ -80,22 +86,26 @@ class TestCheckMemory:
 
         monkeypatch.setattr(_DetPath, "open", lambda self, *a, **k: open(f))
 
+    @pytest.mark.integration
     def test_ok(self, detector, monkeypatch, tmp_path: Path) -> None:
         self._patch_meminfo(monkeypatch, tmp_path, 16_000_000, 8_000_000)
         r = detector.check_memory()
         assert r.status == "ok"
         assert r.value == 50.0
 
+    @pytest.mark.integration
     def test_warning(self, detector, monkeypatch, tmp_path: Path) -> None:
         self._patch_meminfo(monkeypatch, tmp_path, 16_000_000, 2_000_000)
         r = detector.check_memory()
         assert r.status == "warning"
 
+    @pytest.mark.integration
     def test_critical(self, detector, monkeypatch, tmp_path: Path) -> None:
         self._patch_meminfo(monkeypatch, tmp_path, 16_000_000, 500_000)
         r = detector.check_memory()
         assert r.status == "critical"
 
+    @pytest.mark.integration
     def test_error(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.Path.open",
@@ -106,6 +116,7 @@ class TestCheckMemory:
 
 
 class TestCheckOllama:
+    @pytest.mark.integration
     def test_ok_con_modelos(self, detector, monkeypatch) -> None:
         resp = SimpleNamespace(status_code=200, json=lambda: {"models": [1, 2, 3]})
         monkeypatch.setattr("httpx.get", lambda *a, **k: resp)
@@ -113,18 +124,21 @@ class TestCheckOllama:
         assert r.status == "ok"
         assert r.value == 3
 
+    @pytest.mark.integration
     def test_cero_modelos_warning(self, detector, monkeypatch) -> None:
         resp = SimpleNamespace(status_code=200, json=lambda: {"models": []})
         monkeypatch.setattr("httpx.get", lambda *a, **k: resp)
         r = detector.check_ollama()
         assert r.status == "warning"
 
+    @pytest.mark.integration
     def test_http_error_warning(self, detector, monkeypatch) -> None:
         resp = SimpleNamespace(status_code=500, json=lambda: {})
         monkeypatch.setattr("httpx.get", lambda *a, **k: resp)
         r = detector.check_ollama()
         assert r.status == "warning"
 
+    @pytest.mark.integration
     def test_connect_error_critical_y_restart(self, detector, monkeypatch) -> None:
         import httpx
 
@@ -134,6 +148,7 @@ class TestCheckOllama:
         assert r.status == "critical"
         m_restart.assert_called_once()
 
+    @pytest.mark.integration
     def test_error_generico(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("httpx.get", mock.Mock(side_effect=RuntimeError("x")))
         r = detector.check_ollama()
@@ -141,6 +156,7 @@ class TestCheckOllama:
 
 
 class TestCheckGit:
+    @pytest.mark.integration
     def test_ok(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.subprocess.run",
@@ -149,6 +165,7 @@ class TestCheckGit:
         r = detector.check_git_status()
         assert r.status == "ok"
 
+    @pytest.mark.integration
     def test_sucio_warning(self, detector, monkeypatch) -> None:
         out = "\n".join(f" M f{i}.py" for i in range(15))
         monkeypatch.setattr(
@@ -158,6 +175,7 @@ class TestCheckGit:
         r = detector.check_git_status()
         assert r.status == "warning"
 
+    @pytest.mark.integration
     def test_muy_sucio_critical(self, detector, monkeypatch) -> None:
         out = "\n".join(f" M f{i}.py" for i in range(60))
         monkeypatch.setattr(
@@ -167,6 +185,7 @@ class TestCheckGit:
         r = detector.check_git_status()
         assert r.status == "critical"
 
+    @pytest.mark.integration
     def test_no_repo(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.subprocess.run",
@@ -175,6 +194,7 @@ class TestCheckGit:
         r = detector.check_git_status()
         assert r.status == "error"
 
+    @pytest.mark.integration
     def test_error(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.subprocess.run",
@@ -185,6 +205,7 @@ class TestCheckGit:
 
 
 class TestCheckAll:
+    @pytest.mark.integration
     def test_ejecuta_todos(self, detector) -> None:
         with mock.patch.multiple(
             detector,
@@ -198,6 +219,7 @@ class TestCheckAll:
             results = detector.check_all()
         assert len(results) == 4
 
+    @pytest.mark.integration
     def test_get_critical(self) -> None:
         detector = ProactiveDetector(notify=False)
         results = [
@@ -212,6 +234,7 @@ class TestCheckAll:
 
 
 class TestAutoHealing:
+    @pytest.mark.integration
     def test_restart_ollama_systemctl(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/systemctl")
         monkeypatch.setattr(
@@ -222,6 +245,7 @@ class TestAutoHealing:
         assert r["ok"] is True
         assert r["method"] == "systemctl"
 
+    @pytest.mark.integration
     def test_restart_ollama_docker(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("shutil.which", lambda cmd: None)
         monkeypatch.setattr(
@@ -232,6 +256,7 @@ class TestAutoHealing:
         assert r["ok"] is False
         assert r["method"] == "docker"
 
+    @pytest.mark.integration
     def test_restart_ollama_error(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.subprocess.run",
@@ -240,6 +265,7 @@ class TestAutoHealing:
         r = detector.restart_ollama()
         assert r["ok"] is False
 
+    @pytest.mark.integration
     def test_clear_zombies(self, detector, monkeypatch) -> None:
         monkeypatch.setattr(
             "scripts.pro.tuneladora.detector.Path.iterdir",
@@ -248,6 +274,7 @@ class TestAutoHealing:
         r = detector.clear_zombies()
         assert r == {"ok": True, "killed": 0}
 
+    @pytest.mark.integration
     def test_restart_service_ok(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/systemctl")
         monkeypatch.setattr(
@@ -258,11 +285,13 @@ class TestAutoHealing:
         assert r["ok"] is True
         assert r["service"] == "ura-tuneladora"
 
+    @pytest.mark.integration
     def test_restart_service_sin_systemctl(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("shutil.which", lambda cmd: None)
         r = detector.restart_service()
         assert r["ok"] is False
 
+    @pytest.mark.integration
     def test_restart_service_error(self, detector, monkeypatch) -> None:
         monkeypatch.setattr("shutil.which", lambda cmd: "/usr/bin/systemctl")
         monkeypatch.setattr(
@@ -274,12 +303,14 @@ class TestAutoHealing:
 
 
 class TestAlert:
+    @pytest.mark.integration
     def test_alerta_sin_alert_engine(self, detector) -> None:
         detector._alert_engine = None
         with mock.patch("scripts.pro.tuneladora.detector.log.warning") as m_warn:
             detector._alert("warning", "T", "D")
         m_warn.assert_called_once()
 
+    @pytest.mark.integration
     def test_alerta_con_engine(self, detector) -> None:
         detector._notify = True
         detector._alert_engine = mock.Mock()
@@ -288,6 +319,7 @@ class TestAlert:
             detector._alert("critical", "T", "D")
         assert len(detector._alert_engine._alert_history) == 1
 
+    @pytest.mark.integration
     def test_alerta_error_silencioso(self, detector) -> None:
         detector._alert_engine = mock.Mock()
         detector._alert_engine._alert_history = None

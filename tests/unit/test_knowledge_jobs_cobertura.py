@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import sqlite3
 from pathlib import Path
@@ -83,6 +84,7 @@ def _insert_job(db: Path, payload: str = "{}", job_type: str = "archive_source")
     return cur.lastrowid
 
 
+@pytest.mark.unit
 def test_enqueue_job(db, git_repo, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.archiver._DEFAULT_ARCHIVE_DIR", git_repo.parent / "arch")
     enqueue_archive_job(db, git_repo, "cid-1")
@@ -95,6 +97,7 @@ def test_enqueue_job(db, git_repo, monkeypatch) -> None:
     assert payload["source_dir"] == str(git_repo)
 
 
+@pytest.mark.unit
 def test_enqueue_job_dedup(db, git_repo) -> None:
     enqueue_archive_job(db, git_repo)
     enqueue_archive_job(db, git_repo)
@@ -102,11 +105,13 @@ def test_enqueue_job_dedup(db, git_repo) -> None:
     assert n == 1
 
 
+@pytest.mark.unit
 def test_enqueue_job_error_no_crash(tmp_path) -> None:
     enqueue_archive_job(tmp_path / "no.db", tmp_path)
     assert True
 
 
+@pytest.mark.unit
 def test_ejecutar_archive_job_ok(db, git_repo, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.archiver._DEFAULT_ARCHIVE_DIR", git_repo.parent / "arch")
     enqueue_archive_job(db, git_repo, "cid")
@@ -121,6 +126,7 @@ def test_ejecutar_archive_job_ok(db, git_repo, monkeypatch) -> None:
     assert (git_repo.parent / "arch").is_dir()
 
 
+@pytest.mark.unit
 def test_ejecutar_archive_job_source_relativo(db, tmp_path) -> None:
     jid = _insert_job(db, json.dumps({"source_dir": "relativo", "db_path": str(db)}))
     conn = sqlite3.connect(db)
@@ -134,6 +140,7 @@ def test_ejecutar_archive_job_source_relativo(db, tmp_path) -> None:
     assert "absoluto" in row["error"]
 
 
+@pytest.mark.unit
 def test_ejecutar_archive_job_db_relativo(db, tmp_path) -> None:
     jid = _insert_job(db, json.dumps({"source_dir": str(tmp_path), "db_path": "relativa.db"}))
     conn = sqlite3.connect(db)
@@ -146,6 +153,7 @@ def test_ejecutar_archive_job_db_relativo(db, tmp_path) -> None:
     assert row["status"] == "failed"
 
 
+@pytest.mark.unit
 def test_ejecutar_archive_job_archiver_falla(db, tmp_path, monkeypatch) -> None:
     def _boom(*a, **k):
         raise ValueError("no es repo")
@@ -163,6 +171,7 @@ def test_ejecutar_archive_job_archiver_falla(db, tmp_path, monkeypatch) -> None:
     assert "no es repo" in row["error"]
 
 
+@pytest.mark.unit
 def test_process_archive_jobs_completa(db, git_repo, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.archiver._DEFAULT_ARCHIVE_DIR", git_repo.parent / "arch")
     enqueue_archive_job(db, git_repo, "cid")
@@ -171,6 +180,7 @@ def test_process_archive_jobs_completa(db, git_repo, monkeypatch) -> None:
     assert n == 1
 
 
+@pytest.mark.unit
 def test_process_archive_jobs_stale_recovery(db, git_repo, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.archiver._DEFAULT_ARCHIVE_DIR", git_repo.parent / "arch")
     enqueue_archive_job(db, git_repo, "cid")
@@ -185,11 +195,13 @@ def test_process_archive_jobs_stale_recovery(db, git_repo, monkeypatch) -> None:
     assert row["status"] == "completed"
 
 
+@pytest.mark.unit
 def test_process_archive_jobs_error_no_crash(tmp_path) -> None:
     process_archive_jobs(tmp_path / "no.db", "cid")
     assert True
 
 
+@pytest.mark.unit
 def test_recover_stale_directo(db) -> None:
     conn = sqlite3.connect(db)
     conn.execute(
@@ -211,11 +223,13 @@ def test_recover_stale_directo(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_inc_job_retry(db) -> None:
     _inc_job_retry("archive_source", "stale", 2)
     assert True
 
 
+@pytest.mark.unit
 def test_inc_job_retry_metrics_roto(db, monkeypatch) -> None:
     def _boom(*a, **k):
         raise RuntimeError("metrics caidas")
@@ -225,10 +239,12 @@ def test_inc_job_retry_metrics_roto(db, monkeypatch) -> None:
     assert True
 
 
+@pytest.mark.unit
 def test_compile_worker_sin_jobs(db, tmp_path) -> None:
     assert compile_worker(db, tmp_path) == 0
 
 
+@pytest.mark.unit
 def test_compile_worker_completa_job(db, tmp_path) -> None:
     src = tmp_path / "src"
     docs = src / "docs"
@@ -247,6 +263,7 @@ def test_compile_worker_completa_job(db, tmp_path) -> None:
     assert _job_row(db, 1)["status"] == "completed"
 
 
+@pytest.mark.unit
 def test_compile_worker_lock_ocupado(db, tmp_path) -> None:
     jid = _insert_job(db, job_type="compile")
     with compile_lock(tmp_path / "compile.lock"):
@@ -254,6 +271,7 @@ def test_compile_worker_lock_ocupado(db, tmp_path) -> None:
     assert _job_row(db, jid)["status"] == "pending"
 
 
+@pytest.mark.unit
 def test_compile_worker_job_falla(db, tmp_path) -> None:
     src = tmp_path / "src"
     docs = src / "docs"
@@ -266,10 +284,12 @@ def test_compile_worker_job_falla(db, tmp_path) -> None:
     assert _job_row(db, jid)["status"] == "failed"
 
 
+@pytest.mark.unit
 def test_compile_worker_error_lectura(tmp_path) -> None:
     assert compile_worker(tmp_path / "no.db", tmp_path) == 0
 
 
+@pytest.mark.unit
 def test_mark_job_done(db) -> None:
     conn = sqlite3.connect(db)
     conn.execute(
@@ -282,17 +302,20 @@ def test_mark_job_done(db) -> None:
     assert _job_row(db, 1)["status"] == "completed"
 
 
+@pytest.mark.unit
 def test_mark_job_done_error(tmp_path) -> None:
     _mark_job_done(tmp_path / "no.db", 1)
     assert True
 
 
+@pytest.mark.unit
 def test_mark_job_failed(db) -> None:
     jid = _insert_job(db)
     _mark_job_failed(db, jid, "boom")
     assert _job_row(db, jid)["status"] == "failed"
 
 
+@pytest.mark.unit
 def test_mark_job_failed_error(tmp_path) -> None:
     _mark_job_failed(tmp_path / "no.db", 1, "x")
     assert True

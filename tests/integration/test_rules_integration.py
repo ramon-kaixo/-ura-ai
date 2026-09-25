@@ -1,6 +1,7 @@
 """Integration tests: Knowledge DB → RuleEvaluator (SQLite temp real)."""
 
 from __future__ import annotations
+import pytest
 
 import json
 import sqlite3
@@ -115,12 +116,14 @@ def _run_rules(db_path: Path) -> list:
 
 
 class TestRulesIntegration:
+    @pytest.mark.integration
     def test_empty_db(self) -> None:
         db_path = _create_db()
         findings = _run_rules(db_path)
         assert len(findings) == 0
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_doc_no_title(self) -> None:
         db_path = _create_db(nodes=[{"id": "d1", "frontmatter": {}}])
         findings = _run_rules(db_path)
@@ -128,6 +131,7 @@ class TestRulesIntegration:
         assert "R001" in rule_ids
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_doc_no_tags(self) -> None:
         db_path = _create_db(nodes=[{"id": "d1", "frontmatter": {"title": "X"}}])
         findings = _run_rules(db_path)
@@ -135,6 +139,7 @@ class TestRulesIntegration:
         assert "R002" in rule_ids
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_doc_empty_body(self) -> None:
         db_path = _create_db(nodes=[{"id": "d1", "frontmatter": {"title": "X", "tags": ["a"]}, "body": ""}])
         findings = _run_rules(db_path)
@@ -142,6 +147,7 @@ class TestRulesIntegration:
         assert "R003" in rule_ids
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_relation_to_nonexistent(self) -> None:
         db_path = _create_db(
             nodes=[{"id": "d1", "frontmatter": {"title": "T", "tags": ["a"]}, "body": "hello"}],
@@ -152,6 +158,7 @@ class TestRulesIntegration:
         assert "R004" in rule_ids
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_orphan_no_relations(self) -> None:
         """No outgoing edges and id not in any edge dst → orphan."""
         db_path = _create_db(nodes=[{"id": "orphan", "frontmatter": {"title": "O", "tags": ["x"]}, "body": "body"}])
@@ -160,6 +167,7 @@ class TestRulesIntegration:
         assert "R005" in rule_ids
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_mixed_rules(self) -> None:
         """5 docs, each triggering a different rule."""
         nodes = [
@@ -176,6 +184,7 @@ class TestRulesIntegration:
         assert rule_ids == {"R001", "R002", "R003", "R004", "R005"}
         db_path.unlink()
 
+    @pytest.mark.integration
     def test_all_clean_no_findings(self) -> None:
         """A perfect document triggers no rules.
         Needs an incoming relation to avoid R005 (orphan)."""

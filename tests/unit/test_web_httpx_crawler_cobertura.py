@@ -13,6 +13,7 @@ Dependencias: httpx (instalado) — solo simulado, sin llamadas de red.
 
 from __future__ import annotations
 
+import pytest
 import socket
 from typing import Any
 
@@ -92,35 +93,45 @@ def _install_fake_client(
 class TestIsPrivateUrl:
     """Protección SSRF por IP privada."""
 
+    @pytest.mark.unit
     def test_ip_loopback(self) -> None:
         assert _is_private_url("http://127.0.0.1/x")
 
+    @pytest.mark.unit
     def test_ip_privada_10(self) -> None:
         assert _is_private_url("http://10.1.2.3/x")
 
+    @pytest.mark.unit
     def test_ip_privada_172_16(self) -> None:
         assert _is_private_url("http://172.16.5.4/x")
 
+    @pytest.mark.unit
     def test_ip_privada_192_168(self) -> None:
         assert _is_private_url("http://192.168.1.1/x")
 
+    @pytest.mark.unit
     def test_link_local(self) -> None:
         assert _is_private_url("http://169.254.10.10/x")
 
+    @pytest.mark.unit
     def test_ipv6_loopback(self) -> None:
         assert _is_private_url("http://[::1]/x")
 
+    @pytest.mark.unit
     def test_ip_publica(self) -> None:
         assert not _is_private_url("http://93.184.216.34/x")
 
+    @pytest.mark.unit
     def test_hostname_publico(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(0, 0, 0, "", ("93.184.216.34", 0))])
         assert not _is_private_url("http://example.com/x")
 
+    @pytest.mark.unit
     def test_hostname_privado(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(0, 0, 0, "", ("10.0.0.5", 0))])
         assert _is_private_url("http://example.com/x")
 
+    @pytest.mark.unit
     def test_sin_resolucion_dns(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _no_dns(*a: Any, **k: Any) -> list[Any]:
             raise socket.gaierror("no dns")
@@ -128,9 +139,11 @@ class TestIsPrivateUrl:
         monkeypatch.setattr(socket, "getaddrinfo", _no_dns)
         assert not _is_private_url("http://notfound.invalid/x")
 
+    @pytest.mark.unit
     def test_sin_hostname(self) -> None:
         assert _is_private_url("http:///solo-path")
 
+    @pytest.mark.unit
     def test_url_malformada(self) -> None:
         assert not _is_private_url("http://[")
 
@@ -138,18 +151,22 @@ class TestIsPrivateUrl:
 class TestValidateUrl:
     """Validación de URL para crawling."""
 
+    @pytest.mark.unit
     def test_http_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(0, 0, 0, "", ("93.184.216.34", 0))])
         _validate_url("http://example.com/x")  # no raise
 
+    @pytest.mark.unit
     def test_https_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(socket, "getaddrinfo", lambda *a, **k: [(0, 0, 0, "", ("93.184.216.34", 0))])
         _validate_url("https://example.com/x")  # no raise
 
+    @pytest.mark.unit
     def test_esquema_no_permitido(self) -> None:
         with pytest.raises(ValueError, match="Scheme"):
             _validate_url("ftp://example.com/x")
 
+    @pytest.mark.unit
     def test_privada_raise(self) -> None:
         with pytest.raises(ValueError, match="private network"):
             _validate_url("http://192.168.1.1/x")
@@ -158,18 +175,23 @@ class TestValidateUrl:
 class TestExtractCharset:
     """Extracción de charset desde Content-Type."""
 
+    @pytest.mark.unit
     def test_con_charset(self) -> None:
         assert _extract_charset("text/html; charset=utf-8") == "utf-8"
 
+    @pytest.mark.unit
     def test_sin_charset(self) -> None:
         assert _extract_charset("text/html") == ""
 
+    @pytest.mark.unit
     def test_charset_vacio(self) -> None:
         assert _extract_charset("charset=") == ""
 
+    @pytest.mark.unit
     def test_case_insensitive(self) -> None:
         assert _extract_charset("TEXT/HTML; CHARSET=UTF-8") == "utf-8"
 
+    @pytest.mark.unit
     def test_primer_charset_gana(self) -> None:
         assert _extract_charset("a; charset=latin-1; charset=utf-8") == "latin-1"
 
@@ -177,6 +199,7 @@ class TestExtractCharset:
 class TestHttpCrawlerFetchRaw:
     """fetch_raw: flujo principal y errores."""
 
+    @pytest.mark.unit
     def test_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch)
         c = HttpCrawler()
@@ -190,17 +213,20 @@ class TestHttpCrawlerFetchRaw:
         assert doc.content_length == len(b"<html>ok</html>")
         assert doc.elapsed_ms >= 0
 
+    @pytest.mark.unit
     def test_privada_sin_allow_private_raise(self) -> None:
         c = HttpCrawler()
         with pytest.raises(ValueError):
             c.fetch_raw("http://192.168.1.1/x")
 
+    @pytest.mark.unit
     def test_privada_con_allow_private_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch)
         c = HttpCrawler(allow_private=True)
         doc = c.fetch_raw("http://192.168.1.1/x")
         assert doc.error is None
 
+    @pytest.mark.unit
     def test_content_type_no_permitido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(
             monkeypatch,
@@ -211,6 +237,7 @@ class TestHttpCrawlerFetchRaw:
         assert doc.error is not None
         assert "not in allowed list" in doc.error
 
+    @pytest.mark.unit
     def test_content_length_excede_max(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, head=_FakeResponse(headers={"content-length": "5000"}))
         c = HttpCrawler(max_size=100)
@@ -218,11 +245,13 @@ class TestHttpCrawlerFetchRaw:
         assert doc.error is not None
         assert "exceeds max_size" in doc.error
 
+    @pytest.mark.unit
     def test_content_length_invalido_se_ignora(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, head=_FakeResponse(headers={"content-length": "abc"}))
         doc = HttpCrawler().fetch_raw("https://example.com/page")
         assert doc.error is None
 
+    @pytest.mark.unit
     def test_respuesta_excede_max_get(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, get=_FakeResponse(content=b"x" * 500))
         c = HttpCrawler(max_size=100)
@@ -232,16 +261,20 @@ class TestHttpCrawlerFetchRaw:
         assert doc.content == b""
         assert doc.content_length == 0
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, raise_class=httpx.TimeoutException)
         doc = HttpCrawler().fetch_raw("https://example.com/page")
         assert doc.error == "timeout"
 
+    @pytest.mark.unit
     def test_too_many_redirects(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, raise_class=httpx.TooManyRedirects)
         doc = HttpCrawler().fetch_raw("https://example.com/page")
         assert doc.error == "too_many_redirects"
 
+    @pytest.mark.unit
     def test_request_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _boom(*a: Any, **k: Any) -> None:
             raise httpx.ConnectError("boom", request=httpx.Request("GET", "https://example.com"))
@@ -251,6 +284,7 @@ class TestHttpCrawlerFetchRaw:
         assert doc.error is not None
         assert "request_error" in doc.error
 
+    @pytest.mark.unit
     def test_request_error_real(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _boom(*a: Any, **k: Any) -> None:
             raise httpx.RequestError("boom", request=httpx.Request("GET", "https://example.com"))
@@ -260,6 +294,7 @@ class TestHttpCrawlerFetchRaw:
         assert doc.error is not None
         assert "request_error" in doc.error
 
+    @pytest.mark.unit
     def test_value_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _boom(*a: Any, **k: Any) -> None:
             raise ValueError("bad url")
@@ -268,6 +303,7 @@ class TestHttpCrawlerFetchRaw:
         doc = HttpCrawler().fetch_raw("https://example.com/page")
         assert doc.error == "bad url"
 
+    @pytest.mark.unit
     def test_error_generico(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def _boom(*a: Any, **k: Any) -> None:
             raise RuntimeError("weird")
@@ -281,6 +317,7 @@ class TestHttpCrawlerFetchRaw:
 class TestHttpCrawlerFetch:
     """fetch: decodificación y errores."""
 
+    @pytest.mark.unit
     def test_fetch_ok_texto(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(
             monkeypatch,
@@ -289,6 +326,7 @@ class TestHttpCrawlerFetch:
         text = HttpCrawler().fetch("https://example.com/page")
         assert text == "<p>hola</p>"
 
+    @pytest.mark.unit
     def test_fetch_con_headers_content_type_sin_charset(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(
             monkeypatch,
@@ -298,12 +336,14 @@ class TestHttpCrawlerFetch:
         # sin charset en header → utf-8 con errors=replace
         assert "café".encode("latin-1").decode("utf-8", errors="replace") == text
 
+    @pytest.mark.unit
     def test_fetch_raise_si_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_fake_client(monkeypatch, head=_FakeResponse(headers={"content-type": "application/pdf"}))
         c = HttpCrawler(allowed_content_types=["text/html"])
         with pytest.raises(RuntimeError, match="Crawler error"):
             c.fetch("https://example.com/page")
 
+    @pytest.mark.unit
     def test_fetch_decodificacion_falla_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class _BrokenBytes:
             """bytes falsos cuyo decode falla en utf-8 para forzar el fallback."""
@@ -328,15 +368,18 @@ class TestHttpCrawlerFetch:
 class TestHttpCrawlerName:
     """Propiedades de identidad del crawler."""
 
+    @pytest.mark.unit
     def test_name(self) -> None:
         assert HttpCrawler().name == "httpx"
 
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         c = HttpCrawler()
         assert c._allow_private is False
         assert c._allowed_content_types is None
         assert c._user_agent == DEFAULT_USER_AGENT
 
+    @pytest.mark.unit
     def test_constructor_configurable(self) -> None:
         c = HttpCrawler(timeout=5, max_size=50, max_redirects=2, user_agent="UA", allowed_content_types=["text/html"])
         assert c._timeout == 5
@@ -349,6 +392,7 @@ class TestHttpCrawlerName:
 class TestCrawledDocument:
     """Documento bruto."""
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         doc = CrawledDocument(
             url="https://example.com/a",
@@ -371,12 +415,14 @@ class TestCrawledDocument:
         assert d["elapsed_ms"] == 12.3
         assert d["error"] is None
 
+    @pytest.mark.unit
     def test_to_dict_defaults(self) -> None:
         d = CrawledDocument(url="u").to_dict()
         assert d["final_url"] == ""
         assert d["status_code"] == 0
         assert d["elapsed_ms"] == 0.0
 
+    @pytest.mark.unit
     def test_fields_defaults(self) -> None:
         doc = CrawledDocument(url="u")
         assert doc.content == b""

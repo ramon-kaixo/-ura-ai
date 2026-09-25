@@ -4,6 +4,7 @@ Cubre 8 propiedades (P1-P8) con 100 ejemplos cada una.
 """
 from __future__ import annotations
 
+import pytest
 import math
 
 import pytest
@@ -107,27 +108,37 @@ KNOWN_UNSAFE = st.sampled_from([
 class TestLiteralRoundtrip:
     @given(st.integers())
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_int_roundtrip(self, x: int) -> None:
         assert safe_eval(repr(x)) == x
 
     @given(st.floats(allow_nan=False, allow_infinity=False))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_float_roundtrip(self, x: float) -> None:
         result = safe_eval(repr(x))
         assert result == x or (math.isnan(result) and math.isnan(x))
 
     @given(st.booleans())
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_bool_roundtrip(self, x: bool) -> None:
         assert safe_eval(repr(x)) is x
 
     @given(st.none())
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_none_roundtrip(self, x: None) -> None:
         assert safe_eval(repr(x)) is None
 
     @given(st.lists(st.integers(), max_size=10))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_list_roundtrip(self, x: list[int]) -> None:
         assert safe_eval(repr(x)) == x
 
@@ -137,6 +148,8 @@ class TestLiteralRoundtrip:
 class TestValidExpressions:
     @given(expr=KNOWN_VALID, ctx=st.none() | dict_ctx)
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_no_crash(self, expr: str, ctx: dict[str, object] | None) -> None:
         try:
             result = safe_eval(expr, ctx)
@@ -148,12 +161,16 @@ class TestValidExpressions:
 
     @given(st.lists(st.integers(min_value=-100, max_value=100), max_size=5))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_list_comprehension(self, items: list[int]) -> None:
         result = safe_eval("[x * 2 for x in items]", {"items": items})
         assert result == [x * 2 for x in items]
 
     @given(st.dictionaries(st.text(max_size=5), st.integers(), max_size=5))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dict_methods(self, d: dict[str, int]) -> None:
         key = next(iter(d)) if d else "nonexistent"
         expr = f"d.get({key!r}, -1)"
@@ -166,6 +183,8 @@ class TestValidExpressions:
 class TestDunderBlocked:
     @given(expr=KNOWN_UNSAFE)
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dunder_raises(self, expr: str) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval(expr, {"x": {}})
@@ -175,12 +194,16 @@ class TestDunderBlocked:
         obj=st.sampled_from(["x", "''", "[]", "{}", "()"]),
     )
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_any_dunder_attr(self, attr: str, obj: str) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval(f"{obj}.{attr}", {"x": {}})
 
     @given(attr=st.text(max_size=20))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_random_dunder_pattern(self, attr: str) -> None:
         expr = f"x.__{attr}__"
         try:
@@ -195,6 +218,8 @@ class TestDunderBlocked:
 class TestKeywordsBlocked:
     @given(st.sampled_from(["lambda x: x", "yield 1", "await x"]))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_blocked_keywords(self, expr: str) -> None:
         with pytest.raises((UnsafeExpressionError, SyntaxError)):
             safe_eval(expr)
@@ -203,34 +228,52 @@ class TestKeywordsBlocked:
 # ── P5: Method calls whitelist ───────────────────────────────────────────────
 
 class TestMethodCallWhitelist:
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dict_get_allowed(self) -> None:
         assert safe_eval("{'a': 1}.get('a')") == 1
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dict_keys_allowed(self) -> None:
         assert list(safe_eval("{'a': 1}.keys()")) == ["a"]
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dict_values_allowed(self) -> None:
         assert list(safe_eval("{'a': 1}.values()")) == [1]
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dict_items_allowed(self) -> None:
         assert list(safe_eval("{'a': 1}.items()")) == [("a", 1)]
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_str_upper_allowed(self) -> None:
         assert safe_eval("'hello'.upper()") == "HELLO"
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_str_strip_allowed(self) -> None:
         assert safe_eval("'  hi  '.strip()") == "hi"
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_unknown_method_raises(self) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval("{'a': 1}.pop('a')")
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_unknown_type_raises(self) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval("[1, 2, 3].append(4)")
 
     @given(st.sampled_from(["pop", "clear", "update", "copy", "fromkeys", "setdefault"]))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_unknown_dict_method_raises(self, method: str) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval(f"{{'a': 1}}.{method}()")
@@ -243,6 +286,8 @@ class TestMethodCallWhitelist:
                             "rfind", "rindex", "rjust", "rpartition", "rsplit", "rstrip",
                             "swapcase", "title", "translate", "zfill"]))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_unknown_str_method_raises(self, method: str) -> None:
         with pytest.raises(UnsafeExpressionError):
             safe_eval(f"'hello'.{method}()")
@@ -255,6 +300,8 @@ class TestDangerousFunctionsBlocked:
                             "delattr", "compile", "globals", "locals", "vars", "dir",
                             "input", "breakpoint"]))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_dangerous_func_blocked(self, func: str) -> None:
         with pytest.raises((UnsafeExpressionError, NameError)):
             safe_eval(f"{func}()")
@@ -263,12 +310,16 @@ class TestDangerousFunctionsBlocked:
 # ── P7: Límite de profundidad ────────────────────────────────────────────────
 
 class TestDepthLimit:
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_deeply_nested_expression_raises(self) -> None:
         """15 niveles de binop → AST depth 15 > max 10 → UnsafeExpressionError."""
         expr = " + ".join(str(i) for i in range(15))
         with pytest.raises(UnsafeExpressionError):
             safe_eval(expr)
 
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_excessive_nodes_raises(self) -> None:
         """51 constantes + 50 operadores = 101+ nodos > max 100."""
         expr = " + ".join(str(i) for i in range(51))
@@ -277,6 +328,8 @@ class TestDepthLimit:
 
     @given(st.text(min_size=500, max_size=2047, alphabet=" ()[]{} +-*/1234567890x"))
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_long_expression_raises(self, expr: str) -> None:
         try:
             safe_eval(expr)
@@ -289,6 +342,8 @@ class TestDepthLimit:
 class TestDeterminism:
     @given(expr=KNOWN_VALID, ctx=st.none() | dict_ctx)
     @settings(max_examples=100, deadline=5000)
+    @pytest.mark.hypothesis
+    @pytest.mark.unit
     def test_deterministic(self, expr: str, ctx: dict[str, object] | None) -> None:
         try:
             r1 = safe_eval(expr, ctx)

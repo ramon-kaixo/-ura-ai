@@ -7,6 +7,7 @@ Lineas objetivo:
   - motor/agents/agent.py 130             (llm_calls increment)
 """
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -23,6 +24,7 @@ from motor.agents.models import (
 # ── Guardian: OSError handler (lineas 101-102) ────────────────────────
 
 
+@pytest.mark.unit
 def test_log_event_oserror_escritura(tmp_path, monkeypatch):
     """Si open() lanza OSError durante escritura, se loguea y no explota."""
     monkeypatch.setattr(gl, "GUARDIAN_LOG", str(tmp_path / "guardian.jsonl"))
@@ -69,6 +71,7 @@ def _orquestador():
 # ── Agent: cancelled mid-execution (linea 103) ────────────────────────
 
 
+@pytest.mark.unit
 def test_cancelled_devuelve_cancelled_state():
     """Plan de 2 pasos; el primero cancela → linea 103 cubierta."""
     o = _orquestador()
@@ -86,6 +89,7 @@ def test_cancelled_devuelve_cancelled_state():
 # ── Agent: budget exceeded (linea 106) ────────────────────────────────
 
 
+@pytest.mark.unit
 def test_budget_exceeded_returns_cancelled():
     """Plan de 3 pasos + max_cost_units=2 → linea 106 cubierta."""
     o = _orquestador()
@@ -104,6 +108,7 @@ def test_budget_exceeded_returns_cancelled():
 # ── Agent: llm_calls tracking (linea 130) ────────────────────────────
 
 
+@pytest.mark.unit
 def test_llm_step_increments_llm_calls():
     """Plan con 1 paso llm → execution.llm_calls == 1 → linea 130 cubierta."""
     o = _orquestador()

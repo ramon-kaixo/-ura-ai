@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from typing import TYPE_CHECKING
 
@@ -51,6 +52,7 @@ def _make_v2_plugin(base: Path, name: str, version: str = "1.0.0", extra_hooks: 
 
 
 class TestRegistryV2Discovery:
+    @pytest.mark.integration
     def test_discover_legacy_py_files(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_a")
@@ -59,6 +61,7 @@ class TestRegistryV2Discovery:
         assert count == 2
         assert registry.count() == 2
 
+    @pytest.mark.integration
     def test_discover_v2_plugin(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "v2_test")
@@ -66,6 +69,7 @@ class TestRegistryV2Discovery:
         assert count == 1
         assert registry.count() == 1
 
+    @pytest.mark.integration
     def test_discover_ignores_init(self, tmp_path: Path):
         registry = PluginRegistryV2()
         (tmp_path / "__init__.py").write_text("")
@@ -73,6 +77,7 @@ class TestRegistryV2Discovery:
         count = registry.discover([str(tmp_path)])
         assert count == 1
 
+    @pytest.mark.integration
     def test_discover_empty_path(self):
         registry = PluginRegistryV2()
         count = registry.discover(["/nonexistent_path_f11"])
@@ -80,6 +85,7 @@ class TestRegistryV2Discovery:
 
 
 class TestRegistryV2GetManifest:
+    @pytest.mark.integration
     def test_get_manifest_v2(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "manifest_test")
@@ -90,12 +96,15 @@ class TestRegistryV2GetManifest:
         assert manifest.name == "manifest_test"
         assert manifest.version == "1.0.0"
 
+    @pytest.mark.integration
     def test_get_manifest_nonexistent(self):
         registry = PluginRegistryV2()
         assert registry.get_manifest("no_such") is None
 
 
 class TestRegistryV2Load:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_v2_plugin(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "load_test")
@@ -105,6 +114,8 @@ class TestRegistryV2Load:
         assert isinstance(plugin, PluginBase)
         assert "load_test" in registry.loaded
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_load_legacy_plugin(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_load")
@@ -113,10 +124,12 @@ class TestRegistryV2Load:
         assert plugin is not None
         assert isinstance(plugin, PluginBase)
 
+    @pytest.mark.integration
     def test_get_nonexistent_returns_none(self):
         registry = PluginRegistryV2()
         assert registry.get("no_such") is None
 
+    @pytest.mark.integration
     def test_get_caches_instance(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "cache_test")
@@ -125,10 +138,14 @@ class TestRegistryV2Load:
         p2 = registry.get("cache_test")
         assert p1 is p2
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_loaded_property_empty(self):
         registry = PluginRegistryV2()
         assert registry.loaded == []
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_loaded_after_get(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "loaded_test")
@@ -139,6 +156,7 @@ class TestRegistryV2Load:
 
 
 class TestRegistryV2RunPhase:
+    @pytest.mark.integration
     def test_run_phase_v2(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "phase_test")
@@ -148,6 +166,7 @@ class TestRegistryV2RunPhase:
         assert results[0].ok is True
         assert results[0].data["name"] == "phase_test"
 
+    @pytest.mark.integration
     def test_run_phase_legacy(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_phase")
@@ -156,6 +175,7 @@ class TestRegistryV2RunPhase:
         assert len(results) == 1
         assert results[0].ok is True
 
+    @pytest.mark.integration
     def test_run_one(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "run_one_test")
@@ -164,6 +184,7 @@ class TestRegistryV2RunPhase:
         assert result is not None
         assert result.ok is True
 
+    @pytest.mark.integration
     def test_run_one_nonexistent(self):
         registry = PluginRegistryV2()
         result = registry.run_one("no_such")
@@ -171,6 +192,7 @@ class TestRegistryV2RunPhase:
 
 
 class TestRegistryV2Duplicates:
+    @pytest.mark.integration
     def test_duplicate_name_legacy(self, tmp_path: Path):
         registry = PluginRegistryV2()
         d = tmp_path / "sub"
@@ -180,6 +202,7 @@ class TestRegistryV2Duplicates:
         registry.discover([str(tmp_path), str(d)])
         assert registry.count() == 1  # sobrescrito
 
+    @pytest.mark.integration
     def test_duplicate_v2_and_legacy(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "shared_name")
@@ -188,6 +211,8 @@ class TestRegistryV2Duplicates:
 
 
 class TestRegistryV2Unload:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_unload_removes_instance(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_v2_plugin(tmp_path, "unload_test")
@@ -198,12 +223,15 @@ class TestRegistryV2Unload:
         assert result is True
         assert "unload_test" not in registry.loaded
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_unload_nonexistent_returns_false(self):
         registry = PluginRegistryV2()
         assert registry.unload("no_such") is False
 
 
 class TestRegistryV2Compatibility:
+    @pytest.mark.integration
     def test_incompatible_api_version(self, tmp_path: Path):
         registry = PluginRegistryV2()
         d = tmp_path / "bad_api"
@@ -219,6 +247,7 @@ class TestRegistryV2Compatibility:
         plugin = registry.get("bad_api")
         assert plugin is None
 
+    @pytest.mark.integration
     def test_legacy_plugin_always_accepted(self, tmp_path: Path):
         registry = PluginRegistryV2()
         _make_legacy_plugin(tmp_path, "legacy_compat")

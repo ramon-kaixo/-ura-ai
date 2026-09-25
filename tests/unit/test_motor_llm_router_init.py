@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/router/__init__.py — LLMRouter."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -57,6 +58,7 @@ def router() -> LLMRouter:
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         reg = FakeRegistry({"ollama": FakeProvider()})
         r = LLMRouter(registry=reg)
@@ -66,24 +68,28 @@ class TestInit:
         assert r._baseline is None
         assert r._monitor is None
 
+    @pytest.mark.unit
     def test_profiling_enabled(self, monkeypatch) -> None:
         profiler = mock.Mock()
         monkeypatch.setattr("motor.core.llm.profiler.LLMProfiler", mock.Mock(return_value=profiler))
         r = LLMRouter(registry=FakeRegistry({"o": FakeProvider()}), profiling_enabled=True)
         assert r._profiler is profiler
 
+    @pytest.mark.unit
     def test_hotspot_enabled(self, monkeypatch) -> None:
         detector = mock.Mock()
         monkeypatch.setattr("motor.core.llm.detector.HotspotDetector", mock.Mock(return_value=detector))
         r = LLMRouter(registry=FakeRegistry({"o": FakeProvider()}), hotspot_threshold_ms=500.0)
         assert r._detector is detector
 
+    @pytest.mark.unit
     def test_baseline_enabled(self, monkeypatch) -> None:
         baseline = mock.Mock()
         monkeypatch.setattr("motor.core.llm.baseline.PerformanceBaseline", mock.Mock(return_value=baseline))
         r = LLMRouter(registry=FakeRegistry({"o": FakeProvider()}), baseline_enabled=True)
         assert r._baseline is baseline
 
+    @pytest.mark.unit
     def test_monitor_enabled(self, monkeypatch) -> None:
         monitor = mock.Mock()
         monkeypatch.setattr("motor.core.llm.monitor.PerformanceMonitor", mock.Mock(return_value=monitor))
@@ -93,13 +99,16 @@ class TestInit:
 
 
 class TestCircuit:
+    @pytest.mark.unit
     def test_circuit_state_sin_cb(self, router: LLMRouter) -> None:
         assert router.circuit_state("nope") == "no_circuit"
 
+    @pytest.mark.unit
     def test_circuit_state_con_cb(self, router: LLMRouter) -> None:
         router.generate("hola")  # crea el cb
         assert router.circuit_state("ollama") != "no_circuit"
 
+    @pytest.mark.unit
     def test_reset_circuit(self, router: LLMRouter) -> None:
         cb = mock.Mock()
         router._circuit_breakers["ollama"] = cb
@@ -109,14 +118,17 @@ class TestCircuit:
 
 
 class TestGenerate:
+    @pytest.mark.unit
     def test_generate_ok(self, router: LLMRouter) -> None:
         assert router.generate("hola") == "ok"
 
+    @pytest.mark.unit
     def test_generate_provider_explicito(self) -> None:
         prov = FakeProvider(generate_result="desde openai")
         r = LLMRouter(registry=FakeRegistry({"ollama": FakeProvider(), "openai": prov}))
         assert r.generate("hola", provider="openai") == "desde openai"
 
+    @pytest.mark.unit
     def test_generate_error(self) -> None:
         prov = FakeProvider(generate_result=ValueError("boom"))
         r = LLMRouter(registry=FakeRegistry({"ollama": prov}), retry_enabled=False)
@@ -125,6 +137,7 @@ class TestGenerate:
 
 
 class TestEmbed:
+    @pytest.mark.unit
     def test_embed_ok(self, router: LLMRouter) -> None:
         out = router.embed(["hola", "mundo"])
         assert len(out) == 2
@@ -137,17 +150,20 @@ class TestEmbed:
 
 
 class TestHealth:
+    @pytest.mark.unit
     def test_health_ok(self, router: LLMRouter) -> None:
         h = router.health()
         assert h["status"] == "ok"
         assert "latency_ms" in h
 
+    @pytest.mark.unit
     def test_health_cache(self, router: LLMRouter) -> None:
         router.health()
         router.health()
         # cache: segunda llamada sin nueva medicion
         assert "ollama" in router._health_cache
 
+    @pytest.mark.unit
     def test_invalidate_health_cache(self, router: LLMRouter) -> None:
         router._health_cache["ollama"] = (1.0, {"status": "ok"})
         router.invalidate_health_cache("ollama")
@@ -156,6 +172,7 @@ class TestHealth:
         router.invalidate_health_cache()
         assert router._health_cache == {}
 
+    @pytest.mark.unit
     def test_health_error(self) -> None:
         FakeProvider(health_result=None)
 
@@ -168,12 +185,14 @@ class TestHealth:
         assert h["status"] == "error"
         assert "caido" in h["detail"]
 
+    @pytest.mark.unit
     def test_health_con_monitor(self) -> None:
         r = LLMRouter(registry=FakeRegistry({"ollama": FakeProvider()}), monitor_enabled=True)
         h = r.health()
         assert h["status"] == "ok"
         assert "latency_ms" in h
 
+    @pytest.mark.unit
     def test_health_con_profiler_detector(self) -> None:
         r = LLMRouter(
             registry=FakeRegistry({"ollama": FakeProvider()}),
@@ -186,12 +205,15 @@ class TestHealth:
 
 
 class TestCapability:
+    @pytest.mark.unit
     def test_find(self, router: LLMRouter) -> None:
         out = router.find_providers_by_capability("chat")
         assert isinstance(out, list)
 
+    @pytest.mark.unit
     def test_select(self, router: LLMRouter) -> None:
         assert router.select_provider_by_capability("chat") == "ollama"
 
+    @pytest.mark.unit
     def test_generate_with_capability(self, router: LLMRouter) -> None:
         assert router.generate_with_capability("pregunta") == "ok"

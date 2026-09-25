@@ -9,19 +9,23 @@ import scripts.pro.master_conciencia as mc
 
 
 class TestConfig:
+    @pytest.mark.unit
     def test_gx10_default(self):
         # Tailscale (100.72.103.12) — Ethernet 10.164.1.99 sin carrier desde 2026-08-24 (AGENTS.md)
         assert mc.GX10 == "100.72.103.12"
 
+    @pytest.mark.unit
     def test_log_path(self):
         assert mc.LOG.name == "master_conciencia.log"
 
+    @pytest.mark.unit
     def test_test_actions_count(self):
         assert len(mc.TEST_ACTIONS) == 8
 
 
 class TestTestApi:
     @patch("scripts.pro.master_conciencia.urllib.request.urlopen")
+    @pytest.mark.unit
     def test_ok(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.read.return_value = json.dumps({"ok": True, "resultado": "done"}).encode()
@@ -30,6 +34,7 @@ class TestTestApi:
         assert result is True
 
     @patch("scripts.pro.master_conciencia.urllib.request.urlopen")
+    @pytest.mark.unit
     def test_fail(self, mock_urlopen):
         mock_resp = MagicMock()
         mock_resp.read.return_value = json.dumps({"ok": False, "error": "boom"}).encode()
@@ -38,6 +43,7 @@ class TestTestApi:
         assert result is False
 
     @patch("scripts.pro.master_conciencia.urllib.request.urlopen", side_effect=Exception("timeout"))
+    @pytest.mark.unit
     def test_error(self, mock_urlopen):
         result = mc.test_api("test", {"name": "x"})
         assert result is False
@@ -45,6 +51,7 @@ class TestTestApi:
 
 class TestMain:
     @patch("scripts.pro.master_conciencia.urllib.request.urlopen", side_effect=Exception("no mcp"))
+    @pytest.mark.unit
     def test_mcp_no_responde(self, mock_urlopen):
         with pytest.raises(SystemExit) as exc:
             mc.main()

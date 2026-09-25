@@ -10,6 +10,7 @@ importación del módulo.
 
 from __future__ import annotations
 
+import pytest
 import json
 import logging
 import subprocess
@@ -164,6 +165,7 @@ def _make_video_file(tmp_path: Path, name: str = "clip.mp4", content: bytes = b"
 class TestVideoExtractor:
     """Tests de VideoExtractor.extract."""
 
+    @pytest.mark.unit
     def test_extract_file_missing(self, tmp_path: Path) -> None:
         missing = str(tmp_path / "missing.mp4")
         result = VideoExtractor().extract(AssetSource(kind="filesystem", location=missing))
@@ -171,6 +173,7 @@ class TestVideoExtractor:
         assert result.asset is None
         assert result.duration_ms >= 0
 
+    @pytest.mark.unit
     def test_extract_success_without_tools(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path)
         _disable_tools(monkeypatch)
@@ -190,6 +193,7 @@ class TestVideoExtractor:
         assert result.asset.quality == 0.3
         assert result.duration_ms >= 0
 
+    @pytest.mark.unit
     def test_extract_file_too_large(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path, name="big.mp4")
         monkeypatch.setattr(video, "_hash_stream", lambda p: ("sha", video.MAX_VIDEO_SIZE + 1))
@@ -197,6 +201,7 @@ class TestVideoExtractor:
         assert result.errors == [f"File too large: {video.MAX_VIDEO_SIZE + 1} bytes (max {video.MAX_VIDEO_SIZE})"]
         assert result.asset is None
 
+    @pytest.mark.unit
     def test_extract_exception_propagated_as_errors(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path, name="err.mp4")
         _disable_tools(monkeypatch)
@@ -209,6 +214,7 @@ class TestVideoExtractor:
         assert result.errors == ["Extraction error: disk error"]
         assert result.asset is None
 
+    @pytest.mark.unit
     def test_extract_ffprobe_invalid_json_propagates(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path, name="badprobe.mp4")
         monkeypatch.setattr(video, "_HAS_FFPROBE", True)
@@ -227,6 +233,7 @@ class TestVideoExtractor:
 class TestEnrichMetadata:
     """Tests de VideoExtractor._enrich_metadata según flags de herramientas."""
 
+    @pytest.mark.unit
     def test_all_tools_called_when_available(self, monkeypatch: pytest.MonkeyPatch) -> None:
         for flag in _OK_FLAGS:
             monkeypatch.setattr(video, flag, True)
@@ -260,6 +267,7 @@ class TestEnrichMetadata:
         assert metadata["_scenes_called"] is True
         assert metadata["_transcribe_called"] is True
 
+    @pytest.mark.unit
     def test_none_called_when_unavailable(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _disable_tools(monkeypatch)
         calls: list[str] = []
@@ -276,6 +284,7 @@ class TestEnrichMetadata:
         assert calls == []
         assert metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.unit
     def test_partial_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(video, "_HAS_FFPROBE", True)
         monkeypatch.setattr(video, "_HAS_FFMPEG", False)
@@ -309,6 +318,7 @@ class TestEnrichMetadata:
 class TestProbeFormat:
     """Tests de VideoExtractor._probe_format."""
 
+    @pytest.mark.unit
     def test_maps_format_keys(self) -> None:
         metadata: dict[str, Any] = {}
         fmt = {"duration": "10.5", "bit_rate": "1000", "format_name": "mp4", "size": "123"}
@@ -318,6 +328,7 @@ class TestProbeFormat:
         assert metadata["video_container"] == "mp4"
         assert metadata["video_size_bytes"] == "123"
 
+    @pytest.mark.unit
     def test_skips_missing_or_none_values(self) -> None:
         metadata: dict[str, Any] = {}
         VideoExtractor._probe_format(metadata, {"duration": None, "bit_rate": None, "format_name": None, "size": None})
@@ -331,6 +342,7 @@ class TestProbeFormat:
 class TestProbeStreams:
     """Tests de VideoExtractor._probe_streams."""
 
+    @pytest.mark.unit
     def test_video_and_audio_streams(self) -> None:
         metadata: dict[str, Any] = {}
         streams = [
@@ -347,6 +359,7 @@ class TestProbeStreams:
         assert metadata["video_audio_sample_rate"] == "48000"
         assert metadata["video_audio_channels"] == 2
 
+    @pytest.mark.unit
     def test_other_streams_and_none_values_ignored(self) -> None:
         metadata: dict[str, Any] = {}
         streams = [
@@ -361,6 +374,7 @@ class TestProbeStreams:
 class TestExtractFfprobe:
     """Tests de VideoExtractor._extract_ffprobe."""
 
+    @pytest.mark.unit
     def test_success(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="probe.mp4")
         stdout = json.dumps(
@@ -380,6 +394,7 @@ class TestExtractFfprobe:
         assert metadata["video_video_codec"] == "h264"
         assert "Extracted video metadata" in caplog.text
 
+    @pytest.mark.unit
     def test_nonzero_returncode(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="fail.mp4")
         fake_run = FakeRun([SimpleNamespace(returncode=1, stdout="", stderr="boom\n")])
@@ -390,6 +405,8 @@ class TestExtractFfprobe:
         assert metadata["_degraded_ffprobe"] is True
         assert "ffprobe failed" in caplog.text
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="slow.mp4")
         fake_run = FakeRun([subprocess.TimeoutExpired("ffprobe", 60)])
@@ -400,6 +417,7 @@ class TestExtractFfprobe:
         assert metadata["_degraded_ffprobe"] is True
         assert "ffprobe timed out" in caplog.text
 
+    @pytest.mark.unit
     def test_invalid_json_raises(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path, name="bad.mp4")
         fake_run = FakeRun([SimpleNamespace(returncode=0, stdout="not-json", stderr="")])
@@ -407,6 +425,7 @@ class TestExtractFfprobe:
         with pytest.raises(json.JSONDecodeError):
             VideoExtractor._extract_ffprobe(str(path), {})
 
+    @pytest.mark.unit
     def test_empty_format_and_streams(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="empty.mp4")
         fake_run = FakeRun([SimpleNamespace(returncode=0, stdout=json.dumps({"format": {}, "streams": []}), stderr="")])
@@ -421,6 +440,7 @@ class TestExtractFfprobe:
 class TestExtractThumbnails:
     """Tests de VideoExtractor._extract_thumbnails."""
 
+    @pytest.mark.unit
     def test_no_duration_does_nothing(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_run = FakeRun()
         monkeypatch.setattr(video.subprocess, "run", fake_run.run)
@@ -429,6 +449,7 @@ class TestExtractThumbnails:
         assert fake_run.calls == []
         assert "thumbnails" not in metadata
 
+    @pytest.mark.unit
     def test_success_generates_thumbnails(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="clip.mp4")
         thumb_dir = Path(path).parent / "thumbs"
@@ -447,6 +468,8 @@ class TestExtractThumbnails:
         assert metadata["thumbnails"] == [str(thumb_dir / "clip_10.jpg"), str(thumb_dir / "clip_50.jpg"), str(thumb_dir / "clip_90.jpg")]
         assert "Generated 3 thumbnails" in caplog.text
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_skips_thumbnail(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         path = _make_video_file(tmp_path, name="clip.mp4")
         thumb_dir = Path(path).parent / "thumbs"
@@ -461,6 +484,7 @@ class TestExtractThumbnails:
         assert metadata["thumbnails"] == [str(thumb_dir / "clip_50.jpg"), str(thumb_dir / "clip_90.jpg")]
         assert "Thumbnail generation timed out" in caplog.text
 
+    @pytest.mark.unit
     def test_no_output_files_keeps_no_thumbnails(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         path = _make_video_file(tmp_path, name="clip.mp4")
         fake_run = FakeRun()
@@ -473,12 +497,14 @@ class TestExtractThumbnails:
 class TestDetectScenes:
     """Tests de VideoExtractor._detect_scenes."""
 
+    @pytest.mark.unit
     def test_no_frames_returns_early(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_cv2(monkeypatch, FakeCv2(cap=FakeCap([])))
         metadata: dict[str, Any] = {}
         VideoExtractor._detect_scenes("/tmp/v.mp4", metadata)
         assert metadata == {}
 
+    @pytest.mark.unit
     def test_detects_scene_change(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_cv2 = FakeCv2(
             cap=FakeCap(
@@ -494,6 +520,7 @@ class TestDetectScenes:
         assert metadata["video_fps_calculated"] == 30
         assert metadata["video_scene_count"] == 1
 
+    @pytest.mark.unit
     def test_no_diff_no_scene_count(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_cv2(
             monkeypatch,
@@ -511,6 +538,7 @@ class TestDetectScenes:
         assert metadata["video_fps_calculated"] == 30
         assert "video_scene_count" not in metadata
 
+    @pytest.mark.unit
     def test_read_failure_breaks_loop(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_cv2(
             monkeypatch,
@@ -527,6 +555,7 @@ class TestDetectScenes:
         assert metadata["video_total_frames"] == 61
         assert "video_scene_count" not in metadata
 
+    @pytest.mark.unit
     def test_zero_fps_skips_calculated(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _install_cv2(
             monkeypatch,
@@ -544,6 +573,7 @@ class TestDetectScenes:
         assert "video_fps_calculated" not in metadata
         assert metadata["video_scene_count"] == 1
 
+    @pytest.mark.unit
     def test_capture_error_logs_warning(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         _install_cv2(monkeypatch, FakeCv2(capture_error=RuntimeError("no camera")))
         metadata: dict[str, Any] = {"video_total_frames": 1}
@@ -556,6 +586,7 @@ class TestDetectScenes:
 class TestTranscribeVideo:
     """Tests de VideoExtractor._transcribe_video."""
 
+    @pytest.mark.unit
     def test_transcribes_text(self, monkeypatch: pytest.MonkeyPatch) -> None:
         model = FakeWhisperModel("  hola mundo  ", language="es")
         monkeypatch.setattr(video, "_get_whisper_model", lambda: model)
@@ -567,6 +598,7 @@ class TestTranscribeVideo:
         assert metadata["transcription_performed"] is True
         assert metadata["transcription_language"] == "es"
 
+    @pytest.mark.unit
     def test_empty_text_skips_transcript(self, monkeypatch: pytest.MonkeyPatch) -> None:
         model = FakeWhisperModel("   ", language="en")
         monkeypatch.setattr(video, "_get_whisper_model", lambda: model)
@@ -577,6 +609,7 @@ class TestTranscribeVideo:
         assert metadata["transcription_performed"] is True
         assert metadata["transcription_language"] == "en"
 
+    @pytest.mark.unit
     def test_transcription_error(self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
         def error_transcribe(path_str: str) -> dict[str, Any]:
             raise RuntimeError("no model")
@@ -593,6 +626,8 @@ class TestTranscribeVideo:
 class TestGetWhisperModel:
     """Tests de _get_whisper_model (carga lazy + caché en atributo de función)."""
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_loads_and_caches_model(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_whisper = FakeWhisper()
         _install_whisper(monkeypatch, fake_whisper)
@@ -607,13 +642,16 @@ class TestGetWhisperModel:
 class TestComputeVideoQuality:
     """Tests de _compute_video_quality."""
 
+    @pytest.mark.unit
     def test_minimal_quality(self) -> None:
         assert _compute_video_quality({}) == pytest.approx(0.4)
 
+    @pytest.mark.unit
     def test_degraded_quality(self) -> None:
         assert _compute_video_quality({"_degraded_ffprobe": True}) == pytest.approx(0.3)
         assert _compute_video_quality({"video_duration_sec": "10", "_degraded_ffprobe": True}) == pytest.approx(0.45)
 
+    @pytest.mark.unit
     def test_partial_quality_without_width(self) -> None:
         metadata: dict[str, Any] = {
             "video_duration_sec": "10",
@@ -626,6 +664,7 @@ class TestComputeVideoQuality:
         }
         assert _compute_video_quality(metadata) == pytest.approx(1.0)
 
+    @pytest.mark.unit
     def test_transcription_without_text(self) -> None:
         metadata: dict[str, Any] = {
             "video_duration_sec": "10",
@@ -636,6 +675,7 @@ class TestComputeVideoQuality:
         }
         assert _compute_video_quality(metadata) == pytest.approx(0.9)
 
+    @pytest.mark.unit
     def test_full_quality_capped_at_one(self) -> None:
         metadata: dict[str, Any] = {
             "video_duration_sec": "10",
@@ -652,6 +692,7 @@ class TestComputeVideoQuality:
 class TestModuleRegistration:
     """Tests del registro del extractor en el registry (import del módulo)."""
 
+    @pytest.mark.unit
     def test_video_extractor_registered(self) -> None:
         registered = get_registry().get("video")
         assert registered is not None

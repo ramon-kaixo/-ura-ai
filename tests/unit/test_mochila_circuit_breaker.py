@@ -18,12 +18,14 @@ def cb(tmp_path):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_valores_por_defecto(self, tmp_path):
         breaker = CircuitBreaker(health_file=tmp_path / "h.json")
         assert breaker.failure_threshold == 5
         assert breaker.recovery_timeout == 30.0
         assert breaker.half_open_max_requests == 2
 
+    @pytest.mark.unit
     def test_carga_estado_persistido(self, tmp_path):
         hfile = tmp_path / "health.json"
         hfile.write_text('{"ollama": {"state": "open", "failure_count": 4, "consecutive_failures": 4}}')
@@ -32,12 +34,14 @@ class TestInit:
         assert h.state == CircuitState.OPEN
         assert h.failure_count == 4
 
+    @pytest.mark.unit
     def test_ignora_estado_invalido(self, tmp_path):
         hfile = tmp_path / "health.json"
         hfile.write_text('{"ollama": {"state": "unknown"}}')
         breaker = CircuitBreaker(health_file=hfile)
         assert "ollama" not in breaker._health
 
+    @pytest.mark.unit
     def test_json_roto_no_rompe(self, tmp_path):
         hfile = tmp_path / "health.json"
         hfile.write_text("{roto")
@@ -46,9 +50,11 @@ class TestInit:
 
 
 class TestPuedePasar:
+    @pytest.mark.unit
     def test_closed_siempre_pasa(self, cb):
         assert cb.puede_pasar("ollama") is True
 
+    @pytest.mark.unit
     def test_open_bloquea(self, cb):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.OPEN
@@ -57,6 +63,7 @@ class TestPuedePasar:
             # recovery_timeout=60 → aún no recuperado (1020-1000=20)
             assert cb.puede_pasar("ollama") is False
 
+    @pytest.mark.unit
     def test_open_recupera_a_half_open(self, cb, tmp_path):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.OPEN
@@ -65,6 +72,7 @@ class TestPuedePasar:
             assert cb.puede_pasar("ollama") is True
         assert cb._health["ollama"].state == CircuitState.HALF_OPEN
 
+    @pytest.mark.unit
     def test_half_open_limita_requests(self, cb):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.HALF_OPEN
@@ -72,6 +80,7 @@ class TestPuedePasar:
         cb._health["ollama"].failure_count = 1
         assert cb.puede_pasar("ollama") is False
 
+    @pytest.mark.unit
     def test_half_open_con_cupo(self, cb):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.HALF_OPEN
@@ -79,12 +88,14 @@ class TestPuedePasar:
 
 
 class TestRegistrarExito:
+    @pytest.mark.unit
     def test_incrementa_y_reset_consecutivos(self, cb):
         cb.registrar_exito("ollama")
         h = cb._health["ollama"]
         assert h.success_count == 1
         assert h.consecutive_failures == 0
 
+    @pytest.mark.unit
     def test_half_open_exito_cierra(self, cb):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.HALF_OPEN
@@ -96,28 +107,33 @@ class TestRegistrarExito:
 
 
 class TestRegistrarFallo:
+    @pytest.mark.unit
     def test_incrementa_fallos(self, cb):
         cb.registrar_fallo("ollama")
         h = cb._health["ollama"]
         assert h.failure_count == 1
         assert h.consecutive_failures == 1
 
+    @pytest.mark.unit
     def test_abre_tras_umbral(self, cb):
         for _ in range(3):
             cb.registrar_fallo("ollama")
         assert cb._health["ollama"].state == CircuitState.OPEN
 
+    @pytest.mark.unit
     def test_no_abre_bajo_umbral(self, cb):
         cb.registrar_fallo("ollama")
         cb.registrar_fallo("ollama")
         assert cb._health["ollama"].state == CircuitState.CLOSED
 
+    @pytest.mark.unit
     def test_half_open_fallo_reabre(self, cb):
         cb.puede_pasar("ollama")
         cb._health["ollama"].state = CircuitState.HALF_OPEN
         cb.registrar_fallo("ollama")
         assert cb._health["ollama"].state == CircuitState.OPEN
 
+    @pytest.mark.unit
     def test_exitos_rompen_racha(self, cb):
         cb.registrar_fallo("ollama")
         cb.registrar_fallo("ollama")
@@ -127,6 +143,7 @@ class TestRegistrarFallo:
 
 
 class TestEstadoYReset:
+    @pytest.mark.unit
     def test_estructura_estado(self, cb):
         st = cb.estado("ollama")
         assert set(st) == {
@@ -139,16 +156,19 @@ class TestEstadoYReset:
         }
         assert st["state"] == "closed"
 
+    @pytest.mark.unit
     def test_reset_elimina(self, cb):
         cb.registrar_fallo("ollama")
         cb.reset("ollama")
         assert "ollama" not in cb._health
 
+    @pytest.mark.unit
     def test_persistencia_tras_registro(self, cb, tmp_path):
         cb.registrar_fallo("ollama")
         saved = (tmp_path / "health.json").read_text()
         assert '"ollama"' in saved
 
+    @pytest.mark.unit
     def test_persistencia_atomica(self, cb, tmp_path):
         cb.registrar_exito("ollama")
         assert not (tmp_path / "health.tmp").exists()

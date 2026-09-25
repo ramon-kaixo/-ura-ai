@@ -54,6 +54,7 @@ def _pipeline_con_mocks(
     return pipe, stt, mock_load
 
 
+@pytest.mark.unit
 def test_init_success() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -67,23 +68,27 @@ def test_init_success() -> None:
         mock_load.assert_called_once_with("small", device="cuda")
 
 
+@pytest.mark.unit
 def test_init_sin_cuda_raise() -> None:
     with tempfile.TemporaryDirectory() as tmpdir, pytest.raises(RuntimeError, match="CUDA no disponible"):
         _pipeline_con_mocks(Path(tmpdir) / "test.db", cuda=False)
 
 
+@pytest.mark.unit
 def test_init_fallback_al_default_input() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db", query_devices=DEVICES_SIN_ANKER)
         assert pipe.device_index == 0
 
 
+@pytest.mark.unit
 def test_init_sin_dispositivo_de_entrada() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db", query_devices=DEVICES_SIN_ENTRADA)
         assert pipe.device_index is None
 
 
+@pytest.mark.unit
 def test_find_anker_device() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -93,6 +98,7 @@ def test_find_anker_device() -> None:
         assert pipe._find_anker_device() is None
 
 
+@pytest.mark.unit
 def test_find_anker_device_ante_error_de_audio() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -101,6 +107,7 @@ def test_find_anker_device_ante_error_de_audio() -> None:
         assert pipe._find_default_input() is None
 
 
+@pytest.mark.unit
 def test_find_default_input() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -110,6 +117,7 @@ def test_find_default_input() -> None:
         assert pipe._find_default_input() is None
 
 
+@pytest.mark.unit
 def test_init_db_crea_la_tabla_corrections() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -119,6 +127,7 @@ def test_init_db_crea_la_tabla_corrections() -> None:
         assert any(row[0] == "corrections" for row in tablas)
 
 
+@pytest.mark.unit
 def test_apply_deterministic_rules_orden_longitud_y_limites() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -130,6 +139,7 @@ def test_apply_deterministic_rules_orden_longitud_y_limites() -> None:
         assert pipe._apply_deterministic_rules("") == ""
 
 
+@pytest.mark.unit
 def test_learn_correction_ignora_vacios_e_iguales() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -141,6 +151,7 @@ def test_learn_correction_ignora_vacios_e_iguales() -> None:
         assert pipe._apply_deterministic_rules("hola") == "mundo"
 
 
+@pytest.mark.unit
 def test_transcribe_from_file_con_correccion() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -157,12 +168,14 @@ def test_transcribe_from_file_con_correccion() -> None:
         assert final == "el GB10"
 
 
+@pytest.mark.unit
 def test_listen_and_transcribe_sin_dispositivo() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db", query_devices=DEVICES_SIN_ENTRADA)
         assert pipe.listen_and_transcribe() == ("", "")
 
 
+@pytest.mark.unit
 def test_listen_and_transcribe_stream_falla_devuelve_vacio() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")
@@ -170,6 +183,7 @@ def test_listen_and_transcribe_stream_falla_devuelve_vacio() -> None:
             assert pipe.listen_and_transcribe() == ("", "")
 
 
+@pytest.mark.unit
 def test_listen_and_transcribe_happy_path() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = Path(tmpdir) / "test.db"
@@ -192,6 +206,7 @@ def test_listen_and_transcribe_happy_path() -> None:
         assert final == "GB10"
 
 
+@pytest.mark.unit
 def test_audio_callback_descarta_cuando_suena_tts() -> None:
     with tempfile.TemporaryDirectory() as tmpdir:
         pipe, _, _ = _pipeline_con_mocks(Path(tmpdir) / "test.db")

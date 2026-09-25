@@ -1,3 +1,4 @@
+import pytest
 """Tests property-based generados por plantilla (hypothesis)."""
 
 from hypothesis import given, settings, assume
@@ -8,6 +9,8 @@ from motor.core.fusion.models import Fact, SourceScore, FusionProvenance, StageP
 
 @settings(max_examples=50, deadline=None)
 @given(instancia=st.builds(Fact))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_dataclass_fusion_models_Fact_ronda(instancia):
     """Ronda de propiedades básicas sobre la dataclass."""
     assert instancia is not None
@@ -16,6 +19,8 @@ def test_dataclass_fusion_models_Fact_ronda(instancia):
 
 @settings(max_examples=50, deadline=None)
 @given(instancia=st.builds(SourceScore))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_dataclass_fusion_models_SourceScore_ronda(instancia):
     """Ronda de propiedades básicas sobre la dataclass."""
     assert instancia is not None
@@ -24,6 +29,8 @@ def test_dataclass_fusion_models_SourceScore_ronda(instancia):
 
 @settings(max_examples=50, deadline=None)
 @given(instancia=st.builds(FusionProvenance))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_dataclass_fusion_models_FusionProvenance_ronda(instancia):
     """Ronda de propiedades básicas sobre la dataclass."""
     assert instancia is not None
@@ -32,6 +39,8 @@ def test_dataclass_fusion_models_FusionProvenance_ronda(instancia):
 
 @settings(max_examples=50, deadline=None)
 @given(instancia=st.builds(StageProvenance))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_dataclass_fusion_models_StageProvenance_ronda(instancia):
     """Ronda de propiedades básicas sobre la dataclass."""
     assert instancia is not None
@@ -40,6 +49,8 @@ def test_dataclass_fusion_models_StageProvenance_ronda(instancia):
 
 @settings(max_examples=50, deadline=None)
 @given(x0=st.text())
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_fusion_models_normalize_identity(x0):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:
@@ -50,6 +61,8 @@ def test_funcion_fusion_models_normalize_identity(x0):
 
 @settings(max_examples=50, deadline=None)
 @given(x0=st.text(), x1=st.text())
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_fusion_models_make_claim_id(x0, x1):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:
@@ -60,6 +73,8 @@ def test_funcion_fusion_models_make_claim_id(x0, x1):
 
 @settings(max_examples=50, deadline=None)
 @given(x0=st.text(), x1=st.text(), x2=st.text())
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_fusion_models_make_fact_id(x0, x1, x2):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:
@@ -70,6 +85,8 @@ def test_funcion_fusion_models_make_fact_id(x0, x1, x2):
 
 @settings(max_examples=50, deadline=None)
 @given(x0=st.text(), x1=st.floats(allow_nan=False, allow_infinity=False), x2=st.text())
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_fusion_models_make_version_id(x0, x1, x2):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:
@@ -80,6 +97,8 @@ def test_funcion_fusion_models_make_version_id(x0, x1, x2):
 
 @settings(max_examples=50, deadline=None)
 @given(x0=st.text(), x1=st.text(), x2=st.text())
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_fusion_models_make_conflict_id(x0, x1, x2):
     """Ejecuta la función con entradas aleatorias sin lanzar (salvo fallos legítimos)."""
     try:

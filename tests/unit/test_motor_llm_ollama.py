@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import httpx
@@ -39,6 +40,7 @@ def provider(ollama_mod):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_capabilities(self, provider):
         caps = provider.capabilities
         assert caps["chat"] is True
@@ -47,9 +49,11 @@ class TestInit:
         assert caps["multimodal"] is False
         assert caps["max_context"] == 32768
 
+    @pytest.mark.unit
     def test_url_construction(self, provider):
         assert provider._url == "http://localhost:11434"
 
+    @pytest.mark.unit
     def test_model_fallback_to_secret(self, ollama_mod):
         with (
             mock.patch.object(ollama_mod.UraConfig, "load", return_value=_fake_cfg(ollama_model="")),
@@ -58,6 +62,7 @@ class TestInit:
             p = ollama_mod.OllamaProvider()
         assert p._rag_model == "secret-model"
 
+    @pytest.mark.unit
     def test_defaults_when_empty(self, ollama_mod):
         with (
             mock.patch.object(
@@ -79,6 +84,7 @@ class TestGenerate:
         r.json.return_value = {"response": response_text, "eval_count": 5, "eval_duration": 1000000}
         return r
 
+    @pytest.mark.unit
     def test_success(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "post", return_value=self._post_response()):
             result = provider.generate("prompt")
@@ -86,6 +92,7 @@ class TestGenerate:
         called = mock.patch.object(ollama_mod.httpx, "post").start()
         called.stop()
 
+    @pytest.mark.unit
     def test_success_options_defaults(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "post", return_value=self._post_response()) as post:
             provider.generate("p", model="mi-model")
@@ -95,16 +102,20 @@ class TestGenerate:
         assert payload["stream"] is False
         assert payload["options"] == {"temperature": 0.7, "num_predict": 2048}
 
+    @pytest.mark.unit
     def test_empty_response_message(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "post", return_value=self._post_response("   ")):
             result = provider.generate("p")
         assert result == "El modelo no generó ninguna respuesta."
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_error(self, provider):
         with mock.patch("motor.core.llm.ollama.httpx.post", side_effect=httpx.TimeoutException("t")):
             result = provider.generate("p")
         assert result == "Error: La generación excedió el tiempo de espera."
 
+    @pytest.mark.unit
     def test_http_status_error(self, provider, ollama_mod):
         response = mock.Mock()
         response.status_code = 503
@@ -113,11 +124,13 @@ class TestGenerate:
             result = provider.generate("p")
         assert "503" in result
 
+    @pytest.mark.unit
     def test_request_error(self, provider):
         with mock.patch("motor.core.llm.ollama.httpx.post", side_effect=httpx.RequestError("conn")):
             result = provider.generate("p")
         assert "No se pudo conectar" in result
 
+    @pytest.mark.unit
     def test_unexpected_error(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "post", side_effect=RuntimeError("boom")):
             result = provider.generate("p")
@@ -131,11 +144,13 @@ class TestEmbed:
         r.json.return_value = {"embeddings": [[0.1, 0.2], [0.3, 0.4]]}
         return r
 
+    @pytest.mark.unit
     def test_batch_success(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "post", return_value=self._batch_response()):
             result = provider.embed(["a", "b"])
         assert result == [[0.1, 0.2], [0.3, 0.4]]
 
+    @pytest.mark.unit
     def test_non_200_falls_back_to_individual(self, provider):
         batch = mock.Mock()
         batch.status_code = 500
@@ -149,6 +164,7 @@ class TestEmbed:
             result = provider.embed(["a", "b"])
         assert result == [[0.5], [0.5]]
 
+    @pytest.mark.unit
     def test_batch_request_error_falls_back(self, provider):
         individual = mock.Mock()
         individual.status_code = 200
@@ -160,6 +176,7 @@ class TestEmbed:
             result = provider.embed(["a"])
         assert result == [[0.5]]
 
+    @pytest.mark.unit
     def test_individual_failure_uses_fallback(self, provider):
         batch = mock.Mock()
         batch.status_code = 500
@@ -170,6 +187,7 @@ class TestEmbed:
             result = provider.embed(["a"])
         assert result == [[0.0] * FALLBACK_EMBEDDING_DIMENSION]
 
+    @pytest.mark.unit
     def test_batch_generic_error_falls_back(self, provider, ollama_mod):
         individual = mock.Mock()
         individual.status_code = 200
@@ -251,12 +269,14 @@ class TestHealth:
         r.json.return_value = {"models": [{"name": "qwen2.5:3b"}]}
         return r
 
+    @pytest.mark.unit
     def test_ok(self, provider, ollama_mod):
         with mock.patch.object(ollama_mod.httpx, "get", return_value=self._ok_response()):
             result = provider.health()
         assert result["status"] == "ok"
         assert result["modelos_disponibles"] == ["qwen2.5:3b"]
 
+    @pytest.mark.unit
     def test_http_error(self, provider, ollama_mod):
         r = mock.Mock()
         r.is_error = True
@@ -267,6 +287,7 @@ class TestHealth:
         assert result["status"] == "error"
         assert result["detail"] == "server error"
 
+    @pytest.mark.unit
     def test_exception(self, provider):
         with mock.patch("motor.core.llm.ollama.httpx.get", side_effect=httpx.RequestError("conn")):
             result = provider.health()
@@ -275,6 +296,7 @@ class TestHealth:
 
 
 class TestGenerateStream:
+    @pytest.mark.unit
     def test_emite_fragmentos_reales(self, provider, ollama_mod):
         lines = [
             '{"response": "ho", "done": false}',
@@ -292,6 +314,7 @@ class TestGenerateStream:
         assert payload["stream"] is True
         assert payload["model"] == "m"
 
+    @pytest.mark.unit
     def test_error_http_lanza_runtime_error(self, provider, ollama_mod):
         ctx = mock.MagicMock()
         ctx.status_code = 404
@@ -301,6 +324,7 @@ class TestGenerateStream:
             with pytest.raises(RuntimeError, match="404"):
                 list(provider.generate_stream("p"))
 
+    @pytest.mark.unit
     def test_base_generate_stream_degrada_a_generate(self):
         from motor.core.llm.base import BaseLLMProvider
 
@@ -321,6 +345,7 @@ class TestGenerateStream:
 
 
 class TestChatGenerate:
+    @pytest.mark.unit
     def test_tools_nativos(self, provider, ollama_mod):
         r = mock.Mock()
         r.status_code = 200
@@ -351,6 +376,8 @@ class TestChatGenerate:
         assert result["usage"]["completion_tokens"] == 3
         assert result["usage"]["total_tokens"] == 13
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_sin_tools_payload_no_lleva_clave(self, provider, ollama_mod):
         r = mock.Mock()
         r.status_code = 200
@@ -361,6 +388,7 @@ class TestChatGenerate:
         assert result["content"] == "ok"
         assert result["tool_calls"] is None
 
+    @pytest.mark.unit
     def test_error_http_lanza_runtime_error(self, provider, ollama_mod):
         r = mock.Mock()
         r.status_code = 429

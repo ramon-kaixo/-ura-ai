@@ -1,5 +1,6 @@
 """Tests para motor/intelligence/agents/planner.py y motor/observability/readiness.py."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -19,21 +20,25 @@ class TestRuleBasedPlanner:
     def _tarea(self, objective: str) -> MotorAgentTask:
         return MotorAgentTask(task_id="t1", objective=objective)
 
+    @pytest.mark.unit
     def test_plan_search(self):
         plan = RuleBasedPlanner().plan(self._tarea("search for X"))
         assert isinstance(plan.plan_id, str)
         assert any(s.action == "search" for s in plan.steps)
         assert plan.immutable is True
 
+    @pytest.mark.unit
     def test_plan_escribe(self):
         plan = RuleBasedPlanner().plan(self._tarea("write report"))
         assert any(s.action == "tool" for s in plan.steps)
         assert plan.steps[-1].action == "llm"
 
+    @pytest.mark.unit
     def test_plan_sin_keywords(self):
         plan = RuleBasedPlanner().plan(self._tarea("hola"))
         assert any(s.action == "llm" for s in plan.steps)
 
+    @pytest.mark.unit
     def test_replan_conserva(self):
         pl = RuleBasedPlanner()
         plan = pl.plan(self._tarea("search and write"))
@@ -42,12 +47,14 @@ class TestRuleBasedPlanner:
         assert isinstance(nuevo.plan_id, str)
         assert nuevo.immutable is True
 
+    @pytest.mark.unit
     def test_replan_sin_fallo_devuelve_original(self):
         pl = RuleBasedPlanner()
         plan = pl.plan(self._tarea("hola"))
         nuevo = pl.replan(self._tarea("hola"), plan, context={}, failed_step=None)
         assert nuevo is plan
 
+    @pytest.mark.unit
     def test_generate_remaining_search(self):
         pl = RuleBasedPlanner()
         paso = PlanStep(step_id="s", action="search", params={})
@@ -55,12 +62,14 @@ class TestRuleBasedPlanner:
         assert rest[0].action == "retrieve"
         assert rest[-1].action == "llm"
 
+    @pytest.mark.unit
     def test_generate_remaining_tool(self):
         pl = RuleBasedPlanner()
         paso = PlanStep(step_id="s", action="tool", params={})
         rest = pl._generate_remaining("x", paso)
         assert rest[0].action == "llm"
 
+    @pytest.mark.unit
     def test_generate_remaining_otro(self):
         pl = RuleBasedPlanner()
         paso = PlanStep(step_id="s", action="read", params={})
@@ -69,6 +78,7 @@ class TestRuleBasedPlanner:
 
 
 class TestPlannerAgent:
+    @pytest.mark.unit
     def test_init(self) -> None:
         p = PlannerAgent()
         assert p.name == "planner"
@@ -77,10 +87,12 @@ class TestPlannerAgent:
         assert p.status.value == "idle"
         assert len(p.id) == 12
 
+    @pytest.mark.unit
     def test_init_con_id(self) -> None:
         p = PlannerAgent("mi-id")
         assert p.id == "mi-id"
 
+    @pytest.mark.unit
     def test_run_ok(self) -> None:
         p = PlannerAgent()
         result = p.run(_task("busca y encuentra informacion"))
@@ -89,6 +101,7 @@ class TestPlannerAgent:
         assert result.duration_ms >= 0
         assert p.status.value == "idle"  # restaurado
 
+    @pytest.mark.unit
     def test_run_error(self, monkeypatch) -> None:
         p = PlannerAgent()
         monkeypatch.setattr(p, "_decompose", mock.Mock(side_effect=ValueError("boom")))
@@ -96,6 +109,7 @@ class TestPlannerAgent:
         assert result.success is False
         assert "boom" in result.error
 
+    @pytest.mark.unit
     def test_decompose_researcher(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("search information about cats", {})
@@ -104,18 +118,21 @@ class TestPlannerAgent:
         # researcher insertado al inicio
         assert subs[0]["agent_role"] == AgentRole.RESEARCHER
 
+    @pytest.mark.unit
     def test_decompose_executor(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("run the script", {})
         roles = [s["agent_role"] for s in subs]
         assert AgentRole.EXECUTOR in roles
 
+    @pytest.mark.unit
     def test_decompose_validator(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("verify the result", {})
         roles = [s["agent_role"] for s in subs]
         assert AgentRole.VALIDATOR in roles
 
+    @pytest.mark.unit
     def test_decompose_varias(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("search, execute and verify everything", {})
@@ -124,12 +141,14 @@ class TestPlannerAgent:
         assert AgentRole.EXECUTOR in roles
         assert AgentRole.VALIDATOR in roles
 
+    @pytest.mark.unit
     def test_decompose_sin_keyword_default_executor(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("something without keywords", {})
         assert len(subs) == 1
         assert subs[0]["agent_role"] == AgentRole.EXECUTOR
 
+    @pytest.mark.unit
     def test_decompose_atributos(self) -> None:
         p = PlannerAgent()
         subs = p._decompose("execute the script", {})
@@ -139,6 +158,7 @@ class TestPlannerAgent:
 
 
 class TestReadinessEntry:
+    @pytest.mark.unit
     def test_defaults(self) -> None:
         e = ReadinessEntry(dependency="db")
         assert e.ready is False
@@ -147,11 +167,13 @@ class TestReadinessEntry:
 
 
 class TestReadinessRegistry:
+    @pytest.mark.unit
     def test_sin_dependencias_ready(self) -> None:
         r = ReadinessRegistry()
         assert r.is_ready() is True
         assert r.snapshot()["ready"] is True
 
+    @pytest.mark.unit
     def test_register(self) -> None:
         r = ReadinessRegistry()
         r.register_dependency("qdrant")
@@ -159,12 +181,14 @@ class TestReadinessRegistry:
         assert len(r._dependencies) == 1
         assert r.is_ready() is False
 
+    @pytest.mark.unit
     def test_set_ready(self) -> None:
         r = ReadinessRegistry()
         r.register_dependency("qdrant")
         r.set_ready("qdrant")
         assert r.is_ready() is True
 
+    @pytest.mark.unit
     def test_set_not_ready(self) -> None:
         r = ReadinessRegistry()
         r.register_dependency("qdrant")
@@ -173,11 +197,13 @@ class TestReadinessRegistry:
         assert r.is_ready() is False
         assert r._dependencies["qdrant"].reason == "caido"
 
+    @pytest.mark.unit
     def test_set_ready_inexistente(self) -> None:
         r = ReadinessRegistry()
         r.set_ready("nope")  # no debe lanzar
         r.set_not_ready("nope")  # no debe lanzar
 
+    @pytest.mark.unit
     def test_multiples(self) -> None:
         r = ReadinessRegistry()
         r.register_dependency("a")
@@ -187,6 +213,7 @@ class TestReadinessRegistry:
         r.set_ready("b")
         assert r.is_ready() is True
 
+    @pytest.mark.unit
     def test_snapshot(self) -> None:
         r = ReadinessRegistry()
         r.register_dependency("a")

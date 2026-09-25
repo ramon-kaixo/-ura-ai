@@ -5,12 +5,14 @@ import pytest
 from memoria_fallos import MemoriaFallos
 
 
+@pytest.mark.unit
 def test_aislado() -> None:
     m = MemoriaFallos("p1")
     m.registrar("timeout", "tardo")
     assert not m.es_patron("timeout")
 
 
+@pytest.mark.unit
 def test_patron() -> None:
     m = MemoriaFallos("p2")
     for _ in range(3):
@@ -18,6 +20,7 @@ def test_patron() -> None:
     assert m.es_patron("timeout")
 
 
+@pytest.mark.unit
 def test_corta() -> None:
     m = MemoriaFallos("p3", max_fallos=5)
     for i in range(8):
@@ -26,6 +29,7 @@ def test_corta() -> None:
     assert "f0" not in [x.tipo for x in m.fallos_recientes()]
 
 
+@pytest.mark.unit
 def test_arreglo() -> None:
     m = MemoriaFallos("p4")
     m.registrar("err", "msg", arreglo="hacer X")
@@ -33,6 +37,7 @@ def test_arreglo() -> None:
     assert m.arreglo_conocido("otro") is None
 
 
+@pytest.mark.unit
 def test_detectar() -> None:
     m = MemoriaFallos("p5")
     m.registrar("raro", "a")

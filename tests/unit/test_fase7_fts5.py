@@ -1,5 +1,6 @@
 """Tests Fase 7 — FTS5/Lineage/Graph (split de test_fase7.py)."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -25,18 +26,23 @@ from knowledge.engine.asset_store import _sanitize_fts5
 
 
 class TestSanitizeFts5:
+    @pytest.mark.unit
     def test_simple_query(self):
         assert _sanitize_fts5("machine learning") == '"machine" "learning"'
 
+    @pytest.mark.unit
     def test_single_term(self):
         assert _sanitize_fts5("hello") == '"hello"'
 
+    @pytest.mark.unit
     def test_escapes_double_quotes(self):
         assert _sanitize_fts5('say "hello"') == '"say" """hello"""'
 
+    @pytest.mark.unit
     def test_empty_returns_empty(self):
         assert _sanitize_fts5("") == ""
 
+    @pytest.mark.unit
     def test_whitespace_only_returns_empty(self):
         assert _sanitize_fts5("   ") == ""
 
@@ -46,6 +52,7 @@ class TestSanitizeFts5:
 
 
 class TestAssetStoreSearchFts5:
+    @pytest.mark.unit
     def test_search_assets_fts5(self, asset_db: SQLiteAssetStore):  # noqa: F811
         a1 = _make_asset("a1", title="Machine Learning Guide")
         a2 = _make_asset("a2", title="Deep Learning Tutorial")
@@ -58,6 +65,7 @@ class TestAssetStoreSearchFts5:
         assert len(results) == 1
         assert results[0].asset_id == "a1"
 
+    @pytest.mark.unit
     def test_search_assets_fts5_case_folding(self, asset_db: SQLiteAssetStore):  # noqa: F811
         """FTS5 unicode61: case-folding, 'LEARNING' matches 'Learning'."""
         a1 = _make_asset("a1", title="Machine Learning")
@@ -66,6 +74,7 @@ class TestAssetStoreSearchFts5:
         assert len(results) == 1
         assert results[0].asset_id == "a1"
 
+    @pytest.mark.unit
     def test_search_assets_fts5_body(self, asset_db: SQLiteAssetStore):  # noqa: F811
         """Search matches text_preview in body."""
         a1 = _make_asset("a1", title="Doc", text_preview="neural networks are powerful")
@@ -74,22 +83,26 @@ class TestAssetStoreSearchFts5:
         assert len(results) == 1
         assert results[0].asset_id == "a1"
 
+    @pytest.mark.unit
     def test_search_assets_empty_query(self, asset_db: SQLiteAssetStore):  # noqa: F811
         results = asset_db.search_assets("", limit=10)
         assert results == []
 
+    @pytest.mark.unit
     def test_search_assets_no_match(self, asset_db: SQLiteAssetStore):  # noqa: F811
         a1 = _make_asset("a1", title="Alpha")
         asset_db.save_asset(a1)
         results = asset_db.search_assets("nonexistent", limit=10)
         assert results == []
 
+    @pytest.mark.unit
     def test_search_assets_asset_type_filter(self, asset_db: SQLiteAssetStore):  # noqa: F811
         a1 = _make_asset("a1", title="Machine Learning")
         asset_db.save_asset(a1)
         results = asset_db.search_assets("machine", limit=10, asset_type=AssetType("image"))
         assert results == []
 
+    @pytest.mark.unit
     def test_search_assets_fallback_like(self, tmp_path: Path):
         """Sin FTS5, el fallback LIKE funciona."""
         db = tmp_path / "test_nofts.db"
@@ -117,6 +130,7 @@ class TestAssetStoreSearchFts5:
 
 
 class TestMemoryStoreSearchFts5:
+    @pytest.mark.unit
     def test_search_fts5(self, memory_db: SQLiteMemoryStore):  # noqa: F811
         from knowledge.engine.memory_store import MemoryRecord
 
@@ -127,6 +141,7 @@ class TestMemoryStoreSearchFts5:
         assert len(results) == 1
         assert results[0].memory_id == "m1"
 
+    @pytest.mark.unit
     def test_search_fts5_case_folding(self, memory_db: SQLiteMemoryStore):  # noqa: F811
         from knowledge.engine.memory_store import MemoryRecord
 
@@ -134,10 +149,12 @@ class TestMemoryStoreSearchFts5:
         results = memory_db.search("LEARNING", limit=10)
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_search_empty_query(self, memory_db: SQLiteMemoryStore):  # noqa: F811
         results = memory_db.search("", limit=10)
         assert results == []
 
+    @pytest.mark.unit
     def test_search_fallback_like(self, tmp_path: Path):
         """Sin FTS5, fallback LIKE funciona."""
         from knowledge.engine.memory_store import MemoryRecord, SQLiteMemoryStore
@@ -166,6 +183,7 @@ class TestMemoryStoreSearchFts5:
 
 
 class TestLineageEdges:
+    @pytest.mark.unit
     def test_store_event_creates_edges(self, lineage_db: SQLiteLineageStore):  # noqa: F811
         event = {
             "eventType": "COMPLETE",
@@ -177,6 +195,7 @@ class TestLineageEdges:
         upstream = lineage_db.get_upstream("output_asset")
         assert "input_asset" in upstream
 
+    @pytest.mark.unit
     def test_no_false_positives(self, lineage_db: SQLiteLineageStore):  # noqa: F811
         """'abc' no debe matchear 'abc123'."""
         event = {
@@ -190,6 +209,7 @@ class TestLineageEdges:
         assert "abc" in upstream
         assert "abc123" not in upstream
 
+    @pytest.mark.unit
     def test_get_downstream(self, lineage_db: SQLiteLineageStore):  # noqa: F811
         event = {
             "eventType": "COMPLETE",
@@ -202,6 +222,7 @@ class TestLineageEdges:
         assert "dst1" in downstream
         assert "dst2" in downstream
 
+    @pytest.mark.unit
     def test_graceful_when_edges_table_missing(self, tmp_path: Path):
         """Sin op_lineage_edges, debe caer en LIKE."""
         db = tmp_path / "test_noedges.db"
@@ -235,6 +256,7 @@ class TestLineageEdges:
 
 
 class TestFts5Triggers:
+    @pytest.mark.unit
     def test_asset_insert_trigger(self, asset_db: SQLiteAssetStore):  # noqa: F811
         a1 = _make_asset("a1", title="Test Title", text_preview="Test body")
         asset_db.save_asset(a1)
@@ -245,6 +267,7 @@ class TestFts5Triggers:
         assert row is not None
         assert row["title"] == "Test Title"
 
+    @pytest.mark.unit
     def test_asset_update_trigger(self, asset_db: SQLiteAssetStore):  # noqa: F811
         """After INSERT trigger puebla op_assets_fts."""
         a1 = _make_asset("a1", title="Test Title", text_preview="Test body")
@@ -257,6 +280,7 @@ class TestFts5Triggers:
         assert row["title"] == "Test Title"
         assert row["body"] == "Test body"
 
+    @pytest.mark.unit
     def test_memory_backfill(self, memory_db: SQLiteMemoryStore):  # noqa: F811
         from knowledge.engine.memory_store import MemoryRecord
 
@@ -272,6 +296,7 @@ class TestFts5Triggers:
 
 
 class TestGraphRetrieverFts5:
+    @pytest.mark.unit
     def test_retrieve_assets_uses_search_assets(self, tmp_path: Path):
         """Verifica que retrieve_assets llama a search_assets."""
         from knowledge.engine.graphrag import SQLiteGraphRetriever

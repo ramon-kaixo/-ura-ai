@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import subprocess
 from unittest import mock
 
@@ -24,31 +25,37 @@ def mock_subprocess() -> mock.Mock:
 
 
 class TestPromotionPolicy:
+    @pytest.mark.integration
     def test_initially_not_promotable(self):
         policy = PromotionPolicy(mock.Mock())
         assert policy.can_promote is False
 
+    @pytest.mark.integration
     def test_record_makes_promotable(self):
         policy = PromotionPolicy(mock.Mock())
         policy.record("test", True, "OK")
         assert policy.can_promote is True
 
+    @pytest.mark.integration
     def test_fail_prevents_promotion(self):
         policy = PromotionPolicy(mock.Mock())
         policy.record("test", False, "FAIL")
         assert policy.can_promote is False
 
+    @pytest.mark.integration
     def test_mixed_results_block_promotion(self):
         policy = PromotionPolicy(mock.Mock())
         policy.record("a", True)
         policy.record("b", False)
         assert policy.can_promote is False
 
+    @pytest.mark.integration
     def test_budget_within_limits(self):
         policy = PromotionPolicy(mock.Mock())
         policy.set_budget(50, 5000)
         assert policy.check_budget(30, 1000) is True
 
+    @pytest.mark.integration
     def test_budget_exceeded(self):
         policy = PromotionPolicy(mock.Mock())
         policy.set_budget(50, 5000)
@@ -56,6 +63,7 @@ class TestPromotionPolicy:
 
 
 class TestEngineInit:
+    @pytest.mark.integration
     def test_engine_creates_with_defaults(self):
         eng = PipelineEngine()
         assert eng.config is not None
@@ -64,6 +72,7 @@ class TestEngineInit:
         assert eng.checkpoint is not None
         assert eng.promotion is not None
 
+    @pytest.mark.integration
     def test_engine_accepts_custom_config(self):
         config = Configuration()
         eng = PipelineEngine(config=config, pipeline="test")
@@ -71,11 +80,13 @@ class TestEngineInit:
 
 
 class TestRunScript:
+    @pytest.mark.integration
     def test_run_script_success(self, engine, mock_subprocess):
         result = engine.run_script("test_script.py", ["--arg"], timeout=10)
         assert result.returncode == 0
         mock_subprocess.assert_called_once()
 
+    @pytest.mark.integration
     def test_run_script_args_default_none(self, engine):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
@@ -83,6 +94,8 @@ class TestRunScript:
             args = m.call_args[0][0]
             assert args[-1] == "test.py"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_run_script_timeout(self, engine):
         with mock.patch("subprocess.run") as m:
             m.side_effect = subprocess.TimeoutExpired(cmd="test", timeout=1)
@@ -91,6 +104,7 @@ class TestRunScript:
 
 
 class TestRunRuff:
+    @pytest.mark.integration
     def test_run_ruff_calls_ruff(self, engine):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
@@ -100,6 +114,7 @@ class TestRunRuff:
 
 
 class TestRunGit:
+    @pytest.mark.integration
     def test_run_git_calls_git(self, engine):
         with mock.patch("subprocess.run") as m:
             m.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="abc123", stderr="")
@@ -111,6 +126,7 @@ class TestRunGit:
 
 
 class TestHealth:
+    @pytest.mark.integration
     def test_health_ollama_returns_list(self, engine):
         with mock.patch("httpx.get") as m:
             m.return_value.status_code = 200
@@ -119,12 +135,14 @@ class TestHealth:
             assert isinstance(models, list)
             assert len(models) == 1
 
+    @pytest.mark.integration
     def test_health_ollama_fallback_empty(self, engine):
         with mock.patch("httpx.get") as m:
             m.side_effect = Exception("connection failed")
             models = engine.health_ollama()
             assert models == []
 
+    @pytest.mark.integration
     def test_health_disk_returns_dict(self, engine):
         with mock.patch("os.statvfs") as m:
 
@@ -140,6 +158,7 @@ class TestHealth:
 
 
 class TestReport:
+    @pytest.mark.integration
     def test_report_logs_data(self, engine):
         with mock.patch.object(engine.log, "report") as m:
             engine.report("Test Report", {"key": "value"})
@@ -147,6 +166,7 @@ class TestReport:
 
 
 class TestPromotionPolicyExtra:
+    @pytest.mark.integration
     def test_budget_set_y_check(self):
         policy = PromotionPolicy(mock.Mock())
         policy.set_budget(max_files=10, max_lines=100)
@@ -154,6 +174,7 @@ class TestPromotionPolicyExtra:
         assert policy.check_budget(11, 50) is False
         assert policy.check_budget(5, 101) is False
 
+    @pytest.mark.integration
     def test_summary_agrupa(self):
         policy = PromotionPolicy(mock.Mock())
         policy.record("test", True, "OK")
@@ -165,6 +186,7 @@ class TestPromotionPolicyExtra:
 
 
 class TestRunScriptExtra:
+    @pytest.mark.integration
     def test_dry_run_devuelve_simulado(self, engine):
         engine.set_dry_run(True)
         with mock.patch.object(engine.ledger, "add_warning") as m_warn:
@@ -173,6 +195,7 @@ class TestRunScriptExtra:
         assert result.stdout == "[dry run]"
         m_warn.assert_called_once()
 
+    @pytest.mark.integration
     def test_script_falla_notifica(self, engine):
         with mock.patch("subprocess.run") as m_run, mock.patch.object(engine, "notify") as m_notify:
             m_run.return_value = subprocess.CompletedProcess(args=[], returncode=2, stdout="", stderr="boom")
@@ -180,6 +203,7 @@ class TestRunScriptExtra:
         m_notify.assert_called_once()
         assert "boom" in m_notify.call_args[0][2]
 
+    @pytest.mark.integration
     def test_run_ruff_error_loguea_stderr(self, engine):
         with mock.patch("subprocess.run") as m_run, mock.patch.object(engine.log, "warning") as m_warn:
             m_run.return_value = subprocess.CompletedProcess(args=[], returncode=1, stdout="", stderr="err")
@@ -188,6 +212,7 @@ class TestRunScriptExtra:
 
 
 class TestRunPlugins:
+    @pytest.mark.integration
     def test_secuencial(self, engine):
         def fn_a():
             return "a"
@@ -198,6 +223,7 @@ class TestRunPlugins:
         results = engine.run_plugins([("a", fn_a), ("b", fn_b)], parallel=False)
         assert results == {"a": "a", "b": "b"}
 
+    @pytest.mark.integration
     def test_secuencial_con_error(self, engine):
         def fn_boom():
             raise RuntimeError("x")
@@ -205,11 +231,13 @@ class TestRunPlugins:
         results = engine.run_plugins([("boom", fn_boom)], parallel=False)
         assert "error" in results["boom"]
 
+    @pytest.mark.integration
     def test_paralelo(self, engine):
         results = engine.run_plugins([("a", lambda: 1), ("b", lambda: 2)], parallel=True)
         assert results["a"] == 1
         assert results["b"] == 2
 
+    @pytest.mark.integration
     def test_paralelo_con_error(self, engine):
         def fn_boom():
             raise RuntimeError("x")
@@ -217,18 +245,21 @@ class TestRunPlugins:
         results = engine.run_plugins([("boom", fn_boom)], parallel=True)
         assert "error" in results["boom"]
 
+    @pytest.mark.integration
     def test_un_solo_plugin_no_lanza_thread(self, engine):
         results = engine.run_plugins([("a", lambda: "solo")], parallel=True)
         assert results == {"a": "solo"}
 
 
 class TestNotify:
+    @pytest.mark.integration
     def test_sin_alert_engine_loguea(self, engine):
         engine._alert_engine = None
         with mock.patch.object(engine.log, "warning") as m_warn:
             engine.notify("warning", "Titulo", "Desc")
         m_warn.assert_called_once()
 
+    @pytest.mark.integration
     def test_con_alert_engine_guarda(self, engine):
         engine._alert_engine = mock.Mock()
         engine._alert_engine._alert_history = []
@@ -238,6 +269,7 @@ class TestNotify:
 
 
 class TestHealthExtra:
+    @pytest.mark.integration
     def test_health_ollama_ok(self, engine):
 
         resp = mock.Mock()
@@ -248,6 +280,7 @@ class TestHealthExtra:
         assert models == [{"name": "qwen"}]
         m_get.assert_called_once()
 
+    @pytest.mark.integration
     def test_health_disk_critico_notifica(self, engine):
         with mock.patch("os.statvfs") as m, mock.patch.object(engine, "notify") as m_notify:
 
@@ -260,16 +293,19 @@ class TestHealthExtra:
         assert result["libre_gb"] < 10
         m_notify.assert_called_once()
 
+    @pytest.mark.integration
     def test_health_disk_error(self, engine):
         with mock.patch("os.statvfs", side_effect=OSError("x")):
             assert engine.health_disk() == {"libre_gb": 0}
 
+    @pytest.mark.integration
     def test_health_git_ok(self, engine):
         with mock.patch("subprocess.run") as m_run:
             m_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
             result = engine.health_git()
         assert result == {"ok": True, "changes": 0}
 
+    @pytest.mark.integration
     def test_health_git_sucio_notifica(self, engine):
         out = "\n".join(f" M file{i}.py" for i in range(12))
         with mock.patch("subprocess.run") as m_run, mock.patch.object(engine, "notify") as m_notify:
@@ -279,6 +315,7 @@ class TestHealthExtra:
         assert result["changes"] == 12
         m_notify.assert_called_once()
 
+    @pytest.mark.integration
     def test_health_git_no_repo(self, engine):
         with mock.patch("subprocess.run") as m_run:
             m_run.return_value = subprocess.CompletedProcess(args=[], returncode=128, stdout="", stderr="")
@@ -286,6 +323,7 @@ class TestHealthExtra:
         assert result["ok"] is False
         assert "No es un repo" in result["error"]
 
+    @pytest.mark.integration
     def test_health_tests_ok(self, engine):
         stdout = "12 passed, 0 failed, 0 errors in 2s"
         with mock.patch("subprocess.run") as m_run:
@@ -294,6 +332,7 @@ class TestHealthExtra:
         assert result["ok"] is True
         assert result["passed"] == 12
 
+    @pytest.mark.integration
     def test_health_tests_fail(self, engine):
         stdout = "3 passed, 2 failed, 1 error in 2s"
         with mock.patch("subprocess.run") as m_run:
@@ -303,6 +342,7 @@ class TestHealthExtra:
         assert result["failed"] == 2
         assert result["errors"] == 1
 
+    @pytest.mark.integration
     def test_health_tests_wildcard_sin_match(self, engine):
         with mock.patch("subprocess.run") as m_run:
             m_run.return_value = subprocess.CompletedProcess(args=[], returncode=0, stdout="", stderr="")
@@ -310,6 +350,7 @@ class TestHealthExtra:
         assert result["ok"] is False
         assert "No files match" in result["error"]
 
+    @pytest.mark.integration
     def test_health_ruff_ok(self, engine):
         with mock.patch.object(engine, "run_ruff") as m_ruff:
             m_ruff.return_value = subprocess.CompletedProcess(
@@ -319,6 +360,7 @@ class TestHealthExtra:
         assert result["ok"] is True
         assert result["errors"] == 0
 
+    @pytest.mark.integration
     def test_health_ruff_con_errores(self, engine):
         with mock.patch.object(engine, "run_ruff") as m_ruff:
             m_ruff.return_value = subprocess.CompletedProcess(
@@ -328,6 +370,7 @@ class TestHealthExtra:
         assert result["ok"] is False
         assert result["errors"] == 2
 
+    @pytest.mark.integration
     def test_health_bandit_ok(self, engine):
         stdout = "Issue: X\nSeverity: Low\n\nCode scanned"
         with mock.patch("subprocess.run") as m_run:
@@ -336,6 +379,7 @@ class TestHealthExtra:
         assert result["ok"] is True
         assert result["low"] == 1
 
+    @pytest.mark.integration
     def test_health_bandit_medium_bloquea(self, engine):
         stdout = "Severity: Medium\nSeverity: High"
         with mock.patch("subprocess.run") as m_run:
@@ -345,6 +389,7 @@ class TestHealthExtra:
         assert result["medium"] == 1
         assert result["high"] == 1
 
+    @pytest.mark.integration
     def test_parse_count(self, engine):
         assert engine._parse_count("5 passed", "passed") == 5
         assert engine._parse_count("nada", "passed") == 0

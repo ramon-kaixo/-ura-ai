@@ -6,6 +6,7 @@ Instancia RouterHandler con socket mockeado y cubre todos los métodos
 
 from __future__ import annotations
 
+import pytest
 import io
 import json
 from types import SimpleNamespace
@@ -86,6 +87,7 @@ def _wrap_send(handler: RouterHandler) -> list[tuple[int, str, bytes]]:
 
 
 class TestSendHelpers:
+    @pytest.mark.unit
     def test_send_json(self) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -93,6 +95,7 @@ class TestSendHelpers:
         assert out[0][0] == 200
         assert json.loads(out[0][2]) == {"a": 1}
 
+    @pytest.mark.unit
     def test_send_html(self) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -100,6 +103,7 @@ class TestSendHelpers:
         assert out[0][0] == 201
         assert b"hi" in out[0][2]
 
+    @pytest.mark.unit
     def test_send_text(self) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -109,6 +113,7 @@ class TestSendHelpers:
 
 
 class TestGetModelos:
+    @pytest.mark.unit
     def test_obtiene(self, monkeypatch: pytest.MonkeyPatch) -> None:
         RouterHandler._modelos_cache = None
         RouterHandler._cache_ts = 0
@@ -118,6 +123,7 @@ class TestGetModelos:
         )
         assert RouterHandler._get_modelos() == {"m1", "m2"}
 
+    @pytest.mark.unit
     def test_cache_fresco(self, monkeypatch: pytest.MonkeyPatch) -> None:
         RouterHandler._modelos_cache = {"m1"}
         RouterHandler._cache_ts = 9999999999.0
@@ -125,6 +131,7 @@ class TestGetModelos:
 
 
 class TestRateLimit:
+    @pytest.mark.unit
     def test_allowed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         monkeypatch.setattr(
@@ -133,6 +140,7 @@ class TestRateLimit:
         )
         assert h._check_rate_limit() is True
 
+    @pytest.mark.unit
     def test_denied(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -145,6 +153,7 @@ class TestRateLimit:
 
 
 class TestHandlersApi:
+    @pytest.mark.unit
     def test_api_tags(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -156,6 +165,7 @@ class TestHandlersApi:
         assert out[0][0] == 200
         assert b"models" in out[0][2]
 
+    @pytest.mark.unit
     def test_api_version(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -170,6 +180,7 @@ class TestHandlersApi:
         assert data["service"] == "model_router"
         assert data["power_mode"] == "ECO"
 
+    @pytest.mark.unit
     def test_health_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -184,6 +195,7 @@ class TestHandlersApi:
         assert out[0][0] == 200
         assert json.loads(out[0][2])["status"] == "ok"
 
+    @pytest.mark.unit
     def test_health_degraded(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -194,6 +206,7 @@ class TestHandlersApi:
         h._handle_health()
         assert out[0][0] == 503
 
+    @pytest.mark.unit
     def test_health_forbidden(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -202,6 +215,7 @@ class TestHandlersApi:
         h._handle_health()
         assert out[0][0] == 403
 
+    @pytest.mark.unit
     def test_metrics(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -212,6 +226,7 @@ class TestHandlersApi:
         h._handle_metrics()
         assert b"HELP" in out[0][2]
 
+    @pytest.mark.unit
     def test_supervisor_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -228,6 +243,7 @@ class TestHandlersApi:
         data = json.loads(out[0][2])
         assert "error" in data
 
+    @pytest.mark.unit
     def test_status_html(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -242,6 +258,7 @@ class TestHandlersApi:
         h._handle_status()
         assert b"URA System Status" in out[0][2]
 
+    @pytest.mark.unit
     def test_api_search(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -249,6 +266,7 @@ class TestHandlersApi:
         h._handle_api_search("hola")
         assert json.loads(out[0][2])["total"] == 1
 
+    @pytest.mark.unit
     def test_api_search_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -258,6 +276,7 @@ class TestHandlersApi:
 
 
 class TestDoGet:
+    @pytest.mark.unit
     def test_tags(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/tags")
         out = _wrap_send(h)
@@ -266,6 +285,7 @@ class TestDoGet:
         h.do_GET()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_rate_limit_block(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/tags")
         out = _wrap_send(h)
@@ -273,6 +293,7 @@ class TestDoGet:
         h.do_GET()
         assert out[0][0] == 429
 
+    @pytest.mark.unit
     def test_vram_status(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/vram/status")
         out = _wrap_send(h)
@@ -281,6 +302,7 @@ class TestDoGet:
         h.do_GET()
         assert json.loads(out[0][2]) == {"vram": 1}
 
+    @pytest.mark.unit
     def test_dashboard(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/dashboard")
         out = _wrap_send(h)
@@ -289,6 +311,7 @@ class TestDoGet:
         h.do_GET()
         assert b"dash" in out[0][2]
 
+    @pytest.mark.unit
     def test_dashboard_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/dashboard.json")
         out = _wrap_send(h)
@@ -297,6 +320,7 @@ class TestDoGet:
         h.do_GET()
         assert json.loads(out[0][2]) == {"d": 1}
 
+    @pytest.mark.unit
     def test_search_sin_q(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/search")
         out = _wrap_send(h)
@@ -304,6 +328,7 @@ class TestDoGet:
         h.do_GET()
         assert out[0][0] == 400
 
+    @pytest.mark.unit
     def test_search_con_q(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/search?q=hola")
         out = _wrap_send(h)
@@ -312,6 +337,7 @@ class TestDoGet:
         h.do_GET()
         assert json.loads(out[0][2])["query"] == "hola"
 
+    @pytest.mark.unit
     def test_proxy_get(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/v1/models")
         out = _wrap_send(h)
@@ -325,6 +351,7 @@ class TestDoGet:
 
 
 class TestPowerMode:
+    @pytest.mark.unit
     def test_modo_valido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -333,6 +360,7 @@ class TestPowerMode:
         assert h._handle_power_mode() is True
         assert router_mod.POWER_MODE == "TURBO"
 
+    @pytest.mark.unit
     def test_modo_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -341,6 +369,7 @@ class TestPowerMode:
         h._handle_power_mode()
         assert router_mod.POWER_MODE == "ECO"
 
+    @pytest.mark.unit
     def test_modo_invalido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -353,6 +382,7 @@ class TestPowerMode:
 
 
 class TestDoPost:
+    @pytest.mark.unit
     def test_rate_limit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         out = _wrap_send(h)
@@ -360,6 +390,7 @@ class TestDoPost:
         h.do_POST()
         assert out[0][0] == 429
 
+    @pytest.mark.unit
     def test_power_mode(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/power_mode", body=b"mode=TURBO")
         out = _wrap_send(h)
@@ -370,6 +401,7 @@ class TestDoPost:
         h.do_POST()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_chat_directo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         body = json.dumps({"model": "m1", "messages": [{"role": "user", "content": "hola"}]}).encode()
         h = _make_handler(path="/api/chat", body=body)
@@ -386,6 +418,7 @@ class TestDoPost:
         h.do_POST()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_body_invalido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat", body=b"no-json")
         out = _wrap_send(h)
@@ -403,24 +436,29 @@ class TestDoPost:
 
 
 class TestLeerBody:
+    @pytest.mark.unit
     def test_json_ok(self) -> None:
         h = _make_handler(body=b'{"a": 1}')
         assert h._leer_body_json() == {"a": 1}
 
+    @pytest.mark.unit
     def test_json_invalido(self) -> None:
         h = _make_handler(body=b"xx")
         assert h._leer_body_json() == {}
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         h = _make_handler(body=b"")
         assert h._leer_body_json() == {}
 
 
 class TestClasificar:
+    @pytest.mark.unit
     def test_embed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/embed")
         assert h._clasificar_peticion({}) == "embeddings"
 
+    @pytest.mark.unit
     def test_directo_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         monkeypatch.setattr("core.model_router.metrics.metrics", SimpleNamespace(increment=lambda *a, **k: None))
@@ -430,6 +468,7 @@ class TestClasificar:
         monkeypatch.setattr("core.model_router.proxy._proxy_con_vram", lambda *a, **k: (200, {}, b"{}"))
         assert h._clasificar_peticion({"model": "m1", "messages": [{"role": "user", "content": "x"}]}) is None
 
+    @pytest.mark.unit
     def test_directo_no_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         monkeypatch.setattr("core.model_router.metrics.metrics", SimpleNamespace(increment=lambda *a, **k: None))
@@ -437,6 +476,7 @@ class TestClasificar:
         monkeypatch.setattr(RouterHandler, "_get_modelos", classmethod(lambda cls: set()))
         assert h._clasificar_peticion({"model": "zzz", "messages": [{"role": "user", "content": "x"}]}) == "chat"
 
+    @pytest.mark.unit
     def test_router(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         monkeypatch.setattr("core.model_router.model_selection.clasificar_peticion", lambda m: "chat")
@@ -444,6 +484,7 @@ class TestClasificar:
 
 
 class TestCache:
+    @pytest.mark.unit
     def test_hit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         out = _wrap_send(h)
@@ -455,6 +496,7 @@ class TestCache:
         assert h._servir_cache({"messages": [{"role": "user", "content": "x"}]}, "chat") is True
         assert json.loads(out[0][2]) == {"cached": True}
 
+    @pytest.mark.unit
     def test_miss(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         monkeypatch.setattr(
@@ -465,6 +507,7 @@ class TestCache:
 
 
 class TestRutear:
+    @pytest.mark.unit
     def test_ok_cache_set(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         out = _wrap_send(h)
@@ -477,6 +520,7 @@ class TestRutear:
         h._rutear_proxy({"messages": [{"role": "user", "content": "x"}]}, "chat")
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_error_no_cachea(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         out = _wrap_send(h)
@@ -490,6 +534,7 @@ class TestRutear:
 
 
 class TestRegistrarContexto:
+    @pytest.mark.unit
     def test_critical(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         monkeypatch.setattr(
@@ -502,6 +547,7 @@ class TestRegistrarContexto:
         )
         h._registrar_contexto({"messages": [{"role": "user", "content": "x"}]})
 
+    @pytest.mark.unit
     def test_normal(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         monkeypatch.setattr(
@@ -512,12 +558,14 @@ class TestRegistrarContexto:
 
 
 class TestLogMessage:
+    @pytest.mark.unit
     def test_log(self) -> None:
         h = _make_handler()
         h.log_message("GET %s", "/path")
 
 
 class TestDoGetFaltantes:
+    @pytest.mark.unit
     def test_health_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -532,6 +580,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_metrics_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/metrics")
         out = _wrap_send(h)
@@ -543,6 +592,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert b"HELP" in out[0][2]
 
+    @pytest.mark.unit
     def test_supervisor_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -561,6 +611,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert "error" in json.loads(out[0][2])
 
+    @pytest.mark.unit
     def test_status_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/status")
         out = _wrap_send(h)
@@ -576,6 +627,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert b"URA System Status" in out[0][2]
 
+    @pytest.mark.unit
     def test_search_error_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/search?q=x")
         out = _wrap_send(h)
@@ -586,6 +638,7 @@ class TestDoGetFaltantes:
         assert out[0][0] == 200
         assert json.loads(out[0][2])["total"] == 0
 
+    @pytest.mark.unit
     def test_proxy_v1_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/v1/chat/completions")
         out = _wrap_send(h)
@@ -596,6 +649,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_proxy_otro_route(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/otra/ruta")
         out = _wrap_send(h)
@@ -604,6 +658,7 @@ class TestDoGetFaltantes:
         h.do_GET()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_emitir_transfer_encoding(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -612,6 +667,7 @@ class TestDoGetFaltantes:
         assert "Transfer-Encoding" in out[0][1]
         assert out[0][2] == b"data"
 
+    @pytest.mark.unit
     def test_power_mode_loop(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -620,6 +676,7 @@ class TestDoGetFaltantes:
         assert h._handle_power_mode() is True
         assert router_mod.POWER_MODE == "TURBO"
 
+    @pytest.mark.unit
     def test_rutear_cache_fail(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/chat")
         out = _wrap_send(h)
@@ -634,12 +691,14 @@ class TestDoGetFaltantes:
         h._rutear_proxy({"messages": [{"role": "user", "content": "x"}]}, "chat")
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_log_message_real(self) -> None:
         h = _make_handler()
         h.log_message("GET %s", "/path")
 
 
 class TestZmqHappyPath:
+    @pytest.mark.unit
     def test_supervisor_zmq_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -680,6 +739,7 @@ class TestZmqHappyPath:
         h._handle_supervisor()
         assert json.loads(out[0][2]) == {"ok": True}
 
+    @pytest.mark.unit
     def test_status_zmq_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler()
         out = _wrap_send(h)
@@ -718,6 +778,7 @@ class TestZmqHappyPath:
         assert b"t1" in out[0][2]
         assert b"1/1" in out[0][2]
 
+    @pytest.mark.unit
     def test_do_get_version_direct(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -731,6 +792,7 @@ class TestZmqHappyPath:
         h.do_GET()
         assert json.loads(out[0][2])["service"] == "model_router"
 
+    @pytest.mark.unit
     def test_do_post_tipo_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/embed", body=b'{"model": "x"}')
         monkeypatch.setattr("core.model_router.router.rate_limiter", SimpleNamespace(is_allowed=lambda ip: True))
@@ -739,6 +801,7 @@ class TestZmqHappyPath:
 
 
 class TestRamasFinales:
+    @pytest.mark.unit
     def test_supervisor_auth_falla_403(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """require_auth() True y auth_validate False → 403 (líneas 124-125)."""
         import core.model_router.router as router_mod
@@ -751,6 +814,7 @@ class TestRamasFinales:
         assert out[0][0] == 403
         assert "Forbidden" in json.loads(out[0][2])["error"]
 
+    @pytest.mark.unit
     def test_supervisor_auth_valida_pasa(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -769,6 +833,7 @@ class TestRamasFinales:
         h._handle_supervisor()
         assert "error" in json.loads(out[0][2])
 
+    @pytest.mark.unit
     def test_do_get_search_handler_boom(self, monkeypatch: pytest.MonkeyPatch) -> None:
         h = _make_handler(path="/api/search?q=x")
         out = _wrap_send(h)
@@ -779,6 +844,7 @@ class TestRamasFinales:
         h.do_GET()
         assert out[0][0] == 500
 
+    @pytest.mark.unit
     def test_power_mode_part_sin_igual(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import core.model_router.router as router_mod
 
@@ -787,6 +853,7 @@ class TestRamasFinales:
         assert h._handle_power_mode() is True
         assert router_mod.POWER_MODE == "TURBO"
 
+    @pytest.mark.unit
     def test_do_post_clasifica_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # _clasificar_peticion devuelve None cuando el modelo directo esta disponible
         body = json.dumps({"model": "m1", "messages": [{"role": "user", "content": "x"}]}).encode()
@@ -801,6 +868,7 @@ class TestRamasFinales:
         h.do_POST()
         assert out[0][0] == 200
 
+    @pytest.mark.unit
     def test_log_message_fmt(self) -> None:
         h = _make_handler()
         h.client_address = ("1.2.3.4", 99)

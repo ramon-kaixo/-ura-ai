@@ -6,6 +6,7 @@ estos ejercitan el codigo real con mocks de httpx.AsyncClient (sin red).
 
 from __future__ import annotations
 
+import pytest
 import json
 from types import SimpleNamespace
 from typing import Self
@@ -104,74 +105,91 @@ def _mock_upstream(monkeypatch, payload: dict, status: int = 200) -> None:
 
 
 class TestTokenStream:
+    @pytest.mark.unit
     def test_response_field(self) -> None:
         assert proxy_mod._token_stream({"response": "hola"}) == "hola"
 
+    @pytest.mark.unit
     def test_message_content(self) -> None:
         assert proxy_mod._token_stream({"message": {"content": "chunk"}}) == "chunk"
 
+    @pytest.mark.unit
     def test_choices_delta(self) -> None:
         assert proxy_mod._token_stream({"choices": [{"delta": {"content": "d"}}]}) == "d"
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert proxy_mod._token_stream({"nada": 1}) == ""
 
 
 class TestErrorGuardian:
+    @pytest.mark.unit
     def test_con_penalty(self) -> None:
         err = proxy_mod._error_guardian("penalizacion")
         assert err["error"]["message"] == "STREAM_ABORTED_BY_GUARDIAN"
         assert err["error"]["penalty_context"] == "penalizacion"
 
+    @pytest.mark.unit
     def test_sin_penalty(self) -> None:
         err = proxy_mod._error_guardian(None)
         assert "penalty_context" not in err["error"]
 
 
 class TestLeerBody:
+    @pytest.mark.unit
     def test_post_json(self) -> None:
         r = httpx.Request("POST", "http://x/api/chat", json={"model": "m"})
         assert asyncio_run(proxy_mod._leer_body(TestClientRequest(r))) == {"model": "m"}
 
+    @pytest.mark.unit
     def test_get_none(self) -> None:
         r = httpx.Request("GET", "http://x/api/tags")
         assert asyncio_run(proxy_mod._leer_body(TestClientRequest(r))) is None
 
+    @pytest.mark.unit
     def test_json_invalido(self) -> None:
         r = httpx.Request("POST", "http://x/api/chat", content=b"{rotos")
         assert asyncio_run(proxy_mod._leer_body(TestClientRequest(r))) is None
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_build_headers_con_auth(self) -> None:
         r = httpx.Request("GET", "http://x/api/tags", headers={"Authorization": "Bearer k"})
         h = proxy_mod._build_headers(TestClientRequest(r))
         assert h["Authorization"] == "Bearer k"
 
+    @pytest.mark.unit
     def test_build_headers_sin_auth(self) -> None:
         r = httpx.Request("GET", "http://x/api/tags")
         assert "Authorization" not in proxy_mod._build_headers(TestClientRequest(r))
 
+    @pytest.mark.unit
     def test_es_opencode_por_modelo(self) -> None:
         assert proxy_mod._es_opencode({"model": "opencode/llama3"}) is True
 
+    @pytest.mark.unit
     def test_es_opencode_por_fuerza(self) -> None:
         assert proxy_mod._es_opencode({"_force_guardian": True}) is True
 
+    @pytest.mark.unit
     def test_es_opencode_falso(self) -> None:
         assert proxy_mod._es_opencode({"model": "llama3"}) is False
 
+    @pytest.mark.unit
     def test_adquirir_vram_path_sin_slash(self) -> None:
         st = _state()
         asyncio_run(proxy_mod._adquirir_vram(st, {"model": "m1"}, "api/chat"))
         st.scheduler.acquire.assert_awaited_once()
         assert st.scheduler.acquire.await_args.kwargs["data"]["model"] == "m1"
 
+    @pytest.mark.unit
     def test_adquirir_vram_path_con_slash(self) -> None:
         st = _state()
         asyncio_run(proxy_mod._adquirir_vram(st, {}, "v1/chat/completions"))
         assert st.scheduler.acquire.await_args.kwargs["data"]["model"] == "v1"
 
+    @pytest.mark.unit
     def test_adquirir_vram_sin_body(self) -> None:
         st = _state()
         asyncio_run(proxy_mod._adquirir_vram(st, None, "tags"))
@@ -179,12 +197,14 @@ class TestHelpers:
 
 
 class TestUpstream:
+    @pytest.mark.unit
     def test_get_upstream(self) -> None:
         r = httpx.Request("GET", "http://x/api/tags")
         resp = asyncio_run(proxy_mod._get_upstream(TestClientRequest(r), {"Content-Type": "application/json"}))
         assert resp.status_code == 200
         assert json.loads(resp.body) == {"ok": "get"}
 
+    @pytest.mark.unit
     def test_post_upstream(self) -> None:
         r = httpx.Request("POST", "http://x/api/embed", json={"model": "m"})
         resp = asyncio_run(proxy_mod._post_upstream(TestClientRequest(r), {"model": "m"}, {}))
@@ -193,30 +213,35 @@ class TestUpstream:
 
 
 class TestProxyGateway:
+    @pytest.mark.unit
     def test_get(self, monkeypatch) -> None:
         _mock_upstream(monkeypatch, {"tags": []})
         resp = TestClient(_app()).get("/api/tags")
         assert resp.status_code == 200
         assert resp.json() == {"tags": []}
 
+    @pytest.mark.unit
     def test_post_no_stream(self, monkeypatch) -> None:
         _mock_upstream(monkeypatch, {"embedding": [1]})
         resp = TestClient(_app()).post("/api/embed", json={"model": "m", "stream": False})
         assert resp.status_code == 200
         assert resp.json() == {"embedding": [1]}
 
+    @pytest.mark.unit
     def test_post_stream(self, monkeypatch) -> None:
         monkeypatch.setattr(proxy_mod, "httpx", SimpleNamespace(AsyncClient=lambda *a, **k: FakeAsyncClient(stream_lines=['{"response":"hola"}'])))
         resp = TestClient(_app()).post("/api/chat", json={"model": "llama3", "stream": True})
         assert resp.status_code == 200
         assert b'"hola"' in resp.content
 
+    @pytest.mark.unit
     def test_vram_denied(self) -> None:
         st = _state()
         st.scheduler.acquire.return_value = None
         resp = TestClient(_app(st)).post("/api/chat", json={"model": "m", "stream": True})
         assert resp.status_code == 503
 
+    @pytest.mark.unit
     def test_connect_error(self, monkeypatch) -> None:
         async def _boom(request, body, headers):
             raise httpx.ConnectError("sin ollama")
@@ -227,14 +252,17 @@ class TestProxyGateway:
 
 
 class TestProxyStream:
+    @pytest.mark.unit
     def test_linea_vacia(self, monkeypatch) -> None:
         out = run_stream([""])
         assert out == ["\n"]
 
+    @pytest.mark.unit
     def test_guardian_none(self, monkeypatch) -> None:
         out = run_stream(['{"response":"a"}', '{"response":"b"}'])
         assert out == ['{"response":"a"}\n', '{"response":"b"}\n']
 
+    @pytest.mark.unit
     def test_guardian_pasa(self, monkeypatch) -> None:
         g = mock.Mock()
         g.evaluar_texto_stream.return_value = True
@@ -242,6 +270,7 @@ class TestProxyStream:
         assert out == ['{"response":"ok"}\n']
         g.evaluar_texto_stream.assert_called_once_with("ok")
 
+    @pytest.mark.unit
     def test_guardian_aborta(self, monkeypatch) -> None:
         g = mock.Mock()
         g.evaluar_texto_stream.return_value = False
@@ -252,10 +281,12 @@ class TestProxyStream:
         assert "STREAM_ABORTED_BY_GUARDIAN" in out[0]
         assert "p1" in out[0]
 
+    @pytest.mark.unit
     def test_chunk_no_json(self, monkeypatch) -> None:
         out = run_stream(["no-json", '{"response":"a"}'])
         assert out == ["no-json\n", '{"response":"a"}\n']
 
+    @pytest.mark.unit
     def test_chunk_no_json_opencode(self, monkeypatch) -> None:
         g = mock.Mock()
         g.evaluar_texto_stream.return_value = True

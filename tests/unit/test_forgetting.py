@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from datetime import UTC, datetime, timedelta
 
@@ -25,17 +26,20 @@ def _store_episodes(store: EpisodeStore, count: int, **kwargs) -> None:
 
 
 class TestProtectionRules:
+    @pytest.mark.unit
     def test_protect(self):
         pr = ProtectionRules()
         pr.protect("e1")
         assert pr.is_protected("e1")
         assert not pr.is_pinned("e1")
 
+    @pytest.mark.unit
     def test_pin(self):
         pr = ProtectionRules()
         pr.pin("e2")
         assert pr.is_pinned("e2")
 
+    @pytest.mark.unit
     def test_unprotect(self):
         pr = ProtectionRules()
         pr.protect("e1")
@@ -44,6 +48,7 @@ class TestProtectionRules:
 
 
 class TestTTLForgetPolicy:
+    @pytest.mark.unit
     def test_expired_episode(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -56,6 +61,7 @@ class TestTTLForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert should
 
+    @pytest.mark.unit
     def test_fresh_episode(self):
         store = EpisodeStore()
         eid = store.store(Episode(ttl=ONE_DAY * 30))
@@ -65,6 +71,7 @@ class TestTTLForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert not should
 
+    @pytest.mark.unit
     def test_semantic_fact(self):
         fact = SemanticFact(subject="s", predicate="p", object_value="o")
         policy = TTLForgetPolicy()
@@ -76,6 +83,7 @@ class TestTTLForgetPolicy:
 
 
 class TestImportanceForgetPolicy:
+    @pytest.mark.unit
     def test_low_importance_old(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=60)).isoformat()
@@ -86,6 +94,7 @@ class TestImportanceForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert should
 
+    @pytest.mark.unit
     def test_high_importance_kept(self):
         store = EpisodeStore()
         eid = store.store(Episode(importance=0.9))
@@ -100,6 +109,7 @@ from motor.intelligence.memory.forgetting import ForgettingContext
 
 
 class TestConfidenceForgetPolicy:
+    @pytest.mark.unit
     def test_low_confidence(self):
         store = EpisodeStore()
         eid = store.store(Episode(confidence=0.1))
@@ -109,6 +119,7 @@ class TestConfidenceForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert should
 
+    @pytest.mark.unit
     def test_high_confidence_kept(self):
         store = EpisodeStore()
         eid = store.store(Episode(confidence=0.9))
@@ -120,6 +131,7 @@ class TestConfidenceForgetPolicy:
 
 
 class TestHybridForgetPolicy:
+    @pytest.mark.unit
     def test_ttl_or_importance(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=60)).isoformat()
@@ -130,6 +142,7 @@ class TestHybridForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert should  # TTL expired
 
+    @pytest.mark.unit
     def test_require_all(self):
         store = EpisodeStore()
         eid = store.store(Episode(importance=0.9, confidence=0.9, ttl=ONE_DAY * 90))
@@ -139,6 +152,7 @@ class TestHybridForgetPolicy:
         should, _ = policy.should_forget(ep, ctx)
         assert not should  # all conditions must be met
 
+    @pytest.mark.unit
     def test_never_policy(self):
         policy = NeverForgetPolicy()
         ctx = ForgettingContext(EpisodeStore(), SemanticMemoryStore(), [], set(), set())
@@ -147,11 +161,13 @@ class TestHybridForgetPolicy:
 
 
 class TestForgettingEngine:
+    @pytest.mark.unit
     def test_engine_empty(self):
         engine = ForgettingEngine(EpisodeStore(), SemanticMemoryStore(), policies=[NeverForgetPolicy()])
         result = engine.run()
         assert result.total_removed == 0
 
+    @pytest.mark.unit
     def test_engine_removes_expired(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -162,6 +178,7 @@ class TestForgettingEngine:
         assert result.episodes_removed >= 1
         assert store.count() == 1
 
+    @pytest.mark.unit
     def test_dry_run(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -172,6 +189,7 @@ class TestForgettingEngine:
         assert result.dry_run
         assert store.count() == 1  # not actually deleted
 
+    @pytest.mark.unit
     def test_protected_skipped(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -183,6 +201,7 @@ class TestForgettingEngine:
         assert result.protected_skipped >= 1
         assert result.episodes_removed == 0
 
+    @pytest.mark.unit
     def test_pinned_skipped(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -194,6 +213,7 @@ class TestForgettingEngine:
         assert result.pinned_skipped >= 1
         assert result.episodes_removed == 0
 
+    @pytest.mark.unit
     def test_referenced_skipped(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -204,6 +224,7 @@ class TestForgettingEngine:
         assert result.referenced_skipped >= 1
         assert result.episodes_removed == 0
 
+    @pytest.mark.unit
     def test_facts_removed(self):
         sstore = SemanticMemoryStore()
         sstore.store(SemanticFact(subject="s", predicate="p", object_value="o", confidence=0.1))
@@ -211,6 +232,7 @@ class TestForgettingEngine:
         result = engine.run()
         assert result.facts_removed >= 1
 
+    @pytest.mark.unit
     def test_simulate(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -221,12 +243,14 @@ class TestForgettingEngine:
         assert result.dry_run
         assert store.count() == 1
 
+    @pytest.mark.unit
     def test_stats(self):
         engine = ForgettingEngine(EpisodeStore(), SemanticMemoryStore())
         stats = engine.stats()
         assert "episodes_total" in stats
         assert "policies" in stats
 
+    @pytest.mark.unit
     def test_idempotent(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -239,6 +263,7 @@ class TestForgettingEngine:
 
 
 class TestForgettingScheduler:
+    @pytest.mark.unit
     def test_enable_disable(self):
         engine = ForgettingEngine(EpisodeStore(), SemanticMemoryStore())
         scheduler = ForgettingScheduler(engine)
@@ -248,12 +273,14 @@ class TestForgettingScheduler:
         scheduler.disable()
         assert not scheduler.enabled
 
+    @pytest.mark.unit
     def test_run_once(self):
         engine = ForgettingEngine(EpisodeStore(), SemanticMemoryStore())
         scheduler = ForgettingScheduler(engine)
         result = scheduler.run_once()
         assert result.total_removed == 0
 
+    @pytest.mark.unit
     def test_run_once_dry_run(self):
         store = EpisodeStore()
         past = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -265,6 +292,7 @@ class TestForgettingScheduler:
 
 
 class TestForgettingBenchmark:
+    @pytest.mark.unit
     def test_under_500ms(self):
         import time
 
@@ -280,6 +308,7 @@ class TestForgettingBenchmark:
 
 
 class TestForgettingResult:
+    @pytest.mark.unit
     def test_total_removed(self):
         from motor.intelligence.memory.forgetting import ForgettingResult
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -55,6 +56,7 @@ def db_path(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.unit
 def test_record_persiste_hash(db_path: Path) -> None:
     record_determinism_hash(db_path, run_id=42)
     h = get_determinism_hash(db_path)
@@ -64,6 +66,7 @@ def test_record_persiste_hash(db_path: Path) -> None:
     assert algo == "sha256-v2"
 
 
+@pytest.mark.unit
 def test_hash_estable_entre_runs(db_path: Path) -> None:
     record_determinism_hash(db_path, run_id=1)
     h1 = get_determinism_hash(db_path)
@@ -72,19 +75,23 @@ def test_hash_estable_entre_runs(db_path: Path) -> None:
     assert h1 == h2
 
 
+@pytest.mark.unit
 def test_get_hash_sin_fila() -> None:
     path = Path("/no/existe.db")
     assert get_determinism_hash(path) is None
 
 
+@pytest.mark.unit
 def test_get_algorithm_error_retorna_v1() -> None:
     assert get_determinism_algorithm(Path("/no/existe.db")) == "sha256-v1"
 
 
+@pytest.mark.unit
 def test_record_con_error_no_rompe() -> None:
     record_determinism_hash(Path("/no/existe.db"), run_id=3)
 
 
+@pytest.mark.unit
 def test_get_algorithm_vacio_retorna_v1(db_path: Path) -> None:
     conn = sqlite3.connect(db_path)
     conn.execute("UPDATE kg_active_version SET determinism_algorithm = NULL WHERE singleton = 1")

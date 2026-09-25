@@ -1,11 +1,13 @@
 """Tests cobertura mochila_server — VRAM scheduler (split)."""
 
 from __future__ import annotations
+import pytest
 
 from _mochila_helpers import AsyncMock, Mock, asyncio, httpx, pytest, subprocess, time
 
 
 class TestVRAMScheduler:
+    @pytest.mark.unit
     def test_detect_max_vram_ok(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
@@ -13,6 +15,7 @@ class TestVRAMScheduler:
         monkeypatch.setattr(subprocess, "run", fake)
         assert VRAMAwareScheduler._detect_max_vram(100) == 4096
 
+    @pytest.mark.unit
     def test_detect_max_vram_na_stdout(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
@@ -20,6 +23,7 @@ class TestVRAMScheduler:
         monkeypatch.setattr(subprocess, "run", fake)
         assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
+    @pytest.mark.unit
     def test_detect_max_vram_returncode(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
@@ -27,6 +31,7 @@ class TestVRAMScheduler:
         monkeypatch.setattr(subprocess, "run", fake)
         assert VRAMAwareScheduler._detect_max_vram(100) == 100
 
+    @pytest.mark.unit
     def test_detect_max_vram_excepcion(self, monkeypatch):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
@@ -42,17 +47,20 @@ class TestVRAMScheduler:
         s._current_mb = 40
         assert s.available_mb() == 60
 
+    @pytest.mark.unit
     def test_estimar_vram_explicito(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
         assert VRAMAwareScheduler.estimar_vram({"_vram_mb": "123"}) == 123
 
+    @pytest.mark.unit
     def test_estimar_vram_modelos_conocidos(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
         assert VRAMAwareScheduler.estimar_vram({"model": "qwen3-coder:30b"}) == 18000
         assert VRAMAwareScheduler.estimar_vram({"model": "llama3:latest"}) == 4700
 
+    @pytest.mark.unit
     def test_estimar_vram_desconocido_con_overhead(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
 
@@ -60,6 +68,7 @@ class TestVRAMScheduler:
         esperado = 512 + int((len(prompt) // 4) * 0.002)
         assert VRAMAwareScheduler.estimar_vram({"model": "otro", "prompt": prompt}) == esperado
 
+    @pytest.mark.unit
     def test_estimar_vram_messages(self):
         from core.mochila.mochila_server import VRAMAwareScheduler
 

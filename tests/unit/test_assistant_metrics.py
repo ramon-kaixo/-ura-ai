@@ -6,6 +6,7 @@ instancias frescas via monkeypatch para no contaminar estado global.
 
 from __future__ import annotations
 
+import pytest
 import logging
 
 import pytest
@@ -24,11 +25,13 @@ def _fresh_metrics(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestCheckLatencyAlert:
+    @pytest.mark.unit
     def test_no_alerts_when_below_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
         metrics_mod.request_latency.observe(0.5, mode="chat")
         with caplog.at_level(logging.WARNING):
             assert check_latency_alert(threshold=5.0) == []
 
+    @pytest.mark.unit
     def test_alert_when_avg_above_threshold(self, caplog: pytest.LogCaptureFixture) -> None:
         metrics_mod.request_latency.observe(9.0, mode="chat")
         alerts = check_latency_alert(threshold=5.0)
@@ -36,6 +39,7 @@ class TestCheckLatencyAlert:
         assert "LATENCY ALERT" in alerts[0]
         assert "chat" in alerts[0]
 
+    @pytest.mark.unit
     def test_alert_only_for_exceeding_keys(self) -> None:
         metrics_mod.request_latency.observe(9.0, mode="lento")
         metrics_mod.request_latency.observe(0.1, mode="rapido")
@@ -43,16 +47,19 @@ class TestCheckLatencyAlert:
         assert len(alerts) == 1
         assert "lento" in alerts[0]
 
+    @pytest.mark.unit
     def test_empty_state_no_alerts(self) -> None:
         assert check_latency_alert() == []
 
 
 class TestCheckErrorAlert:
+    @pytest.mark.unit
     def test_no_alerts_low_rate(self) -> None:
         metrics_mod.requests_total.inc(100, mode="chat")
         metrics_mod.errors_total.inc(1, type="llm")
         assert check_error_alert(threshold=0.1) == []
 
+    @pytest.mark.unit
     def test_alert_high_rate(self) -> None:
         metrics_mod.requests_total.inc(10, mode="chat")
         metrics_mod.errors_total.inc(5, type="llm")
@@ -61,9 +68,11 @@ class TestCheckErrorAlert:
         assert "ERROR RATE ALERT" in alerts[0]
         assert "5/10" in alerts[0]
 
+    @pytest.mark.unit
     def test_empty_state_no_alerts(self) -> None:
         assert check_error_alert() == []
 
+    @pytest.mark.unit
     def test_errors_accumulate_across_labels(self) -> None:
         metrics_mod.requests_total.inc(10, mode="chat")
         metrics_mod.errors_total.inc(2, type="llm")

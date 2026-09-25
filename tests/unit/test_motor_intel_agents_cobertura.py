@@ -15,6 +15,7 @@ from motor.intelligence.agents.validator import ValidatorAgent
 # ── message ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_agent_message_defaults() -> None:
     m = AgentMessage(source="a", target="b", message_type="task", payload={"x": 1})
     assert m.id != ""
@@ -22,6 +23,7 @@ def test_agent_message_defaults() -> None:
     assert m.correlation_id == m.id
 
 
+@pytest.mark.unit
 def test_agent_message_con_ids_explicitos() -> None:
     m = AgentMessage(source="a", target="b", message_type="status", payload={}, correlation_id="c1", id="i1", timestamp="t1")
     assert m.id == "i1"
@@ -29,6 +31,7 @@ def test_agent_message_con_ids_explicitos() -> None:
     assert m.timestamp == "t1"
 
 
+@pytest.mark.unit
 def test_agent_task_defaults() -> None:
     t = AgentTask(objective="haz algo")
     assert t.id != ""
@@ -36,28 +39,33 @@ def test_agent_task_defaults() -> None:
     assert t.agent_role == AgentRole.EXECUTOR
 
 
+@pytest.mark.unit
 def test_agent_task_con_id() -> None:
     t = AgentTask(objective="x", id="t1", created_at="c1", priority=5, timeout=30)
     assert t.id == "t1"
     assert t.created_at == "c1"
 
 
+@pytest.mark.unit
 def test_agent_result_defaults() -> None:
     r = AgentResult(task_id="t", agent_id="a", success=True)
     assert r.id != ""
     assert r.output == {}
 
 
+@pytest.mark.unit
 def test_agent_result_con_id() -> None:
     r = AgentResult(task_id="t", agent_id="a", success=True, id="r1")
     assert r.id == "r1"
 
 
+@pytest.mark.unit
 def test_agent_role_valores() -> None:
     assert AgentRole.PLANNER.value == "planner"
     assert AgentRole.VALIDATOR.value == "validator"
 
 
+@pytest.mark.unit
 def test_agent_status_valores() -> None:
     assert AgentStatus.ERROR.value == "error"
     assert AgentStatus.COMPLETED.value == "completed"
@@ -77,6 +85,7 @@ class _DummyAgent(Agent):
         return AgentResult(task_id=task.id, agent_id=self.id, success=True)
 
 
+@pytest.mark.unit
 def test_agent_can_handle_rol_correcto() -> None:
     a = _DummyAgent()
     assert a.can_handle(AgentTask(objective="x", agent_role=AgentRole.EXECUTOR)) is True
@@ -98,6 +107,7 @@ class _ConSuperRun(Agent):
         return r
 
 
+@pytest.mark.unit
 def test_agent_abstract_run_elipsis() -> None:
     a = _ConSuperRun()
     r = a.run(AgentTask(objective="x"))
@@ -111,6 +121,7 @@ def _task(input_data: dict) -> AgentTask:
     return AgentTask(objective="v", input_data=input_data)
 
 
+@pytest.mark.unit
 def test_validator_ok_sin_issues() -> None:
     v = ValidatorAgent()
     r = v.run(_task({"result": {"success": True}}))
@@ -120,6 +131,7 @@ def test_validator_ok_sin_issues() -> None:
     assert v.status == AgentStatus.IDLE
 
 
+@pytest.mark.unit
 def test_validator_sin_result_data() -> None:
     v = ValidatorAgent()
     r = v.run(_task({}))
@@ -127,6 +139,7 @@ def test_validator_sin_result_data() -> None:
     assert "No result data provided" in r.output["issues"]
 
 
+@pytest.mark.unit
 def test_validator_require_success_fail() -> None:
     v = ValidatorAgent()
     r = v.run(_task({"result": {"success": False}}))
@@ -134,24 +147,28 @@ def test_validator_require_success_fail() -> None:
     assert "Result indicates failure" in r.output["issues"]
 
 
+@pytest.mark.unit
 def test_validator_require_success_false_ok() -> None:
     v = ValidatorAgent()
     r = v.run(_task({"require_success": False, "result": {"success": False}}))
     assert r.success is True
 
 
+@pytest.mark.unit
 def test_validator_require_output() -> None:
     v = ValidatorAgent()
     r = v.run(_task({"require_output": True, "result": {"success": True, "output": None}}))
     assert "Result has no output" in r.output["issues"]
 
 
+@pytest.mark.unit
 def test_validator_require_output_presente() -> None:
     v = ValidatorAgent()
     r = v.run(_task({"require_output": True, "result": {"success": True, "output": {"a": 1}}}))
     assert r.success is True
 
 
+@pytest.mark.unit
 def test_validator_excepcion_devuelve_error() -> None:
     v = ValidatorAgent()
 
@@ -165,6 +182,7 @@ def test_validator_excepcion_devuelve_error() -> None:
     assert "exploto" in r.error
 
 
+@pytest.mark.unit
 def test_validator_id_generado() -> None:
     v1, v2 = ValidatorAgent(), ValidatorAgent()
     assert v1.id != v2.id
@@ -204,6 +222,7 @@ class _RetrieverVacio:
         return None
 
 
+@pytest.mark.unit
 def test_researcher_con_memoria_y_retriever() -> None:
     r = ResearcherAgent(memory_store=_MemStoreFake(), context_retriever=_RetrieverFake())
     out = r._gather_context("buscar", {"x": 1})
@@ -211,6 +230,7 @@ def test_researcher_con_memoria_y_retriever() -> None:
     assert out["sources"] == ["semantic_memory", "episodic_memory"]
 
 
+@pytest.mark.unit
 def test_researcher_solo_memoria() -> None:
     r = ResearcherAgent(memory_store=_MemStoreFake(), context_retriever=_RetrieverVacio())
     out = r._gather_context("q", {})
@@ -233,30 +253,35 @@ class _FalsyRetriever:
         return _EpisodesFake()
 
 
+@pytest.mark.unit
 def test_researcher_memory_store_falsy_no_usa() -> None:
     r = ResearcherAgent(memory_store=_FalsyStore(), context_retriever=_FalsyRetriever())
     out = r._gather_context("q", {})
     assert out["sources"] == []
 
 
+@pytest.mark.unit
 def test_researcher_solo_retriever() -> None:
     r = ResearcherAgent(memory_store=_FalsyStore(), context_retriever=_RetrieverFake())
     out = r._gather_context("q", {})
     assert out["sources"] == ["episodic_memory"]
 
 
+@pytest.mark.unit
 def test_researcher_sin_dependencias() -> None:
     r = ResearcherAgent(memory_store=_FalsyStore(), context_retriever=None)
     out = r._gather_context("q", {})
     assert out["sources"] == []
 
 
+@pytest.mark.unit
 def test_researcher_memoria_vacia_no_agrega() -> None:
     r = ResearcherAgent(memory_store=_MemStoreVacio(), context_retriever=_RetrieverVacio())
     out = r._gather_context("q", {})
     assert out["sources"] == []
 
 
+@pytest.mark.unit
 def test_researcher_run_ok() -> None:
     r = ResearcherAgent(memory_store=_MemStoreFake(), context_retriever=_RetrieverFake())
     res = r.run(AgentTask(objective="buscar", input_data={}))
@@ -265,6 +290,7 @@ def test_researcher_run_ok() -> None:
     assert r.status == AgentStatus.IDLE
 
 
+@pytest.mark.unit
 def test_researcher_run_error() -> None:
     class _Roto:
         def search(self, text: str, k: int) -> list:
@@ -277,6 +303,7 @@ def test_researcher_run_error() -> None:
     assert "roto" in res.error
 
 
+@pytest.mark.unit
 def test_researcher_auto_discover_falla_silenciosamente(monkeypatch: pytest.MonkeyPatch) -> None:
     import builtins
 
@@ -294,6 +321,7 @@ def test_researcher_auto_discover_falla_silenciosamente(monkeypatch: pytest.Monk
     assert r._context_retriever is None
 
 
+@pytest.mark.unit
 def test_researcher_auto_discover_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     class _CR:
         pass
@@ -310,6 +338,7 @@ def test_researcher_auto_discover_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(r._memory_store, _SM)
 
 
+@pytest.mark.unit
 def test_researcher_auto_discover_retriever_presente(monkeypatch: pytest.MonkeyPatch) -> None:
     class _SM:
         pass
@@ -332,6 +361,7 @@ class _FakeExec:
         return self._r
 
 
+@pytest.mark.unit
 def test_executor_ok() -> None:
     fx = _FakeExec(ProcessResult(ok=True, cmd=["echo"], returncode=0, stdout="salida", stderr=""))
     e = ExecutorAgent(executor=fx)
@@ -342,6 +372,7 @@ def test_executor_ok() -> None:
     assert e.status == AgentStatus.IDLE
 
 
+@pytest.mark.unit
 def test_executor_falla_lanza_error() -> None:
     fx = _FakeExec(ProcessResult(ok=False, cmd=["bad"], returncode=2, stdout="", stderr="falló"))
     e = ExecutorAgent(executor=fx)
@@ -350,6 +381,7 @@ def test_executor_falla_lanza_error() -> None:
     assert "falló" in r.error
 
 
+@pytest.mark.unit
 def test_executor_allow_failure() -> None:
     fx = _FakeExec(ProcessResult(ok=False, cmd=["bad"], returncode=2, stdout="", stderr="falló"))
     e = ExecutorAgent(executor=fx)
@@ -358,6 +390,7 @@ def test_executor_allow_failure() -> None:
     assert r.output["returncode"] == 2
 
 
+@pytest.mark.unit
 def test_executor_cmd_por_defecto() -> None:
     class _Registra:
         def __init__(self) -> None:
@@ -373,6 +406,7 @@ def test_executor_cmd_por_defecto() -> None:
     assert fx.cmd == ["echo", "executed:", "op"]
 
 
+@pytest.mark.unit
 def test_executor_excepcion_interna() -> None:
     class _Explota:
         def run(self, cmd, timeout: int = 30) -> ProcessResult:
@@ -403,6 +437,7 @@ class _AgenteStub:
         return self._results.pop(0) if self._results else AgentResult(task_id=task.id, agent_id=self.id, success=True)
 
 
+@pytest.mark.unit
 def test_supervisor_coordina_exito() -> None:
     s = SupervisorAgent()
     ok = _AgenteStub("a1", AgentRole.EXECUTOR, [])
@@ -414,6 +449,7 @@ def test_supervisor_coordina_exito() -> None:
     assert r.output["steps"][0]["status"] == "completed"
 
 
+@pytest.mark.unit
 def test_supervisor_sin_agente_skips() -> None:
     s = SupervisorAgent()
     ctx = {"subtasks": [{"objective": "t1", "agent_role": AgentRole.RESEARCHER}]}
@@ -423,6 +459,7 @@ def test_supervisor_sin_agente_skips() -> None:
     assert r.output["steps"][0]["reason"] == "no_agent"
 
 
+@pytest.mark.unit
 def test_supervisor_cancelled_break() -> None:
     s = SupervisorAgent()
     ctx = {"subtasks": [{"objective": "t1", "agent_role": AgentRole.EXECUTOR}, {"objective": "t2"}]}
@@ -432,6 +469,7 @@ def test_supervisor_cancelled_break() -> None:
     assert r2.output["steps"][0]["status"] == "skipped"
 
 
+@pytest.mark.unit
 def test_supervisor_cancellation_check() -> None:
     s = SupervisorAgent()
     ok = _AgenteStub("a1", AgentRole.EXECUTOR, [])
@@ -441,6 +479,7 @@ def test_supervisor_cancellation_check() -> None:
     assert r.success is True
 
 
+@pytest.mark.unit
 def test_supervisor_cancelled_en_subtask() -> None:
     s = SupervisorAgent()
     ctx = {"subtasks": [{"objective": "t1", "agent_role": AgentRole.EXECUTOR}]}
@@ -452,6 +491,7 @@ def test_supervisor_cancelled_en_subtask() -> None:
     assert result["steps"][0]["status"] == "cancelled"
 
 
+@pytest.mark.unit
 def test_supervisor_retries_hasta_agotar() -> None:
     s = SupervisorAgent()
     fail = _AgenteStub(
@@ -467,6 +507,7 @@ def test_supervisor_retries_hasta_agotar() -> None:
     assert len(fails) == MAX_RETRIES + 1
 
 
+@pytest.mark.unit
 def test_supervisor_agente_que_lanza() -> None:
     s = SupervisorAgent()
     malo = _AgenteStub("a1", AgentRole.EXECUTOR, [], lanzar=True)
@@ -476,6 +517,7 @@ def test_supervisor_agente_que_lanza() -> None:
     assert r.output["steps"][0]["status"] == "error"
 
 
+@pytest.mark.unit
 def test_supervisor_cancel_en_run_subtask() -> None:
     s = SupervisorAgent()
     llamadas = {"n": 0}
@@ -490,6 +532,7 @@ def test_supervisor_cancel_en_run_subtask() -> None:
     assert result["steps"][0]["status"] == "cancelled"
 
 
+@pytest.mark.unit
 def test_supervisor_run_excepcion() -> None:
     s = SupervisorAgent()
     r = s.run(AgentTask(objective="o", context={"subtasks": None}))
@@ -497,6 +540,7 @@ def test_supervisor_run_excepcion() -> None:
     assert s.status == AgentStatus.IDLE
 
 
+@pytest.mark.unit
 def test_supervisor_find_agent_por_rol() -> None:
     s = SupervisorAgent()
     a = _AgenteStub("a1", AgentRole.EXECUTOR, [])
@@ -506,6 +550,7 @@ def test_supervisor_find_agent_por_rol() -> None:
     assert s._find_agent(None) is None
 
 
+@pytest.mark.unit
 def test_supervisor_run_ok_status_idle() -> None:
     s = SupervisorAgent()
     ctx = {"subtasks": []}

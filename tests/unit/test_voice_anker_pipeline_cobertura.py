@@ -8,6 +8,7 @@ context manager __enter__/__exit__.
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from unittest import mock
 
@@ -26,6 +27,7 @@ def _stt_model(text="  hola mundo  "):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_ok_cuda(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -39,6 +41,7 @@ class TestInit:
         assert p.sample_rate == 16000
         assert p.block_size == 480
 
+    @pytest.mark.unit
     def test_ok_con_dispositivo(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -49,6 +52,7 @@ class TestInit:
         p = mod.AnkerDeterministicPipeline(db_path=str(tmp_path / "c.db"))
         assert p.device_index == 0
 
+    @pytest.mark.unit
     def test_sin_cuda_raise(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -56,6 +60,7 @@ class TestInit:
         with pytest.raises(RuntimeError):
             mod.AnkerDeterministicPipeline(db_path=str(tmp_path / "c.db"))
 
+    @pytest.mark.unit
     def test_db_creada(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -69,6 +74,7 @@ class TestInit:
 
 
 class TestFindDevices:
+    @pytest.mark.unit
     def test_anker_device(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -79,6 +85,7 @@ class TestFindDevices:
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=devs):
             assert p._find_anker_device() == 0
 
+    @pytest.mark.unit
     def test_anker_device_sin_match(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -88,6 +95,7 @@ class TestFindDevices:
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=[{"name": "X", "max_input_channels": 1}]):
             assert p._find_anker_device() is None
 
+    @pytest.mark.unit
     def test_anker_device_excepcion(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -97,6 +105,7 @@ class TestFindDevices:
         with mock.patch.object(SOUNDDEVICE, "query_devices", side_effect=RuntimeError("x")):
             assert p._find_anker_device() is None
 
+    @pytest.mark.unit
     def test_default_input(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -106,6 +115,7 @@ class TestFindDevices:
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=[{"name": "Mic", "max_input_channels": 1}]):
             assert p._find_default_input() == 0
 
+    @pytest.mark.unit
     def test_default_input_none(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -115,6 +125,7 @@ class TestFindDevices:
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=[]):
             assert p._find_default_input() is None
 
+    @pytest.mark.unit
     def test_default_input_solo_salida(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -132,6 +143,7 @@ class TestFindDevices:
         ):
             assert p._find_default_input() == 1
 
+    @pytest.mark.unit
     def test_default_input_excepcion(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -143,6 +155,7 @@ class TestFindDevices:
 
 
 class TestAudioCallback:
+    @pytest.mark.unit
     def test_playing_descarta(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -153,6 +166,7 @@ class TestAudioCallback:
         p._audio_callback(np.zeros((480, 1)), None, None, None)
         assert p.audio_queue.empty()
 
+    @pytest.mark.unit
     def test_no_playing_encola(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -184,6 +198,7 @@ def _llenar_cola(p, n=5):
 
 
 class TestListenAndTranscribe:
+    @pytest.mark.unit
     def test_sin_dispositivo(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -193,6 +208,7 @@ class TestListenAndTranscribe:
         p.device_index = None
         assert p.listen_and_transcribe(1.0) == ("", "")
 
+    @pytest.mark.unit
     def test_stream_error(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -203,6 +219,7 @@ class TestListenAndTranscribe:
         with mock.patch.object(SOUNDDEVICE, "InputStream", side_effect=RuntimeError("no device")):
             assert p.listen_and_transcribe(1.0) == ("", "")
 
+    @pytest.mark.unit
     def test_sin_audio(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -213,6 +230,7 @@ class TestListenAndTranscribe:
         with mock.patch.object(SOUNDDEVICE, "InputStream", return_value=_FakeStream(0)):
             assert p.listen_and_transcribe(0.1) == ("", "")
 
+    @pytest.mark.unit
     def test_ok(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -229,6 +247,7 @@ class TestListenAndTranscribe:
 
 
 class TestTranscribeFromFile:
+    @pytest.mark.unit
     def test_ok(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -243,6 +262,7 @@ class TestTranscribeFromFile:
 
 
 class TestReglasDeterministas:
+    @pytest.mark.unit
     def test_texto_vacio(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -252,6 +272,7 @@ class TestReglasDeterministas:
         assert p._apply_deterministic_rules("") == ""
         assert p._apply_deterministic_rules("   ") == ""
 
+    @pytest.mark.unit
     def test_aplica_reglas(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -266,6 +287,7 @@ class TestReglasDeterministas:
             conn.commit()
         assert p._apply_deterministic_rules("  HEMBY y CODEX  ") == "GB10 y ura_codex"
 
+    @pytest.mark.unit
     def test_sin_reglas(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -276,6 +298,7 @@ class TestReglasDeterministas:
 
 
 class TestLearnCorrection:
+    @pytest.mark.unit
     def test_ok(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -288,6 +311,7 @@ class TestLearnCorrection:
             row = conn.execute("SELECT wrong_text, correct_text FROM corrections").fetchone()
         assert row == ("hola", "HOLA!")
 
+    @pytest.mark.unit
     def test_key_vacio(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -296,6 +320,7 @@ class TestLearnCorrection:
         p = mod.AnkerDeterministicPipeline(db_path=str(tmp_path / "c.db"))
         p.learn_correction("  ", "X")
 
+    @pytest.mark.unit
     def test_val_vacio(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -304,6 +329,7 @@ class TestLearnCorrection:
         p = mod.AnkerDeterministicPipeline(db_path=str(tmp_path / "c.db"))
         p.learn_correction("hola", "  ")
 
+    @pytest.mark.unit
     def test_igual(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -312,6 +338,7 @@ class TestLearnCorrection:
         p = mod.AnkerDeterministicPipeline(db_path=str(tmp_path / "c.db"))
         p.learn_correction("hola", "HOLA")
 
+    @pytest.mark.unit
     def test_reemplaza(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_pipeline as mod
 
@@ -326,6 +353,7 @@ class TestLearnCorrection:
         assert rows == (1,)
 
 
+@pytest.mark.unit
 def test_context_manager(tmp_path, monkeypatch) -> None:
     import motor.core.voice.anker_pipeline as mod
 

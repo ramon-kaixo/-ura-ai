@@ -1,5 +1,6 @@
 """Tests cobertura motor qdrant_client — conectar/colecciones/embeddings/guardar (split)."""
 from __future__ import annotations
+import pytest
 
 from _qdrant_helpers import (  # noqa: F401
     COLECCION_DOCUMENTOS,
@@ -26,6 +27,7 @@ from _qdrant_helpers import (  # noqa: F401
 
 class TestConectar:
     @patch("motor.core.qdrant_client.DegradedMode")
+    @pytest.mark.unit
     def test_conectar_nativo_ok(self, mock_dm: MagicMock, native_modules: dict) -> None:  # noqa: F811
         with patch.dict(sys.modules, native_modules):
             c = QdrantClient(make_config())
@@ -38,6 +40,7 @@ class TestConectar:
     @patch("motor.core.qdrant_client.DegradedMode")
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.httpx.get")
+    @pytest.mark.unit
     def test_conectar_rest_fallback(self, mock_get: MagicMock, mock_put: MagicMock, mock_dm: MagicMock, native_modules: dict) -> None:  # noqa: F811
         def fake_get(url: str, timeout: float | None = None) -> FakeResp:
             return FakeResp(200) if url.endswith("/collections") else FakeResp(404)
@@ -57,6 +60,7 @@ class TestConectar:
 
     @patch("motor.core.qdrant_client.DegradedMode")
     @patch("motor.core.qdrant_client.httpx.get")
+    @pytest.mark.unit
     def test_conectar_degradado(self, mock_get: MagicMock, mock_dm: MagicMock, native_modules: dict) -> None:  # noqa: F811
         qc = FakeQC()
         qc.fail_get_collections = True
@@ -70,6 +74,7 @@ class TestConectar:
 
     @patch("motor.core.qdrant_client.DegradedMode")
     @patch("motor.core.qdrant_client.httpx.get")
+    @pytest.mark.unit
     def test_conectar_rest_status_500(self, mock_get: MagicMock, mock_dm: MagicMock, native_modules: dict) -> None:  # noqa: F811
         qc = FakeQC()
         qc.fail_get_collections = True
@@ -95,6 +100,7 @@ class TestAsegurarColecciones:
             ("_asegurar_coleccion_transacciones", COLECCION_TRANSACCIONES),
         ],
     )
+    @pytest.mark.unit
     def test_rest_creates_on_404(self, client: QdrantClient, metodo: str, coleccion: str) -> None:  # noqa: F811
         client._modo_rest = True
         with patch.object(qc_mod.httpx, "get") as mget, patch.object(qc_mod.httpx, "put") as mput:
@@ -106,6 +112,7 @@ class TestAsegurarColecciones:
         assert coleccion in mput.call_args[0][0]
 
     @pytest.mark.parametrize("metodo", ["_asegurar_coleccion", "_asegurar_coleccion_documentos"])
+    @pytest.mark.unit
     def test_rest_200_noop(self, client: QdrantClient, metodo: str) -> None:  # noqa: F811
         client._modo_rest = True
         with patch.object(qc_mod.httpx, "get") as mget, patch.object(qc_mod.httpx, "put") as mput:
@@ -113,6 +120,7 @@ class TestAsegurarColecciones:
             getattr(client, metodo)()
         assert mput.call_count == 0
 
+    @pytest.mark.unit
     def test_rest_put_non_2xx(self, client: QdrantClient) -> None:  # noqa: F811
         client._modo_rest = True
         with patch.object(qc_mod.httpx, "get") as mget, patch.object(qc_mod.httpx, "put") as mput:
@@ -121,6 +129,7 @@ class TestAsegurarColecciones:
             client._asegurar_coleccion()
         assert mput.called
 
+    @pytest.mark.unit
     def test_rest_get_error(self, client: QdrantClient) -> None:  # noqa: F811
         client._modo_rest = True
         with patch.object(qc_mod.httpx, "get") as mget:
@@ -135,6 +144,7 @@ class TestAsegurarColecciones:
             ("_asegurar_coleccion_transacciones", COLECCION_TRANSACCIONES),
         ],
     )
+    @pytest.mark.unit
     def test_native_creates(self, client: QdrantClient, native_modules: dict, metodo: str, coleccion: str) -> None:  # noqa: F811
         client._modo_rest = False
         qc = FakeQC()
@@ -145,6 +155,7 @@ class TestAsegurarColecciones:
         assert qc.created[0] == coleccion
 
     @pytest.mark.parametrize("metodo", ["_asegurar_coleccion", "_asegurar_coleccion_documentos"])
+    @pytest.mark.unit
     def test_native_exists(self, client: QdrantClient, native_modules: dict, metodo: str) -> None:  # noqa: F811
         client._modo_rest = False
         qc = FakeQC()
@@ -154,6 +165,7 @@ class TestAsegurarColecciones:
             getattr(client, metodo)()
         assert qc.created == []
 
+    @pytest.mark.unit
     def test_native_other_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client._modo_rest = False
         qc = FakeQC()
@@ -167,6 +179,7 @@ class TestAsegurarColecciones:
         "metodo",
         ["_asegurar_coleccion_documentos", "_asegurar_coleccion_transacciones"],
     )
+    @pytest.mark.unit
     def test_native_other_error_restantes(self, client: QdrantClient, native_modules: dict, metodo: str) -> None:  # noqa: F811
         client._modo_rest = False
         qc = FakeQC()
@@ -183,21 +196,25 @@ class TestAsegurarColecciones:
 
 
 class TestGenerarEmbeddingAsync:
+    @pytest.mark.unit
     def test_ok(self, client: QdrantClient) -> None:  # noqa: F811
         with patch.object(client, "generar_embeddings_batch_async", new=AsyncMock(return_value=[[0.1, 0.2]])):
             out = asyncio.run(client.generar_embedding_async("texto"))
         assert out == [0.1, 0.2]
 
+    @pytest.mark.unit
     def test_zero_vector(self, client: QdrantClient) -> None:  # noqa: F811
         with patch.object(client, "generar_embeddings_batch_async", new=AsyncMock(return_value=[[0.0, 0.0]])):
             out = asyncio.run(client.generar_embedding_async("texto"))
         assert out == [0.0] * VECTOR_SIZE_EMBEDDING
 
+    @pytest.mark.unit
     def test_empty_result(self, client: QdrantClient) -> None:  # noqa: F811
         with patch.object(client, "generar_embeddings_batch_async", new=AsyncMock(return_value=[])):
             out = asyncio.run(client.generar_embedding_async("texto"))
         assert out == [0.0] * VECTOR_SIZE_EMBEDDING
 
+    @pytest.mark.unit
     def test_batch_async_delega_en_llm(self, client: QdrantClient) -> None:  # noqa: F811
         with patch("motor.core.qdrant_client.llm_embed_async", new=AsyncMock(return_value=[[0.1]])) as m:
             out = asyncio.run(client.generar_embeddings_batch_async(["x"]))
@@ -211,13 +228,16 @@ class TestGenerarEmbeddingAsync:
 
 
 class TestGuardarDocumentos:
+    @pytest.mark.unit
     def test_no_disponible(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = False
         assert client._guardar_documentos([("a", "texto", {})]) == 0
 
+    @pytest.mark.unit
     def test_empty_docs(self, client: QdrantClient) -> None:  # noqa: F811
         assert client._guardar_documentos([]) == 0
 
+    @pytest.mark.unit
     def test_rest_ok(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -231,6 +251,7 @@ class TestGuardarDocumentos:
         assert points[0]["payload"]["x"] == 1
         assert points[0]["payload"]["texto"] == "hola"
 
+    @pytest.mark.unit
     def test_rest_500(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -238,6 +259,7 @@ class TestGuardarDocumentos:
             mput.return_value = FakeResp(500)
             assert client._guardar_documentos([("a", "t", {})]) == 0
 
+    @pytest.mark.unit
     def test_rest_error(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -245,6 +267,7 @@ class TestGuardarDocumentos:
             mput.side_effect = OSError("net")
             assert client._guardar_documentos([("a", "t", {})]) == 0
 
+    @pytest.mark.unit
     def test_native_ok(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -258,6 +281,7 @@ class TestGuardarDocumentos:
         assert points[0].payload["x"] == 1
         assert points[0].vector == [0.1]
 
+    @pytest.mark.unit
     def test_native_sin_cliente(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -265,6 +289,7 @@ class TestGuardarDocumentos:
         with patch("motor.core.qdrant_client.llm_embed", return_value=[[0.1]]):
             assert client._guardar_documentos([("a", "t", {})]) == 0
 
+    @pytest.mark.unit
     def test_native_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -274,6 +299,7 @@ class TestGuardarDocumentos:
         with patch("motor.core.qdrant_client.llm_embed", return_value=[[0.1]]), patch.dict(sys.modules, native_modules):
             assert client._guardar_documentos([("a", "t", {})]) == 0
 
+    @pytest.mark.unit
     def test_doc_id_vacio_usa_texto(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -284,6 +310,7 @@ class TestGuardarDocumentos:
         expected = int(hashlib.sha256(b"texto unico").hexdigest()[:15], 16) % (2**63)
         assert pid == expected
 
+    @pytest.mark.unit
     def test_pid_determinista(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -294,23 +321,27 @@ class TestGuardarDocumentos:
         expected = int(hashlib.sha256(b"doc-1").hexdigest()[:15], 16) % (2**63)
         assert pid == expected
 
+    @pytest.mark.unit
     def test_guardar_documento(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         with patch.object(client, "_guardar_documentos", return_value=1) as m:
             assert client.guardar_documento("d1", "texto", {"a": 1}) is True
         m.assert_called_with([("d1", "texto", {"a": 1})], COLECCION_DOCUMENTOS)
 
+    @pytest.mark.unit
     def test_guardar_documento_false(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         with patch.object(client, "_guardar_documentos", return_value=0):
             assert client.guardar_documento("d1", "texto") is False
 
+    @pytest.mark.unit
     def test_guardar_documento_metadata_none(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         with patch.object(client, "_guardar_documentos", return_value=1) as m:
             client.guardar_documento("d1", "texto", None)
         m.assert_called_with([("d1", "texto", {})], COLECCION_DOCUMENTOS)
 
+    @pytest.mark.unit
     def test_guardar_documentos_batch(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         docs = [("a", "t1", {}), ("b", "t2", {})]

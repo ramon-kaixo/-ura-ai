@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from datetime import UTC, datetime, timedelta
 from typing import ClassVar
@@ -43,6 +44,7 @@ def _fact(fid: str = "f1", **kw) -> SemanticFact:
 # ── HybridMemory ─────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_hybrid_store_y_search() -> None:
     h = HybridMemory()
     rid = h.store(payload="el gato sube al arbol", metadata={"src": "test"})
@@ -54,6 +56,7 @@ def test_hybrid_store_y_search() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_store_con_tipo_y_vector_fake() -> None:
     class _VS:
         def __init__(self) -> None:
@@ -72,6 +75,7 @@ def test_hybrid_store_con_tipo_y_vector_fake() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_store_vector_error_no_rompe() -> None:
     class _VS:
         def guardar_incidente(self, data) -> None:
@@ -88,6 +92,7 @@ def test_hybrid_store_vector_error_no_rompe() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_search_vacio() -> None:
     h = HybridMemory()
     assert h.search("") == []
@@ -95,6 +100,7 @@ def test_hybrid_search_vacio() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_search_por_tipo() -> None:
     h = HybridMemory()
     h.store(payload="frase de prueba", memory_type=MemoryType.EPISODIC)
@@ -105,6 +111,7 @@ def test_hybrid_search_por_tipo() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_search_error_fts() -> None:
     h = HybridMemory()
     # query con caracteres que rompen FTS5 → OperationalError → []
@@ -113,6 +120,7 @@ def test_hybrid_search_error_fts() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_get() -> None:
     h = HybridMemory()
     rid = h.store(payload="contenido")
@@ -123,6 +131,7 @@ def test_hybrid_get() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_get_tipo_invalido() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -140,6 +149,7 @@ def test_hybrid_get_tipo_invalido() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_metadata_invalida() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -157,6 +167,7 @@ def test_hybrid_metadata_invalida() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_delete() -> None:
     h = HybridMemory()
     rid = h.store(payload="x")
@@ -166,6 +177,7 @@ def test_hybrid_delete() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_delete_error() -> None:
     h = HybridMemory()
     h._conn = None  # get_conn se recreará; forzamos error con conn roto
@@ -178,6 +190,7 @@ def test_hybrid_delete_error() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_count_y_clear() -> None:
     h = HybridMemory()
     h.store(payload="a", memory_type=MemoryType.WORKING)
@@ -189,6 +202,7 @@ def test_hybrid_count_y_clear() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_count_error() -> None:
     h = HybridMemory()
     h._get_conn().close()
@@ -200,6 +214,7 @@ def test_hybrid_count_error() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_health_sin_vector() -> None:
     h = HybridMemory()
     h.store(payload="x")
@@ -209,6 +224,7 @@ def test_hybrid_health_sin_vector() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_health_con_vector() -> None:
     class _VS:
         def buscar_similares(self, v, limite: int = 1):
@@ -220,6 +236,7 @@ def test_hybrid_health_con_vector() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_health_vector_error() -> None:
     class _VS:
         def buscar_similares(self, v, limite: int = 1):
@@ -232,18 +249,21 @@ def test_hybrid_health_vector_error() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_context_manager(tmp_path: object) -> None:
     with HybridMemory() as h:
         h.store(payload="x")
         assert h.count() == 1
 
 
+@pytest.mark.unit
 def test_hybrid_close_doble() -> None:
     h = HybridMemory()
     h.close()
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_persistencia(tmp_path: object) -> None:
     path = str(tmp_path / "hybrid.db")
     h = HybridMemory(db_path=path)
@@ -254,6 +274,7 @@ def test_hybrid_persistencia(tmp_path: object) -> None:
     h2.close()
 
 
+@pytest.mark.unit
 def test_hybrid_store_error_lanza() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -266,6 +287,7 @@ def test_hybrid_store_error_lanza() -> None:
 # ── hybrid: ramas restantes ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_hybrid_close_error_conn_roto() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -281,6 +303,7 @@ def test_hybrid_close_error_conn_roto() -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_hybrid_clear_error() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -290,6 +313,7 @@ def test_hybrid_clear_error() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_search_metadata_invalida_en_resultado() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -308,6 +332,7 @@ def test_hybrid_search_metadata_invalida_en_resultado() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_search_error_fts5_operacional() -> None:
     h = HybridMemory()
     h.store(payload="algo")
@@ -318,6 +343,7 @@ def test_hybrid_search_error_fts5_operacional() -> None:
     h.close()
 
 
+@pytest.mark.unit
 def test_hybrid_get_error_conn_roto() -> None:
     h = HybridMemory()
     conn = h._get_conn()
@@ -333,6 +359,7 @@ def test_hybrid_get_error_conn_roto() -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_hybrid_health_count_error() -> None:
     h = HybridMemory()
 
@@ -349,6 +376,7 @@ def test_hybrid_health_count_error() -> None:
 # ── forgetting ───────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_forgetting_event_to_dict() -> None:
     e = ForgettingEvent(record_id="r1", record_type="episode", reason="ttl", policy="hybrid", timestamp="t", importance=0.5, age_days=1.25)
     d = e.to_dict()
@@ -356,11 +384,13 @@ def test_forgetting_event_to_dict() -> None:
     assert d["policy"] == "hybrid"
 
 
+@pytest.mark.unit
 def test_forgetting_result_total() -> None:
     r = ForgettingResult(episodes_removed=1, facts_removed=2, summaries_removed=3)
     assert r.total_removed == 6
 
 
+@pytest.mark.unit
 def test_protection_rules() -> None:
     p = ProtectionRules()
     p.protect("a")
@@ -376,12 +406,14 @@ def test_protection_rules() -> None:
     assert p.is_protected("zzz") is False
 
 
+@pytest.mark.unit
 def test_never_forget_policy() -> None:
     p = NeverForgetPolicy()
     assert p.name() == "never_forget"
     assert p.should_forget(_ep(), None) == (False, "policy_never_forget")
 
 
+@pytest.mark.unit
 def test_ttl_policy_episode() -> None:
     p = TTLForgetPolicy()
     ep = _ep("e1", ttl=0)
@@ -396,6 +428,7 @@ def test_ttl_policy_episode() -> None:
     assert reason == "ttl_expired_3600s"
 
 
+@pytest.mark.unit
 def test_ttl_policy_no_expirado() -> None:
     p = TTLForgetPolicy()
     ep = _ep("e1", ttl=604800)
@@ -403,16 +436,19 @@ def test_ttl_policy_no_expirado() -> None:
     assert ok is False
 
 
+@pytest.mark.unit
 def test_ttl_policy_fact() -> None:
     p = TTLForgetPolicy()
     assert p.should_forget(_fact(), None) == (False, "semantic_no_ttl")
 
 
+@pytest.mark.unit
 def test_ttl_policy_unknown() -> None:
     p = TTLForgetPolicy()
     assert p.should_forget("string", None) == (False, "unknown")
 
 
+@pytest.mark.unit
 def test_importance_policy_episode_alta() -> None:
     p = ImportanceForgetPolicy(min_importance=0.2, min_age_days=30)
     ep = _ep("e1", importance=0.9)
@@ -421,6 +457,7 @@ def test_importance_policy_episode_alta() -> None:
     assert "above" in reason
 
 
+@pytest.mark.unit
 def test_importance_policy_episode_joven() -> None:
     p = ImportanceForgetPolicy(min_importance=0.2, min_age_days=30)
     ep = _ep("e1", importance=0.1)
@@ -429,6 +466,7 @@ def test_importance_policy_episode_joven() -> None:
     assert "below" in reason
 
 
+@pytest.mark.unit
 def test_importance_policy_episode_vieja_baja() -> None:
     p = ImportanceForgetPolicy(min_importance=0.2, min_age_days=1)
     ep = _ep("e1", importance=0.1)
@@ -437,17 +475,20 @@ def test_importance_policy_episode_vieja_baja() -> None:
     assert ok is True
 
 
+@pytest.mark.unit
 def test_importance_policy_fact() -> None:
     p = ImportanceForgetPolicy(min_importance=0.2)
     assert p.should_forget(_fact("f1", importance=0.9), None)[0] is False
     assert p.should_forget(_fact("f2", importance=0.1), None)[0] is True
 
 
+@pytest.mark.unit
 def test_importance_policy_unknown() -> None:
     p = ImportanceForgetPolicy()
     assert p.should_forget("str", None)[0] is False
 
 
+@pytest.mark.unit
 def test_confidence_policy() -> None:
     p = ConfidenceForgetPolicy(min_confidence=0.3)
     assert p.should_forget(_ep("a", confidence=0.9), None)[0] is False
@@ -457,6 +498,7 @@ def test_confidence_policy() -> None:
     assert p.should_forget("str", None)[0] is False
 
 
+@pytest.mark.unit
 def test_hybrid_policy_any() -> None:
     p = HybridForgetPolicy(require_all=False)
     ep = _ep("e1", importance=0.1, confidence=0.1)
@@ -465,6 +507,7 @@ def test_hybrid_policy_any() -> None:
     assert "ttl:" in reason
 
 
+@pytest.mark.unit
 def test_hybrid_policy_require_all() -> None:
     p = HybridForgetPolicy(require_all=True)
     ep = _ep("e1", importance=0.1, confidence=0.1)
@@ -472,6 +515,7 @@ def test_hybrid_policy_require_all() -> None:
     assert ok is False  # ttl no expirado → no todos
 
 
+@pytest.mark.unit
 def test_hybrid_policy_nada_selecciona() -> None:
     p = HybridForgetPolicy()
     ok, reason = p.should_forget(_ep("e1", importance=0.9, confidence=0.9), None)
@@ -479,10 +523,12 @@ def test_hybrid_policy_nada_selecciona() -> None:
     assert "ttl:" in reason
 
 
+@pytest.mark.unit
 def test_hybrid_policy_name() -> None:
     assert HybridForgetPolicy().name() == "hybrid"
 
 
+@pytest.mark.unit
 def test_forgetting_policy_abstracto() -> None:
     with pytest.raises(TypeError):
         ForgettingPolicy()
@@ -502,21 +548,25 @@ class _ConSuperPolicy(ForgettingPolicy):
         return r
 
 
+@pytest.mark.unit
 def test_forgetting_policy_elipsis_via_super() -> None:
     p = _ConSuperPolicy()
     assert p.name() == "con-super"
     assert p.should_forget(_ep("a"), None) == (False, "default")
 
 
+@pytest.mark.unit
 def test_age_seconds_timestamp_invalido() -> None:
     assert _age_seconds("no-es-fecha") == 0.0
 
 
+@pytest.mark.unit
 def test_age_seconds_valido() -> None:
     ts = (datetime.now(UTC) - timedelta(days=1)).isoformat()
     assert _age_seconds(ts) > 0
 
 
+@pytest.mark.unit
 def test_forgetting_engine_remueve() -> None:
     es = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -530,6 +580,7 @@ def test_forgetting_engine_remueve() -> None:
     assert r.total_evaluated >= 1
 
 
+@pytest.mark.unit
 def test_forgetting_engine_dry_run_no_borra() -> None:
     es = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -540,6 +591,7 @@ def test_forgetting_engine_dry_run_no_borra() -> None:
     assert es.count() == 1
 
 
+@pytest.mark.unit
 def test_forgetting_protegidos_skipped() -> None:
     es = EpisodeStore()
     es.store(_ep("a", timestamp=(datetime.now(UTC) - timedelta(days=10)).isoformat(), ttl=3600))
@@ -551,6 +603,7 @@ def test_forgetting_protegidos_skipped() -> None:
     assert r.protected_skipped == 1
 
 
+@pytest.mark.unit
 def test_forgetting_pinned_skipped() -> None:
     es = EpisodeStore()
     es.store(_ep("a", timestamp=(datetime.now(UTC) - timedelta(days=10)).isoformat(), ttl=3600))
@@ -562,6 +615,7 @@ def test_forgetting_pinned_skipped() -> None:
     assert r.pinned_skipped == 1
 
 
+@pytest.mark.unit
 def test_forgetting_referenciado_skipped() -> None:
     es = EpisodeStore()
     es.store(_ep("a", timestamp=(datetime.now(UTC) - timedelta(days=10)).isoformat(), ttl=3600))
@@ -574,6 +628,7 @@ def test_forgetting_referenciado_skipped() -> None:
     assert r.referenced_skipped == 1
 
 
+@pytest.mark.unit
 def test_forgetting_facts_removidos() -> None:
     sm = SemanticMemoryStore()
     sm.store(_fact("f1", importance=0.1, subject="x1"))
@@ -585,6 +640,7 @@ def test_forgetting_facts_removidos() -> None:
     assert sm.count() == 1
 
 
+@pytest.mark.unit
 def test_forgetting_facts_dry_run() -> None:
     sm = SemanticMemoryStore()
     sm.store(_fact("f1", importance=0.1))
@@ -595,6 +651,7 @@ def test_forgetting_facts_dry_run() -> None:
     assert sm.count() == 1
 
 
+@pytest.mark.unit
 def test_forgetting_engine_simulate() -> None:
     es = EpisodeStore()
     engine = ForgettingEngine(episode_store=es, semantic_store=SemanticMemoryStore())
@@ -602,6 +659,7 @@ def test_forgetting_engine_simulate() -> None:
     assert r.dry_run is True
 
 
+@pytest.mark.unit
 def test_forgetting_engine_stats() -> None:
     es = EpisodeStore()
     es.store(_ep("a"))
@@ -617,6 +675,7 @@ def test_forgetting_engine_stats() -> None:
     assert st["policies"] == ["ttl"]
 
 
+@pytest.mark.unit
 def test_forgetting_engine_sin_semantic_store() -> None:
     es = EpisodeStore()
     engine = ForgettingEngine(episode_store=es, semantic_store=None)
@@ -629,6 +688,7 @@ class _StoreFalsy:
         return False
 
 
+@pytest.mark.unit
 def test_forgetting_evaluate_facts_store_falsy() -> None:
     es = EpisodeStore()
     engine = ForgettingEngine(episode_store=es, semantic_store=SemanticMemoryStore())
@@ -637,6 +697,7 @@ def test_forgetting_evaluate_facts_store_falsy() -> None:
     assert r.facts_removed == 0
 
 
+@pytest.mark.unit
 def test_forgetting_scheduler() -> None:
     es = EpisodeStore()
     engine = ForgettingEngine(episode_store=es, semantic_store=SemanticMemoryStore())
@@ -650,6 +711,7 @@ def test_forgetting_scheduler() -> None:
     assert r.dry_run is True
 
 
+@pytest.mark.unit
 def test_forgetting_episode_batch_break() -> None:
     es = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=10)).isoformat()
@@ -660,6 +722,7 @@ def test_forgetting_episode_batch_break() -> None:
     assert r.episodes_removed == 2  # batch_size limita
 
 
+@pytest.mark.unit
 def test_forgetting_engine_policy_custom() -> None:
     class _SiempreOlvida:
         def name(self) -> str:
@@ -675,6 +738,7 @@ def test_forgetting_engine_policy_custom() -> None:
     assert r.episodes_removed == 1
 
 
+@pytest.mark.unit
 def test_forgetting_engine_policy_vacio() -> None:
     es = EpisodeStore()
     es.store(_ep("a"))
@@ -684,6 +748,7 @@ def test_forgetting_engine_policy_vacio() -> None:
     assert r.details == []
 
 
+@pytest.mark.unit
 def test_forgetting_facts_protegidos_skipped() -> None:
     sm = SemanticMemoryStore()
     sm.store(_fact("f1", importance=0.1, subject="x1"))
@@ -696,6 +761,7 @@ def test_forgetting_facts_protegidos_skipped() -> None:
     assert r.protected_skipped >= 1
 
 
+@pytest.mark.unit
 def test_forgetting_facts_pinned_skipped() -> None:
     sm = SemanticMemoryStore()
     sm.store(_fact("f1", importance=0.1, subject="x1"))

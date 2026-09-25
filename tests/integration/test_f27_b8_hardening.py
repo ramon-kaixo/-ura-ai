@@ -5,6 +5,7 @@ Estress, concurrencia, caos, determinismo y property-based testing.
 
 from __future__ import annotations
 
+import pytest
 import contextlib
 import random
 import threading
@@ -52,6 +53,7 @@ def _exec(caps: set[AgentCapability] | None = None) -> AgentExecution:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_state_machine_all_transitions() -> None:
     """Verificar que todas las transiciones válidas funcionan."""
     sm = AgentStateMachine()
@@ -61,6 +63,7 @@ def test_state_machine_all_transitions() -> None:
             assert sm.transition(source, target) == target
 
 
+@pytest.mark.integration
 def test_state_machine_no_invalid_transitions() -> None:
     """Verificar que transiciones inválidas lanzan ValueError."""
     sm = AgentStateMachine()
@@ -76,6 +79,7 @@ def test_state_machine_no_invalid_transitions() -> None:
             sm.transition(source, target)
 
 
+@pytest.mark.integration
 def test_state_machine_random_sequences() -> None:
     """Property-based: secuencias aleatorias no deben corromper el estado."""
     sm = AgentStateMachine()
@@ -95,6 +99,8 @@ def test_state_machine_random_sequences() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_scheduler_stress_1000_tasks() -> None:
     s = AgentScheduler(max_concurrent=10)
     for _i in range(1000):
@@ -109,6 +115,7 @@ def test_scheduler_stress_1000_tasks() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_concurrent_agents_50() -> None:
     s = AgentScheduler(max_concurrent=10)
     errors: list[Exception] = []
@@ -135,6 +142,7 @@ def test_concurrent_agents_50() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_mass_cancellation_500() -> None:
     s = AgentScheduler(max_concurrent=0)
     ids: list[str] = []
@@ -164,6 +172,8 @@ class _SlowAdapter(ToolAdapter):
         pass
 
 
+@pytest.mark.integration
+@pytest.mark.slow
 def test_multiple_timeouts() -> None:
     runner = AgentToolRunner()
     runner.register("slow", _SlowAdapter(), ToolContract(name="slow", timeout_seconds=1))
@@ -199,6 +209,7 @@ class _FlakyAdapter(ToolAdapter):
         pass
 
 
+@pytest.mark.integration
 def test_flaky_tool_recovers() -> None:
     runner = AgentToolRunner()
     runner.register("flaky", _FlakyAdapter(), ToolContract(name="flaky", timeout_seconds=5))
@@ -211,6 +222,7 @@ def test_flaky_tool_recovers() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_budget_exhaustion() -> None:
     """Budget agotado debe denegar capabilities."""
     execution = AgentExecution(
@@ -230,6 +242,7 @@ def test_budget_exhaustion() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.integration
 def test_gate_deterministic() -> None:
     """Mismo execution → mismas decisiones."""
     e1 = _exec()

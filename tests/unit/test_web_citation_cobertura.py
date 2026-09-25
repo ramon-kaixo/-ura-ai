@@ -12,6 +12,7 @@ Sin dependencias externas: solo motor.core.web + stdlib.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from motor.core.web.citation.citation import (
     CitationBundle,
@@ -46,16 +47,19 @@ def _make_doc(
 class TestMakeEvidenceId:
     """Identificador estable de evidencia."""
 
+    @pytest.mark.unit
     def test_estable_y_corto(self) -> None:
         eid = make_evidence_id("doc1", 3, "hash1")
         assert len(eid) == 16
         assert isinstance(eid, str)
         assert make_evidence_id("doc1", 3, "hash1") == eid
 
+    @pytest.mark.unit
     def test_cambia_con_sentencia(self) -> None:
         base = make_evidence_id("doc1", 3, "hash1")
         assert make_evidence_id("doc1", 4, "hash1") != base
 
+    @pytest.mark.unit
     def test_cambia_con_hash(self) -> None:
         base = make_evidence_id("doc1", 3, "hash1")
         assert make_evidence_id("doc1", 3, "hash2") != base
@@ -64,6 +68,7 @@ class TestMakeEvidenceId:
 class TestEvidence:
     """Dataclass Evidence."""
 
+    @pytest.mark.unit
     def test_frozen(self) -> None:
         e = Evidence(
             evidence_id="e1",
@@ -81,6 +86,7 @@ class TestEvidence:
         with pytest.raises(AttributeError):
             e.evidence_id = "other"  # type: ignore[misc]
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         e = Evidence(
             evidence_id="e1",
@@ -105,6 +111,7 @@ class TestEvidence:
 class TestCitationRecordAndBundle:
     """Citación y agregado."""
 
+    @pytest.mark.unit
     def test_citation_record_fields(self) -> None:
         cr = CitationRecord(
             evidence_id="e1",
@@ -118,6 +125,7 @@ class TestCitationRecordAndBundle:
         assert cr.citation_index == 0
         assert cr.document_index == 1
 
+    @pytest.mark.unit
     def test_bundle_to_dict(self) -> None:
         cr = CitationRecord(
             evidence_id="e1",
@@ -147,6 +155,7 @@ class TestCitationRecordAndBundle:
         assert d["evidence"][0]["evidence_id"] == "e1"
         assert d["traceability_report"] == {"k": 1}
 
+    @pytest.mark.unit
     def test_bundle_to_dict_defaults(self) -> None:
         b = CitationBundle(summary="", citations=[], evidence=[])
         d = b.to_dict()
@@ -158,6 +167,7 @@ class TestCitationRecordAndBundle:
 class TestCitationEngine:
     """Motor de citas completo."""
 
+    @pytest.mark.unit
     def test_build_con_origenes_validos(self) -> None:
         doc = _make_doc("https://example.com/a", metadata={"canonical_url": "https://example.com/canon"})
         summary = Summary(
@@ -184,6 +194,7 @@ class TestCitationEngine:
         assert e.fragment == "Frase uno."
         assert e.quality_score == 1.0
 
+    @pytest.mark.unit
     def test_build_evidencia_duplicada_se_reutiliza(self) -> None:
         # Dos frases en la MISMA posición y mismo doc → mismo evidence_id
         summary = Summary(
@@ -201,6 +212,7 @@ class TestCitationEngine:
         assert len(bundle.evidence) == 1  # evidencia reutilizada
         assert bundle.evidence[0].document_url == doc.url
 
+    @pytest.mark.unit
     def test_build_documento_sin_metadata(self) -> None:
         doc = _make_doc("https://example.com/a")  # metadata=None
         summary = Summary(
@@ -214,6 +226,7 @@ class TestCitationEngine:
         assert bundle.evidence[0].canonical_url is None
         assert bundle.evidence[0].document_id == "https://example.com/a"
 
+    @pytest.mark.unit
     def test_build_origen_sin_documento_se_ignora(self) -> None:
         summary = Summary(
             text="Fantasma",
@@ -227,6 +240,7 @@ class TestCitationEngine:
         assert bundle.evidence == []
         assert bundle.traceability_report["total_citations"] == 0
 
+    @pytest.mark.unit
     def test_build_metadatos_dict_sin_canonical(self) -> None:
         doc = _make_doc("https://example.com/a", metadata={"author": "x"})
         summary = Summary(
@@ -240,6 +254,7 @@ class TestCitationEngine:
         assert bundle.evidence[0].canonical_url is None
         assert bundle.evidence[0].document_id == "https://example.com/a"
 
+    @pytest.mark.unit
     def test_build_title_desde_origin(self) -> None:
         doc = _make_doc("https://example.com/a")
         summary = Summary(
@@ -257,13 +272,16 @@ class TestCitationEngine:
 class TestFindDocIndex:
     """Búsqueda de índice de documento (incluye rama no encontrado)."""
 
+    @pytest.mark.unit
     def test_encuentra_indice(self) -> None:
         docs = [_make_doc("https://example.com/a"), _make_doc("https://example.com/b")]
         assert _find_doc_index(docs, "https://example.com/b") == 1
 
+    @pytest.mark.unit
     def test_no_encontrado_devuelve_menos_uno(self) -> None:
         docs = [_make_doc("https://example.com/a")]
         assert _find_doc_index(docs, "https://example.com/nope") == -1
 
+    @pytest.mark.unit
     def test_lista_vacia(self) -> None:
         assert _find_doc_index([], "https://example.com/a") == -1

@@ -8,11 +8,13 @@ from motor.core.state import DegradedMode
 
 
 class TestDegradedModeSingleton:
+    @pytest.mark.integration
     def test_instancia_returns_same_object(self):
         d1 = DegradedMode.instancia()
         d2 = DegradedMode.instancia()
         assert d1 is d2
 
+    @pytest.mark.integration
     def test_new_instance_not_singleton(self):
         d1 = DegradedMode.instancia()
         d2 = DegradedMode()
@@ -21,6 +23,7 @@ class TestDegradedModeSingleton:
 
 
 class TestDegradedModeInitial:
+    @pytest.mark.integration
     def test_status_empty(self):
         dm = DegradedMode()
         s = dm.status()
@@ -29,26 +32,31 @@ class TestDegradedModeInitial:
         assert s["healthy"] is True
         assert s["since"] == {}
 
+    @pytest.mark.integration
     def test_not_degraded_initially(self):
         dm = DegradedMode()
         assert dm.is_degraded("anything") is False
 
 
 class TestDegradedModeDegradation:
+    @pytest.mark.integration
     def test_mark_degraded_first_time_returns_false(self):
         dm = DegradedMode()
         assert dm.mark_degraded("sys_a") is False
 
+    @pytest.mark.integration
     def test_mark_degraded_second_time_returns_true(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_a")
         assert dm.mark_degraded("sys_a") is True
 
+    @pytest.mark.integration
     def test_is_degraded_after_mark(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_b")
         assert dm.is_degraded("sys_b") is True
 
+    @pytest.mark.integration
     def test_multiple_subsystems_independent(self):
         dm = DegradedMode()
         dm.mark_degraded("a")
@@ -57,6 +65,7 @@ class TestDegradedModeDegradation:
         assert dm.is_degraded("b") is True
         assert dm.is_degraded("c") is False
 
+    @pytest.mark.integration
     def test_status_reflects_degraded_subsystems(self):
         dm = DegradedMode()
         dm.mark_degraded("qdrant")
@@ -66,6 +75,7 @@ class TestDegradedModeDegradation:
         assert "qdrant" in s["since"]
         assert s["healthy"] is False
 
+    @pytest.mark.integration
     def test_status_sorted(self):
         dm = DegradedMode()
         dm.mark_degraded("z")
@@ -74,21 +84,25 @@ class TestDegradedModeDegradation:
 
 
 class TestDegradedModeRecovery:
+    @pytest.mark.integration
     def test_mark_healthy_first_time_returns_false(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_c")
         assert dm.mark_healthy("sys_c") is False
 
+    @pytest.mark.integration
     def test_mark_healthy_after_healthy_returns_true(self):
         dm = DegradedMode()
         assert dm.mark_healthy("never_degraded") is True
 
+    @pytest.mark.integration
     def test_is_not_degraded_after_recovery(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_d")
         dm.mark_healthy("sys_d")
         assert dm.is_degraded("sys_d") is False
 
+    @pytest.mark.integration
     def test_status_global_recovers(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_e")
@@ -98,6 +112,7 @@ class TestDegradedModeRecovery:
         assert s["healthy"] is True
         assert s["degraded"] == []
 
+    @pytest.mark.integration
     def test_recovery_then_redegrade(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_f")
@@ -106,6 +121,7 @@ class TestDegradedModeRecovery:
         dm.mark_degraded("sys_f")
         assert dm.is_degraded("sys_f") is True
 
+    @pytest.mark.integration
     def test_partial_recovery(self):
         dm = DegradedMode()
         dm.mark_degraded("x")
@@ -115,6 +131,7 @@ class TestDegradedModeRecovery:
         assert s["global"] is True
         assert s["degraded"] == ["y"]
 
+    @pytest.mark.integration
     def test_idempotent_mark_healthy(self):
         dm = DegradedMode()
         dm.mark_degraded("sys_g")
@@ -125,6 +142,7 @@ class TestDegradedModeRecovery:
 class TestDegradedModeThreadSafety:
     @pytest.mark.slow
     @pytest.mark.flaky(reruns=3, reruns_delay=2)
+    @pytest.mark.integration
     def test_concurrent_degrade_and_recover(self):
         dm = DegradedMode()
         n = 100
@@ -151,6 +169,7 @@ class TestDegradedModeThreadSafety:
 
 
 class TestDegradedModeInvalidStates:
+    @pytest.mark.integration
     def test_mark_healthy_nonexistent(self):
         dm = DegradedMode()
         assert dm.mark_healthy("nonexistent") is True

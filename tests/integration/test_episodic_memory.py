@@ -1,4 +1,5 @@
 from __future__ import annotations
+import pytest
 
 from datetime import UTC, datetime, timedelta
 
@@ -9,6 +10,7 @@ ONE_DAY = 86400
 
 
 class TestEpisode:
+    @pytest.mark.integration
     def test_create_minimal(self):
         ep = Episode()
         assert ep.id != ""
@@ -16,6 +18,7 @@ class TestEpisode:
         assert ep.ttl == ONE_DAY * 7
         assert ep.importance == 0.5
 
+    @pytest.mark.integration
     def test_to_record(self):
         ep = Episode(session_id="s1", payload="hello", source="user")
         record = ep.to_record()
@@ -23,6 +26,7 @@ class TestEpisode:
         assert record.payload == "hello"
         assert record.metadata["session_id"] == "s1"
 
+    @pytest.mark.integration
     def test_from_record(self):
         record = MemoryRecord(
             type=MemoryType.EPISODIC,
@@ -33,26 +37,31 @@ class TestEpisode:
         assert ep.payload == "test"
         assert ep.session_id == "s2"
 
+    @pytest.mark.integration
     def test_is_expired(self):
         future_ts = (datetime.now(UTC) + timedelta(hours=1)).isoformat()
         ep = Episode(timestamp=future_ts, ttl=1)
         assert not ep.is_expired
 
+    @pytest.mark.integration
     def test_is_expired_true(self):
         past_ts = (datetime.now(UTC) - timedelta(days=8)).isoformat()
         ep = Episode(timestamp=past_ts, ttl=ONE_DAY * 7)
         assert ep.is_expired
 
+    @pytest.mark.integration
     def test_is_expired_no_ttl(self):
         ep = Episode(ttl=0)
         assert not ep.is_expired
 
+    @pytest.mark.integration
     def test_age_seconds(self):
         ep = Episode()
         assert ep.age_seconds >= 0
 
 
 class TestEpisodeStore:
+    @pytest.mark.integration
     def test_store_and_get(self):
         store = EpisodeStore()
         ep = Episode(payload="hello")
@@ -62,36 +71,43 @@ class TestEpisodeStore:
         assert retrieved is not None
         assert retrieved.payload == "hello"
 
+    @pytest.mark.integration
     def test_get_nonexistent(self):
         store = EpisodeStore()
         assert store.get("nonexistent") is None
 
+    @pytest.mark.integration
     def test_store_assigns_id(self):
         store = EpisodeStore()
         ep = Episode()
         eid = store.store(ep)
         assert ep.id == eid
 
+    @pytest.mark.integration
     def test_store_assigns_timestamp(self):
         store = EpisodeStore()
         ep = Episode(timestamp="")
         store.store(ep)
         assert ep.timestamp != ""
 
+    @pytest.mark.integration
     def test_delete(self):
         store = EpisodeStore()
         eid = store.store(Episode())
         assert store.delete(eid) is True
         assert store.get(eid) is None
 
+    @pytest.mark.integration
     def test_delete_nonexistent(self):
         store = EpisodeStore()
         assert store.delete("nope") is False
 
+    @pytest.mark.integration
     def test_count_empty(self):
         store = EpisodeStore()
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_count_after_store(self):
         store = EpisodeStore()
         store.store(Episode(session_id="s1"))
@@ -101,6 +117,7 @@ class TestEpisodeStore:
         assert store.count("s1") == 2
         assert store.count("s2") == 1
 
+    @pytest.mark.integration
     def test_delete_expired(self):
         store = EpisodeStore()
         past_ts = (datetime.now(UTC) - timedelta(days=8)).isoformat()
@@ -110,6 +127,7 @@ class TestEpisodeStore:
         assert deleted >= 1
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_clear_session(self):
         store = EpisodeStore()
         store.store(Episode(session_id="s1"))
@@ -118,6 +136,7 @@ class TestEpisodeStore:
         assert store.clear_session("s1") == 2
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_clear_all(self):
         store = EpisodeStore()
         store.store(Episode())
@@ -125,6 +144,7 @@ class TestEpisodeStore:
         assert store.clear_all() == 2
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_get_by_session(self):
         store = EpisodeStore()
         store.store(Episode(session_id="s1", payload="first"))
@@ -134,12 +154,14 @@ class TestEpisodeStore:
         assert len(results) == 2
         assert results[0].payload == "second"  # newest first
 
+    @pytest.mark.integration
     def test_get_by_session_limit(self):
         store = EpisodeStore()
         for i in range(10):
             store.store(Episode(session_id="s1", payload=f"e{i}"))
         assert len(store.get_by_session("s1", limit=3)) == 3
 
+    @pytest.mark.integration
     def test_get_by_session_offset(self):
         store = EpisodeStore()
         for i in range(10):
@@ -151,6 +173,7 @@ class TestEpisodeStore:
         # timestamps diff means order may vary, just verify pagination works
         assert page1[0].id != page2[0].id
 
+    @pytest.mark.integration
     def test_get_by_time_range(self):
         store = EpisodeStore()
         now = datetime.now(UTC)
@@ -165,6 +188,7 @@ class TestEpisodeStore:
         results = store.get_by_time_range(start, end)
         assert len(results) == 2  # ep1 and ep2
 
+    @pytest.mark.integration
     def test_get_recent(self):
         store = EpisodeStore()
         for i in range(20):
@@ -172,12 +196,14 @@ class TestEpisodeStore:
         recent = store.get_recent(k=5)
         assert len(recent) == 5
 
+    @pytest.mark.integration
     def test_expired_not_returned(self):
         store = EpisodeStore()
         past_ts = (datetime.now(UTC) - timedelta(days=8)).isoformat()
         eid = store.store(Episode(timestamp=past_ts, ttl=ONE_DAY * 7))
         assert store.get(eid) is None  # expired, not returned
 
+    @pytest.mark.integration
     def test_trim(self):
         config = EpisodeStoreConfig(max_episodes=5, default_ttl=ONE_DAY * 7)
         store = EpisodeStore(config)
@@ -185,6 +211,7 @@ class TestEpisodeStore:
             store.store(Episode(payload=f"e{i}"))
         assert store.count() <= 5
 
+    @pytest.mark.integration
     def test_thread_safety(self):
         import concurrent.futures
 
@@ -194,6 +221,7 @@ class TestEpisodeStore:
             concurrent.futures.wait(futures)
         assert store.count() == 100
 
+    @pytest.mark.integration
     def test_serialization_roundtrip(self):
         ep = Episode(
             session_id="s_test",
@@ -215,17 +243,20 @@ class TestEpisodeStore:
 
 
 class TestSessionMemory:
+    @pytest.mark.integration
     def test_create_session(self):
         sm = SessionMemory()
         sid = sm.create_session()
         assert sid != ""
         assert sm.session_count() == 1
 
+    @pytest.mark.integration
     def test_create_session_with_id(self):
         sm = SessionMemory()
         sid = sm.create_session(session_id="my_session")
         assert sid == "my_session"
 
+    @pytest.mark.integration
     def test_add_episode(self):
         sm = SessionMemory()
         sid = sm.create_session()
@@ -234,6 +265,7 @@ class TestSessionMemory:
         assert ep.payload == "hello"
         assert ep.importance == 0.9
 
+    @pytest.mark.integration
     def test_get_history(self):
         sm = SessionMemory()
         sid = sm.create_session()
@@ -243,6 +275,7 @@ class TestSessionMemory:
         assert len(history) == 2
         assert history[0].payload == "second"
 
+    @pytest.mark.integration
     def test_get_history_limit(self):
         sm = SessionMemory()
         sid = sm.create_session()
@@ -250,6 +283,7 @@ class TestSessionMemory:
             sm.add_episode(sid, f"e{i}")
         assert len(sm.get_history(sid, limit=3)) == 3
 
+    @pytest.mark.integration
     def test_get_recent_across_sessions(self):
         sm = SessionMemory()
         s1 = sm.create_session()
@@ -260,21 +294,25 @@ class TestSessionMemory:
         recent = sm.get_recent(k=2)
         assert len(recent) == 2
 
+    @pytest.mark.integration
     def test_close_session(self):
         sm = SessionMemory()
         sid = sm.create_session()
         assert sm.close_session(sid) is True
         assert sm.session_count() == 0
 
+    @pytest.mark.integration
     def test_close_nonexistent(self):
         sm = SessionMemory()
         assert sm.close_session("nope") is False
 
+    @pytest.mark.integration
     def test_store_property(self):
         store = EpisodeStore()
         sm = SessionMemory(store)
         assert sm.store is store
 
+    @pytest.mark.integration
     def test_persist_sqlite(self, tmp_path):
         db_path = str(tmp_path / "test_episodes.db")
         config = EpisodeStoreConfig(persist_path=db_path)
@@ -287,6 +325,7 @@ class TestSessionMemory:
         store2 = EpisodeStore(config)
         assert store2.count() == 2
 
+    @pytest.mark.integration
     def test_session_count(self):
         sm = SessionMemory()
         sm.create_session()

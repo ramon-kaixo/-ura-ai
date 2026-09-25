@@ -1,6 +1,7 @@
 """Tests para core/scraper_pool.py — DomainDecoupledPool."""
 from __future__ import annotations
 
+import pytest
 import asyncio
 
 import pytest

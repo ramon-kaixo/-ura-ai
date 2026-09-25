@@ -16,6 +16,7 @@ filtrado, estadísticas) es el real del módulo.
 
 from __future__ import annotations
 
+import pytest
 import hashlib
 import json
 from pathlib import Path
@@ -126,6 +127,7 @@ def paths(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> dict[str, Path]:
 class TestGetQdrant:
     """_get_qdrant: singleton perezoso del cliente Qdrant."""
 
+    @pytest.mark.unit
     def test_crea_instancia_cuando_es_nula(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         FakeMotorQdrant.inst = fake
@@ -137,6 +139,7 @@ class TestGetQdrant:
         assert result is fake
         assert me._qdrant is fake
 
+    @pytest.mark.unit
     def test_reutiliza_instancia_existente(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         me._qdrant = fake
@@ -156,6 +159,7 @@ class TestGetQdrant:
 class TestSha256:
     """_sha256: hash SHA-256 real de archivos en chunks de 8192."""
 
+    @pytest.mark.unit
     def test_hash_archivo_multichunk(self, tmp_path: Path) -> None:
         p = tmp_path / "bin.dat"
         data = b"ab" * 20000
@@ -167,6 +171,7 @@ class TestSha256:
         assert digest == expected
         assert len(digest) == 64
 
+    @pytest.mark.unit
     def test_hash_archivo_vacio(self, tmp_path: Path) -> None:
         p = tmp_path / "empty.txt"
         p.write_bytes(b"")
@@ -177,16 +182,19 @@ class TestSha256:
 class TestChunkText:
     """_chunk_text: troceado por palabras con solape."""
 
+    @pytest.mark.unit
     def test_texto_corto_devuelve_tal_cual(self) -> None:
         text = "hola mundo"
 
         assert _chunk_text(text, size=5, overlap=2) == [text]
 
+    @pytest.mark.unit
     def test_texto_con_tantas_palabras_como_size(self) -> None:
         text = "a b c d e"
 
         assert _chunk_text(text, size=5, overlap=2) == [text]
 
+    @pytest.mark.unit
     def test_texto_largo_se_trocea_con_solape(self) -> None:
         words = [f"w{i}" for i in range(12)]
         text = " ".join(words)
@@ -198,11 +206,13 @@ class TestChunkText:
         assert chunks[1] == " ".join(words[3:8])
         assert chunks[-1].endswith(words[-1])
 
+    @pytest.mark.unit
     def test_overlap_cero_trocea_contiguo(self) -> None:
         chunks = _chunk_text(" ".join(f"w{i}" for i in range(6)), size=2, overlap=0)
 
         assert chunks == ["w0 w1", "w2 w3", "w4 w5"]
 
+    @pytest.mark.unit
     def test_palabra_unica(self) -> None:
         assert _chunk_text("solo", size=5, overlap=2) == ["solo"]
 
@@ -210,6 +220,7 @@ class TestChunkText:
 class TestLoadManifest:
     """load_manifest: lectura del manifest de índice."""
 
+    @pytest.mark.unit
     def test_sin_archivo_devuelve_vacio(self) -> None:
         assert load_manifest() == {
             "indexed_at": None,
@@ -218,6 +229,7 @@ class TestLoadManifest:
             "files": {},
         }
 
+    @pytest.mark.unit
     def test_archivo_valido(self, paths: dict[str, Path]) -> None:
         paths["data"].mkdir(parents=True)
         manifest = {"indexed_at": "2026-08-15T10:00:00+00:00", "total_documents": 1, "total_chunks": 2, "files": {"a.txt": {"sha256": "x"}}}
@@ -225,6 +237,7 @@ class TestLoadManifest:
 
         assert load_manifest() == manifest
 
+    @pytest.mark.unit
     def test_json_corrupto_devuelve_vacio_y_avisa(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["data"].mkdir(parents=True)
         paths["manifest"].write_text("{no-json", encoding="utf-8")
@@ -244,6 +257,7 @@ class TestLoadManifest:
 class TestSaveManifest:
     """save_manifest: escritura con verificación de espacio en disco."""
 
+    @pytest.mark.unit
     def test_escribe_json_ordenado(self, paths: dict[str, Path]) -> None:
         manifest = {"files": {"b.txt": {"sha256": "y"}, "a.txt": {"sha256": "x"}}}
 
@@ -253,6 +267,7 @@ class TestSaveManifest:
         assert written == json.dumps(manifest, indent=2, sort_keys=True)
         assert paths["data"].is_dir()
 
+    @pytest.mark.unit
     def test_espacio_insuficiente_levanta_oserror(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         monkeypatch.setattr("shutil.disk_usage", lambda path: type("DU", (), {"free": 0, "total": 1, "used": 1})())
         logs = _capture_log(monkeypatch, "exception")
@@ -267,6 +282,7 @@ class TestSaveManifest:
 class TestIndexDocuments:
     """index_documents: ciclo completo de indexación idempotente."""
 
+    @pytest.mark.unit
     def test_qdrant_no_disponible_devuelve_error(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         fake = FakeQdrant(disponible=False)
         monkeypatch.setattr(me, "_get_qdrant", lambda: fake)
@@ -276,6 +292,7 @@ class TestIndexDocuments:
         assert result == {"error": "Qdrant no disponible"}
         assert not paths["manifest"].exists()
 
+    @pytest.mark.unit
     def test_indexa_archivo_nuevo(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         file = paths["docs"] / "a.txt"
@@ -300,6 +317,7 @@ class TestIndexDocuments:
         doc_ids = [d[0] for d in fake.saved_batches[0]]
         assert doc_ids == [f"a.txt_{i}" for i in range(stats["chunks_added"])]
 
+    @pytest.mark.unit
     def test_archivo_sin_cambios_no_reenvia(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         file = paths["docs"] / "a.txt"
@@ -316,6 +334,7 @@ class TestIndexDocuments:
         assert fake.saved_batches == []
         assert fake.deleted_filters == []
 
+    @pytest.mark.unit
     def test_archivo_eliminado_borra_chunks(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         manifest = _fake_manifest()
@@ -330,6 +349,7 @@ class TestIndexDocuments:
         assert fake.deleted_filters == [{"source": "gone.txt"}]
         assert "gone.txt" not in load_manifest()["files"]
 
+    @pytest.mark.unit
     def test_archivo_modificado_se_reindexa(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         file = paths["docs"] / "a.txt"
@@ -346,6 +366,7 @@ class TestIndexDocuments:
         assert fake.deleted_filters == [{"source": "a.txt"}]
         assert load_manifest()["files"]["a.txt"]["sha256"] == _sha256(file)
 
+    @pytest.mark.unit
     def test_force_reindexa_aun_con_hash_igual(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         file = paths["docs"] / "a.txt"
@@ -360,6 +381,7 @@ class TestIndexDocuments:
         assert len(fake.saved_batches) == 1
         assert load_manifest()["files"]["a.txt"]["sha256"] == _sha256(file)
 
+    @pytest.mark.unit
     def test_fallo_batch_no_registra_el_archivo(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "a.txt").write_text("contenido" * 40, encoding="utf-8")
@@ -378,6 +400,7 @@ class TestIndexDocuments:
 class TestEscanearArchivos:
     """_escanear_archivos: listado recursivo ignorando archivos ocultos."""
 
+    @pytest.mark.unit
     def test_solo_archivos_no_ocultos_con_hash(self, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "a.txt").write_text("hola", encoding="utf-8")
@@ -397,6 +420,7 @@ class TestEscanearArchivos:
 class TestProcesarEliminados:
     """_procesar_eliminados: borrado de documentos ausentes."""
 
+    @pytest.mark.unit
     def test_elimina_y_actualiza_stats(self, monkeypatch: pytest.MonkeyPatch) -> None:
         manifest = {"files": {"gone.txt": {}}}
         stats = {"deleted": 0}
@@ -409,6 +433,7 @@ class TestProcesarEliminados:
         assert manifest["files"] == {}
         assert fake.deleted_filters == [{"source": "gone.txt"}]
 
+    @pytest.mark.unit
     def test_fallo_eliminando_deja_manifest_y_avisa(self, monkeypatch: pytest.MonkeyPatch) -> None:
         manifest = {"files": {"gone.txt": {}}}
         stats = {"deleted": 0}
@@ -426,6 +451,7 @@ class TestProcesarEliminados:
 class TestIndexarArchivo:
     """_indexar_archivo: indexación individual de un archivo."""
 
+    @pytest.mark.unit
     def test_archivo_nuevo(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         file = paths["docs"] / "n.txt"
@@ -445,6 +471,7 @@ class TestIndexarArchivo:
         assert entry["indexed_at"]
         assert fake.deleted_filters == []
 
+    @pytest.mark.unit
     def test_sin_cambios_no_indexa(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         manifest = {"files": {"n.txt": {"sha256": "same-hash", "chunks": 1, "indexed_at": "x"}}, "indexed_at": None, "total_chunks": 0, "total_documents": 0}
         stats = {"new": 0, "modified": 0, "unchanged": 0, "chunks_added": 0}
@@ -456,6 +483,7 @@ class TestIndexarArchivo:
         assert stats == {"new": 0, "modified": 0, "unchanged": 1, "chunks_added": 0}
         assert fake.saved_batches == []
 
+    @pytest.mark.unit
     def test_force_con_hash_igual_marca_modificado(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "n.txt").write_text("palabra" * 10, encoding="utf-8")
@@ -470,6 +498,7 @@ class TestIndexarArchivo:
         assert stats["unchanged"] == 0
         assert fake.deleted_filters == [{"source": "n.txt"}]
 
+    @pytest.mark.unit
     def test_error_leyendo_archivo_aborta(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "n.txt").write_text("x", encoding="utf-8")
@@ -491,6 +520,7 @@ class TestIndexarArchivo:
         assert manifest["files"] == {}
         assert len(logs) == 1
 
+    @pytest.mark.unit
     def test_chunks_vacios_no_guardan(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "n.txt").write_text("x", encoding="utf-8")
@@ -506,6 +536,7 @@ class TestIndexarArchivo:
         assert fake.saved_batches == []
         assert "n.txt" not in manifest["files"]
 
+    @pytest.mark.unit
     def test_fallo_guardando_aborta_sin_manifest(self, monkeypatch: pytest.MonkeyPatch, paths: dict[str, Path]) -> None:
         paths["docs"].mkdir(parents=True)
         (paths["docs"] / "n.txt").write_text("palabra" * 10, encoding="utf-8")
@@ -527,6 +558,7 @@ class TestIndexarArchivo:
 class TestConstruirBatch:
     """_construir_batch: construcción del lote de documentos Qdrant."""
 
+    @pytest.mark.unit
     def test_metadatos_por_chunk(self) -> None:
         batch = _construir_batch("doc.txt", "h1", ["uno", "dos", "tres"], "2026-08-15T00:00:00+00:00")
 
@@ -536,6 +568,7 @@ class TestConstruirBatch:
             ("doc.txt_2", "tres", {"source": "doc.txt", "chunk_index": 2, "total_chunks": 3, "sha256": "h1", "indexed_at": "2026-08-15T00:00:00+00:00"}),
         ]
 
+    @pytest.mark.unit
     def test_sin_chunks_devuelve_vacio(self) -> None:
         assert _construir_batch("doc.txt", "h1", [], "now") == []
 
@@ -543,12 +576,14 @@ class TestConstruirBatch:
 class TestQuery:
     """query: búsqueda en Qdrant con filtro por similitud."""
 
+    @pytest.mark.unit
     def test_qdrant_no_disponible_devuelve_vacio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant(disponible=False)
         monkeypatch.setattr(me, "_get_qdrant", lambda: fake)
 
         assert query("pregunta") == []
 
+    @pytest.mark.unit
     def test_excepcion_en_busqueda_devuelve_vacio(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         fake.fail_search = True
@@ -558,6 +593,7 @@ class TestQuery:
         assert query("pregunta") == []
         assert len(logs) == 1
 
+    @pytest.mark.unit
     def test_filtra_resultados_bajo_umbral(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         fake.search_results = [
@@ -575,6 +611,7 @@ class TestQuery:
             {"content": "ctx3", "source": "c.txt", "chunk_index": 0, "similarity": 0.9346},
         ]
 
+    @pytest.mark.unit
     def test_resultado_sin_score_se_descarta(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         fake.search_results = [{"payload": {"texto": "x", "source": "s"}, "score": 0}]
@@ -583,6 +620,7 @@ class TestQuery:
 
         assert query("pregunta") == []
 
+    @pytest.mark.unit
     def test_top_k_limitado_a_10(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = FakeQdrant()
         monkeypatch.setattr(me, "_get_qdrant", lambda: fake)
@@ -596,6 +634,7 @@ class TestQuery:
 class TestGetSources:
     """get_sources: fuentes únicas con conteo de chunks usados."""
 
+    @pytest.mark.unit
     def test_fuentes_unicas_e_incremento_conteo(self) -> None:
         results = [
             {"source": "a.txt"},
@@ -605,9 +644,11 @@ class TestGetSources:
 
         assert get_sources(results) == [{"source": "a.txt", "chunks_used": 2}, {"source": "b.txt", "chunks_used": 1}]
 
+    @pytest.mark.unit
     def test_fuente_ausente_es_unknown(self) -> None:
         assert get_sources([{}, {}]) == [{"source": "unknown", "chunks_used": 2}]
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert get_sources([]) == []
 
@@ -615,6 +656,7 @@ class TestGetSources:
 class TestChromadbAvailable:
     """_chromadb_available: ChromaDB desinstalado, siempre False."""
 
+    @pytest.mark.unit
     def test_siempre_false(self) -> None:
         assert _chromadb_available() is False
 
@@ -622,11 +664,13 @@ class TestChromadbAvailable:
 class TestRagEnabled:
     """rag_enabled: RAG activo solo si config, Qdrant y directorio existen."""
 
+    @pytest.mark.unit
     def test_no_habilitado_en_config(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(me, "CONFIG", {"rag": {"enabled": False}})
 
         assert rag_enabled() is False
 
+    @pytest.mark.unit
     def test_qdrant_no_disponible(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(me, "CONFIG", {"rag": {"enabled": True}})
         fake = FakeQdrant(disponible=False)
@@ -634,6 +678,7 @@ class TestRagEnabled:
 
         assert rag_enabled() is False
 
+    @pytest.mark.unit
     def test_directorio_documentos_inexistente(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr(me, "CONFIG", {"rag": {"enabled": True}})
         monkeypatch.setattr(me, "DOCS_DIR", tmp_path / "no-existe")
@@ -642,6 +687,7 @@ class TestRagEnabled:
 
         assert rag_enabled() is False
 
+    @pytest.mark.unit
     def test_habilitado_completo(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         docs_dir = tmp_path / "documentos"
         docs_dir.mkdir()
@@ -656,9 +702,11 @@ class TestRagEnabled:
 class TestBuildContext:
     """_build_context: construcción del contexto textual para el LLM."""
 
+    @pytest.mark.unit
     def test_vacio_devuelve_cadena_vacia(self) -> None:
         assert _build_context([]) == ""
 
+    @pytest.mark.unit
     def test_ignora_resultados_sin_contenido(self) -> None:
         results = [
             {"content": "primer contenido", "source": "a.txt", "similarity": 0.9},
@@ -669,6 +717,7 @@ class TestBuildContext:
 
         assert ctx == "[1] (fuente: a.txt, similitud: 0.90)\nprimer contenido"
 
+    @pytest.mark.unit
     def test_varios_resultados_ordenados(self) -> None:
         results = [
             {"content": "c1", "source": "a.txt", "similarity": 0.9345},
@@ -682,11 +731,13 @@ class TestBuildContext:
             "[2] (fuente: b.txt, similitud: 0.80)\nc2"
         )
 
+    @pytest.mark.unit
     def test_trunca_a_max_chars(self) -> None:
         ctx = _build_context([{"content": "x" * 50, "source": "a", "similarity": 0.9}], max_chars=10)
 
         assert len(ctx) == 10
 
+    @pytest.mark.unit
     def test_fuente_ausente_devuelve_unknown(self) -> None:
         assert _build_context([{"content": "texto", "similarity": 0.5}]) == "[1] (fuente: unknown, similitud: 0.50)\ntexto"
 
@@ -694,6 +745,7 @@ class TestBuildContext:
 class TestGenerate:
     """_generate: generación de respuesta delegando en motor.core.llm."""
 
+    @pytest.mark.unit
     def test_sin_contexto_devuelve_mensaje_por_defecto(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[str] = []
         monkeypatch.setattr(me, "llm_generate", lambda prompt: calls.append(prompt) or "ok")
@@ -701,6 +753,7 @@ class TestGenerate:
         assert _generate("", "¿qué es?") == "No se encontraron documentos relevantes para generar una respuesta."
         assert calls == []
 
+    @pytest.mark.unit
     def test_con_contexto_llama_al_llm(self, monkeypatch: pytest.MonkeyPatch) -> None:
         prompts: list[str] = []
         monkeypatch.setattr(me, "llm_generate", lambda prompt: prompts.append(prompt) or "Respuesta IA")
@@ -717,6 +770,7 @@ class TestGenerate:
 class TestAsk:
     """ask: pipeline RAG completo recuperación + generación."""
 
+    @pytest.mark.unit
     def test_ask_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         query_calls: list[tuple[str, int | None]] = []
         monkeypatch.setattr(me, "query", lambda question, top_k=5: query_calls.append((question, top_k)) or [{"content": "ctx", "source": "a.txt", "similarity": 0.9}])
@@ -727,6 +781,7 @@ class TestAsk:
         assert result == "respuesta final"
         assert query_calls == [("¿pregunta?", 5)]
 
+    @pytest.mark.unit
     def test_ask_con_top_k_explicito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         query_calls: list[int | None] = []
         monkeypatch.setattr(me, "query", lambda question, top_k=5: query_calls.append(top_k) or [])

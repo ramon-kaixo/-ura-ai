@@ -1,6 +1,7 @@
 """Tests para motor/assistant/web_search.py y motor/cli/cmd_pipeline.py."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -66,6 +67,7 @@ class TestWebSearch:
         monkeypatch.setattr("motor.assistant.web_search.httpx.AsyncClient", lambda *a, **k: ClienteRoto())
         assert await WebSearch().search("q") == []
 
+    @pytest.mark.unit
     def test_parse_results(self) -> None:
         html = (
             '<a class="result__a" href="1">Primero</a>\n'
@@ -78,16 +80,19 @@ class TestWebSearch:
         assert results[0]["title"] == "Primero"
         assert results[1]["snippet"] == ""
 
+    @pytest.mark.unit
     def test_parse_limita(self) -> None:
         html = "\n".join(f'<div class="result__a">{i}</div>' for i in range(10))
         results = WebSearch()._parse_results(html, 3)
         assert len(results) == 3
 
+    @pytest.mark.unit
     def test_parse_sin_resultados(self) -> None:
         assert WebSearch()._parse_results("<html>vacio</html>", 5) == []
 
 
 class TestCmdPipeline:
+    @pytest.mark.unit
     def test_cmd_pipeline(self, monkeypatch) -> None:
         from motor.cli.cmd_pipeline import cmd_pipeline
 
@@ -101,6 +106,7 @@ class TestCmdPipeline:
         cmd_pipeline(config, args)
         orch.run.assert_called_once_with(dry_run=True)
 
+    @pytest.mark.unit
     def test_cmd_scan(self, monkeypatch) -> None:
         from motor.cli.cmd_pipeline import cmd_scan
 
@@ -109,6 +115,7 @@ class TestCmdPipeline:
         cmd_scan(mock.Mock())
         sc.run.assert_called_once()
 
+    @pytest.mark.unit
     def test_cmd_diagnose(self, monkeypatch) -> None:
         from motor.cli.cmd_pipeline import cmd_diagnose
 
@@ -119,6 +126,7 @@ class TestCmdPipeline:
         cmd_diagnose(mock.Mock())
         diag.run.assert_called_once()
 
+    @pytest.mark.unit
     def test_cmd_calibrate_sin_baseline(self, monkeypatch, tmp_path) -> None:
         from motor.cli.cmd_pipeline import cmd_calibrate
 
@@ -135,6 +143,7 @@ class TestCmdPipeline:
         cmd_calibrate(config, args)
         cal.learn.assert_called_once()
 
+    @pytest.mark.unit
     def test_cmd_calibrate_con_baseline_sin_force(self, monkeypatch, tmp_path) -> None:
         from motor.cli.cmd_pipeline import cmd_calibrate
 
@@ -156,6 +165,7 @@ class TestCmdPipeline:
             cmd_calibrate(config, args)
         assert exit_called == [1]
 
+    @pytest.mark.unit
     def test_cmd_calibrate_con_trends(self, monkeypatch, tmp_path) -> None:
         from motor.cli.cmd_pipeline import ARCHIVO_TRENDS, cmd_calibrate
 

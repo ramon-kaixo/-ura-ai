@@ -7,6 +7,7 @@ from scripts.pro.lock_manager import acquire_gpu_lock, release_gpu_lock
 
 
 class TestLockManager:
+    @pytest.mark.unit
     def test_acquire_and_release(self, tmp_path):
         lock = tmp_path / "test.lock"
         fp = acquire_gpu_lock(str(lock), timeout=1)
@@ -14,6 +15,8 @@ class TestLockManager:
         release_gpu_lock(fp)
         assert fp.closed
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_acquire_timeout(self, tmp_path, monkeypatch):
         lock = tmp_path / "test.lock"
 
@@ -24,9 +27,11 @@ class TestLockManager:
         with pytest.raises(RuntimeError, match="No se pudo adquirir"):
             acquire_gpu_lock(str(lock), timeout=0)
 
+    @pytest.mark.unit
     def test_release_none(self):
         release_gpu_lock(None)
 
+    @pytest.mark.unit
     def test_reacquire_after_release(self, tmp_path):
         lock = tmp_path / "test.lock"
         fp1 = acquire_gpu_lock(str(lock), timeout=1)

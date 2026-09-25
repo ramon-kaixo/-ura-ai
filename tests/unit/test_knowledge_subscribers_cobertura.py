@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import logging
 import sqlite3
 from pathlib import Path
@@ -57,6 +58,7 @@ def _compile_event(**kw) -> CompileCompleted:
     )
 
 
+@pytest.mark.unit
 def test_subscribe_all_registra_una_vez(monkeypatch) -> None:
     EventBus()
     calls: list[str] = []
@@ -71,6 +73,7 @@ def test_subscribe_all_registra_una_vez(monkeypatch) -> None:
     assert calls == first  # idempotente
 
 
+@pytest.mark.unit
 def test_subscribe_all_con_vectores(monkeypatch) -> None:
     calls: list[str] = []
 
@@ -82,6 +85,7 @@ def test_subscribe_all_con_vectores(monkeypatch) -> None:
     assert "MetadataExtracted" in calls
 
 
+@pytest.mark.unit
 def test_handler_archive_ok(db, monkeypatch) -> None:
     calls = []
 
@@ -99,6 +103,7 @@ def test_handler_archive_ok(db, monkeypatch) -> None:
     assert calls == ["enqueue", "process"]
 
 
+@pytest.mark.unit
 def test_handler_archive_falla_no_lanza(db, monkeypatch, caplog) -> None:
     monkeypatch.setattr("knowledge.engine.jobs.enqueue_archive_job", lambda *a, **k: (_ for _ in ()).throw(RuntimeError("boom")))
     handler = _make_compile_archive_handler(db, Path("/src"))
@@ -107,6 +112,7 @@ def test_handler_archive_falla_no_lanza(db, monkeypatch, caplog) -> None:
     assert "Archive handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_audit_ok(db, monkeypatch) -> None:
     calls = []
 
@@ -123,6 +129,7 @@ def test_handler_audit_ok(db, monkeypatch) -> None:
     assert calls[1]["docs_changed"] == 3
 
 
+@pytest.mark.unit
 def test_handler_audit_falla_no_lanza(monkeypatch, caplog) -> None:
     monkeypatch.setattr("knowledge.engine.audit.get_audit", lambda: (_ for _ in ()).throw(RuntimeError("x")))
     handler = _make_compile_audit_handler()
@@ -131,6 +138,7 @@ def test_handler_audit_falla_no_lanza(monkeypatch, caplog) -> None:
     assert "Audit handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_metrics_ok(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr("knowledge.engine.metrics.record_compile", lambda **kw: calls.append(kw))
@@ -139,6 +147,7 @@ def test_handler_metrics_ok(monkeypatch) -> None:
     assert calls[0] == {"source": "cron"}
 
 
+@pytest.mark.unit
 def test_handler_metrics_falla_no_lanza(monkeypatch, caplog) -> None:
     monkeypatch.setattr("knowledge.engine.metrics.record_compile", lambda **kw: (_ for _ in ()).throw(RuntimeError("x")))
     handler = _make_compile_metrics_handler()
@@ -147,6 +156,7 @@ def test_handler_metrics_falla_no_lanza(monkeypatch, caplog) -> None:
     assert "Metrics handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_search_audit_ok(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr("knowledge.engine.audit.get_audit", lambda: type("A", (), {"log_read": lambda self, **kw: calls.append(kw)})())
@@ -156,6 +166,7 @@ def test_handler_search_audit_ok(monkeypatch) -> None:
     assert calls[0]["docs"] == 2
 
 
+@pytest.mark.unit
 def test_handler_search_audit_falla_no_lanza(monkeypatch, caplog) -> None:
     monkeypatch.setattr("knowledge.engine.audit.get_audit", lambda: (_ for _ in ()).throw(RuntimeError("x")))
     handler = _make_search_audit_handler()
@@ -164,6 +175,7 @@ def test_handler_search_audit_falla_no_lanza(monkeypatch, caplog) -> None:
     assert "Search audit handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_archive_metrics_ok(monkeypatch) -> None:
     calls = []
     monkeypatch.setattr("knowledge.engine.metrics.record_archive", lambda **kw: calls.append(kw))
@@ -172,6 +184,7 @@ def test_handler_archive_metrics_ok(monkeypatch) -> None:
     assert calls[0] == {"kind": "git", "status": "completed"}
 
 
+@pytest.mark.unit
 def test_handler_archive_metrics_falla_no_lanza(monkeypatch, caplog) -> None:
     monkeypatch.setattr("knowledge.engine.metrics.record_archive", lambda **kw: (_ for _ in ()).throw(RuntimeError("x")))
     handler = _make_archive_metrics_handler()
@@ -180,6 +193,7 @@ def test_handler_archive_metrics_falla_no_lanza(monkeypatch, caplog) -> None:
     assert "Archive metrics handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_lineage_ok(db) -> None:
     handler = _make_lineage_subscriber(db)
     handler(_compile_event(correlation_id="cid-lineage"))
@@ -189,6 +203,7 @@ def test_handler_lineage_ok(db) -> None:
     assert n == 1
 
 
+@pytest.mark.unit
 def test_handler_lineage_falla_no_lanza(db, monkeypatch, caplog) -> None:
     class BoomStore:
         def store_lineage_event(self, event) -> bool:
@@ -201,6 +216,7 @@ def test_handler_lineage_falla_no_lanza(db, monkeypatch, caplog) -> None:
     assert "Lineage handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_vector_index_success(db, monkeypatch) -> None:
     class FakeStore:
         def __init__(self, *args, **kwargs) -> None:
@@ -232,6 +248,7 @@ def test_handler_vector_index_success(db, monkeypatch) -> None:
     assert len(vs.items) == 1  # asset None → no op
 
 
+@pytest.mark.unit
 def test_handler_vector_index_fallos(db, monkeypatch) -> None:
     class FakeStore:
         def __init__(self, *args, **kwargs) -> None:
@@ -246,6 +263,7 @@ def test_handler_vector_index_fallos(db, monkeypatch) -> None:
     handler(MetadataExtracted(asset_id="a1", asset_type="doc", extractor="test", duration_ms=1, success=True))  # text vacío → return
 
 
+@pytest.mark.unit
 def test_handler_fusion_sin_claims(monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.orchestrator.compile_result_to_claims", lambda db: [])
     monkeypatch.setattr("knowledge.engine.metrics.record_fusion", lambda **kw: None)
@@ -253,6 +271,7 @@ def test_handler_fusion_sin_claims(monkeypatch) -> None:
     handler(_compile_event())
 
 
+@pytest.mark.unit
 def test_handler_fusion_ok(db, monkeypatch) -> None:
     calls = []
     monkeypatch.setattr("knowledge.engine.orchestrator.compile_result_to_claims", lambda db: [{"claim": "c1"}])
@@ -264,6 +283,7 @@ def test_handler_fusion_ok(db, monkeypatch) -> None:
     assert calls[0]["facts"] == 4
 
 
+@pytest.mark.unit
 def test_handler_fusion_error(db, monkeypatch, caplog) -> None:
     monkeypatch.setattr(
         "knowledge.engine.orchestrator.compile_result_to_claims",
@@ -278,6 +298,7 @@ def test_handler_fusion_error(db, monkeypatch, caplog) -> None:
     assert "Fusion handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_governance_ok(db) -> None:
     handler = _make_governance_subscriber(db)
     handler(_compile_event(documents_total=3))
@@ -287,11 +308,13 @@ def test_handler_governance_ok(db) -> None:
     assert n == 1
 
 
+@pytest.mark.unit
 def test_handler_governance_sin_docs(db) -> None:
     handler = _make_governance_subscriber(db)
     handler(_compile_event(documents_total=0))
 
 
+@pytest.mark.unit
 def test_handler_governance_falla_no_lanza(db, monkeypatch, caplog) -> None:
     class BoomStore:
         def set_policy(self, asset_id, policy, actor="system") -> bool:
@@ -304,6 +327,7 @@ def test_handler_governance_falla_no_lanza(db, monkeypatch, caplog) -> None:
     assert "Governance handler failed" in caplog.text
 
 
+@pytest.mark.unit
 def test_handler_vector_index_embed_vacio(db, monkeypatch) -> None:
     class FakeStore:
         def __init__(self, *args, **kwargs) -> None:
@@ -332,6 +356,7 @@ def test_handler_vector_index_embed_vacio(db, monkeypatch) -> None:
     assert vs.items == []  # embed vacío → sin upsert
 
 
+@pytest.mark.unit
 def test_handler_vector_index_falla_no_lanza(db, monkeypatch, caplog) -> None:
     class FakeStore:
         def __init__(self, *args, **kwargs) -> None:

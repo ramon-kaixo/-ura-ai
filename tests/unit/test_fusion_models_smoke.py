@@ -5,11 +5,15 @@ import pytest
 from motor.core.fusion.models import Fact, SourceScore, FusionProvenance, StageProvenance, normalize_identity, make_claim_id, make_fact_id, make_version_id, make_conflict_id
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import_fusion_models():
     """El módulo importa sin errores."""
     assert Fact is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_dataclass_fusion_models_Fact():
     """Instanciación con valores por defecto (skip si valida/requiere args)."""
     try:
@@ -19,6 +23,8 @@ def test_dataclass_fusion_models_Fact():
     assert inst is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_dataclass_fusion_models_SourceScore():
     """Instanciación con valores por defecto (skip si valida/requiere args)."""
     try:
@@ -28,6 +34,8 @@ def test_dataclass_fusion_models_SourceScore():
     assert inst is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_dataclass_fusion_models_FusionProvenance():
     """Instanciación con valores por defecto (skip si valida/requiere args)."""
     try:
@@ -37,6 +45,8 @@ def test_dataclass_fusion_models_FusionProvenance():
     assert inst is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_dataclass_fusion_models_StageProvenance():
     """Instanciación con valores por defecto (skip si valida/requiere args)."""
     try:
@@ -46,6 +56,8 @@ def test_dataclass_fusion_models_StageProvenance():
     assert inst is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_fusion_models_normalize_identity():
     """La función no lanza con argumentos básicos."""
     try:
@@ -54,6 +66,8 @@ def test_funcion_fusion_models_normalize_identity():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_fusion_models_make_claim_id():
     """La función no lanza con argumentos básicos."""
     try:
@@ -62,6 +76,8 @@ def test_funcion_fusion_models_make_claim_id():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_fusion_models_make_fact_id():
     """La función no lanza con argumentos básicos."""
     try:
@@ -70,6 +86,8 @@ def test_funcion_fusion_models_make_fact_id():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_fusion_models_make_version_id():
     """La función no lanza con argumentos básicos."""
     try:
@@ -78,6 +96,8 @@ def test_funcion_fusion_models_make_version_id():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_fusion_models_make_conflict_id():
     """La función no lanza con argumentos básicos."""
     try:

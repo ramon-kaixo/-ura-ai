@@ -9,6 +9,7 @@ motor.core.llm.generate, httpx, concurrent.futures.
 
 from __future__ import annotations
 
+import pytest
 import concurrent.futures
 import json
 from unittest import mock
@@ -48,16 +49,19 @@ def _bridge(
 
 
 class TestBuildMessages:
+    @pytest.mark.unit
     def test_sin_context_sin_system(self) -> None:
         b = _bridge()
         assert b.build_messages("c1", user_message="hola") == [{"role": "user", "content": "hola"}]
 
+    @pytest.mark.unit
     def test_con_system_prompt(self) -> None:
         b = _bridge()
         msgs = b.build_messages("c1", system_prompt="sys", user_message="hola")
         assert msgs[0] == {"role": "system", "content": "sys"}
         assert msgs[1] == {"role": "user", "content": "hola"}
 
+    @pytest.mark.unit
     def test_context_reverso_con_sistema(self) -> None:
         eng = _FakeEngine([_Msg("user", "m1"), _Msg("assistant", "a1"), _Msg("user", "m2")])
         b = _bridge(engine=eng)
@@ -65,6 +69,7 @@ class TestBuildMessages:
         roles = [m["role"] for m in msgs]
         assert roles == ["system", "user", "assistant", "user"]
 
+    @pytest.mark.unit
     def test_context_sin_sistema(self) -> None:
         eng = _FakeEngine([_Msg("user", "m1"), _Msg("assistant", "a1")])
         b = _bridge(engine=eng)
@@ -72,6 +77,7 @@ class TestBuildMessages:
         roles = [m["role"] for m in msgs]
         assert roles == ["user", "assistant"]
 
+    @pytest.mark.unit
     def test_max_context_recorta(self) -> None:
         # cada mensaje cuesta len//4 + 1 tokens; con max_context=2 solo cabe 1
         eng = _FakeEngine([_Msg("user", "x" * 20), _Msg("user", "y" * 20)])
@@ -79,45 +85,54 @@ class TestBuildMessages:
         msgs = b.build_messages("c1", max_context=6)
         assert len(msgs) == 1
 
+    @pytest.mark.unit
     def test_duplicado_user_no_append(self) -> None:
         eng = _FakeEngine([_Msg("user", "hola")])
         b = _bridge(engine=eng)
         msgs = b.build_messages("c1", user_message="hola")
         assert len(msgs) == 1
 
+    @pytest.mark.unit
     def test_sin_context_user_append(self) -> None:
         b = _bridge()
         msgs = b.build_messages("c1", user_message="nuevo")
         assert msgs == [{"role": "user", "content": "nuevo"}]
 
+    @pytest.mark.unit
     def test_sin_user_sin_context(self) -> None:
         b = _bridge()
         assert b.build_messages("c1") == []
 
 
 class TestSelectModel:
+    @pytest.mark.unit
     def test_explicacion_usa_fallback(self) -> None:
         b = _bridge(fallback="modelo-x")
         assert b.select_model(ConversationMode.EXPLANATION) == "modelo-x"
 
+    @pytest.mark.unit
     def test_trabajo_usa_coder(self) -> None:
         b = _bridge()
         assert b.select_model(ConversationMode.WORK) == "qwen3-coder:30b"
 
+    @pytest.mark.unit
     def test_intent_command_usa_7b(self) -> None:
         b = _bridge()
         assert b.select_model(ConversationMode.CONVERSATION, "command") == "llama3:latest"
 
+    @pytest.mark.unit
     def test_intent_search_usa_7b(self) -> None:
         b = _bridge()
         assert b.select_model(ConversationMode.CONVERSATION, "search") == "llama3:latest"
 
+    @pytest.mark.unit
     def test_default_usa_fallback(self) -> None:
         b = _bridge(fallback="modelo-y")
         assert b.select_model(ConversationMode.CONVERSATION, "otro") == "modelo-y"
 
 
 class TestGenerate:
+    @pytest.mark.unit
     def test_generate_con_router_ok(self) -> None:
         router = mock.Mock()
         router.generate.return_value = "respuesta del router"
@@ -126,6 +141,7 @@ class TestGenerate:
         assert r == "respuesta del router"
         router.generate.assert_called_once()
 
+    @pytest.mark.unit
     def test_generate_router_error_fallback_local(self) -> None:
         router = mock.Mock()
         router.generate.side_effect = RuntimeError("boom")
@@ -134,6 +150,7 @@ class TestGenerate:
             r = b.generate("c1", "hola", ConversationMode.CONVERSATION)
         assert r == "local-ok"
 
+    @pytest.mark.unit
     def test_generate_router_respuesta_error_local(self) -> None:
         router = mock.Mock()
         router.generate.return_value = "[Error algo"
@@ -142,6 +159,8 @@ class TestGenerate:
             r = b.generate("c1", "hola", ConversationMode.CONVERSATION)
         assert r == "local-ok"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_generate_timeout(self) -> None:
         b = _bridge(timeout=1)
         with mock.patch.object(b, "_do_generate") as do_gen:
@@ -149,6 +168,7 @@ class TestGenerate:
             r = b.generate("c1", "hola", ConversationMode.CONVERSATION)
         assert "no respondió" in r
 
+    @pytest.mark.unit
     def test_generate_excepcion_hilo_fallback_local(self) -> None:
         b = _bridge(timeout=1)
         with (
@@ -158,6 +178,7 @@ class TestGenerate:
             r = b.generate("c1", "hola", ConversationMode.CONVERSATION)
         assert r == "local-ok"
 
+    @pytest.mark.unit
     def test_generate_sin_router_local(self) -> None:
         b = _bridge()
         with mock.patch("motor.assistant.llm_bridge.LLMBridge._local_generate", return_value="local-ok") as local:
@@ -165,6 +186,7 @@ class TestGenerate:
         assert r == "local-ok"
         local.assert_called_once()
 
+    @pytest.mark.unit
     def test_do_generate_router_ok(self) -> None:
         router = mock.Mock()
         router.generate.return_value = "respuesta"
@@ -172,6 +194,7 @@ class TestGenerate:
         r = b._do_generate([{"role": "user", "content": "hola"}], "m1")
         assert r == "respuesta"
 
+    @pytest.mark.unit
     def test_do_generate_router_exc(self) -> None:
         router = mock.Mock()
         router.generate.side_effect = RuntimeError("boom")
@@ -181,6 +204,7 @@ class TestGenerate:
         assert r == "local"
         local.assert_called_once()
 
+    @pytest.mark.unit
     def test_local_generate_ok(self) -> None:
         b = _bridge()
         with mock.patch("motor.core.llm.generate", return_value="core-ok") as core_gen:
@@ -188,12 +212,14 @@ class TestGenerate:
         assert r == "core-ok"
         core_gen.assert_called_once()
 
+    @pytest.mark.unit
     def test_local_generate_error(self) -> None:
         b = _bridge()
         with mock.patch("motor.core.llm.generate", side_effect=RuntimeError("down")):
             r = b._local_generate([{"role": "user", "content": "hola"}], "m1")
         assert "Error al conectar" in r
 
+    @pytest.mark.unit
     def test_messages_to_prompt(self) -> None:
         b = _bridge()
         p = b._messages_to_prompt(

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import socket
 from pathlib import Path
 from types import SimpleNamespace
@@ -27,24 +28,29 @@ def cfg(tmp_path: Path) -> UraConfig:
 
 
 class TestEsFisico:
+    @pytest.mark.unit
     def test_virt_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("none"))
         assert Scanner._es_fisico() is True
 
+    @pytest.mark.unit
     def test_virt_kvm(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("kvm"))
         assert Scanner._es_fisico() is False
 
+    @pytest.mark.unit
     def test_virt_falla_cpuinfo_hypervisor(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("no virt")))
         with mock.patch("builtins.open", mock.mock_open(read_data="model name: foo hypervisor xyz")):
             assert Scanner._es_fisico() is False
 
+    @pytest.mark.unit
     def test_virt_falla_cpuinfo_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("no virt")))
         with mock.patch("builtins.open", mock.mock_open(read_data="model name: foo")):
             assert Scanner._es_fisico() is True
 
+    @pytest.mark.unit
     def test_virt_doble_falla(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("no virt")))
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("no cpuinfo")))
@@ -52,16 +58,19 @@ class TestEsFisico:
 
 
 class TestHostname:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         s = Scanner(cfg_fake())
         assert s._get_hostname() == socket.gethostname()
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("socket.gethostname", mock.Mock(side_effect=OSError("sin hostname")))
         assert Scanner(cfg_fake())._get_hostname() == "unknown"
 
 
 class TestCheckServicios:
+    @pytest.mark.unit
     def test_systemd_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "motor.scanner._executor.run",
@@ -72,6 +81,7 @@ class TestCheckServicios:
         for svc in SERVICIOS_SYSTEMD:
             assert out[svc] == "active"
 
+    @pytest.mark.unit
     def test_systemd_inactive_sin_unit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def fake_run(cmd, timeout=5):
             if cmd[0] == "systemctl" and cmd[1] == "is-active":
@@ -85,6 +95,7 @@ class TestCheckServicios:
         out = s._check_servicios()
         assert all(out[svc] == "not_found" for svc in SERVICIOS_SYSTEMD)
 
+    @pytest.mark.unit
     def test_systemd_inactive_con_unit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def fake_run(cmd, timeout=5):
             if cmd[0] == "systemctl" and cmd[1] == "is-active":
@@ -96,6 +107,7 @@ class TestCheckServicios:
         out = s._check_servicios()
         assert out["sshd"] == "inactive"  # unit existe -> estado real
 
+    @pytest.mark.unit
     def test_file_not_found(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def fake_run(cmd, timeout=5):
             raise FileNotFoundError(cmd[0])
@@ -105,12 +117,14 @@ class TestCheckServicios:
         out = s._check_servicios()
         assert all(out[svc] == "not_found" for svc in SERVICIOS_SYSTEMD)
 
+    @pytest.mark.unit
     def test_error_generico(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         s = Scanner(cfg_fake())
         out = s._check_servicios()
         assert all(out[svc] == "unknown" for svc in SERVICIOS_SYSTEMD)
 
+    @pytest.mark.unit
     def test_docker_aliases(self, monkeypatch: pytest.MonkeyPatch) -> None:
         docker_out = "\n".join(
             [
@@ -137,20 +151,24 @@ class TestCheckServicios:
 
 
 class TestUnitExists:
+    @pytest.mark.unit
     def test_existe(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("sshd.service"))
         assert Scanner(cfg_fake())._unit_exists("sshd") is True
 
+    @pytest.mark.unit
     def test_no_existe(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res(""))
         assert Scanner(cfg_fake())._unit_exists("x") is False
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         assert Scanner(cfg_fake())._unit_exists("x") is False
 
 
 class TestListDocker:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "motor.scanner._executor.run", lambda *a, **k: _res("c1\trunning\nc2\texited")
@@ -158,17 +176,20 @@ class TestListDocker:
         out = Scanner(cfg_fake())._list_docker_containers()
         assert out == {"c1": "running", "c2": "exited"}
 
+    @pytest.mark.unit
     def test_lineas_sin_tab(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("c1\trunning\nbasura"))
         out = Scanner(cfg_fake())._list_docker_containers()
         assert out == {"c1": "running"}
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         assert Scanner(cfg_fake())._list_docker_containers() == {}
 
 
 class TestCheckRecursos:
+    @pytest.mark.unit
     def test_psutil(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.scanner as scanner_mod
 
@@ -177,6 +198,7 @@ class TestCheckRecursos:
         )
         assert Scanner(cfg_fake())._check_recursos()["ram_pct"] == 50
 
+    @pytest.mark.unit
     def test_proc_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.scanner as scanner_mod
 
@@ -187,6 +209,7 @@ class TestCheckRecursos:
 
 
 class TestCheckContenedores:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "motor.scanner._executor.run", lambda *a, **k: _res("c1\trunning\nc2\texited\nc3\trunning")
@@ -194,16 +217,19 @@ class TestCheckContenedores:
         out = Scanner(cfg_fake())._check_contenedores()
         assert out == {"total": 3, "running": 2, "exited": 1}
 
+    @pytest.mark.unit
     def test_linea_vacia(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("c1\trunning\n\n"))
         out = Scanner(cfg_fake())._check_contenedores()
         assert out["total"] == 1
 
+    @pytest.mark.unit
     def test_linea_tab_sola(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("\t"))
         out = Scanner(cfg_fake())._check_contenedores()
         assert out["total"] == 0  # len(parts) != 2
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         out = Scanner(cfg_fake())._check_contenedores()
@@ -211,6 +237,7 @@ class TestCheckContenedores:
 
 
 class TestDetectarCambios:
+    @pytest.mark.unit
     def test_primera_vez(self) -> None:
         s = Scanner(cfg_fake())
         r = SimpleNamespace(
@@ -222,6 +249,7 @@ class TestDetectarCambios:
         assert s._detectar_cambios(r) == (0, [])
         assert s._ventana_previa["servicios"] == {"a": "active"}
 
+    @pytest.mark.unit
     def test_segunda_vez_diff(self, monkeypatch: pytest.MonkeyPatch) -> None:
         s = Scanner(cfg_fake())
         r1 = SimpleNamespace(
@@ -251,24 +279,29 @@ class TestCalcularHealthScore:
         base.update(kw)
         return SimpleNamespace(**base)
 
+    @pytest.mark.unit
     def test_perfecto(self) -> None:
         assert Scanner(cfg_fake())._calcular_health_score(self._r()) == 100.0
 
+    @pytest.mark.unit
     def test_servicios_fallados(self) -> None:
         s = Scanner(cfg_fake())
         r = self._r(servicios={"a": "failed", "b": "failed", "c": "degraded"})
         assert s._calcular_health_score(r) == 100 - 30
 
+    @pytest.mark.unit
     def test_ram_alta(self) -> None:
         s = Scanner(cfg_fake())
         assert s._calcular_health_score(self._r(recursos={"ram_pct": 95, "disk_pct": 50, "zombies": 0})) == 85.0
         assert s._calcular_health_score(self._r(recursos={"ram_pct": 85, "disk_pct": 50, "zombies": 0})) == 90.0
 
+    @pytest.mark.unit
     def test_disk_alta(self) -> None:
         s = Scanner(cfg_fake())
         assert s._calcular_health_score(self._r(recursos={"ram_pct": 50, "disk_pct": 95, "zombies": 0})) == 85.0
         assert s._calcular_health_score(self._r(recursos={"ram_pct": 50, "disk_pct": 85, "zombies": 0})) == 90.0
 
+    @pytest.mark.unit
     def test_zombies_latencia_flapping_hw_diff(self) -> None:
         s = Scanner(cfg_fake())
         r = self._r(
@@ -280,6 +313,7 @@ class TestCalcularHealthScore:
         )
         assert s._calcular_health_score(r) == 100 - 10 - 5 - 5 - 15 - 6
 
+    @pytest.mark.unit
     def test_minimo_0(self) -> None:
         s = Scanner(cfg_fake())
         r = self._r(
@@ -294,6 +328,7 @@ class TestCalcularHealthScore:
 
 
 class TestDetectarDuplicados:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "motor.scanner._executor.run",
@@ -303,25 +338,30 @@ class TestDetectarDuplicados:
         assert out["procesos"]["opencode serve"] == 2
         assert out["procesos"]["node x"] == 2
 
+    @pytest.mark.unit
     def test_sin_duplicados(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("bash\npython x\n"))
         assert Scanner(cfg_fake())._detectar_duplicados() == {}
 
+    @pytest.mark.unit
     def test_args_vacios(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", lambda *a, **k: _res("\n   \n"))
         assert Scanner(cfg_fake())._detectar_duplicados() == {}
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         assert Scanner(cfg_fake())._detectar_duplicados() == {}
 
 
 class TestSnapshotHash:
+    @pytest.mark.unit
     def test_archivos_inexistentes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner.RUTAS_CONFIG_OPENCODE", ["/no/existe/1.jsonc", "/no/existe/2.json"])
         h = Scanner(cfg_fake())._tomar_snapshot_hash()
         assert len(h) == 16
 
+    @pytest.mark.unit
     def test_archivos_existentes(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         f1 = tmp_path / "a.jsonc"
         f2 = tmp_path / "b.json"
@@ -336,6 +376,7 @@ class TestSnapshotHash:
 
 
 class TestDetectarOrphans:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.scanner as scanner_mod
 
@@ -345,6 +386,7 @@ class TestDetectarOrphans:
         s._detectar_orphans()  # no lanza
         assert True
 
+    @pytest.mark.unit
     def test_acumula(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import motor.scanner as scanner_mod
 
@@ -358,6 +400,7 @@ class TestDetectarOrphans:
 
 
 class TestDetectarSystemdFailed:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "motor.scanner._executor.run",
@@ -367,6 +410,7 @@ class TestDetectarSystemdFailed:
         assert "foo.service" in out
         assert "bar.service" in out
 
+    @pytest.mark.unit
     def test_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("motor.scanner._executor.run", mock.Mock(side_effect=OSError("boom")))
         assert Scanner(cfg_fake())._detectar_systemd_failed() == []
@@ -379,6 +423,7 @@ class TestRun:
         sc.sliding.add_and_check = mock.Mock(return_value=[])
         return sc
 
+    @pytest.mark.unit
     def test_run_vm(self, s: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         s.cal._baseline = {}
         for method in (
@@ -404,6 +449,7 @@ class TestRun:
         assert r.hw_health == {"ok": True}
         assert r.calibration_status == "learning"
 
+    @pytest.mark.unit
     def test_run_fisico(self, s: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         for method in (
             "_get_hostname",
@@ -427,6 +473,7 @@ class TestRun:
         assert r.ok is True
         assert r.hw_health["temp"] == 45
 
+    @pytest.mark.unit
     def test_run_calibracion_activa(self, s: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         for method in (
             "_get_hostname",

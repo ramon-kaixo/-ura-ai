@@ -5,6 +5,7 @@ Mock de red (httpx) SÍ permitido. Mock de lógica interna NO.
 
 from __future__ import annotations
 
+import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
@@ -50,6 +51,7 @@ def _http_resp(status: int = 200, json_data: dict | None = None) -> AsyncMock:
 
 
 class TestURAQdrantClient:
+    @pytest.mark.integration
     def test_init_defaults(self) -> None:
         client = URAQdrantClient()
         assert client.base_url == "http://127.0.0.1:6333"
@@ -204,6 +206,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
+    @pytest.mark.integration
     def test_guardar_documento(self, mock_embed: MagicMock, mock_put: MagicMock) -> None:
         mock_embed.return_value = [[0.1, 0.2]]
         mock_put.return_value.status_code = 200
@@ -216,6 +219,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
+    @pytest.mark.integration
     def test_guardar_documentos_batch(self, mock_embed: MagicMock, mock_put: MagicMock) -> None:
         mock_embed.return_value = [[0.1], [0.2]]
         mock_put.return_value.status_code = 200
@@ -226,6 +230,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
+    @pytest.mark.integration
     def test_guardar_documento_server_error(self, mock_embed: MagicMock, mock_put: MagicMock) -> None:
         mock_embed.return_value = [[0.1]]
         mock_put.return_value.status_code = 500
@@ -233,6 +238,7 @@ class TestQdrantClientREST:
         assert client.guardar_documento("doc1", "text") is False
 
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
+    @pytest.mark.integration
     def test_guardar_documento_not_disponible(self, mock_embed: MagicMock) -> None:
         client = _rest_client()
         client.disponible = False
@@ -242,6 +248,7 @@ class TestQdrantClientREST:
     # ── buscar_por_similitud / _buscar_similitud_rest ──
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_similitud_rest_success(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"result": [{"id": 1, "payload": {"texto": "hi"}, "score": 0.9}]}
@@ -252,6 +259,7 @@ class TestQdrantClientREST:
         assert results[0]["score"] == 0.9
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_similitud_rest_empty(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"result": []}
@@ -260,6 +268,7 @@ class TestQdrantClientREST:
         assert results == []
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_similitud_rest_exception(self, mock_post: MagicMock) -> None:
         mock_post.side_effect = Exception("timeout")
         client = _rest_client()
@@ -269,6 +278,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.QdrantClient.buscar_por_similitud")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embedding")
+    @pytest.mark.integration
     def test_buscar_documentos(self, mock_embed: MagicMock, mock_search: MagicMock) -> None:
         mock_embed.return_value = [0.1, 0.2]
         mock_search.return_value = [{"payload": {"texto": "doc"}, "score": 1.0}]
@@ -281,17 +291,20 @@ class TestQdrantClientREST:
     # ── eliminar_por_filtro ──
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_eliminar_por_filtro_rest_success(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         client = _rest_client()
         assert client.eliminar_por_filtro({"source": "x"}, "test_col") is True
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_eliminar_por_filtro_server_error(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 500
         client = _rest_client()
         assert client.eliminar_por_filtro({"source": "x"}, "test_col") is False
 
+    @pytest.mark.integration
     def test_eliminar_por_filtro_not_disponible(self) -> None:
         client = _rest_client()
         client.disponible = False
@@ -300,6 +313,7 @@ class TestQdrantClientREST:
     # ── guardar_incidente / _guardar_rest ──
 
     @patch("motor.core.qdrant_client.httpx.put")
+    @pytest.mark.integration
     def test_guardar_incidente_rest_success(self, mock_put: MagicMock) -> None:
         mock_put.return_value.status_code = 200
         client = _rest_client()
@@ -309,11 +323,13 @@ class TestQdrantClientREST:
         assert COLECCION_INCIDENTES in url
 
     @patch("motor.core.qdrant_client.httpx.put")
+    @pytest.mark.integration
     def test_guardar_incidente_server_error(self, mock_put: MagicMock) -> None:
         mock_put.return_value.status_code = 500
         client = _rest_client()
         assert client.guardar_incidente({"ts": "now"}) is False
 
+    @pytest.mark.integration
     def test_guardar_incidente_not_disponible(self) -> None:
         client = _rest_client()
         client.disponible = False
@@ -322,6 +338,7 @@ class TestQdrantClientREST:
     # ── buscar_incidentes / _buscar_rest ──
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_incidentes_rest_success(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"result": {"points": [{"payload": {"tipo": "CRASH"}}]}}
@@ -331,6 +348,7 @@ class TestQdrantClientREST:
         assert results[0]["tipo"] == "CRASH"
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_incidentes_rest_empty(self, mock_post: MagicMock) -> None:
         mock_post.return_value.status_code = 200
         mock_post.return_value.json.return_value = {"result": {"points": []}}
@@ -338,11 +356,13 @@ class TestQdrantClientREST:
         assert client.buscar_incidentes() == []
 
     @patch("motor.core.qdrant_client.httpx.post")
+    @pytest.mark.integration
     def test_buscar_incidentes_rest_exception(self, mock_post: MagicMock) -> None:
         mock_post.side_effect = Exception("timeout")
         client = _rest_client()
         assert client.buscar_incidentes() == []
 
+    @pytest.mark.integration
     def test_buscar_incidentes_not_disponible(self) -> None:
         client = _rest_client()
         client.disponible = False
@@ -352,6 +372,7 @@ class TestQdrantClientREST:
 
     @patch("motor.core.qdrant_client.httpx.put")
     @patch("motor.core.qdrant_client.QdrantClient.generar_embeddings_batch")
+    @pytest.mark.integration
     def test_guardar_documentos_batch_http_exception(self, mock_embed: MagicMock, mock_put: MagicMock) -> None:
         mock_embed.return_value = [[0.1]]
         mock_put.side_effect = httpx.RequestError("net err", request=MagicMock())

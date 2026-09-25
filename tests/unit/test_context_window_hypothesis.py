@@ -4,6 +4,7 @@ Deterministas en CI vía derandomize=True.
 """
 
 from __future__ import annotations
+import pytest
 
 from hypothesis import given, settings
 from hypothesis import strategies as st
@@ -25,6 +26,8 @@ def _a_messages(pares: list[tuple[str, str]]) -> list[Message]:
 
 @settings(derandomize=True, max_examples=50)
 @given(pares=st_mensajes, presupuesto=st.integers(min_value=8, max_value=512))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_trim_nunca_aumenta_y_cabe_en_presupuesto(
     pares: list[tuple[str, str]], presupuesto: int
 ) -> None:
@@ -38,6 +41,8 @@ def test_trim_nunca_aumenta_y_cabe_en_presupuesto(
 
 @settings(derandomize=True, max_examples=50)
 @given(pares=st_mensajes, sistema=st_texto)
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_build_context_prefiere_los_ultimos(
     pares: list[tuple[str, str]], sistema: str
 ) -> None:

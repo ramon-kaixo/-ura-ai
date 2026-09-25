@@ -8,6 +8,7 @@ Demuestra que un hecho generado por FusionPipeline puede ser:
 """
 
 from __future__ import annotations
+import pytest
 
 import sys
 
@@ -66,6 +67,8 @@ def _make_bundle() -> CitationBundle:
     )
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_fusion_to_index() -> None:
     """FusionPipeline produce FusionResult con FactIndex incluido."""
     from motor.core.fusion.stages import KnowledgeMergerStage
@@ -84,6 +87,8 @@ def test_e2e_fusion_to_index() -> None:
     assert result.index.size >= 1, f"Expected at least 1 fact, got {result.index.size}"
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_index_to_context() -> None:
     """FactIndex → ContextBuilder produce texto utilizable por LLM."""
     from motor.core.fusion.stages import KnowledgeMergerStage
@@ -107,6 +112,8 @@ def test_e2e_index_to_context() -> None:
         pass
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_fact_to_semantic_projection() -> None:
     """KnowledgeFact → SemanticFact projection es funcional."""
     kf = KnowledgeFact(
@@ -129,6 +136,8 @@ def test_e2e_fact_to_semantic_projection() -> None:
     assert required_keys.issubset(projected.keys()), f"Missing keys: {required_keys - set(projected.keys())}"
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_context_ready_for_llm() -> None:
     """El contexto generado puede insertarse en un prompt LLM."""
     # Crear un FactIndex directamente
@@ -165,6 +174,8 @@ Pregunta: ¿Qué vende Apple?
     assert "oranges" in prompt
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_full_vertical_flow() -> None:
     """Prueba completa: Evidence → Fact → FactIndex → Contexto → LLM-ready.
 
@@ -214,6 +225,8 @@ Pregunta: ¿Qué vende Apple?
 # ── A3-08: Filtro de versiones obsoletas ─────────────
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_context_filters_obsolete() -> None:
     """FactIndex con versión SUPERSEDED no debe aparecer en el contexto."""
     from motor.core.fusion.fact_index import FactIndex
@@ -236,6 +249,8 @@ def test_e2e_context_filters_obsolete() -> None:
     assert "Apple" in context
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_context_after_rollback() -> None:
     """Rollback → solo la versión restaurada aparece en contexto."""
     from motor.core.fusion.fact_history import FactHistory
@@ -261,6 +276,8 @@ def test_e2e_context_after_rollback() -> None:
     assert "makes" in context
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
 def test_e2e_context_after_tombstone() -> None:
     """Tombstone → el hecho no debe aparecer en el contexto."""
     from motor.core.fusion.fact_history import FactHistory
@@ -293,6 +310,9 @@ def test_e2e_context_after_tombstone() -> None:
 # ── A3-06: Benchmark E2E ──────────────────────────────
 
 
+@pytest.mark.e2e
+@pytest.mark.integration
+@pytest.mark.slow
 def test_benchmark_e2e_full_flow() -> None:
     """Benchmark del flujo completo: Evidence → Prompt."""
     import time

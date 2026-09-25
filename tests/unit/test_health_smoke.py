@@ -6,11 +6,15 @@ import threading
 from motor.core.llm.router.health import health_get_cached, health_store_cache, health_remove_cache
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import_health():
     """El módulo importa sin errores."""
     assert health_get_cached is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_health_health_get_cached():
     """La función no lanza con argumentos básicos."""
     try:
@@ -19,6 +23,8 @@ def test_funcion_health_health_get_cached():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_health_health_store_cache():
     """La función no lanza con argumentos básicos."""
     try:
@@ -27,6 +33,8 @@ def test_funcion_health_health_store_cache():
         pytest.skip('no aplicable con argumentos básicos')
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion_health_health_remove_cache():
     """La función no lanza con argumentos básicos."""
     try:
@@ -36,6 +44,8 @@ def test_funcion_health_health_remove_cache():
 
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_health_cache_flujo_completo():
     """Cobertura: get/store/remove con caché válida y expirada."""
     import threading
@@ -59,6 +69,8 @@ def test_health_cache_flujo_completo():
     assert "llm" not in cache
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_health_cache_spin_wait():
     """Rama concurrencia: cached_result None -> spin-wait hasta que otro thread lo rellena."""
     import threading
@@ -81,6 +93,9 @@ def test_health_cache_spin_wait():
     assert r == {"ok": True}
 
 
+@pytest.mark.slow
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_health_cache_spin_timeout():
     """Rama: spin-wait agota los 20 intentos sin resultado -> None."""
     import threading

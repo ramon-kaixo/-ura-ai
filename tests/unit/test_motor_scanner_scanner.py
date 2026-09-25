@@ -51,19 +51,23 @@ def sc(config: mock.Mock, executor: FakeExecutor) -> Scanner:
 
 
 class TestEsFisico:
+    @pytest.mark.unit
     def test_detect_virt_none(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.default = "none\n"
         assert sc._es_fisico() is True
 
+    @pytest.mark.unit
     def test_detect_virt_kvm(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.default = "kvm\n"
         assert sc._es_fisico() is False
 
+    @pytest.mark.unit
     def test_excepcion_cpuinfo(self, sc: Scanner, executor: FakeExecutor, monkeypatch: pytest.MonkeyPatch) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("boom"))
         monkeypatch.setattr("builtins.open", mock.mock_open(read_data="bare metal cpu"))
         assert sc._es_fisico() is True
 
+    @pytest.mark.unit
     def test_excepcion_total(self, sc: Scanner, executor: FakeExecutor, monkeypatch: pytest.MonkeyPatch) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("boom"))
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("ro")))
@@ -71,6 +75,7 @@ class TestEsFisico:
 
 
 class TestRun:
+    @pytest.mark.unit
     def test_run_completo_fisico(self, sc: Scanner, executor: FakeExecutor,
                                  config: mock.Mock, monkeypatch: pytest.MonkeyPatch) -> None:
         executor.default = "none\n"
@@ -90,6 +95,7 @@ class TestRun:
         assert r.snapshot_hash == "abc"
         assert r.calibration_status == "learning"
 
+    @pytest.mark.unit
     def test_run_vm(self, sc: Scanner, executor: FakeExecutor,
                     config: mock.Mock, monkeypatch: pytest.MonkeyPatch) -> None:
         config.is_vm = True
@@ -111,11 +117,13 @@ class TestRun:
 
 
 class TestHostname:
+    @pytest.mark.unit
     def test_ok(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         import socket
         monkeypatch.setattr(socket, "gethostname", mock.Mock(return_value="host-x"))
         assert sc._get_hostname() == "host-x"
 
+    @pytest.mark.unit
     def test_falla(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(scanner.socket if hasattr(scanner, "socket") else __import__("socket"),
                             "gethostname", mock.Mock(side_effect=OSError("x")))
@@ -126,6 +134,7 @@ class TestHostname:
 
 
 class TestCheckServicios:
+    @pytest.mark.unit
     def test_systemd_y_docker(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.outputs["is-active"] = "active\n"
         executor.outputs["list-units"] = "sshd.service loaded active running\n"
@@ -137,17 +146,20 @@ class TestCheckServicios:
         assert s["searxng"] == "not_found"
         assert s["vane"] == "not_found"
 
+    @pytest.mark.unit
     def test_inactive_sin_unit(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.outputs["is-active"] = "inactive\n"
         executor.outputs["list-units"] = ""
         s = sc._check_servicios()
         assert s["sshd"] == "not_found"
 
+    @pytest.mark.unit
     def test_file_not_found(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=FileNotFoundError("no"))
         s = sc._check_servicios()
         assert s["sshd"] == "not_found"
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         s = sc._check_servicios()
@@ -155,30 +167,36 @@ class TestCheckServicios:
 
 
 class TestUnitExists:
+    @pytest.mark.unit
     def test_existe(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.default = "sshd.service loaded\n"
         assert sc._unit_exists("sshd") is True
 
+    @pytest.mark.unit
     def test_no_existe(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.default = ""
         assert sc._unit_exists("sshd") is False
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         assert sc._unit_exists("sshd") is False
 
 
 class TestDockerContainers:
+    @pytest.mark.unit
     def test_ok(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.outputs["docker"] = "a\trunning\nb\texited\n"
         assert sc._list_docker_containers() == {"a": "running", "b": "exited"}
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         assert sc._list_docker_containers() == {}
 
 
 class TestCheckRecursos:
+    @pytest.mark.unit
     def test_psutil(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_psutil = mock.Mock()
         fake_psutil.virtual_memory.return_value = mock.Mock(percent=50.0, total=1e9, available=5e8)
@@ -195,6 +213,7 @@ class TestCheckRecursos:
         assert r["ram_pct"] == 50.0
         assert r["zombies"] == 1
 
+    @pytest.mark.unit
     def test_fallback_proc(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(scanner, "_recursos_psutil", mock.Mock(return_value=None))
         monkeypatch.setattr(scanner, "_recursos_proc", mock.Mock(return_value={"ram_pct": 60}))
@@ -202,22 +221,26 @@ class TestCheckRecursos:
 
 
 class TestCheckContenedores:
+    @pytest.mark.unit
     def test_ok(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.outputs["docker"] = "a\trunning\nb\texited\n\n"
         c = sc._check_contenedores()
         assert c == {"total": 2, "running": 1, "exited": 1}
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         assert sc._check_contenedores() == {"total": 0, "running": 0, "exited": 0}
 
 
 class TestDetectarCambios:
+    @pytest.mark.unit
     def test_primera_vez(self, sc: Scanner) -> None:
         r = ScanResult(timestamp="t", servicios={"a": "b"}, recursos={}, contenedores={}, hw_health={})
         assert sc._detectar_cambios(r) == (0, [])
         assert sc._ventana_previa["servicios"] == {"a": "b"}
 
+    @pytest.mark.unit
     def test_segunda_vez(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         r = ScanResult(timestamp="t", servicios={"a": "b"}, recursos={}, contenedores={}, hw_health={})
         sc._detectar_cambios(r)
@@ -226,6 +249,7 @@ class TestDetectarCambios:
 
 
 class TestHealthScore:
+    @pytest.mark.unit
     def test_lleno(self, sc: Scanner) -> None:
         r = ScanResult(
             timestamp="t",
@@ -238,6 +262,7 @@ class TestHealthScore:
         )
         assert sc._calcular_health_score(r) == 14.0
 
+    @pytest.mark.unit
     def test_sano(self, sc: Scanner) -> None:
         r = ScanResult(
             timestamp="t",
@@ -250,6 +275,7 @@ class TestHealthScore:
         )
         assert sc._calcular_health_score(r) == 99.5
 
+    @pytest.mark.unit
     def test_medios(self, sc: Scanner) -> None:
         r = ScanResult(
             timestamp="t",
@@ -265,28 +291,33 @@ class TestHealthScore:
 
 
 class TestDuplicados:
+    @pytest.mark.unit
     def test_con_dups(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.outputs["ps"] = "opencode --serve\nopencode --serve\nnode x\n"
         d = sc._detectar_duplicados()
         assert "procesos" in d
         assert d["procesos"]["opencode --serve"] == 2
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         assert sc._detectar_duplicados() == {}
 
 
 class TestSnapshotHash:
+    @pytest.mark.unit
     def test_sin_archivos(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("no")))
         assert len(sc._tomar_snapshot_hash()) == 16
 
+    @pytest.mark.unit
     def test_con_archivos(self, sc: Scanner, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.mock_open(read_data=b"data"))
         assert len(sc._tomar_snapshot_hash()) == 16
 
 
 class TestDetectarOrphans:
+    @pytest.mark.unit
     def test_todos(self, sc: Scanner, executor: FakeExecutor) -> None:
         with mock.patch("motor.scanner.scanner._detectar_pid_files") as pid, \
                 mock.patch("motor.scanner.scanner._detectar_hijos_huerfanos") as hijos, \
@@ -300,16 +331,19 @@ class TestDetectarOrphans:
 
 
 class TestSystemdFailed:
+    @pytest.mark.unit
     def test_ok(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.default = "● ura-x.service   loaded failed failed\nura-y.service loaded failed\n"
         assert sc._detectar_systemd_failed() == ["ura-x.service", "ura-y.service"]
 
+    @pytest.mark.unit
     def test_excepcion(self, sc: Scanner, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         assert sc._detectar_systemd_failed() == []
 
 
 class TestRecursosProc:
+    @pytest.mark.unit
     def test_proc_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(scanner, "_leer_meminfo", mock.Mock(return_value=(2_000_000_000, 1_000_000_000)))
         monkeypatch.setattr(scanner, "_leer_loadavg", mock.Mock(return_value=0.5))
@@ -321,19 +355,25 @@ class TestRecursosProc:
         assert r["load_1m"] == 0.5
         assert r["ncpu"] >= 1
 
+    @pytest.mark.unit
     def test_meminfo_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("ro")))
         assert scanner._leer_meminfo() == (1024, 0)
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_loadavg_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.mock_open(read_data="0.75 0.50 0.25 1/2 3"))
         assert scanner._leer_loadavg() == 0.75
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_loadavg_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("builtins.open", mock.Mock(side_effect=OSError("ro")))
         with mock.patch.object(scanner.log, "debug"):
             assert scanner._leer_loadavg() == 0.0
 
+    @pytest.mark.unit
     def test_meminfo_valores(self, monkeypatch: pytest.MonkeyPatch) -> None:
         content = "MemTotal: 1000 kB\nMemAvailable: 400 kB\nOther: 5 kB\n"
         monkeypatch.setattr("builtins.open", mock.mock_open(read_data=content))
@@ -341,6 +381,7 @@ class TestRecursosProc:
         assert total == 1000 * 1024
         assert avail == 400 * 1024
 
+    @pytest.mark.unit
     def test_statvfs_disk_total_cero(self, monkeypatch: pytest.MonkeyPatch) -> None:
         s = mock.Mock()
         s.f_frsize = 4096
@@ -349,10 +390,12 @@ class TestRecursosProc:
         monkeypatch.setattr(scanner.os, "statvfs", mock.Mock(return_value=s))
         assert scanner._leer_statvfs() == (0, 0, 0)
 
+    @pytest.mark.unit
     def test_statvfs_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(scanner.os, "statvfs", mock.Mock(side_effect=OSError("x")))
         assert scanner._leer_statvfs() == (0, 0, 0)
 
+    @pytest.mark.unit
     def test_zombies_proc(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_proc = mock.Mock()
         p1 = mock.Mock()
@@ -364,6 +407,7 @@ class TestRecursosProc:
         monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
         assert scanner._contar_zombies_proc() == 1
 
+    @pytest.mark.unit
     def test_zombies_proc_no_zombie(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_proc = mock.Mock()
         p1 = mock.Mock()
@@ -373,6 +417,7 @@ class TestRecursosProc:
         monkeypatch.setattr(Path, "iterdir", fake_proc.iterdir)
         assert scanner._contar_zombies_proc() == 0
 
+    @pytest.mark.unit
     def test_zombies_proc_read_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_proc = mock.Mock()
         p1 = mock.Mock()
@@ -383,6 +428,7 @@ class TestRecursosProc:
         with mock.patch.object(scanner.log, "debug"):
             assert scanner._contar_zombies_proc() == 0
 
+    @pytest.mark.unit
     def test_zombies_proc_iter_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_proc = mock.Mock()
         fake_proc.iterdir.side_effect = OSError("x")
@@ -392,6 +438,7 @@ class TestRecursosProc:
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_pid_files_stale(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
         stale = mock.Mock()
@@ -407,6 +454,7 @@ class TestHelpers:
         assert len(orphans) == 1
         assert orphans[0]["tipo"] == "stale_pid"
 
+    @pytest.mark.unit
     def test_pid_files_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
         bad = mock.Mock()
@@ -420,6 +468,7 @@ class TestHelpers:
             scanner._detectar_pid_files(orphans)
         assert orphans == []
 
+    @pytest.mark.unit
     def test_pid_files_glob_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake_dir = mock.Mock()
         fake_dir.glob.side_effect = OSError("x")
@@ -428,6 +477,7 @@ class TestHelpers:
         with mock.patch.object(scanner.log, "debug"):
             scanner._detectar_pid_files([])
 
+    @pytest.mark.unit
     def test_hijos_huerfanos(self, monkeypatch: pytest.MonkeyPatch) -> None:
         orphans: list[dict] = []
         fake_psutil = mock.Mock()
@@ -440,6 +490,7 @@ class TestHelpers:
         assert len(orphans) == 1
         assert orphans[0]["tipo"] == "hijo_huertano"
 
+    @pytest.mark.unit
     def test_hijos_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         monkeypatch.delitem(sys.modules, "psutil", raising=False)
@@ -448,34 +499,40 @@ class TestHelpers:
         monkeypatch.setitem(sys.modules, "psutil", fake)
         scanner._detectar_hijos_huerfanos([])
 
+    @pytest.mark.unit
     def test_docker_dangling(self, executor: FakeExecutor) -> None:
         executor.outputs["docker"] = "img1\nimg2\n"
         orphans: list[dict] = []
         scanner._detectar_docker_dangling(orphans, executor)
         assert orphans == [{"tipo": "docker_dangling", "cantidad": 2}]
 
+    @pytest.mark.unit
     def test_docker_dangling_vacio(self, executor: FakeExecutor) -> None:
         executor.default = ""
         orphans: list[dict] = []
         scanner._detectar_docker_dangling(orphans, executor)
         assert orphans == []
 
+    @pytest.mark.unit
     def test_docker_dangling_error(self, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         scanner._detectar_docker_dangling([], executor)
 
+    @pytest.mark.unit
     def test_systemd_failed_helper(self, executor: FakeExecutor) -> None:
         executor.default = "● x.service loaded failed failed\n"
         orphans: list[dict] = []
         scanner._detectar_systemd_failed(orphans, executor)
         assert orphans[0]["tipo"] == "systemd_failed"
 
+    @pytest.mark.unit
     def test_systemd_failed_helper_error(self, executor: FakeExecutor) -> None:
         executor.run = mock.Mock(side_effect=RuntimeError("x"))
         scanner._detectar_systemd_failed([], executor)
 
 
 class TestRecursosPsutil:
+    @pytest.mark.unit
     def test_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         fake_psutil = mock.Mock()
@@ -489,6 +546,7 @@ class TestRecursosPsutil:
         assert r is not None
         assert r["ram_pct"] == 10.0
 
+    @pytest.mark.unit
     def test_excepcion(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         fake_psutil = mock.Mock()
@@ -497,6 +555,7 @@ class TestRecursosPsutil:
         with mock.patch.object(scanner.log, "warning"):
             assert scanner._recursos_psutil() is None
 
+    @pytest.mark.unit
     def test_import_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
         fake_psutil = mock.Mock()

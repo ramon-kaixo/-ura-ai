@@ -6,6 +6,7 @@ GX10: smoke tests contra servicios reales.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from tests.infra.conftest import run_cmd
 
@@ -14,12 +15,14 @@ from tests.infra.conftest import run_cmd
 class TestSystemSmoke:
     """Smoke tests que verifican que el sistema esta operativo."""
 
+    @pytest.mark.smoke
     def test_opencode_responds(self) -> None:
         rc, out, _ = run_cmd("curl -s -o /dev/null -w '%{http_code}' http://localhost:8081/")
         assert rc == 0, "OpenCode no responde"
         code = out.strip().strip("'")
         assert code in ("200", "401", "403"), f"OpenCode HTTP {code}"
 
+    @pytest.mark.smoke
     def test_ollama_has_models(self) -> None:
         rc, out, _ = run_cmd("curl -s http://localhost:11434/api/tags")
         assert rc == 0, "Ollama no responde"
@@ -28,16 +31,19 @@ class TestSystemSmoke:
         data = json.loads(out)
         assert len(data.get("models", [])) > 0, "Ollama sin modelos"
 
+    @pytest.mark.smoke
     def test_ssh_port_open(self) -> None:
         rc, _, _ = run_cmd("ss -tlnp | grep :22")
         assert rc == 0, "Puerto SSH no activo"
 
+    @pytest.mark.smoke
     def test_git_repo_clean(self) -> None:
         rc, out, _ = run_cmd("git status --short", timeout=15)
         assert rc == 0, f"git status fallo: {out}"
         # En GX10, el working tree puede tener archivos sin commitear (esperado)
         # Solo verificamos que git funciona
 
+    @pytest.mark.smoke
     def test_no_critical_errors_in_logs(self) -> None:
         rc, out, _ = run_cmd(
             "journalctl -u opencode.service --since '1 hour ago' --no-pager -p err 2>/dev/null | head -5"

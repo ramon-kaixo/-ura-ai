@@ -15,26 +15,31 @@ from motor.intelligence.agents.validator import ValidatorAgent
 
 
 class TestAgentMessage:
+    @pytest.mark.integration
     def test_auto_id(self):
         m = AgentMessage(source="a", target="b", message_type="task", payload={})
         assert m.id != ""
         assert m.timestamp != ""
 
+    @pytest.mark.integration
     def test_auto_correlation(self):
         m = AgentMessage(source="a", target="b", message_type="task", payload={})
         assert m.correlation_id == m.id
 
+    @pytest.mark.integration
     def test_custom_id(self):
         m = AgentMessage(source="a", target="b", message_type="task", payload={}, id="custom")
         assert m.id == "custom"
 
 
 class TestAgentTask:
+    @pytest.mark.integration
     def test_auto_id(self):
         t = AgentTask(objective="test")
         assert t.id != ""
         assert t.created_at != ""
 
+    @pytest.mark.integration
     def test_defaults(self):
         t = AgentTask(objective="test")
         assert t.agent_role == AgentRole.EXECUTOR
@@ -43,12 +48,14 @@ class TestAgentTask:
 
 
 class TestAgentResult:
+    @pytest.mark.integration
     def test_auto_id(self):
         r = AgentResult(task_id="t1", agent_id="a1", success=True)
         assert r.id != ""
 
 
 class TestPlannerAgent:
+    @pytest.mark.integration
     def test_plan_search(self):
         agent = PlannerAgent()
         task = AgentTask(objective="search for documents")
@@ -57,6 +64,7 @@ class TestPlannerAgent:
         subtasks = result.output.get("subtasks", [])
         assert any(s["agent_role"] == AgentRole.RESEARCHER for s in subtasks)
 
+    @pytest.mark.integration
     def test_plan_execute(self):
         agent = PlannerAgent()
         task = AgentTask(objective="execute the pipeline")
@@ -65,6 +73,7 @@ class TestPlannerAgent:
         subtasks = result.output.get("subtasks", [])
         assert any(s["agent_role"] == AgentRole.EXECUTOR for s in subtasks)
 
+    @pytest.mark.integration
     def test_plan_validate(self):
         agent = PlannerAgent()
         task = AgentTask(objective="validate the results")
@@ -73,6 +82,7 @@ class TestPlannerAgent:
         subtasks = result.output.get("subtasks", [])
         assert any(s["agent_role"] == AgentRole.VALIDATOR for s in subtasks)
 
+    @pytest.mark.integration
     def test_plan_multiple(self):
         agent = PlannerAgent()
         task = AgentTask(objective="search and validate the results")
@@ -81,6 +91,7 @@ class TestPlannerAgent:
         subtasks = result.output.get("subtasks", [])
         assert len(subtasks) >= 2
 
+    @pytest.mark.integration
     def test_plan_generic(self):
         agent = PlannerAgent()
         task = AgentTask(objective="do something generic")
@@ -90,6 +101,7 @@ class TestPlannerAgent:
 
 
 class TestExecutorAgent:
+    @pytest.mark.integration
     def test_execute_simple(self):
         agent = ExecutorAgent()
         task = AgentTask(objective="echo test", input_data={"cmd": ["echo", "hello"]})
@@ -97,12 +109,15 @@ class TestExecutorAgent:
         assert result.success
         assert "hello" in result.output.get("stdout", "")
 
+    @pytest.mark.integration
     def test_execute_failure(self):
         agent = ExecutorAgent()
         task = AgentTask(objective="fail", input_data={"cmd": ["bash", "-c", "exit 1"]})
         result = agent.run(task)
         assert not result.success
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_execute_timeout(self):
         agent = ExecutorAgent()
         task = AgentTask(objective="timeout", input_data={"cmd": ["sleep", "10"], "timeout": 1})
@@ -111,6 +126,7 @@ class TestExecutorAgent:
 
 
 class TestValidatorAgent:
+    @pytest.mark.integration
     def test_validate_success(self):
         agent = ValidatorAgent()
         task = AgentTask(objective="validate", input_data={"result": {"success": True, "output": "ok"}})
@@ -118,6 +134,7 @@ class TestValidatorAgent:
         assert result.success
         assert result.output["valid"]
 
+    @pytest.mark.integration
     def test_validate_failure(self):
         agent = ValidatorAgent()
         task = AgentTask(objective="validate", input_data={"result": {"success": False}})
@@ -125,6 +142,7 @@ class TestValidatorAgent:
         assert not result.success
         assert len(result.output["issues"]) > 0
 
+    @pytest.mark.integration
     def test_validate_empty(self):
         agent = ValidatorAgent()
         task = AgentTask(objective="validate", input_data={})
@@ -133,6 +151,7 @@ class TestValidatorAgent:
 
 
 class TestResearcherAgent:
+    @pytest.mark.integration
     def test_research(self):
         agent = ResearcherAgent()
         task = AgentTask(objective="search for EventBus docs")
@@ -140,6 +159,7 @@ class TestResearcherAgent:
         assert result.success or not result.success  # depends on available stores
         assert "query" in result.output
 
+    @pytest.mark.integration
     def test_research_with_stores(self):
         from motor.intelligence.memory.episodic import Episode, EpisodeStore
         from motor.intelligence.memory.retrieval import ContextRetriever
@@ -160,6 +180,7 @@ class TestResearcherAgent:
 
 
 class TestSupervisorAgent:
+    @pytest.mark.integration
     def test_coordinate_success(self):
         sup = SupervisorAgent()
         exec_agent = ExecutorAgent()
@@ -176,6 +197,7 @@ class TestSupervisorAgent:
         result = sup.run(task)
         assert result.success
 
+    @pytest.mark.integration
     def test_coordinate_no_agent(self):
         sup = SupervisorAgent()
         task = AgentTask(
@@ -185,6 +207,7 @@ class TestSupervisorAgent:
         result = sup.run(task)
         assert not result.success  # no researcher registered
 
+    @pytest.mark.integration
     def test_retry_on_failure(self):
         sup = SupervisorAgent()
         exec_agent = ExecutorAgent()
@@ -207,6 +230,7 @@ class TestSupervisorAgent:
 
 
 class TestMultiAgentRuntime:
+    @pytest.mark.integration
     def test_register(self):
         runtime = MultiAgentRuntime()
         agent = ExecutorAgent()
@@ -214,6 +238,7 @@ class TestMultiAgentRuntime:
         assert runtime.get_agent(aid) is agent
         assert runtime.agent_count() == 1
 
+    @pytest.mark.integration
     def test_unregister(self):
         runtime = MultiAgentRuntime()
         agent = ExecutorAgent()
@@ -221,6 +246,7 @@ class TestMultiAgentRuntime:
         assert runtime.unregister(aid)
         assert runtime.agent_count() == 0
 
+    @pytest.mark.integration
     def test_find_by_role(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -229,6 +255,7 @@ class TestMultiAgentRuntime:
         assert len(executors) == 1
         assert executors[0].role == AgentRole.EXECUTOR
 
+    @pytest.mark.integration
     def test_find_by_capability(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -236,18 +263,21 @@ class TestMultiAgentRuntime:
         agents = runtime.find_by_capability("execute")
         assert len(agents) == 1
 
+    @pytest.mark.integration
     def test_execute_workflow(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
         result = runtime.execute_workflow("echo hello", timeout=30)
         assert result.success
 
+    @pytest.mark.integration
     def test_workflow_id_in_output(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
         result = runtime.execute_workflow("echo test", timeout=30)
         assert "workflow_id" in result.output
 
+    @pytest.mark.integration
     def test_cancel(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -258,10 +288,12 @@ class TestMultiAgentRuntime:
         # Workflow already completed, cancel won't change status
         assert wf is not None
 
+    @pytest.mark.integration
     def test_cancel_nonexistent(self):
         runtime = MultiAgentRuntime()
         assert not runtime.cancel("nonexistent")
 
+    @pytest.mark.integration
     def test_list_workflows(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -270,12 +302,14 @@ class TestMultiAgentRuntime:
         wfs = runtime.list_workflows()
         assert len(wfs) == 2
 
+    @pytest.mark.integration
     def test_execute_workflow_failure(self):
         runtime = MultiAgentRuntime()
         # No executor registered, should fail
         result = runtime.execute_workflow("execute bad command", timeout=5)
         assert not result.success
 
+    @pytest.mark.integration
     def test_concurrent_execution(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -287,6 +321,7 @@ class TestMultiAgentRuntime:
             # May succeed or fail depending on timing
             assert isinstance(r, AgentResult)
 
+    @pytest.mark.integration
     def test_execute_workflow_planning(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -297,10 +332,12 @@ class TestMultiAgentRuntime:
 
 
 class TestAgentABC:
+    @pytest.mark.integration
     def test_cannot_instantiate(self):
         with pytest.raises(TypeError):
             Agent()
 
+    @pytest.mark.integration
     def test_can_handle(self):
         agent = ExecutorAgent()
         task = AgentTask(objective="test", agent_role=AgentRole.EXECUTOR)
@@ -310,6 +347,7 @@ class TestAgentABC:
 
 
 class TestIntegration:
+    @pytest.mark.integration
     def test_full_workflow(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -318,6 +356,7 @@ class TestIntegration:
         result = runtime.execute_workflow("validate the echo command", timeout=30)
         assert isinstance(result, AgentResult)
 
+    @pytest.mark.integration
     def test_full_workflow_with_context(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -332,6 +371,7 @@ class TestIntegration:
 
 
 class TestMockExecutorInjection:
+    @pytest.mark.integration
     def test_custom_executor_injected(self):
         from motor.core.executor import BaseExecutor, ProcessResult
 
@@ -354,6 +394,7 @@ class TestMockExecutorInjection:
         assert "fake_output" in result.output.get("stdout", "")
         assert fake.calls == [["test_cmd"]]
 
+    @pytest.mark.integration
     def test_status_resets_to_idle(self):
         from motor.core.executor import BaseExecutor, ProcessResult
 
@@ -372,6 +413,7 @@ class TestMockExecutorInjection:
 
 
 class TestCancellation:
+    @pytest.mark.integration
     def test_cancel_before_execution(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -381,6 +423,7 @@ class TestCancellation:
         assert wf is not None
         assert wf["status"] in ("completed", "cancelled", "failed")
 
+    @pytest.mark.integration
     def test_cancel_mid_workflow(self):
         runtime = MultiAgentRuntime()
         runtime.register(ExecutorAgent())
@@ -392,6 +435,7 @@ class TestCancellation:
 
 
 class TestWorkflowCleanup:
+    @pytest.mark.integration
     def test_fifo_cleanup(self):
         runtime = MultiAgentRuntime(max_completed_workflows=3)
         runtime.register(ExecutorAgent())
@@ -403,21 +447,25 @@ class TestWorkflowCleanup:
 
 
 class TestStatusRestoration:
+    @pytest.mark.integration
     def test_planner_status_restored(self):
         agent = PlannerAgent()
         agent.run(AgentTask(objective="echo test"))
         assert agent.status == AgentStatus.IDLE
 
+    @pytest.mark.integration
     def test_executor_status_restored(self):
         agent = ExecutorAgent()
         agent.run(AgentTask(objective="echo test", input_data={"cmd": ["echo", "ok"]}))
         assert agent.status == AgentStatus.IDLE
 
+    @pytest.mark.integration
     def test_validator_status_restored(self):
         agent = ValidatorAgent()
         agent.run(AgentTask(objective="validate", input_data={"result": {"success": True}}))
         assert agent.status == AgentStatus.IDLE
 
+    @pytest.mark.integration
     def test_supervisor_status_restored(self):
         agent = SupervisorAgent()
         agent.run(AgentTask(objective="coordinate", context={"subtasks": []}))

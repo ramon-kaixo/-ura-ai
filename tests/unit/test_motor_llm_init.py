@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/__init__.py — API unificada lazy."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -24,11 +25,13 @@ class FakeState:
 
 
 class TestLLMInit:
+    @pytest.mark.unit
     def test_all(self) -> None:
         from motor.core import llm
 
         assert set(llm.__all__) == {"embed", "embed_async", "generate", "health"}
 
+    @pytest.mark.unit
     def test_generate_delega(self, monkeypatch) -> None:
         from motor.core import llm
 
@@ -38,6 +41,7 @@ class TestLLMInit:
         assert r == "generado"
         state.generate.assert_called_once_with("prompt", "m", {"t": 0.1})
 
+    @pytest.mark.unit
     def test_embed_delega(self, monkeypatch) -> None:
         from motor.core import llm
 
@@ -57,6 +61,7 @@ class TestLLMInit:
         assert r == [[0.2]]
         state.embed_async.assert_awaited_once_with(["texto"], "m2")
 
+    @pytest.mark.unit
     def test_health_delega(self, monkeypatch) -> None:
         from motor.core import llm
 
@@ -64,6 +69,7 @@ class TestLLMInit:
         monkeypatch.setattr(llm, "_get_state", mock.Mock(return_value=state))
         assert llm.health() == {"status": "ok"}
 
+    @pytest.mark.unit
     def test_get_state_lazy(self, monkeypatch) -> None:
         from motor.core import llm
 

@@ -15,6 +15,7 @@ Cubre:
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from motor.core.fusion.models import (
     FusionContext,
@@ -39,11 +40,13 @@ from motor.core.fusion.stages.entity_resolver import (
 # ── B3.1: LRUCache ──────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_lru_cache_get_miss() -> None:
     c = LRUCache(maxsize=10)
     assert c.get("missing") is None
 
 
+@pytest.mark.unit
 def test_lru_cache_put_and_get() -> None:
     c = LRUCache(maxsize=10)
     e = ResolvedEntity(entity_id="E0001", canonical_name="Apple Inc.", confidence=0.95)
@@ -51,6 +54,7 @@ def test_lru_cache_put_and_get() -> None:
     assert c.get("apple") is e
 
 
+@pytest.mark.unit
 def test_lru_cache_eviction() -> None:
     c = LRUCache(maxsize=3)
     for i in range(5):
@@ -61,6 +65,7 @@ def test_lru_cache_eviction() -> None:
     assert c.get("key4") is not None  # most recent
 
 
+@pytest.mark.unit
 def test_lru_cache_clear() -> None:
     c = LRUCache(maxsize=10)
     e = ResolvedEntity(entity_id="E0001", canonical_name="X", confidence=0.9)
@@ -69,6 +74,7 @@ def test_lru_cache_clear() -> None:
     assert c.size == 0
 
 
+@pytest.mark.unit
 def test_lru_cache_move_to_end_on_get() -> None:
     c = LRUCache(maxsize=3)
     for i in range(3):
@@ -85,6 +91,7 @@ def test_lru_cache_move_to_end_on_get() -> None:
 # ── B3.2: ContextualEntityResolver — disambiguation ─────
 
 
+@pytest.mark.unit
 def test_resolve_apple_company_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("apple", context={"claim_text": "Apple Inc. sells iPhones"})
@@ -93,6 +100,7 @@ def test_resolve_apple_company_by_context() -> None:
     assert e.entity_id == "E0001"
 
 
+@pytest.mark.unit
 def test_resolve_apple_fruit_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("apple", context={"claim_text": "I ate a delicious red apple"})
@@ -101,6 +109,7 @@ def test_resolve_apple_fruit_by_context() -> None:
     assert e.entity_id == "E0009"
 
 
+@pytest.mark.unit
 def test_resolve_tesla_company_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("tesla", context={"claim_text": "Tesla sold 500k electric cars"})
@@ -108,6 +117,7 @@ def test_resolve_tesla_company_by_context() -> None:
     assert e.canonical_name == "Tesla Inc."
 
 
+@pytest.mark.unit
 def test_resolve_tesla_person_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("tesla", context={"claim_text": "Nikola Tesla invented the AC motor in 1888"})
@@ -115,6 +125,7 @@ def test_resolve_tesla_person_by_context() -> None:
     assert e.canonical_name == "Nikola Tesla"
 
 
+@pytest.mark.unit
 def test_resolve_amazon_company_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("amazon", context={"claim_text": "Amazon reported record revenue this quarter"})
@@ -122,6 +133,7 @@ def test_resolve_amazon_company_by_context() -> None:
     assert e.canonical_name == "Amazon.com Inc."
 
 
+@pytest.mark.unit
 def test_resolve_amazon_river_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("amazon", context={"claim_text": "The Amazon river flows through Brazil"})
@@ -129,6 +141,7 @@ def test_resolve_amazon_river_by_context() -> None:
     assert e.canonical_name == "Amazon River"
 
 
+@pytest.mark.unit
 def test_resolve_washington_state_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("washington", context={"claim_text": "Washington state is known for coffee"})
@@ -136,6 +149,7 @@ def test_resolve_washington_state_by_context() -> None:
     assert e.canonical_name == "Washington (state)"
 
 
+@pytest.mark.unit
 def test_resolve_washington_dc_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("washington", context={"claim_text": "The White House is in Washington D.C."})
@@ -143,6 +157,7 @@ def test_resolve_washington_dc_by_context() -> None:
     assert e.canonical_name == "Washington, D.C."
 
 
+@pytest.mark.unit
 def test_resolve_washington_person_by_context() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("washington", context={"claim_text": "George Washington was the first president"})
@@ -153,6 +168,7 @@ def test_resolve_washington_person_by_context() -> None:
 # ── B3.3: AMBIGUOUS status ──────────────────────────────
 
 
+@pytest.mark.unit
 def test_resolve_ambiguous_no_context() -> None:
     r = ContextualEntityResolver()
     # "apple" without context keywords → ambiguous
@@ -161,6 +177,7 @@ def test_resolve_ambiguous_no_context() -> None:
     assert e.entity_id == ""
 
 
+@pytest.mark.unit
 def test_resolve_ambiguous_tie() -> None:
     r = ContextualEntityResolver()
     # No disambiguation keywords → tie → AMBIGUOUS
@@ -171,6 +188,7 @@ def test_resolve_ambiguous_tie() -> None:
 # ── B3.4: UNKNOWN status ────────────────────────────────
 
 
+@pytest.mark.unit
 def test_resolve_unknown() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("nonexistentcorp12345")
@@ -178,6 +196,7 @@ def test_resolve_unknown() -> None:
     assert e.entity_id == ""
 
 
+@pytest.mark.unit
 def test_resolve_empty_text() -> None:
     r = ContextualEntityResolver()
     e = r.resolve("")
@@ -187,6 +206,7 @@ def test_resolve_empty_text() -> None:
 # ── B3.5: Cache integration ─────────────────────────────
 
 
+@pytest.mark.unit
 def test_cache_does_not_cache_multi_entry() -> None:
     """Multi-entry entities (apple) are NOT cached — depends on context."""
     r = ContextualEntityResolver()
@@ -199,6 +219,7 @@ def test_cache_does_not_cache_multi_entry() -> None:
     assert b.entity_id == "E0009"  # Apple fruit
 
 
+@pytest.mark.unit
 def test_cache_hit_single_entry() -> None:
     """Single-entry entities (nvidia) ARE cached."""
     r = ContextualEntityResolver()
@@ -207,6 +228,7 @@ def test_cache_hit_single_entry() -> None:
     assert cached is first  # same object (cache hit)
 
 
+@pytest.mark.unit
 def test_cache_stats_in_stage() -> None:
     ctx = FusionContext(
         claims=[
@@ -227,23 +249,28 @@ def test_cache_stats_in_stage() -> None:
 # ── B3.6: N-gram extraction ─────────────────────────────
 
 
+@pytest.mark.unit
 def test_extract_candidates_single_word() -> None:
     assert "apple" in _extract_entity_candidates("Apple sells oranges", _DEFAULT_REGISTRY)
 
 
+@pytest.mark.unit
 def test_extract_candidates_multi_word() -> None:
     assert "berkshire hathaway" in _extract_entity_candidates("Berkshire Hathaway bought a company", _DEFAULT_REGISTRY)
 
 
+@pytest.mark.unit
 def test_extract_candidates_multi_word_three() -> None:
     assert "elon musk" in _extract_entity_candidates("Elon Musk is the CEO of Tesla", _DEFAULT_REGISTRY)
 
 
+@pytest.mark.unit
 def test_extract_candidates_does_not_include_unknown() -> None:
     candidates = _extract_entity_candidates("The quick brown fox jumps", _DEFAULT_REGISTRY)
     assert len(candidates) == 0
 
 
+@pytest.mark.unit
 def test_extract_candidates_no_duplicates() -> None:
     candidates = _extract_entity_candidates("Apple Apple Apple", _DEFAULT_REGISTRY)
     assert candidates.count("apple") == 1
@@ -252,6 +279,7 @@ def test_extract_candidates_no_duplicates() -> None:
 # ── B3.7: EntityResolutionStage ─────────────────────────
 
 
+@pytest.mark.unit
 def test_stage_resolves_apple_vs_fruit() -> None:
     ctx = FusionContext(
         claims=[
@@ -273,6 +301,7 @@ def test_stage_resolves_apple_vs_fruit() -> None:
             break
 
 
+@pytest.mark.unit
 def test_stage_ambiguous_when_no_context() -> None:
     ctx = FusionContext(
         claims=[
@@ -290,6 +319,7 @@ def test_stage_ambiguous_when_no_context() -> None:
     assert "entities_ambiguous" in result.statistics
 
 
+@pytest.mark.unit
 def test_stage_multiple_entities() -> None:
     ctx = FusionContext(
         claims=[
@@ -309,6 +339,7 @@ def test_stage_multiple_entities() -> None:
     assert "Tesla Inc." in entity_names
 
 
+@pytest.mark.unit
 def test_stage_provenance_records_resolver_version() -> None:
     ctx = FusionContext(
         claims=[
@@ -328,6 +359,7 @@ def test_stage_provenance_records_resolver_version() -> None:
 # ── B3.8: Backward compatibility ────────────────────────
 
 
+@pytest.mark.unit
 def test_legacy_resolver_still_works() -> None:
     resolver = RuleBasedEntityResolver()
     e = resolver.resolve("apple")
@@ -336,6 +368,7 @@ def test_legacy_resolver_still_works() -> None:
     assert e.resolver_name == "RuleBasedEntityResolver"
 
 
+@pytest.mark.unit
 def test_legacy_resolver_unknown() -> None:
     resolver = RuleBasedEntityResolver()
     e = resolver.resolve("nonexistent")
@@ -343,6 +376,7 @@ def test_legacy_resolver_unknown() -> None:
     assert e.entity_id == ""
 
 
+@pytest.mark.unit
 def test_stage_accepts_custom_resolver() -> None:
     """EntityResolutionStage debe aceptar un EntityResolver inyectado."""
     custom = RuleBasedEntityResolver()
@@ -353,6 +387,7 @@ def test_stage_accepts_custom_resolver() -> None:
 # ── B3.9: Determinism ──────────────────────────────────
 
 
+@pytest.mark.unit
 def test_resolve_deterministic_same_context() -> None:
     """Mismo texto + mismo contexto → misma entidad."""
     r = ContextualEntityResolver()
@@ -363,6 +398,7 @@ def test_resolve_deterministic_same_context() -> None:
     assert a.canonical_name == b.canonical_name
 
 
+@pytest.mark.unit
 def test_stage_deterministic() -> None:
     """EntityResolutionStage es determinista."""
     claims = [
@@ -385,6 +421,7 @@ def test_stage_deterministic() -> None:
 # ── B3.10: Resolver respects context parameter ─────────
 
 
+@pytest.mark.unit
 def test_resolve_without_context_fallback() -> None:
     """Sin contexto, entidades sin ambigüedad se resuelven igual."""
     r = ContextualEntityResolver()
@@ -393,6 +430,7 @@ def test_resolve_without_context_fallback() -> None:
     assert e.canonical_name == "NVIDIA Corporation"
 
 
+@pytest.mark.unit
 def test_resolve_without_context_ambiguous() -> None:
     """Sin contexto, entidades ambiguas retornan AMBIGUOUS."""
     r = ContextualEntityResolver()
@@ -403,6 +441,7 @@ def test_resolve_without_context_ambiguous() -> None:
 # ── B3.11: EntityRegistry injection ─────────────────────
 
 
+@pytest.mark.unit
 def test_custom_registry_injection() -> None:
     """El resolver acepta un EntityRegistry personalizado."""
     custom = EntityRegistry(
@@ -424,6 +463,7 @@ def test_custom_registry_injection() -> None:
     assert e.entity_id == "E9999"
 
 
+@pytest.mark.unit
 def test_custom_registry_does_not_see_default() -> None:
     """Un resolver con registry personalizado no ve las entidades por defecto."""
     custom = EntityRegistry()
@@ -432,6 +472,7 @@ def test_custom_registry_does_not_see_default() -> None:
     assert e.status == ResolutionStatus.UNKNOWN  # not in custom registry
 
 
+@pytest.mark.unit
 def test_entity_registry_known_names() -> None:
     reg = EntityRegistry(
         {
@@ -444,6 +485,7 @@ def test_entity_registry_known_names() -> None:
     assert "test alias" in reg.known_names
 
 
+@pytest.mark.unit
 def test_entity_registry_len() -> None:
     reg = EntityRegistry({"a": [], "b": []})
     assert len(reg) == 2
@@ -459,6 +501,7 @@ class _AlwaysFirst(ScoringStrategy):
         return 0 if entries else None
 
 
+@pytest.mark.unit
 def test_custom_scorer_injection() -> None:
     """El resolver acepta un ScoringStrategy personalizado."""
     r = ContextualEntityResolver(
@@ -470,6 +513,7 @@ def test_custom_scorer_injection() -> None:
     assert e.canonical_name == "Apple Inc."
 
 
+@pytest.mark.unit
 def test_custom_scorer_returns_ambiguous() -> None:
     """Un scorer que retorna None genera AMBIGUOUS."""
 
@@ -482,6 +526,7 @@ def test_custom_scorer_returns_ambiguous() -> None:
     assert e.status == ResolutionStatus.AMBIGUOUS
 
 
+@pytest.mark.unit
 def test_stage_has_ambiguous_entity_ids() -> None:
     """El stage reporta qué entidades quedaron ambiguas."""
     ctx = FusionContext(
@@ -503,12 +548,14 @@ def test_stage_has_ambiguous_entity_ids() -> None:
 # ── B3.13: CachePolicy validation ───────────────────────
 
 
+@pytest.mark.unit
 def test_cache_policy_from_string_valid() -> None:
     assert CachePolicy.from_string("deterministic_only") == CachePolicy.DETERMINISTIC_ONLY
     assert CachePolicy.from_string("all") == CachePolicy.ALL
     assert CachePolicy.from_string("disabled") == CachePolicy.DISABLED
 
 
+@pytest.mark.unit
 def test_cache_policy_from_string_invalid() -> None:
     import re
 
@@ -516,21 +563,25 @@ def test_cache_policy_from_string_invalid() -> None:
         CachePolicy.from_string("invalid")
 
 
+@pytest.mark.unit
 def test_cache_policy_from_string_case_sensitive() -> None:
     with pytest.raises(ValueError):
         CachePolicy.from_string("ALL")  # must be lowercase
 
 
+@pytest.mark.unit
 def test_cache_policy_accepts_enum_in_constructor() -> None:
     r = ContextualEntityResolver(cache_policy=CachePolicy.DISABLED)
     assert r.cache_policy == CachePolicy.DISABLED
 
 
+@pytest.mark.unit
 def test_cache_policy_accepts_string_in_constructor() -> None:
     r = ContextualEntityResolver(cache_policy="disabled")
     assert r.cache_policy == CachePolicy.DISABLED
 
 
+@pytest.mark.unit
 def test_cache_disabled_does_not_cache() -> None:
     r = ContextualEntityResolver(cache_policy=CachePolicy.DISABLED)
     a = r.resolve("nvidia")

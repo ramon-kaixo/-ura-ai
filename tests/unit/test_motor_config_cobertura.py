@@ -8,6 +8,7 @@ Legacy config (_apply_legacy_config) ELIMINADO v6.0.
 
 from __future__ import annotations
 
+import pytest
 import json
 import os
 from unittest import mock
@@ -25,12 +26,14 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 class TestApplyConfigOverrides:
+    @pytest.mark.unit
     def test_sin_config(self) -> None:
         with mock.patch("motor.core.config._load_config_dict", return_value=None):
             c = UraConfig()
             _apply_config_overrides(c)
             assert c.log_level == "INFO"
 
+    @pytest.mark.unit
     def test_config_completo(self) -> None:
         data = {
             "paths": {"data": "/tmp/data-x"},
@@ -59,6 +62,7 @@ class TestApplyConfigOverrides:
         assert c.ollama_max_tokens == 512
         assert c.llm_provider == "deepseek"
 
+    @pytest.mark.unit
     def test_config_parcial(self) -> None:
         with mock.patch("motor.core.config._load_config_dict", return_value={"paths": {}}):
             c = UraConfig()
@@ -67,6 +71,7 @@ class TestApplyConfigOverrides:
 
 
 class TestApplyEnvOverrides:
+    @pytest.mark.unit
     def test_env_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clean_env(monkeypatch)
         monkeypatch.setenv("URA_QDRANT_HOST", "10.1.1.1")
@@ -96,6 +101,7 @@ class TestApplyEnvOverrides:
         assert c.ollama_max_tokens == 2048
         assert c.llm_provider == "groq"
 
+    @pytest.mark.unit
     def test_env_log_invalido(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clean_env(monkeypatch)
         monkeypatch.setenv("URA_LOG_LEVEL", "bogus")
@@ -103,6 +109,7 @@ class TestApplyEnvOverrides:
         _apply_env_overrides(c)
         assert c.log_level == "INFO"
 
+    @pytest.mark.unit
     def test_sin_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clean_env(monkeypatch)
         c = UraConfig()
@@ -112,16 +119,20 @@ class TestApplyEnvOverrides:
 
 
 class TestUraConfigDefaults:
+    @pytest.mark.unit
     def test_post_init_completa_rutas(self) -> None:
         c = UraConfig()
         assert c.data_dir.endswith("/data")
         assert c.failure_knowledge_path.endswith("failure_knowledge_inicial.json")
         assert c.baseline_path.endswith("baseline_inicial.json")
 
+    @pytest.mark.unit
     def test_post_init_log_invalido(self) -> None:
         c = UraConfig(log_level="nope")
         assert c.log_level == "INFO"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_full(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _clean_env(monkeypatch)
         c = UraConfig.load()

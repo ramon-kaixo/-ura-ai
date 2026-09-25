@@ -1,6 +1,7 @@
 """Tests para core/mochila/routes/chat.py — /v1/chat/completions."""
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -36,6 +37,7 @@ def _provider_chat(return_chunk: dict):
 
 
 class TestRechazarSiBloqueado:
+    @pytest.mark.unit
     def test_circuit_open(self) -> None:
         from fastapi import HTTPException
 
@@ -48,6 +50,7 @@ class TestRechazarSiBloqueado:
             _rechazar_si_bloqueado("ollama", cb, mock.Mock())
         assert e.value.status_code == 503
 
+    @pytest.mark.unit
     def test_rate_limit(self) -> None:
         from fastapi import HTTPException
 
@@ -61,6 +64,7 @@ class TestRechazarSiBloqueado:
             _rechazar_si_bloqueado("ollama", cb, rl)
         assert e.value.status_code == 429
 
+    @pytest.mark.unit
     def test_ok_no_raise(self) -> None:
         from core.mochila.routes.chat import _rechazar_si_bloqueado
 
@@ -127,6 +131,7 @@ class TestChatRouter:
         app.include_router(create_chat_router(state))
         return TestClient(app)
 
+    @pytest.mark.unit
     def test_chat_basico(self) -> None:
         st = _state()
         st.providers["ollama"] = _provider_chat({"choices": [{"message": {"content": "respuesta"}}]})
@@ -138,6 +143,7 @@ class TestChatRouter:
         st.circuit_breaker.registrar_exito.assert_called_once_with("ollama")
         st.rate_limiter.registrar.assert_called_once_with("ollama")
 
+    @pytest.mark.unit
     def test_no_provider_available(self) -> None:
         from core.mochila.router import NoProviderAvailable
 
@@ -147,6 +153,7 @@ class TestChatRouter:
         r = client.post("/v1/chat/completions", json={"model": "m1", "messages": [{"role": "user", "content": "x"}]})
         assert r.status_code == 503
 
+    @pytest.mark.unit
     def test_circuit_breaker_bloquea(self) -> None:
         st = _state()
         st.circuit_breaker.puede_pasar.return_value = False
@@ -155,6 +162,7 @@ class TestChatRouter:
         r = client.post("/v1/chat/completions", json={"model": "m1", "messages": [{"role": "user", "content": "x"}]})
         assert r.status_code == 503
 
+    @pytest.mark.unit
     def test_rate_limit_bloquea(self) -> None:
         st = _state()
         st.rate_limiter.puede_pasar.return_value = (False, 10, 5)
@@ -162,6 +170,7 @@ class TestChatRouter:
         r = client.post("/v1/chat/completions", json={"model": "m1", "messages": [{"role": "user", "content": "x"}]})
         assert r.status_code == 429
 
+    @pytest.mark.unit
     def test_respuesta_vacia_502(self) -> None:
         st = _state()
         st.providers["ollama"] = mock.Mock()
@@ -170,6 +179,7 @@ class TestChatRouter:
         r = client.post("/v1/chat/completions", json={"model": "m1", "messages": [{"role": "user", "content": "x"}]})
         assert r.status_code == 502
 
+    @pytest.mark.unit
     def test_stream(self) -> None:
         st = _state()
         st.providers["ollama"] = _provider_chat({"choices": [{"delta": {"content": "a"}, "index": 0}]})
@@ -179,6 +189,7 @@ class TestChatRouter:
         assert "text/event-stream" in r.headers["content-type"]
         assert "X-Mochila-Provider" in r.headers
 
+    @pytest.mark.unit
     def test_stream_con_tools_true(self) -> None:
         st = _state()
         st.providers["ollama"] = _provider_chat({"choices": [{"delta": {"content": "b"}, "index": 0}]})
@@ -187,6 +198,7 @@ class TestChatRouter:
             r = client.post("/v1/chat/completions", json={"model": "m1", "messages": [{"role": "user", "content": "x"}], "stream": True, "tools": True})
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_tool_calls_ejecuta(self) -> None:
         st = _state()
         msg = {
@@ -208,6 +220,7 @@ class TestChatRouter:
         assert r.status_code == 200
         tool.assert_awaited_once_with("web_search", {"q": "test"})
 
+    @pytest.mark.unit
     def test_force_guardian(self) -> None:
         st = _state()
         st.providers["ollama"] = _provider_chat({"choices": [{"message": {"content": "con guardian"}}]})

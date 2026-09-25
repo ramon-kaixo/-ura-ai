@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -34,6 +35,7 @@ def _entry(entry_id: str = "e1", ts: float = 1.0, created_by: str = "t") -> Memo
 # ── Journal ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_journal_append_flush_fsync(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     j = Journal()
@@ -48,17 +50,20 @@ def test_journal_append_flush_fsync(tmp_path: object) -> None:
     assert len(lines) == 2
 
 
+@pytest.mark.unit
 def test_journal_append_sin_open_lanza() -> None:
     j = Journal()
     with pytest.raises(RuntimeError):
         j.append(_entry())
 
 
+@pytest.mark.unit
 def test_journal_read_all_vacio_si_no_existe() -> None:
     j = Journal("/no/existe.log")
     assert j.read_all() == []
 
 
+@pytest.mark.unit
 def test_journal_read_all_corruptas_omitidas(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     with Path(path).open("w") as f:
@@ -71,6 +76,7 @@ def test_journal_read_all_corruptas_omitidas(tmp_path: object) -> None:
     j.close()
 
 
+@pytest.mark.unit
 def test_journal_read_all_archivo_vacio(tmp_path: object) -> None:
     path = str(tmp_path / "empty.log")
     Path(path).open("w").close()
@@ -79,6 +85,7 @@ def test_journal_read_all_archivo_vacio(tmp_path: object) -> None:
     assert j.read_all() == []
 
 
+@pytest.mark.unit
 def test_journal_rotate_renombra_y_reabre(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     j = Journal()
@@ -91,17 +98,20 @@ def test_journal_rotate_renombra_y_reabre(tmp_path: object) -> None:
     j.close()
 
 
+@pytest.mark.unit
 def test_journal_rotate_sin_path_no_rompe(tmp_path: object) -> None:
     j = Journal()
     j.rotate(str(tmp_path / "j.bak"))
     assert j.count == 0
 
 
+@pytest.mark.unit
 def test_journal_wait_idle_true_cuando_libre() -> None:
     j = Journal()
     assert j.wait_idle(1) is True
 
 
+@pytest.mark.unit
 def test_journal_wait_idle_espera_lock_ocupado() -> None:
     j = Journal()
     j._lock.acquire()
@@ -110,6 +120,7 @@ def test_journal_wait_idle_espera_lock_ocupado() -> None:
     assert j.wait_idle(1) is True
 
 
+@pytest.mark.unit
 def test_journal_entry_to_dict_estructura() -> None:
     e = _entry("e1", 3.5, created_by="autor")
     d = Journal._entry_to_dict(e)
@@ -122,11 +133,13 @@ def test_journal_entry_to_dict_estructura() -> None:
     assert d["snapshot"] is False
 
 
+@pytest.mark.unit
 def test_journal_entry_version_default() -> None:
     e = MemoryEntry(entry_id="x", timestamp=1.0)
     assert Journal._entry_to_dict(e)["entry_version"] == "1"
 
 
+@pytest.mark.unit
 def test_journal_count_lines_inicial(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     with Path(path).open("w") as f:
@@ -137,6 +150,7 @@ def test_journal_count_lines_inicial(tmp_path: object) -> None:
     j.close()
 
 
+@pytest.mark.unit
 def test_journal_ab_binario_sin_encoding_con_clave(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     j = Journal(encryption_key="clave")
@@ -147,6 +161,7 @@ def test_journal_ab_binario_sin_encoding_con_clave(tmp_path: object) -> None:
     assert b"entry_id" not in raw  # cifrado
 
 
+@pytest.mark.unit
 def test_journal_read_all_con_clave(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     j = Journal(encryption_key="clave")
@@ -160,6 +175,7 @@ def test_journal_read_all_con_clave(tmp_path: object) -> None:
     assert [r["entry_id"] for r in j2.read_all()] == ["e1"]
 
 
+@pytest.mark.unit
 def test_journal_read_all_clave_incorrecta_decodifica_reemplazo(tmp_path: object) -> None:
     path = str(tmp_path / "j.log")
     j = Journal(encryption_key="clave")
@@ -172,17 +188,20 @@ def test_journal_read_all_clave_incorrecta_decodifica_reemplazo(tmp_path: object
     assert result == []  # texto corrupto no parsea como JSON
 
 
+@pytest.mark.unit
 def test_journal_count_lines_sin_archivo() -> None:
     j = Journal()
     assert j._count_lines() == 0
 
 
+@pytest.mark.unit
 def test_journal_close_idempotente() -> None:
     j = Journal()
     j.close()
     j.close()
 
 
+@pytest.mark.unit
 def test_journal_properties_por_defecto() -> None:
     j = Journal()
     assert j.path == ""
@@ -197,6 +216,7 @@ class _FakeTimeline:
     entries: dict
 
 
+@pytest.mark.unit
 def test_save_snapshot_guarda_y_devuelve_checksum(tmp_path: object) -> None:
     path = str(tmp_path / "snap.json")
     tl = _FakeTimeline(entries={"e1": _entry("e1", 1.0)})
@@ -208,6 +228,7 @@ def test_save_snapshot_guarda_y_devuelve_checksum(tmp_path: object) -> None:
     assert data["header"]["checksum"] == chk
 
 
+@pytest.mark.unit
 def test_save_snapshot_sin_entries(tmp_path: object) -> None:
     path = str(tmp_path / "empty.json")
     tl = _FakeTimeline(entries={})
@@ -217,6 +238,7 @@ def test_save_snapshot_sin_entries(tmp_path: object) -> None:
     assert len(chk) == 16
 
 
+@pytest.mark.unit
 def test_save_snapshot_cifrado(tmp_path: object) -> None:
     path = str(tmp_path / "snap.enc")
     tl = _FakeTimeline(entries={"e1": _entry("e1", 1.0)})
@@ -225,6 +247,8 @@ def test_save_snapshot_cifrado(tmp_path: object) -> None:
     assert b"entry_id" not in raw
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_roundtrip(tmp_path: object) -> None:
     path = str(tmp_path / "snap.json")
     tl = _FakeTimeline(entries={"e1": _entry("e1", 1.0)})
@@ -234,11 +258,15 @@ def test_load_snapshot_roundtrip(tmp_path: object) -> None:
     assert entries["e1"]["entry_id"] == "e1"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_no_existe_lanza() -> None:
     with pytest.raises(FileNotFoundError):
         load_snapshot("/no/existe.json")
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_cifrado_sin_clave_lanza_valueerror(tmp_path: object) -> None:
     path = str(tmp_path / "snap.enc")
     tl = _FakeTimeline(entries={})
@@ -247,6 +275,8 @@ def test_load_snapshot_cifrado_sin_clave_lanza_valueerror(tmp_path: object) -> N
         load_snapshot(path)
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_con_clave(tmp_path: object) -> None:
     path = str(tmp_path / "snap.enc")
     tl = _FakeTimeline(entries={"e1": _entry("e1", 1.0)})
@@ -255,6 +285,8 @@ def test_load_snapshot_con_clave(tmp_path: object) -> None:
     assert entries["e1"]["entry_id"] == "e1"
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_checksum_mismatch_lanza(tmp_path: object) -> None:
     path = str(tmp_path / "snap.json")
     tl = _FakeTimeline(entries={"e1": _entry("e1", 1.0)})
@@ -266,6 +298,8 @@ def test_load_snapshot_checksum_mismatch_lanza(tmp_path: object) -> None:
         load_snapshot(path)
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_snapshot_sin_checksum_acepta(tmp_path: object) -> None:
     path = str(tmp_path / "snap.json")
     data = {"header": {"schema_version": 1, "checksum": ""}, "entries": {"a": {}}}
@@ -275,6 +309,7 @@ def test_load_snapshot_sin_checksum_acepta(tmp_path: object) -> None:
     assert "a" in entries
 
 
+@pytest.mark.unit
 def test_entry_to_dict_completo() -> None:
     e = _entry("e1", 2.5)
     d = __import__("motor.memory.snapshot", fromlist=["_entry_to_dict"])._entry_to_dict(e)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import logging
 import threading
 
@@ -23,6 +24,7 @@ class _Payload(EventPayload):
         self.value = value
 
 
+@pytest.mark.unit
 def test_publish_llama_subscribers_exactos() -> None:
     bus = EventBus()
     recibidos: list[str] = []
@@ -35,6 +37,7 @@ def test_publish_llama_subscribers_exactos() -> None:
     assert recibidos == ["a.b"]
 
 
+@pytest.mark.unit
 def test_publish_errores_no_rompen_cadena() -> None:
     bus = EventBus()
     resultados: list[str] = []
@@ -52,6 +55,7 @@ def test_publish_errores_no_rompen_cadena() -> None:
     assert resultados == ["ok"]
 
 
+@pytest.mark.unit
 def test_publish_async_ejecuta_en_hilo(caplog: pytest.LogCaptureFixture) -> None:
     bus = EventBus()
     hecho = threading.Event()
@@ -64,6 +68,7 @@ def test_publish_async_ejecuta_en_hilo(caplog: pytest.LogCaptureFixture) -> None
     assert hecho.wait(timeout=2)
 
 
+@pytest.mark.unit
 def test_subscribe_prioridad_ordena_exactos() -> None:
     bus = EventBus()
     orden: list[int] = []
@@ -80,6 +85,7 @@ def test_subscribe_prioridad_ordena_exactos() -> None:
     assert orden == [5, 1]
 
 
+@pytest.mark.unit
 def test_subscribe_pattern_fnmatch() -> None:
     bus = EventBus()
     match: list[str] = []
@@ -89,6 +95,7 @@ def test_subscribe_pattern_fnmatch() -> None:
     assert match == ["exact", "plugin.hook.x"]
 
 
+@pytest.mark.unit
 def test_unsubscribe_exacto_elimina_y_limpia_topico() -> None:
     bus = EventBus()
     sub_id = bus.subscribe("t", lambda e: None)
@@ -97,6 +104,7 @@ def test_unsubscribe_exacto_elimina_y_limpia_topico() -> None:
     assert bus.count("t") == 0
 
 
+@pytest.mark.unit
 def test_unsubscribe_pattern() -> None:
     bus = EventBus()
     sub_id = bus.subscribe("p.*", lambda e: None, pattern=True)
@@ -104,6 +112,7 @@ def test_unsubscribe_pattern() -> None:
     assert bus.count() == 0
 
 
+@pytest.mark.unit
 def test_emit_sync_recoge_respuestas() -> None:
     bus = EventBus()
 
@@ -115,6 +124,7 @@ def test_emit_sync_recoge_respuestas() -> None:
     assert resp == ["r1"]
 
 
+@pytest.mark.unit
 def test_emit_sync_con_error_append_none() -> None:
     bus = EventBus()
 
@@ -127,6 +137,7 @@ def test_emit_sync_con_error_append_none() -> None:
     assert resp == [None]
 
 
+@pytest.mark.unit
 def test_count_total_y_por_topic() -> None:
     bus = EventBus()
     bus.subscribe("a", lambda e: None)
@@ -139,6 +150,7 @@ def test_count_total_y_por_topic() -> None:
     assert bus.count("zzz") == 0
 
 
+@pytest.mark.unit
 def test_reset_limpia_todo() -> None:
     bus = EventBus()
     bus.subscribe("a", lambda e: None)
@@ -147,6 +159,7 @@ def test_reset_limpia_todo() -> None:
     assert bus.count() == 0
 
 
+@pytest.mark.unit
 def test_priority_combined_exact_pattern() -> None:
     bus = EventBus()
     orden: list[str] = []
@@ -184,6 +197,7 @@ class _FakePlugin:
         return "ok"
 
 
+@pytest.mark.unit
 def test_register_plugin_hooks_ok() -> None:
     bus = EventBus()
     dm = DegradedMode()
@@ -196,6 +210,7 @@ def test_register_plugin_hooks_ok() -> None:
     assert len(plugin.calls) == 1
 
 
+@pytest.mark.unit
 def test_register_hook_desconocido_se_ignora(caplog: pytest.LogCaptureFixture) -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -205,6 +220,7 @@ def test_register_hook_desconocido_se_ignora(caplog: pytest.LogCaptureFixture) -
     assert hm._subscription_ids == {}
 
 
+@pytest.mark.unit
 def test_register_hook_declarado_sin_implementar(caplog: pytest.LogCaptureFixture) -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -214,6 +230,7 @@ def test_register_hook_declarado_sin_implementar(caplog: pytest.LogCaptureFixtur
     assert hm._subscription_ids == {}
 
 
+@pytest.mark.unit
 def test_unregister_plugin_hooks_libera_solo_del_plugin() -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -224,6 +241,7 @@ def test_unregister_plugin_hooks_libera_solo_del_plugin() -> None:
     assert "p2:pre_ingest" in hm._subscription_ids
 
 
+@pytest.mark.unit
 def test_wrapper_errores_incrementa_y_marca_degradado() -> None:
     bus = EventBus()
     dm = DegradedMode()
@@ -244,6 +262,7 @@ def test_wrapper_errores_incrementa_y_marca_degradado() -> None:
     assert not dm.is_degraded("hook:pe:pre_ingest") or True  # degradado una vez
 
 
+@pytest.mark.unit
 def test_wrapper_recupera_tras_error() -> None:
     bus = EventBus()
     dm = DegradedMode()
@@ -271,6 +290,7 @@ def test_wrapper_recupera_tras_error() -> None:
     assert not dm.is_degraded("hook:pi:pre_ingest")
 
 
+@pytest.mark.unit
 def test_wrapper_desubscribe_tras_max_errores(caplog: pytest.LogCaptureFixture) -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -292,6 +312,7 @@ def test_wrapper_desubscribe_tras_max_errores(caplog: pytest.LogCaptureFixture) 
     assert any("desuscrito" in r.message for r in caplog.records)
 
 
+@pytest.mark.unit
 def test_wrapper_omitido_si_ya_supero_max() -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -304,6 +325,7 @@ def test_wrapper_omitido_si_ya_supero_max() -> None:
     assert len(plugin.calls) == 0
 
 
+@pytest.mark.unit
 def test_hooks_registran_en_topic_con_prefijo() -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())
@@ -312,11 +334,13 @@ def test_hooks_registran_en_topic_con_prefijo() -> None:
     assert bus.count("plugin.hook.post_search") == 1
 
 
+@pytest.mark.unit
 def test_all_hooks_contiene_hook_validos() -> None:
     assert "pre_ingest" in ALL_HOOKS
     assert "on_shutdown" in ALL_HOOKS
 
 
+@pytest.mark.unit
 def test_unsubscribe_recorre_varios_subs_mismo_topic() -> None:
     bus = EventBus()
     ids = [bus.subscribe("m", lambda e: None) for _ in range(3)]
@@ -327,6 +351,7 @@ def test_unsubscribe_recorre_varios_subs_mismo_topic() -> None:
     assert bus.count("m") == 1
 
 
+@pytest.mark.unit
 def test_unsubscribe_pattern_no_primero() -> None:
     bus = EventBus()
     ids = [bus.subscribe("p.*", lambda e: None, pattern=True) for _ in range(2)]
@@ -336,6 +361,7 @@ def test_unsubscribe_pattern_no_primero() -> None:
     assert bus.count() == 0
 
 
+@pytest.mark.unit
 def test_wrapper_sin_sub_id_en_dict_no_desuscribe(caplog: pytest.LogCaptureFixture) -> None:
     bus = EventBus()
     hm = HookManager(bus, DegradedMode())

@@ -5,11 +5,15 @@ import pytest
 from motor.core.llm._state import build_llm_state
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_import__state():
     """El módulo importa sin errores."""
     assert build_llm_state is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_funcion__state_build_llm_state():
     """La función no lanza con argumentos básicos."""
     try:
@@ -19,6 +23,8 @@ def test_funcion__state_build_llm_state():
 
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_optional_providers_import_fallo():
     """Rama: fallo de import de un provider opcional no rompe."""
     import builtins
@@ -39,6 +45,8 @@ def test_optional_providers_import_fallo():
     assert "openai" not in nombres
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_seleccionar_provider_conocido():
     """Rama: provider registrado en _PROVIDER_MODULES (openai)."""
     from unittest import mock
@@ -60,6 +68,8 @@ def test_seleccionar_provider_conocido():
     assert r.regs[0][0] == "openai"
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_seleccionar_provider_excepcion_registro():
     """Rama: excepción al instanciar un provider opcional (fallback ollama)."""
     from unittest import mock
@@ -79,6 +89,8 @@ def test_seleccionar_provider_excepcion_registro():
     assert d is not None
 
 
+@pytest.mark.smoke
+@pytest.mark.unit
 def test_build_llm_state_provider_configurado():
     """Rama: config con provider distinto a ollama."""
     from types import SimpleNamespace

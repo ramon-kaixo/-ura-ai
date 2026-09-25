@@ -82,6 +82,7 @@ def _content_so(path: str, text: str = "") -> SourceObject:
 
 
 class TestUraConfig:
+    @pytest.mark.slow
     def test_load_defaults(self):
         cfg = UraConfig.load()
         assert cfg.qdrant_host == "localhost"
@@ -1086,6 +1087,7 @@ class TestIntegration:
         )
         assert result.returncode == 0
 
+    @pytest.mark.e2e
     def test_e2e_compile_search_verify_incremental(self, tmp_path):
         src = tmp_path / "source"
         src.mkdir()
@@ -1482,6 +1484,7 @@ class TestMigration:
             assert "duration_ms" in details
         conn.close()
 
+    @pytest.mark.slow
     def test_begin_immediate_retry_timeout(self):
         import sqlite3
 

@@ -3,6 +3,7 @@
 Funciones puras sobre SourceObject: frontmatter, body, relaciones y errores KE0xx.
 """
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.models import CompileError, KnowledgeObject, SourceObject, doc_id_from_path
 from knowledge.engine.parser import parse_source
@@ -25,6 +26,7 @@ Cuerpo del documento con [enlace](docs/destino.md) y [[wiki/objetivo]].
 
 
 class TestParseSource:
+    @pytest.mark.unit
     def test_ok_con_relaciones(self) -> None:
         obj = parse_source(_so(MD_OK.encode()))
         assert isinstance(obj, KnowledgeObject)
@@ -38,6 +40,7 @@ class TestParseSource:
         assert ("wiki/objetivo", "references") in rels
         assert ("docs/otro.md", "references") in rels
 
+    @pytest.mark.unit
     def test_doc_id_desde_frontmatter(self) -> None:
         raw = """---
 title: T
@@ -50,50 +53,59 @@ cuerpo
         obj = parse_source(_so(raw.encode()))
         assert obj.document.doc_id == "custom-id"
 
+    @pytest.mark.unit
     def test_empty_body_ke005(self) -> None:
         err = parse_source(_so(b"   "))
         assert isinstance(err, CompileError)
         assert err.code == "KE005"
 
+    @pytest.mark.unit
     def test_content_vacio_ke005(self) -> None:
         err = parse_source(_so(b""))
         assert isinstance(err, CompileError)
         assert err.code == "KE005"
 
+    @pytest.mark.unit
     def test_yaml_invalido_ke006(self) -> None:
         raw = "---\ntitle: [mal\n---\ncuerpo"
         err = parse_source(_so(raw.encode()))
         assert isinstance(err, CompileError)
         assert err.code == "KE006"
 
+    @pytest.mark.unit
     def test_sin_title_ke001(self) -> None:
         raw = "---\ntype: note\n---\ncuerpo"
         err = parse_source(_so(raw.encode()))
         assert isinstance(err, CompileError)
         assert err.code == "KE001"
 
+    @pytest.mark.unit
     def test_sin_type_ke002(self) -> None:
         raw = "---\ntitle: T\n---\ncuerpo"
         err = parse_source(_so(raw.encode()))
         assert isinstance(err, CompileError)
         assert err.code == "KE002"
 
+    @pytest.mark.unit
     def test_utf8_invalido_ke202(self) -> None:
         err = parse_source(_so(b"\xff\xfe\x00"))
         assert isinstance(err, CompileError)
         assert err.code == "KE202"
 
+    @pytest.mark.unit
     def test_sin_frontmatter_ke001(self) -> None:
         err = parse_source(_so(b"cuerpo sin frontmatter"))
         assert isinstance(err, CompileError)
         assert err.code == "KE001"
 
+    @pytest.mark.unit
     def test_frontmatter_escalar(self) -> None:
         raw = "---\n42\n---\ncuerpo"
         err = parse_source(_so(raw.encode()))
         assert isinstance(err, CompileError)
         assert err.code == "KE001"
 
+    @pytest.mark.unit
     def test_frontmatter_vacio(self) -> None:
         raw = "---\n---\ncuerpo"
         err = parse_source(_so(raw.encode()))
@@ -102,32 +114,38 @@ cuerpo
 
 
 class TestRelaciones:
+    @pytest.mark.unit
     def test_sin_relaciones(self) -> None:
         raw = "---\ntitle: T\ntype: note\n---\n\ncuerpo simple"
         obj = parse_source(_so(raw.encode()))
         assert obj.relations == ()
 
+    @pytest.mark.unit
     def test_enlace_a_si_mismo_ignorado(self) -> None:
         raw = "---\ntitle: T\ntype: note\n---\n\n[yo](docs/test.md)"
         obj = parse_source(_so(raw.encode(), path="docs/test.md"))
         assert obj.relations == ()
 
+    @pytest.mark.unit
     def test_ancla_descartada(self) -> None:
         raw = "---\ntitle: T\ntype: note\n---\n\n[texto](docs/destino.md#seccion)"
         obj = parse_source(_so(raw.encode()))
         assert ("docs/destino.md", "references") in {(r.dst, r.relation) for r in obj.relations}
 
+    @pytest.mark.unit
     def test_duplicados_eliminados(self) -> None:
         raw = "---\ntitle: T\ntype: note\n---\n\n[a](docs/x.md) y [b](docs/x.md) y [[docs/x.md]]"
         obj = parse_source(_so(raw.encode()))
         rels = [(r.src, r.dst) for r in obj.relations]
         assert rels.count(("docs/test.md", "docs/x.md")) == 1
 
+    @pytest.mark.unit
     def test_related_no_lista(self) -> None:
         raw = "---\ntitle: T\ntype: note\nrelated: nope\n---\ncuerpo"
         obj = parse_source(_so(raw.encode()))
         assert obj.relations == ()
 
+    @pytest.mark.unit
     def test_wiki_con_alias(self) -> None:
         raw = "---\ntitle: T\ntype: note\n---\n\n[[docs/destino|alias]]"
         obj = parse_source(_so(raw.encode()))

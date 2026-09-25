@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import signal
 import sqlite3
@@ -82,6 +83,7 @@ def _count(db: Path, table: str) -> int:
     return n
 
 
+@pytest.mark.unit
 def test_init_db_crea_schema(tmp_path) -> None:
     db = tmp_path / "nueva.db"
     init_db(db, SCHEMA)
@@ -92,6 +94,7 @@ def test_init_db_crea_schema(tmp_path) -> None:
         assert t in tables
 
 
+@pytest.mark.unit
 def test_init_db_error(monkeypatch, tmp_path) -> None:
     def _boom(*args, **kwargs):
         raise RuntimeError("migración falló")
@@ -101,11 +104,13 @@ def test_init_db_error(monkeypatch, tmp_path) -> None:
         init_db(tmp_path / "x.db", SCHEMA)
 
 
+@pytest.mark.unit
 def test_init_db_ya_creada(db) -> None:
     init_db(db, SCHEMA)  # no-op
     assert db.exists()
 
 
+@pytest.mark.unit
 def test_rebuild_inserta_nodos_y_edges(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -121,6 +126,7 @@ def test_rebuild_inserta_nodos_y_edges(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_rebuild_sin_relaciones_y_fts_marcador(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -130,6 +136,7 @@ def test_rebuild_sin_relaciones_y_fts_marcador(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_delete_ids_vacio_no_operacion(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -138,6 +145,7 @@ def test_delete_ids_vacio_no_operacion(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_delete_ids_borra_nodos_y_edges(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -155,6 +163,7 @@ def test_delete_ids_borra_nodos_y_edges(db) -> None:
     assert _count(db, "kg_edges") == 0
 
 
+@pytest.mark.unit
 def test_insert_errors_y_purge(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -168,6 +177,7 @@ def test_insert_errors_y_purge(db) -> None:
     assert (row[1]["error_code"], row[1]["severity"]) == ("KE009", "WARN")
 
 
+@pytest.mark.unit
 def test_create_run_detalles(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -187,6 +197,7 @@ def test_create_run_detalles(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_active_version_swap(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -200,6 +211,7 @@ def test_active_version_swap(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_sync_full(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -212,6 +224,7 @@ def test_sync_full(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_sync_documents_delega(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -222,6 +235,7 @@ def test_sync_documents_delega(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_apply_compile_e2e(db, tmp_path) -> None:
     result = apply_compile(
         db,
@@ -245,6 +259,7 @@ def test_apply_compile_e2e(db, tmp_path) -> None:
     assert v["graph_version"] == result.run_id
 
 
+@pytest.mark.unit
 def test_apply_compile_con_deleted_ids(db) -> None:
     apply_compile(db, [_obj("keep")], _ctx(), [], [])
     apply_compile(db, [_obj("keep")], _ctx(), [], [], deleted_ids=["keep", "ghost"])
@@ -252,6 +267,7 @@ def test_apply_compile_con_deleted_ids(db) -> None:
     assert _count(db, "kg_edges") == 0
 
 
+@pytest.mark.unit
 def test_apply_compile_error_rollback(db, monkeypatch) -> None:
     def _boom(conn, objects):
         raise sqlite3.OperationalError("rotura simulada")
@@ -262,6 +278,7 @@ def test_apply_compile_error_rollback(db, monkeypatch) -> None:
     assert _count(db, "kg_nodes") == 0
 
 
+@pytest.mark.unit
 def test_build_result() -> None:
     err = CompileError(code="KE003", document="d", stage="v", message="m")
     res = _build_result(0.0, 5, 2, 3, _ctx(), [err], [])
@@ -271,10 +288,12 @@ def test_build_result() -> None:
     assert res.duration_ms >= 0
 
 
+@pytest.mark.unit
 def test_get_compile_errors_vacio(db) -> None:
     assert get_compile_errors(db) == []
 
 
+@pytest.mark.unit
 def test_get_compile_errors_con_datos(db) -> None:
     apply_compile(db, [_obj("a1")], _ctx(), [CompileError(code="KE009", document="x", stage="v", message="aviso")], [])
     rows = get_compile_errors(db, limit=1)
@@ -283,6 +302,7 @@ def test_get_compile_errors_con_datos(db) -> None:
     assert "document" in rows[0]
 
 
+@pytest.mark.unit
 def test_cancel_guard_restaura_handlers() -> None:
     orig_int = signal.getsignal(signal.SIGINT)
     with _cancel_guard():
@@ -290,6 +310,7 @@ def test_cancel_guard_restaura_handlers() -> None:
     assert signal.getsignal(signal.SIGINT) is orig_int
 
 
+@pytest.mark.unit
 def test_install_restore_en_thread() -> None:
     results: dict[str, bool] = {}
 
@@ -305,6 +326,7 @@ def test_install_restore_en_thread() -> None:
     assert results["no_change"] is True
 
 
+@pytest.mark.unit
 def test_begin_immediate_with_retry_ok(db) -> None:
     from knowledge.engine.sqlite_writer import _begin_immediate_with_retry
 
@@ -315,6 +337,7 @@ def test_begin_immediate_with_retry_ok(db) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_get_conn_devuelve_conexion(db) -> None:
     from knowledge.engine.sqlite_writer import _get_conn
 

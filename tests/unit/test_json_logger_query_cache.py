@@ -1,6 +1,7 @@
 """Tests para core/json_logger.py y core/query_cache.py."""
 from __future__ import annotations
 
+import pytest
 import logging
 from unittest import mock
 
@@ -11,10 +12,12 @@ from motor.core.query_cache import AsyncQueryCache
 
 
 class TestStructuredLogger:
+    @pytest.mark.unit
     def test_deprecation_warning(self) -> None:
         with pytest.warns(DeprecationWarning, match="StructuredLogger is deprecated"):
             StructuredLogger("test_dep", level=logging.DEBUG)
 
+    @pytest.mark.unit
     def test_niveles(self) -> None:
         with mock.patch("sys.stdout", mock.Mock()):
             logger = StructuredLogger("test_logger", level=logging.DEBUG)
@@ -24,11 +27,13 @@ class TestStructuredLogger:
             logger.critical("msg crit")
             logger.debug("msg debug")
 
+    @pytest.mark.unit
     def test_info_sin_extra(self) -> None:
         with mock.patch("sys.stdout", mock.Mock()):
             logger = StructuredLogger("test_logger2")
             logger.info("solo mensaje")
 
+    @pytest.mark.unit
     def test_json_formatter_usado(self) -> None:
         with mock.patch("sys.stdout", mock.Mock()):
             logger = StructuredLogger("test_logger3")
@@ -37,6 +42,7 @@ class TestStructuredLogger:
 
 
 class TestAsyncQueryCache:
+    @pytest.mark.unit
     def test_compute_key_determinista(self) -> None:
         c = AsyncQueryCache()
         assert c.compute_key("  HOLA  ") == c.compute_key("hola")

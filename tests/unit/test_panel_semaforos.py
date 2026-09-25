@@ -1,6 +1,7 @@
 """Tests para scripts/pro/panel.py."""
 
 from __future__ import annotations
+import pytest
 
 import json
 from pathlib import Path
@@ -11,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 COORD = ROOT / "docs" / "udo" / "coordination.json"
 
 
+@pytest.mark.unit
 def test_semaforo_mapea_estados() -> None:
     assert semaforo("cerrada") == "🟢"
     assert semaforo("aprobada") == "🟢"
@@ -21,6 +23,7 @@ def test_semaforo_mapea_estados() -> None:
     assert semaforo("desconocido") == "⚪"
 
 
+@pytest.mark.unit
 def test_cargar_coord() -> None:
     datos = cargar_coord(COORD)
     assert "colas" in datos
@@ -28,6 +31,7 @@ def test_cargar_coord() -> None:
     assert "modo" in datos
 
 
+@pytest.mark.unit
 def test_generar_panel_contiene_tabla_y_semaforos() -> None:
     datos = cargar_coord(COORD)
     panel = generar_panel(datos)
@@ -37,6 +41,7 @@ def test_generar_panel_contiene_tabla_y_semaforos() -> None:
     assert "Modo análisis de planes" in panel
 
 
+@pytest.mark.unit
 def test_generar_panel_no_verificado_para_metricas_faltantes() -> None:
     datos = {
         "modo": "secuencial",
@@ -56,6 +61,7 @@ def test_generar_panel_no_verificado_para_metricas_faltantes() -> None:
     assert "NO VERIFICADO" in panel
 
 
+@pytest.mark.unit
 def test_main_genera_archivo(tmp_path: Path) -> None:
     from scripts.pro.panel import main
 

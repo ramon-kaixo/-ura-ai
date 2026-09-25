@@ -1,3 +1,4 @@
+import pytest
 """Tests de verificador_tests.py (TASK-20260812-023) — cobertura 100%.
 
 Cubre: _tests_para_archivo (todas las ramas), _tests_del_modulo, ejecutar_tests
@@ -18,6 +19,7 @@ from verificador_tests import (
 )
 
 
+@pytest.mark.unit
 def test_tests_para_archivo_encuentra_directo() -> None:
     # motor/core/fusion/engine.py -> test_fusion.py (import exacto)
     # Ruta ABSOLUTA para ser independiente del cwd de ejecución.
@@ -26,11 +28,13 @@ def test_tests_para_archivo_encuentra_directo() -> None:
     assert any("test_fusion.py" in str(t) for t in tests)
 
 
+@pytest.mark.unit
 def test_tests_para_archivo_sin_cobertura() -> None:
     tests = _tests_para_archivo("scripts/pro/noexiste_modulo.py")
     assert tests == []
 
 
+@pytest.mark.unit
 def test_tests_para_archivo_ruta_relativa() -> None:
     # Debe resolver la ruta a absoluta (independiente del cwd)
     repo = Path(__file__).parent.parent.parent
@@ -38,22 +42,26 @@ def test_tests_para_archivo_ruta_relativa() -> None:
     assert isinstance(tests, list)
 
 
+@pytest.mark.unit
 def test_tests_del_modulo_encuentra() -> None:
     tests = _tests_del_modulo("knowledge/engine/reader.py")
     # test_knowledge_engine.py puede existir
     assert isinstance(tests, list)
 
 
+@pytest.mark.unit
 def test_tests_del_modulo_sin() -> None:
     assert _tests_del_modulo("scripts/pro/x_inexistente.py") == []
 
 
+@pytest.mark.unit
 def test_ejecutar_tests_sin_tests() -> None:
     r = ejecutar_tests([])
     assert r["ok"] is True
     assert r["ejecutados"] == 0
 
 
+@pytest.mark.unit
 def test_ejecutar_tests_reales() -> None:
     # Ejecutar un test real que sabemos que pasa (rápido)
     tests = [Path("tests/unit/test_memoria_refactor.py")]
@@ -62,6 +70,8 @@ def test_ejecutar_tests_reales() -> None:
     assert r["ejecutados"] == 1
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_ejecutar_tests_timeout() -> None:
     tests = [Path("tests/unit/test_memoria_refactor.py")]
     r = ejecutar_tests(tests, timeout=1)
@@ -70,6 +80,7 @@ def test_ejecutar_tests_timeout() -> None:
     assert "ejecutados" in r
 
 
+@pytest.mark.unit
 def test_verificar_sin_tests_ok() -> None:
     with patch("verificador_tests._tests_para_archivo", return_value=[]):
         r = verificar_con_tests("archivo_sin_tests.py", nuevo_contenido="x = 1")
@@ -77,6 +88,7 @@ def test_verificar_sin_tests_ok() -> None:
     assert r["sintaxis"] == "ok"
 
 
+@pytest.mark.unit
 def test_verificar_sin_tests_sintaxis_rota() -> None:
     with patch("verificador_tests._tests_para_archivo", return_value=[]):
         r = verificar_con_tests("archivo_sin_tests.py", nuevo_contenido="def (")
@@ -84,6 +96,7 @@ def test_verificar_sin_tests_sintaxis_rota() -> None:
     assert "error" in r["sintaxis"]
 
 
+@pytest.mark.unit
 def test_verificar_con_tests_ok() -> None:
     with (
         patch("verificador_tests._tests_para_archivo", return_value=[Path("t1.py")]),
@@ -93,6 +106,7 @@ def test_verificar_con_tests_ok() -> None:
     assert r["veredicto"] == "ok"
 
 
+@pytest.mark.unit
 def test_verificar_con_tests_rompe() -> None:
     with patch("verificador_tests._tests_para_archivo", return_value=[Path("t1.py")]), patch(
         "verificador_tests.ejecutar_tests",
@@ -103,6 +117,7 @@ def test_verificar_con_tests_rompe() -> None:
     assert "t1.py" in r["regresiones"]
 
 
+@pytest.mark.unit
 def test_verificar_baseline_roto_no_bloquea() -> None:
     """Si el test ya fallaba antes, un fallo despues no es regresion."""
     with patch("verificador_tests._tests_para_archivo", return_value=[Path("t1.py")]), patch(
@@ -113,6 +128,7 @@ def test_verificar_baseline_roto_no_bloquea() -> None:
     assert r["veredicto"] == "ok"
 
 
+@pytest.mark.unit
 def test_verificar_sin_baseline_atencion() -> None:
     """Sin baseline y tests fallan -> atencion (no bloquea)."""
     with patch("verificador_tests._tests_para_archivo", return_value=[Path("t1.py")]), patch(
@@ -123,6 +139,7 @@ def test_verificar_sin_baseline_atencion() -> None:
     assert r["veredicto"] == "atencion"
 
 
+@pytest.mark.unit
 def test_verificar_con_contenido_nuevo_restaura() -> None:
     """Escribe temporalmente, testea y restaura el archivo."""
     import tempfile
@@ -140,6 +157,7 @@ def test_verificar_con_contenido_nuevo_restaura() -> None:
         assert f.read_text() == "x = 1\n"
 
 
+@pytest.mark.unit
 def test_verificar_sin_tests_sin_contenido_nuevo() -> None:
     """Sin tests y sin nuevo_contenido -> sintaxis n/a (148)."""
     with patch("verificador_tests._tests_para_archivo", return_value=[]):
@@ -147,6 +165,7 @@ def test_verificar_sin_tests_sin_contenido_nuevo() -> None:
     assert r == {"veredicto": "sin_tests", "sintaxis": "n/a"}
 
 
+@pytest.mark.unit
 def test_tests_para_archivo_error_lectura(monkeypatch) -> None:
     """Error leyendo un test -> continue (56-57)."""
     from pathlib import Path as P
@@ -166,6 +185,7 @@ def test_tests_para_archivo_error_lectura(monkeypatch) -> None:
     assert isinstance(tests, list)
 
 
+@pytest.mark.unit
 def test_main_sin_argumentos(monkeypatch, capsys) -> None:
     """main sin archivo -> SystemExit(1) (183-185)."""
     import sys
@@ -187,6 +207,7 @@ def test_main_sin_argumentos(monkeypatch, capsys) -> None:
         assert e.code == 1
 
 
+@pytest.mark.unit
 def test_main_con_archivo(monkeypatch, capsys) -> None:
     """main con archivo real -> imprime resultado (186)."""
     import runpy

@@ -1,5 +1,6 @@
 """Cobertura para motor/agents/agent.py (TASK-20260818-009, A6)."""
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -34,10 +35,12 @@ def _orquestador():
     return AgentOrchestrator(planner, scheduler, tool_runner, gate, audit), (planner, scheduler, tool_runner, gate, audit)
 
 
+@pytest.mark.unit
 def test_es_agente_abc():
     assert issubclass(AgentOrchestrator, Agent)
 
 
+@pytest.mark.unit
 def test_run_exitoso():
     o, (planner, scheduler, tool_runner, _, audit) = _orquestador()
     planner.plan.return_value = _Plan("retrieve", "llm")
@@ -50,6 +53,7 @@ def test_run_exitoso():
     assert audit.log.call_args[0][0].event_type == "agent_run"
 
 
+@pytest.mark.unit
 def test_run_planificacion_denegada():
     o, (_, _, _, gate, _) = _orquestador()
     gate.check.side_effect = PermissionError("sin permiso")
@@ -58,6 +62,7 @@ def test_run_planificacion_denegada():
     assert "sin permiso" in (res.error or "")
 
 
+@pytest.mark.unit
 def test_run_error_generico():
     o, (planner, _, _, _, _) = _orquestador()
     planner.plan.side_effect = RuntimeError("boom")
@@ -65,6 +70,7 @@ def test_run_error_generico():
     assert res.state == AgentState.FAILED
 
 
+@pytest.mark.unit
 def test_paso_cancelado():
     o, (planner, _, _, _, _) = _orquestador()
     planner.plan.return_value = _Plan("retrieve", "llm")
@@ -78,6 +84,7 @@ def test_paso_cancelado():
     assert all(e.cancelled for e in o2._executions.values()) or not execution
 
 
+@pytest.mark.unit
 def test_budget_excedido():
     o, (planner, _, _, _, _) = _orquestador()
     planner.plan.return_value = _Plan("retrieve", "llm", "search")
@@ -91,6 +98,7 @@ def test_budget_excedido():
     assert res.state is not None
 
 
+@pytest.mark.unit
 def test_capability_faltante():
     o, (planner, _, _, gate, _) = _orquestador()
     planner.plan.return_value = _Plan("search")
@@ -100,12 +108,14 @@ def test_capability_faltante():
     assert "web.search" in (res.error or "")
 
 
+@pytest.mark.unit
 def test_required_capabilities_mapping():
     o, _ = _orquestador()
     assert o._required_capabilities["retrieve"] == AgentCapability.FACTS_READ
     assert o._required_capabilities["tool"] == AgentCapability.TOOLS_EXECUTE
 
 
+@pytest.mark.unit
 def test_cancel_marca_ejecuciones():
     o, (planner, _, _, _, _) = _orquestador()
     planner.plan.return_value = _Plan("retrieve")

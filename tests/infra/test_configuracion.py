@@ -6,6 +6,7 @@ GX10: verifica permisos del sistema.
 
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 from typing import ClassVar

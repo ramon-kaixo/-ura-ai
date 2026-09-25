@@ -12,6 +12,7 @@ class TestConciencia:
         monkeypatch.setattr(Conciencia, "PATH", tmp_path / "conciencia.json")
         return tmp_path
 
+    @pytest.mark.unit
     def test_nuevo(self):
         data = Conciencia._nuevo()
         assert data["estado_general"] == "ok"
@@ -19,11 +20,13 @@ class TestConciencia:
         assert "orquestador" in data["procesos"]
         assert len(data["contexto_global"]["errores_acumulados"]) == 0
 
+    @pytest.mark.unit
     def test_leer_no_existe(self):
         data = Conciencia.leer()
         assert data["estado_general"] == "ok"
         assert data["nivel_error"] == 0
 
+    @pytest.mark.unit
     def test_escribir_y_leer(self):
         data = Conciencia._nuevo()
         data["estado_general"] = "warning"
@@ -32,12 +35,14 @@ class TestConciencia:
         leido = Conciencia.leer()
         assert leido["estado_general"] == "warning"
 
+    @pytest.mark.unit
     def test_actualizar_proceso(self):
         Conciencia.actualizar_proceso("orquestador", "activo")
         data = Conciencia.leer()
         assert data["procesos"]["orquestador"]["estado"] == "activo"
         assert "ultima_actualizacion" in data["procesos"]["orquestador"]
 
+    @pytest.mark.unit
     def test_registrar_error(self):
         Conciencia.registrar_error(2, "test error")
         data = Conciencia.leer()
@@ -45,17 +50,20 @@ class TestConciencia:
         assert len(data["contexto_global"]["errores_acumulados"]) == 1
         assert data["contexto_global"]["errores_acumulados"][0]["mensaje"] == "test error"
 
+    @pytest.mark.unit
     def test_registrar_error_trunca(self):
         for i in range(55):
             Conciencia.registrar_error(1, f"error {i}")
         data = Conciencia.leer()
         assert len(data["contexto_global"]["errores_acumulados"]) == 50
 
+    @pytest.mark.unit
     def test_nivel_error(self):
         assert Conciencia.nivel_error() == 0
         Conciencia.registrar_error(3, "critical")
         assert Conciencia.nivel_error() == 3
 
+    @pytest.mark.unit
     def test_leer_json_invalido(self, monkeypatch, tmp_path):
         bad = tmp_path / "bad.json"
         bad.write_text("not json")

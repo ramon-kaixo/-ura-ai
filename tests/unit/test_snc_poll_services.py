@@ -35,6 +35,7 @@ def fake_subprocess(monkeypatch):
     return ejecutados
 
 
+@pytest.mark.unit
 def test_poll_services_nunca_ejecuta_comandos_prohibidos(monkeypatch, fake_subprocess):
     """Invariante de seguridad: comandos peligrosos del runbook nunca se ejecutan."""
     runbook = {
@@ -58,6 +59,7 @@ def test_poll_services_nunca_ejecuta_comandos_prohibidos(monkeypatch, fake_subpr
     assert "svc2" in state["services"]
 
 
+@pytest.mark.unit
 def test_poll_services_servicio_sano_no_repara(monkeypatch, fake_subprocess):
     """Servicio cuyo check pasa: ok=True, sin repair_result."""
     runbook = {
@@ -72,6 +74,7 @@ def test_poll_services_servicio_sano_no_repara(monkeypatch, fake_subprocess):
     assert state["status"] == "OK"
 
 
+@pytest.mark.unit
 def test_poll_services_servicio_caido_intenta_reparar(monkeypatch, fake_subprocess):
     """Servicio cuyo check falla: registra repair_result y estado CRITICAL."""
 

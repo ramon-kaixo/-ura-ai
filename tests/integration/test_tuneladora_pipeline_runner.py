@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import time
 from pathlib import Path
 from unittest import mock
@@ -32,24 +33,29 @@ def runner(cfg: Configuration) -> PipelineRunner:
 
 
 class TestPipelineRunnerInit:
+    @pytest.mark.integration
     def test_init_defaults(self, runner: PipelineRunner):
         assert runner.mode == "check"
         assert runner.files == []
 
+    @pytest.mark.integration
     def test_init_with_files(self, cfg: Configuration):
         r = PipelineRunner(cfg, mode="fix", files=["a.py", "b.py"])
         assert r.mode == "fix"
         assert r.files == ["a.py", "b.py"]
 
+    @pytest.mark.integration
     def test_snapshot_manager_set(self, runner: PipelineRunner):
         assert runner.snapshot_manager is not None
 
 
 class TestPipelineRunnerPhases:
+    @pytest.mark.integration
     def test_phase_static(self, runner: PipelineRunner):
         results = runner.phase_static()
         assert isinstance(results, list)
 
+    @pytest.mark.integration
     def test_phase_dynamic(self, runner: PipelineRunner):
         with mock.patch.object(
             runner.tools["pytest"],
@@ -59,6 +65,7 @@ class TestPipelineRunnerPhases:
             results = runner.phase_dynamic()
             assert isinstance(results, list)
 
+    @pytest.mark.integration
     def test_phase_integrity(self, runner: PipelineRunner):
         results = runner.phase_integrity()
         for r in results:
@@ -68,6 +75,7 @@ class TestPipelineRunnerPhases:
 
 class TestPipelineRunnerRun:
     @pytest.mark.slow
+    @pytest.mark.integration
     def test_run_returns_status(self, runner: PipelineRunner):
         with mock.patch.multiple(
             runner,
@@ -93,16 +101,19 @@ class TestPipelineRunnerRun:
 
 
 class TestFreeDiskGB:
+    @pytest.mark.integration
     def test_returns_float_or_none(self):
         gb = _free_disk_gb(Path("/tmp"))
         assert gb is None or isinstance(gb, (int, float))
 
+    @pytest.mark.integration
     def test_none_on_bad_path(self):
         gb = _free_disk_gb(Path("/nonexistent_path_xyz"))
         assert gb is None
 
 
 class TestJsonReport:
+    @pytest.mark.integration
     def test_build_report_dict(self):
         report = _build_json_report(
             episode_id="ep-1",
@@ -124,6 +135,7 @@ class TestJsonReport:
         assert report["duration_ms"] == 1234.5
         assert report["telemetry"]["n_files"] == 2
 
+    @pytest.mark.integration
     def test_build_report_fail_verdict(self):
         report = _build_json_report(
             episode_id="ep-2",
@@ -139,6 +151,7 @@ class TestJsonReport:
         assert report["verdict"] == "FAIL"
         assert report["summary"] == "fallo"
 
+    @pytest.mark.integration
     def test_write_json_report(self, runner: PipelineRunner, tmp_path):
         runner.cfg.ura_root = tmp_path
         runner._write_json_report("ep-3", Status.OK, "ok", 99.0)
@@ -150,6 +163,7 @@ class TestJsonReport:
         assert data["episode_id"] == "ep-3"
         assert data["verdict"] == "OK"
 
+    @pytest.mark.integration
     def test_write_json_report_error_silencioso(self, runner: PipelineRunner, tmp_path):
         runner.cfg.ura_root = tmp_path / "no" / "existe"
         (tmp_path / "no").write_text("soy un archivo")
@@ -157,6 +171,7 @@ class TestJsonReport:
 
 
 class TestFuncionesPuras:
+    @pytest.mark.integration
     def test_discover_focused_tests(self, tmp_path, monkeypatch) -> None:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "tests").mkdir()
@@ -166,6 +181,7 @@ class TestFuncionesPuras:
         assert "tests/test_modulo.py" in focused
         assert focused.count("tests/test_modulo.py") == 1
 
+    @pytest.mark.integration
     def test_extract_api(self) -> None:
         import ast
 
@@ -176,6 +192,7 @@ class TestFuncionesPuras:
         assert "class Bar" in api
         assert "async def baz" in api
 
+    @pytest.mark.integration
     def test_api_diff(self) -> None:
         old = {"def a": {"args": "x", "returns": "None"}, "def b": {"args": "", "returns": "None"}}
         new = {"def a": {"args": "x, y", "returns": "None"}, "def c": {"args": "", "returns": "None"}}
@@ -190,6 +207,7 @@ class TestPhaseVerdict:
     def _pr(self, name: str, status: Status) -> PhaseResult:
         return PhaseResult(name, status)
 
+    @pytest.mark.integration
     def test_fail_prioridad(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check")
         results = [
@@ -200,6 +218,7 @@ class TestPhaseVerdict:
         assert verdict == Status.FAIL
         assert "FAILED" in msg
 
+    @pytest.mark.integration
     def test_warn(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check")
         results = [[self._pr("static", Status.WARN)], [self._pr("d", Status.OK)]]
@@ -207,6 +226,7 @@ class TestPhaseVerdict:
         assert verdict == Status.WARN
         assert "1 warnings" in msg
 
+    @pytest.mark.integration
     def test_ok(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check")
         results = [[self._pr("static", Status.OK)], [self._pr("d", Status.OK)]]
@@ -216,6 +236,7 @@ class TestPhaseVerdict:
 
 
 class TestBuildJsonReportExtra:
+    @pytest.mark.integration
     def test_fail_verdict(self) -> None:
         report = _build_json_report(
             episode_id="e",
@@ -236,6 +257,7 @@ class TestPhasesConMocks:
     def _runner(self, cfg: Configuration) -> PipelineRunner:
         return PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
 
+    @pytest.mark.integration
     def test_phase_dynamic_skip_sin_pytest(self, cfg: Configuration) -> None:
         runner = self._runner(cfg)
         runner.tools["pytest"] = mock.Mock()
@@ -243,6 +265,7 @@ class TestPhasesConMocks:
         results = runner.phase_dynamic()
         assert results[0].status == Status.SKIP
 
+    @pytest.mark.integration
     def test_phase_dynamic_focused_ok(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "tests").mkdir()
@@ -259,6 +282,7 @@ class TestPhasesConMocks:
         assert results[0].status == Status.OK
         runner.cache.set.assert_called_once()
 
+    @pytest.mark.integration
     def test_phase_dynamic_focused_fail_encola(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "tests").mkdir()
@@ -278,6 +302,7 @@ class TestPhasesConMocks:
         runner.pending_queue.add.assert_called_once()
         assert runner.llm_fallback.analyze.call_count == 1
 
+    @pytest.mark.integration
     def test_phase_dynamic_cache_hit(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
         monkeypatch.chdir(tmp_path)
         (tmp_path / "tests").mkdir()
@@ -293,6 +318,7 @@ class TestPhasesConMocks:
         assert results[0].status == Status.OK
         tool.run_check.assert_not_called()
 
+    @pytest.mark.integration
     def test_phase_dynamic_full_fail(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         tool = mock.Mock()
@@ -307,6 +333,7 @@ class TestPhasesConMocks:
         assert results[0].status == Status.FAIL
         runner.pending_queue.add.assert_called_once()
 
+    @pytest.mark.integration
     def test_phase_dynamic_full_ok(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         tool = mock.Mock()
@@ -320,6 +347,7 @@ class TestPhasesConMocks:
         assert results[0].status == Status.OK
         runner.pending_queue.add.assert_not_called()
 
+    @pytest.mark.integration
     def test_phase_static_tools(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
         runner._run_py_compile = mock.Mock()
@@ -334,6 +362,7 @@ class TestPhasesConMocks:
         names = {r.name for r in results}
         assert {"ruff", "mypy", "bandit"} <= names
 
+    @pytest.mark.integration
     def test_phase_static_skip(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="check", files=["motor/x/modulo.py"])
         runner._run_py_compile = mock.Mock()
@@ -348,6 +377,7 @@ class TestPhasesConMocks:
 
 
 class TestLockPidMuerto:
+    @pytest.mark.integration
     def test_lock_pid_muerto_se_sobrescribe(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
 
         runner = PipelineRunner(cfg, mode="check", files=[])
@@ -362,6 +392,7 @@ class TestLockPidMuerto:
         assert ok is True
         assert runner._lock_acquired is True
 
+    @pytest.mark.integration
     def test_lock_pid_vivo_bloquea(self, cfg: Configuration, tmp_path, monkeypatch) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         runner.cfg.tuneladora_dir = tmp_path
@@ -374,6 +405,7 @@ class TestLockPidMuerto:
             ok = runner._acquire_lock()
         assert ok is False
 
+    @pytest.mark.integration
     def test_pid_alive_helpers(self) -> None:
         from scripts.pro.tuneladora.pipeline.runner import _pid_alive
 
@@ -386,6 +418,7 @@ class TestLockPidMuerto:
 
 
 class TestCoverageReporte:
+    @pytest.mark.integration
     def test_reporte_incluye_coverage(self) -> None:
         report = _build_json_report(
             episode_id="e",
@@ -402,6 +435,7 @@ class TestCoverageReporte:
         assert report["coverage"]["tests_failed"] == 2
         assert report["coverage"]["tests_total"] == 0  # default
 
+    @pytest.mark.integration
     def test_reporte_coverage_default_cero(self) -> None:
         report = _build_json_report(
             episode_id="e",
@@ -416,6 +450,7 @@ class TestCoverageReporte:
         )
         assert report["coverage"]["global"] == 0
 
+    @pytest.mark.integration
     def test_recolectar_coverage_xml(self, cfg: Configuration, tmp_path: Path) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         runner.cfg.ura_root = tmp_path
@@ -425,12 +460,14 @@ class TestCoverageReporte:
         runner._recolectar_coverage()
         assert runner._telemetry["coverage_global"] == 78.5
 
+    @pytest.mark.integration
     def test_recolectar_sin_xml(self, cfg: Configuration, tmp_path: Path) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         runner.cfg.ura_root = tmp_path
         runner._recolectar_coverage()
         assert "coverage_global" not in runner._telemetry
 
+    @pytest.mark.integration
     def test_recolectar_xml_invalido(self, cfg: Configuration, tmp_path: Path) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         runner.cfg.ura_root = tmp_path
@@ -440,12 +477,14 @@ class TestCoverageReporte:
 
 
 class TestPhaseCommitADR221:
+    @pytest.mark.integration
     def test_desactivado_por_defecto(self, cfg: Configuration, monkeypatch) -> None:
         monkeypatch.delenv("URA_TUNELADORA_AUTO_COMMIT", raising=False)
         runner = PipelineRunner(cfg, mode="gate", files=[])
         results = runner.phase_commit()
         assert results[0].status == Status.SKIP
 
+    @pytest.mark.integration
     def test_activado_con_env(self, cfg: Configuration, monkeypatch) -> None:
         monkeypatch.setenv("URA_TUNELADORA_AUTO_COMMIT", "1")
         runner = PipelineRunner(cfg, mode="gate", files=[])
@@ -456,17 +495,20 @@ class TestPhaseCommitADR221:
         assert results[0].status == Status.OK
         assert m_run.call_count == 2  # git add + git commit
 
+    @pytest.mark.integration
     def test_impl_no_gate_skip(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="check", files=[])
         results = runner._phase_commit_impl()
         assert results[0].status == Status.SKIP
 
+    @pytest.mark.integration
     def test_impl_auto_commit_false(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="gate", files=[])
         runner.cfg.auto_commit = False
         results = runner._phase_commit_impl()
         assert results[0].status == Status.SKIP
 
+    @pytest.mark.integration
     def test_impl_nada_que_commitear_ok(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="gate", files=[])
         runner.cfg.auto_commit = True
@@ -477,6 +519,7 @@ class TestPhaseCommitADR221:
         assert results[0].status == Status.OK
         assert m_run.call_count == 2
 
+    @pytest.mark.integration
     def test_impl_error_warn(self, cfg: Configuration) -> None:
         runner = PipelineRunner(cfg, mode="gate", files=[])
         runner.cfg.auto_commit = True
@@ -486,6 +529,7 @@ class TestPhaseCommitADR221:
 
 
 class TestQualityGateCambiaVerdict:
+    @pytest.mark.integration
     def test_qg_rechaza_baja_a_fail(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check", files=["a.py"])
         runner._sofia_report = mock.Mock()
@@ -516,6 +560,7 @@ class TestQualityGateCambiaVerdict:
             result = runner.run()
         assert result == Status.FAIL
 
+    @pytest.mark.integration
     def test_qg_acepta_mantiene(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check", files=[])
         runner._sofia_report = mock.Mock()
@@ -529,6 +574,7 @@ class TestQualityGateCambiaVerdict:
             verdict, _ = runner._aplicar_quality_gate(Status.OK, "ok", time.time())
         assert verdict == Status.OK
 
+    @pytest.mark.integration
     def test_qg_error_no_cambia(self) -> None:
         runner = PipelineRunner(Configuration(), mode="check", files=[])
         runner._sofia_report = mock.Mock()

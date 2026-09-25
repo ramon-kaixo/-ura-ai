@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,7 @@ def sem_mem(tmp_path: Path) -> SemanticMemory:
 
 
 class TestConcept:
+    @pytest.mark.integration
     def test_learn_and_get(self, sem_mem: SemanticMemory) -> None:
         c = Concept(name="ruff", context="linting tool", weight=1.0, tags=("lint",))
         sem_mem.learn_concept(c)
@@ -23,6 +25,7 @@ class TestConcept:
         assert results[0].weight == 1.0
         assert "lint" in results[0].tags
 
+    @pytest.mark.integration
     def test_learn_accumulates_weight(self, sem_mem: SemanticMemory) -> None:
         c1 = Concept(name="bolt", context="database", weight=1.0)
         c2 = Concept(name="bolt", context="database", weight=2.0)
@@ -32,11 +35,13 @@ class TestConcept:
         assert results[0].weight == 3.0
         assert results[0].occurrences == 2
 
+    @pytest.mark.integration
     def test_get_missing(self, sem_mem: SemanticMemory) -> None:
         assert sem_mem.get_concept("nonexistent") == []
 
 
 class TestRelation:
+    @pytest.mark.integration
     def test_learn_and_get_related(self, sem_mem: SemanticMemory) -> None:
         r = Relation(source="ruff", target="linting", relation_type="tool_for")
         sem_mem.learn_relation(r)
@@ -44,6 +49,7 @@ class TestRelation:
         assert len(related) == 1
         assert related[0].target == "linting"
 
+    @pytest.mark.integration
     def test_get_related_by_type(self, sem_mem: SemanticMemory) -> None:
         sem_mem.learn_relation(Relation(source="a", target="b", relation_type="depends"))
         sem_mem.learn_relation(Relation(source="a", target="c", relation_type="extends"))
@@ -51,11 +57,13 @@ class TestRelation:
         assert len(related) == 1
         assert related[0].target == "b"
 
+    @pytest.mark.integration
     def test_relation_inverse(self, sem_mem: SemanticMemory) -> None:
         sem_mem.learn_relation(Relation(source="x", target="y", relation_type="connects"))
         from_y = sem_mem.get_related("y")
         assert len(from_y) == 1
 
+    @pytest.mark.integration
     def test_update_relation(self, sem_mem: SemanticMemory) -> None:
         r1 = Relation(source="a", target="b", relation_type="link", weight=1.0)
         r2 = Relation(source="a", target="b", relation_type="link", weight=5.0)
@@ -66,6 +74,7 @@ class TestRelation:
 
 
 class TestSearch:
+    @pytest.mark.integration
     def test_search_concepts(self, sem_mem: SemanticMemory) -> None:
         sem_mem.learn_concept(Concept(name="python", context="language"))
         sem_mem.learn_concept(Concept(name="pyramid", context="structure"))
@@ -73,11 +82,13 @@ class TestSearch:
         assert len(results) >= 1
         assert any(c.name == "python" for c in results)
 
+    @pytest.mark.integration
     def test_search_by_context(self, sem_mem: SemanticMemory) -> None:
         sem_mem.learn_concept(Concept(name="x", context="database engine"))
         results = sem_mem.search_concepts("database")
         assert len(results) >= 1
 
+    @pytest.mark.integration
     def test_search_limit(self, sem_mem: SemanticMemory) -> None:
         for i in range(10):
             sem_mem.learn_concept(Concept(name=f"concept{i}", context="test"))

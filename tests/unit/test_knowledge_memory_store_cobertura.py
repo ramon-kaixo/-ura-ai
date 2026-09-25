@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -63,6 +64,7 @@ def _rec(**overrides) -> MemoryRecord:
     return MemoryRecord(**base)
 
 
+@pytest.mark.unit
 def test_record_to_dict() -> None:
     d = _rec().to_dict()
     assert d["memory_id"] == "m1"
@@ -72,11 +74,13 @@ def test_record_to_dict() -> None:
     assert len(d["content"]) == len("Elegimos SQLite")
 
 
+@pytest.mark.unit
 def test_record_to_dict_trunca_content() -> None:
     r = _rec(content="x" * 1000)
     assert len(r.to_dict()["content"]) == 500
 
 
+@pytest.mark.unit
 def test_save_y_get(store) -> None:
     assert store.save(_rec()) is True
     got = store.get("m1")
@@ -88,20 +92,24 @@ def test_save_y_get(store) -> None:
     assert got.created_at  # auto-fill
 
 
+@pytest.mark.unit
 def test_save_error(store, tmp_path) -> None:
     bad = SQLiteMemoryStore(tmp_path / "no.db")
     assert bad.save(_rec()) is False
 
 
+@pytest.mark.unit
 def test_get_no_existe(store) -> None:
     assert store.get("nada") is None
 
 
+@pytest.mark.unit
 def test_get_error(store, tmp_path) -> None:
     bad = SQLiteMemoryStore(tmp_path / "no.db")
     assert bad.get("x") is None
 
 
+@pytest.mark.unit
 def test_list_sin_kind(store) -> None:
     store.save(_rec(memory_id="a"))
     store.save(_rec(memory_id="b", kind="note"))
@@ -109,6 +117,7 @@ def test_list_sin_kind(store) -> None:
     assert {r.memory_id for r in rows} == {"a", "b"}
 
 
+@pytest.mark.unit
 def test_list_con_kind(store) -> None:
     store.save(_rec(memory_id="a"))
     store.save(_rec(memory_id="b", kind="note"))
@@ -116,6 +125,7 @@ def test_list_con_kind(store) -> None:
     assert [r.memory_id for r in rows] == ["a"]
 
 
+@pytest.mark.unit
 def test_list_limit_offset(store) -> None:
     for i in range(5):
         store.save(_rec(memory_id=f"m{i}", title=f"t{i}"))
@@ -123,22 +133,26 @@ def test_list_limit_offset(store) -> None:
     assert len(rows) == 2
 
 
+@pytest.mark.unit
 def test_list_error(store, tmp_path) -> None:
     bad = SQLiteMemoryStore(tmp_path / "no.db")
     assert bad.list() == []
 
 
+@pytest.mark.unit
 def test_delete(store) -> None:
     store.save(_rec())
     assert store.delete("m1") is True
     assert store.get("m1") is None
 
 
+@pytest.mark.unit
 def test_delete_error(store, tmp_path) -> None:
     bad = SQLiteMemoryStore(tmp_path / "no.db")
     assert bad.delete("x") is False
 
 
+@pytest.mark.unit
 def test_search_fts5(store) -> None:
     store.save(_rec(memory_id="a", title="sqlite db", content="motor"))
     store.save(_rec(memory_id="b", kind="note", title="otra", content="sqlite rule"))
@@ -148,11 +162,13 @@ def test_search_fts5(store) -> None:
     assert [r.memory_id for r in rows_kind] == ["b"]
 
 
+@pytest.mark.unit
 def test_search_vacio(store) -> None:
     assert store.search("") == []
     assert store.search("   ") == []
 
 
+@pytest.mark.unit
 def test_search_fallback_like(store, tmp_path) -> None:
     path = tmp_path / "nolike.db"
     conn = sqlite3.connect(path)
@@ -171,6 +187,7 @@ def test_search_fallback_like(store, tmp_path) -> None:
     assert [r.memory_id for r in rows_kind] == ["a"]
 
 
+@pytest.mark.unit
 def test_link_asset(store) -> None:
     store.save(_rec())
     assert store.link_asset("m1", "a2") is True
@@ -178,16 +195,19 @@ def test_link_asset(store) -> None:
     assert got.related_assets == ("a1", "a2")
 
 
+@pytest.mark.unit
 def test_link_asset_ya_existe(store) -> None:
     store.save(_rec())
     assert store.link_asset("m1", "a1") is True
     assert store.get("m1").related_assets == ("a1",)
 
 
+@pytest.mark.unit
 def test_link_asset_no_existe(store) -> None:
     assert store.link_asset("nada", "a1") is False
 
 
+@pytest.mark.unit
 def test_link_asset_error(store, db_path) -> None:
     conn = sqlite3.connect(db_path)
     conn.executescript(
@@ -201,6 +221,7 @@ def test_link_asset_error(store, db_path) -> None:
     assert store.link_asset("m1", "a2") is False
 
 
+@pytest.mark.unit
 def test_row_to_record_campos_nulos(db_path, store) -> None:
     conn = sqlite3.connect(db_path)
     conn.execute(
@@ -215,6 +236,7 @@ def test_row_to_record_campos_nulos(db_path, store) -> None:
     assert r.created_at == ""
 
 
+@pytest.mark.unit
 def test_count(store) -> None:
     assert store.count() == 0
     store.save(_rec(memory_id="a"))
@@ -223,11 +245,13 @@ def test_count(store) -> None:
     assert store.count(kind="note") == 1
 
 
+@pytest.mark.unit
 def test_count_error(store, tmp_path) -> None:
     bad = SQLiteMemoryStore(tmp_path / "no.db")
     assert bad.count() == 0
 
 
+@pytest.mark.unit
 def test_row_to_record_json_invalido(db_path, store) -> None:
     conn = sqlite3.connect(db_path)
     conn.execute(

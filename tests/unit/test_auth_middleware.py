@@ -30,12 +30,14 @@ def client(app):
 
 
 class TestAuthMiddleware:
+    @pytest.mark.unit
     def test_auth_disabled(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "")
         app.add_middleware(auth.AuthMiddleware)
         resp = client.get("/api/v1/chat", headers={"Authorization": "Bearer invalid"})
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_auth_enabled_no_header(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "test-key-123")
         app.add_middleware(auth.AuthMiddleware)
@@ -43,24 +45,28 @@ class TestAuthMiddleware:
         assert resp.status_code == 401
         assert resp.json()["error"] == "Unauthorized"
 
+    @pytest.mark.unit
     def test_auth_enabled_wrong_key(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "test-key-123")
         app.add_middleware(auth.AuthMiddleware)
         resp = client.get("/api/v1/chat", headers={"Authorization": "Bearer wrong-key"})
         assert resp.status_code == 401
 
+    @pytest.mark.unit
     def test_auth_enabled_valid_key(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "test-key-123")
         app.add_middleware(auth.AuthMiddleware)
         resp = client.get("/api/v1/chat", headers={"Authorization": "Bearer test-key-123"})
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_non_chat_path_skips_auth(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "test-key-123")
         app.add_middleware(auth.AuthMiddleware)
         resp = client.get("/health")
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_auth_no_bearer_prefix(self, app, client, monkeypatch):
         monkeypatch.setattr(auth.config, "api_key", "test-key-123")
         app.add_middleware(auth.AuthMiddleware)

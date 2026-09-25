@@ -7,6 +7,7 @@ listen_and_transcribe (incl. sanitize_text y notificaciones).
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from unittest import mock
 
@@ -34,21 +35,29 @@ def _make(tmp_path, monkeypatch, mps=True):
 
 
 class TestInit:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_ok_mps(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch, mps=True)
         assert p.device == "mps"
         assert p.device_index is None
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_ok_cpu(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch, mps=False)
         assert p.device == "cpu"
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_db_creada(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with sqlite3.connect(p.db_path) as conn:
             tabs = conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         assert ("corrections",) in tabs
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_con_dispositivo(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 
@@ -61,6 +70,8 @@ class TestInit:
 
 
 class TestFindAnkerDevice:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_match(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch.object(
@@ -70,16 +81,22 @@ class TestFindAnkerDevice:
         ):
             assert p._find_anker_device() == 0
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_no_match(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=[{"name": "X", "max_input_channels": 1}]):
             assert p._find_anker_device() is None
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_excepcion(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch.object(SOUNDDEVICE, "query_devices", side_effect=RuntimeError("x")):
             assert p._find_anker_device() is None
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_no_input_channels_continua(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch.object(
@@ -94,12 +111,16 @@ class TestFindAnkerDevice:
 
 
 class TestAudioCallback:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_playing_descarta(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         p.is_playing_tts = True
         p._audio_callback(np.zeros((480, 1)), None, None, None)
         assert p.audio_queue.empty()
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_no_playing_encola(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         p._audio_callback(np.zeros((480, 1)), None, None, None)
@@ -107,6 +128,8 @@ class TestAudioCallback:
 
 
 class TestNotificacion:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_sound_valido(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch("subprocess.Popen") as popen:
@@ -116,6 +139,8 @@ class TestNotificacion:
         assert 'sound name "Glass"' in script
         assert '"Titulo"' in script
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_sound_invalido_default(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch("subprocess.Popen") as popen:
@@ -123,6 +148,8 @@ class TestNotificacion:
         script = popen.call_args.args[0][2]
         assert 'sound name "Tink"' in script
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_escape_comillas(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with mock.patch("subprocess.Popen") as popen:
@@ -152,11 +179,15 @@ def _llenar_cola(p, n=5):
 
 
 class TestReglasDeterministas:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_texto_vacio(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         assert p._apply_deterministic_rules("") == ""
         assert p._apply_deterministic_rules("   ") == ""
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_aplica_reglas_con_notificacion(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 
@@ -171,6 +202,8 @@ class TestReglasDeterministas:
         assert out == "GB10"
         popen.assert_called_once()
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_sin_match_sin_notificacion(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         with sqlite3.connect(p.db_path) as conn:
@@ -183,10 +216,14 @@ class TestReglasDeterministas:
 
 
 class TestListenAndTranscribe:
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_sin_dispositivo(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         assert p.listen_and_transcribe(1.0) == ("", "", "")
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_device_index_presente_no_rebusca(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 
@@ -200,6 +237,8 @@ class TestListenAndTranscribe:
             raw, _corr, _san = p.listen_and_transcribe(0.1)
         assert raw == "hola mundo"
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_rebusca_encuentra(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 
@@ -217,6 +256,8 @@ class TestListenAndTranscribe:
         assert p.device_index == 0
         assert raw == "hola mundo"
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_stream_error(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         p.device_index = 0
@@ -224,12 +265,16 @@ class TestListenAndTranscribe:
             assert p.listen_and_transcribe(1.0) == ("", "", "")
         assert p.device_index is None
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_sin_audio(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         p.device_index = 0
         with mock.patch.object(SOUNDDEVICE, "InputStream", return_value=_FakeStream(0)):
             assert p.listen_and_transcribe(0.1) == ("", "", "")
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_ok_con_sanitize(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 
@@ -248,6 +293,8 @@ class TestListenAndTranscribe:
         # sanitized != corrected -> notificacion de datos protegidos
         popen.assert_called_once()
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_ok_sin_sanitize(self, tmp_path, monkeypatch) -> None:
         _mod, p = _make(tmp_path, monkeypatch)
         p.device_index = 0
@@ -260,6 +307,8 @@ class TestListenAndTranscribe:
         assert sanitized == corrected
         popen.assert_not_called()
 
+    @pytest.mark.mac
+    @pytest.mark.unit
     def test_error_transcribe(self, tmp_path, monkeypatch) -> None:
         import motor.core.voice.anker_mac_pipeline as mod
 

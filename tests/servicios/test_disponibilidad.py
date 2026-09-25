@@ -5,6 +5,7 @@ GX10: verifica servicios systemd y endpoints HTTP.
 
 from __future__ import annotations
 
+import pytest
 import json
 
 import pytest

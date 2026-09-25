@@ -1,6 +1,7 @@
 """Cobertura 100x100 de motor/intelligence/memory (episodic + retrieval). TASK-20260820-008."""
 
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from datetime import UTC, datetime, timedelta
@@ -20,6 +21,7 @@ def _ep(oid: str = "e1", ts: str | None = None, session: str = "s1", **kw) -> Ep
 # ── Episode ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_episode_defaults() -> None:
     e = Episode()
     assert e.id != ""
@@ -27,11 +29,13 @@ def test_episode_defaults() -> None:
     assert e.ttl == 604800
 
 
+@pytest.mark.unit
 def test_episode_ttl_negativo_resetea() -> None:
     e = Episode(ttl=-5)
     assert e.ttl == 604800
 
 
+@pytest.mark.unit
 def test_episode_to_record() -> None:
     e = _ep("e1", payload="texto", tags=["a"], references=["r1"], importance=0.7, confidence=0.8, ttl=100)
     r = e.to_record()
@@ -42,6 +46,7 @@ def test_episode_to_record() -> None:
     assert r.metadata["session_id"] == "s1"
 
 
+@pytest.mark.unit
 def test_episode_from_record() -> None:
     r = MemoryRecord(id="r1", type=MemoryType.EPISODIC, payload="p", tags=["t"], metadata={"session_id": "ss"})
     e = Episode.from_record(r)
@@ -50,18 +55,21 @@ def test_episode_from_record() -> None:
     assert e.payload == "p"
 
 
+@pytest.mark.unit
 def test_episode_from_record_sin_session() -> None:
     r = MemoryRecord(id="r1", payload="p")
     e = Episode.from_record(r)
     assert e.session_id == ""
 
 
+@pytest.mark.unit
 def test_episode_expired() -> None:
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
     e = _ep("e1", ts=viejo, ttl=3600)
     assert e.is_expired is True
 
 
+@pytest.mark.unit
 def test_episode_no_expired() -> None:
     e = _ep("e1", ttl=3600)
     assert e.is_expired is False
@@ -71,6 +79,7 @@ def test_episode_no_expired() -> None:
 # ── EpisodeStore ─────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_store_y_get() -> None:
     s = EpisodeStore()
     eid = s.store(_ep("e1", payload="x"))
@@ -79,6 +88,7 @@ def test_store_y_get() -> None:
     assert s.count() == 1
 
 
+@pytest.mark.unit
 def test_store_id_auto() -> None:
     s = EpisodeStore()
     e = Episode(payload="x")
@@ -87,11 +97,13 @@ def test_store_id_auto() -> None:
     assert s.count() == 1
 
 
+@pytest.mark.unit
 def test_get_inexistente_none() -> None:
     s = EpisodeStore()
     assert s.get("zzz") is None
 
 
+@pytest.mark.unit
 def test_get_expirado_borra() -> None:
     s = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -100,6 +112,7 @@ def test_get_expirado_borra() -> None:
     assert s.count() == 0
 
 
+@pytest.mark.unit
 def test_get_by_session() -> None:
     now = datetime.now(UTC)
     s = EpisodeStore()
@@ -111,6 +124,7 @@ def test_get_by_session() -> None:
     assert s.get_by_session("zzz") == []
 
 
+@pytest.mark.unit
 def test_get_by_session_limit_offset() -> None:
     now = datetime.now(UTC)
     s = EpisodeStore()
@@ -120,6 +134,7 @@ def test_get_by_session_limit_offset() -> None:
     assert len(res) == 2
 
 
+@pytest.mark.unit
 def test_get_by_time_range() -> None:
     now = datetime.now(UTC)
     start = (now - timedelta(hours=3)).isoformat()
@@ -132,6 +147,7 @@ def test_get_by_time_range() -> None:
     assert [e.id for e in res] == ["b", "a"]
 
 
+@pytest.mark.unit
 def test_get_recent() -> None:
     now = datetime.now(UTC)
     s = EpisodeStore()
@@ -142,6 +158,7 @@ def test_get_recent() -> None:
     assert [e.id for e in res] == ["e2", "e1"]
 
 
+@pytest.mark.unit
 def test_count_por_sesion() -> None:
     s = EpisodeStore()
     s.store(_ep("a", session="s1"))
@@ -151,6 +168,7 @@ def test_count_por_sesion() -> None:
     assert s.count("s1") == 2
 
 
+@pytest.mark.unit
 def test_delete() -> None:
     s = EpisodeStore()
     s.store(_ep("a"))
@@ -159,6 +177,7 @@ def test_delete() -> None:
     assert s.count() == 0
 
 
+@pytest.mark.unit
 def test_delete_expired() -> None:
     s = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -168,6 +187,7 @@ def test_delete_expired() -> None:
     assert s.count() == 1
 
 
+@pytest.mark.unit
 def test_clear_session() -> None:
     s = EpisodeStore()
     s.store(_ep("a", session="s1"))
@@ -177,6 +197,7 @@ def test_clear_session() -> None:
     assert s.count() == 1
 
 
+@pytest.mark.unit
 def test_clear_all() -> None:
     s = EpisodeStore()
     s.store(_ep("a"))
@@ -185,6 +206,7 @@ def test_clear_all() -> None:
     assert s.count() == 0
 
 
+@pytest.mark.unit
 def test_trim_por_max_episodes() -> None:
     s = EpisodeStore(config=EpisodeStoreConfig(max_episodes=2))
     s.store(_ep("a", ts="2026-08-19T00:00:00+00:00"))
@@ -194,6 +216,7 @@ def test_trim_por_max_episodes() -> None:
     assert s.get("a") is None
 
 
+@pytest.mark.unit
 def test_persistencia_sqlite(tmp_path: object) -> None:
     path = str(tmp_path / "ep.db")
     s = EpisodeStore(config=EpisodeStoreConfig(persist_path=path))
@@ -207,6 +230,7 @@ def test_persistencia_sqlite(tmp_path: object) -> None:
     s2.close()
 
 
+@pytest.mark.unit
 def test_persistencia_sqlite_delete(tmp_path: object) -> None:
     path = str(tmp_path / "ep.db")
     s = EpisodeStore(config=EpisodeStoreConfig(persist_path=path))
@@ -218,6 +242,7 @@ def test_persistencia_sqlite_delete(tmp_path: object) -> None:
     s2.close()
 
 
+@pytest.mark.unit
 def test_db_corrupta_se_recrea(tmp_path: object) -> None:
     path = str(tmp_path / "ep.db")
     Path(path).write_bytes(b"no-sqlite")
@@ -228,6 +253,7 @@ def test_db_corrupta_se_recrea(tmp_path: object) -> None:
     s.close()
 
 
+@pytest.mark.unit
 def test_persist_error_se_degrada() -> None:
     s = EpisodeStore()
     e = _ep("a")
@@ -248,6 +274,8 @@ def test_persist_error_se_degrada() -> None:
     s.close()
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_load_db_fila_corrupta_se_omite(tmp_path: object) -> None:
     path = str(tmp_path / "ep.db")
     s = EpisodeStore(config=EpisodeStoreConfig(persist_path=path))
@@ -262,6 +290,7 @@ def test_load_db_fila_corrupta_se_omite(tmp_path: object) -> None:
     s2.close()
 
 
+@pytest.mark.unit
 def test_session_memory() -> None:
     sm = SessionMemory()
     sid = sm.create_session("ses1", metadata={"usuario": "ramon"})
@@ -276,12 +305,14 @@ def test_session_memory() -> None:
     assert sm.session_count() == 0
 
 
+@pytest.mark.unit
 def test_session_memory_id_auto() -> None:
     sm = SessionMemory()
     sid = sm.create_session()
     assert sid != ""
 
 
+@pytest.mark.unit
 def test_session_memory_store_compartido() -> None:
     store = EpisodeStore()
     sm = SessionMemory(store=store)
@@ -291,6 +322,7 @@ def test_session_memory_store_compartido() -> None:
 # ── retrieval ────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_context_result_explanation() -> None:
     r = ContextResult(episode=_ep("a"), score=0.5, recency_score=0.4, importance_score=0.3, confidence_score=0.2)
     assert "score=0.500" in r.explanation
@@ -298,17 +330,20 @@ def test_context_result_explanation() -> None:
     assert "sem=" not in r.explanation
 
 
+@pytest.mark.unit
 def test_context_result_explanation_con_sem() -> None:
     r = ContextResult(episode=_ep("a"), semantic_score=0.9, recency_score=0.4, importance_score=0.3, confidence_score=0.2)
     assert "sem=0.90" in r.explanation
 
 
+@pytest.mark.unit
 def test_context_result_list_indexado() -> None:
     rl = ContextResultList(results=[ContextResult(episode=_ep("a"))])
     assert len(rl) == 1
     assert rl[0].episode.id == "a"
 
 
+@pytest.mark.unit
 def test_context_result_list_to_dict() -> None:
     rl = ContextResultList(results=[ContextResult(episode=_ep("a", payload="texto"), score=0.7)])
     d = rl.to_dict()
@@ -317,11 +352,14 @@ def test_context_result_list_to_dict() -> None:
     assert d[0]["score"] == 0.7
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_context_result_list_to_dict_payload_vacio() -> None:
     rl = ContextResultList(results=[ContextResult(episode=_ep("a", payload=""))])
     assert rl.to_dict()[0]["payload"] == ""
 
 
+@pytest.mark.unit
 def test_retriever_search_basico() -> None:
     store = EpisodeStore()
     store.store(_ep("a", payload="uno", importance=0.5, confidence=0.5))
@@ -332,6 +370,7 @@ def test_retriever_search_basico() -> None:
     assert res.results[0].episode.id == "b"  # mayor importancia primero
 
 
+@pytest.mark.unit
 def test_retriever_search_por_sesion() -> None:
     store = EpisodeStore()
     store.store(_ep("a", session="s1", importance=0.5))
@@ -342,6 +381,7 @@ def test_retriever_search_por_sesion() -> None:
     assert res.results[0].episode.id == "a"
 
 
+@pytest.mark.unit
 def test_retriever_search_por_tags() -> None:
     store = EpisodeStore()
     store.store(_ep("a", tags=["urgente"]))
@@ -351,6 +391,7 @@ def test_retriever_search_por_tags() -> None:
     assert res.total == 1
 
 
+@pytest.mark.unit
 def test_retriever_search_offset_k() -> None:
     store = EpisodeStore()
     for i in range(5):
@@ -360,6 +401,7 @@ def test_retriever_search_offset_k() -> None:
     assert len(res.results) == 2
 
 
+@pytest.mark.unit
 def test_retriever_weights_personalizados() -> None:
     store = EpisodeStore()
     store.store(_ep("a", importance=1.0, confidence=0.1))
@@ -369,6 +411,7 @@ def test_retriever_weights_personalizados() -> None:
     assert res.results[0].episode.id == "a"
 
 
+@pytest.mark.unit
 def test_retriever_expirado_borrado() -> None:
     store = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -381,6 +424,7 @@ def test_retriever_expirado_borrado() -> None:
     assert store.count() >= 1
 
 
+@pytest.mark.unit
 def test_retriever_recency_score_todos_iguales() -> None:
     store = EpisodeStore()
     ts = datetime.now(UTC).isoformat()
@@ -391,6 +435,7 @@ def test_retriever_recency_score_todos_iguales() -> None:
     assert res.total == 2
 
 
+@pytest.mark.unit
 def test_retriever_semantic_weight_con_embedding() -> None:
     store = EpisodeStore()
     store.store(_ep("a", embedding=[0.1, 0.2]))
@@ -399,6 +444,7 @@ def test_retriever_semantic_weight_con_embedding() -> None:
     assert res.results[0].semantic_score == 0.0
 
 
+@pytest.mark.unit
 def test_retriever_ranks_asignados() -> None:
     store = EpisodeStore()
     store.store(_ep("a", importance=0.1))
@@ -408,6 +454,7 @@ def test_retriever_ranks_asignados() -> None:
     assert [x.rank for x in res.results] == [0, 1]
 
 
+@pytest.mark.unit
 def test_retriever_k_minimo_1() -> None:
     store = EpisodeStore()
     store.store(_ep("a"))
@@ -419,28 +466,34 @@ def test_retriever_k_minimo_1() -> None:
 # ── ramas restantes ──────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_episode_ttl_cero_no_expira() -> None:
     e = _ep("e1", ttl=0)
     assert e.is_expired is False
 
 
+@pytest.mark.unit
 def test_episode_ttl_negativo_no_expira() -> None:
     e = _ep("e1", ttl=-1)
     assert e.is_expired is False
 
 
+@pytest.mark.unit
 def test_episode_is_expired_ttl_cero() -> None:
     e = _ep("e1", ttl=0)
     e.ttl = 0  # bypass del __post_init__ que resetea ttl<=0
     assert e.is_expired is False
 
 
+@pytest.mark.slow
+@pytest.mark.unit
 def test_episode_store_load_from_db_sin_conn() -> None:
     s = EpisodeStore()
     s._conn = None
     s._load_from_db()
 
 
+@pytest.mark.unit
 def test_episode_store_store_sin_id_ni_timestamp() -> None:
     s = EpisodeStore()
     e = Episode(session_id="s9")
@@ -451,17 +504,20 @@ def test_episode_store_store_sin_id_ni_timestamp() -> None:
     assert e.timestamp != ""
 
 
+@pytest.mark.unit
 def test_episode_get_by_session_inexistente() -> None:
     s = EpisodeStore()
     assert s.get_by_session("nope") == []
 
 
+@pytest.mark.unit
 def test_episode_get_by_session_con_id_fantasma() -> None:
     s = EpisodeStore()
     s._by_session["s1"] = {"ghost"}  # id en índice pero no en _episodes
     assert s.get_by_session("s1") == []
 
 
+@pytest.mark.unit
 def test_episode_clear_all_con_db(tmp_path: object) -> None:
     path = str(tmp_path / "ep.db")
     s = EpisodeStore(config=EpisodeStoreConfig(persist_path=path))
@@ -470,17 +526,20 @@ def test_episode_clear_all_con_db(tmp_path: object) -> None:
     s.close()
 
 
+@pytest.mark.unit
 def test_episode_store_close_sin_conn() -> None:
     s = EpisodeStore()
     s.close()  # no lanza
 
 
+@pytest.mark.unit
 def test_session_memory_episode_count_solo_sesion_activa() -> None:
     sm = SessionMemory()
     sm.add_episode("s1", "x")  # sesión no creada → no cuenta
     assert sm.session_count() == 0
 
 
+@pytest.mark.unit
 def test_retriever_ttl_cero_no_expira() -> None:
     store = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()
@@ -490,6 +549,7 @@ def test_retriever_ttl_cero_no_expira() -> None:
     assert res.total == 1
 
 
+@pytest.mark.unit
 def test_retriever_recency_max_age_cero() -> None:
     store = EpisodeStore()
     futuro = (datetime.now(UTC) + timedelta(hours=1)).isoformat()  # ts futuro → age negativo → max_age=0
@@ -498,6 +558,7 @@ def test_retriever_recency_max_age_cero() -> None:
     assert scored[0].recency_score == 1.0
 
 
+@pytest.mark.unit
 def test_retriever_is_expired_ttl_cero() -> None:
     store = EpisodeStore()
     r = ContextRetriever(store)
@@ -507,6 +568,7 @@ def test_retriever_is_expired_ttl_cero() -> None:
     assert r._is_expired(ep) is False
 
 
+@pytest.mark.unit
 def test_retriever_is_expired_borra() -> None:
     store = EpisodeStore()
     viejo = (datetime.now(UTC) - timedelta(days=2)).isoformat()

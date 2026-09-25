@@ -49,6 +49,7 @@ def dashboard_ctx(monkeypatch):
 
 
 class TestRenderDashboard:
+    @pytest.mark.unit
     def test_html_contains_placeholders_replaced(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "AUTO")
         monkeypatch.setattr("core.model_router.router.get_ollama_url", lambda: "http://ollama:11434")
@@ -58,6 +59,7 @@ class TestRenderDashboard:
         assert "AUTO" in html
         assert "http://ollama:11434" in html
 
+    @pytest.mark.unit
     def test_power_hints_per_mode(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "TURBO")
         html = _render_dashboard()
@@ -67,12 +69,16 @@ class TestRenderDashboard:
         html = _render_dashboard()
         assert "Mac local" in html
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_latency_negative_renders_na(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.proxy._asus_latency_ms", -1.0)
         html = _render_dashboard()
         assert "N/A" in html
         assert "ASUS no accesible" in html
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_latency_high_renders_alert(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.proxy._asus_latency_ms", 350.0)
         monkeypatch.setattr("core.model_router.proxy._asus_latency_updated", time.time())
@@ -80,6 +86,8 @@ class TestRenderDashboard:
         assert "350.0 ms" in html
         assert "alta" in html
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_latency_ok_renders_green(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.proxy._asus_latency_ms", 42.0)
         monkeypatch.setattr("core.model_router.proxy._asus_latency_updated", time.time())
@@ -87,6 +95,7 @@ class TestRenderDashboard:
         assert "42.0 ms" in html
         assert "value-green" in html
 
+    @pytest.mark.unit
     def test_fallback_count_0_green(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr(
             "core.model_router.proxy._fallback_count_last_hour",
@@ -95,6 +104,7 @@ class TestRenderDashboard:
         html = _render_dashboard()
         assert 'id="fallback-count">0</div>' in html
 
+    @pytest.mark.unit
     def test_fallback_count_high_red(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr(
             "core.model_router.proxy._fallback_count_last_hour",
@@ -106,6 +116,7 @@ class TestRenderDashboard:
 
 
 class TestDashboardJson:
+    @pytest.mark.unit
     def test_json_shape(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "AUTO")
         monkeypatch.setattr("core.model_router.router.get_ollama_url", lambda: "http://ollama:11434")
@@ -116,21 +127,25 @@ class TestDashboardJson:
         models = {m["name"] for m in data["models"]}
         assert models == {"qwen3:32b", "qwen2.5:7b"}
 
+    @pytest.mark.unit
     def test_json_turbo_forces_remote(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "TURBO")
         data = json.loads(_dashboard_json("192.168.1.50"))
         assert data["backend_label"] == "ASUS Remoto"
 
+    @pytest.mark.unit
     def test_json_eco_forces_local(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr("core.model_router.router.POWER_MODE", "ECO")
         data = json.loads(_dashboard_json("192.168.1.50"))
         assert data["backend_label"] == "Local Mac"
 
+    @pytest.mark.unit
     def test_json_model_tasks_resolved(self, dashboard_ctx, monkeypatch) -> None:
         data = json.loads(_dashboard_json())
         qwen = next(m for m in data["models"] if m["name"] == "qwen3:32b")
         assert "razonamiento" in qwen["tasks"]
 
+    @pytest.mark.unit
     def test_json_empty_models(self, dashboard_ctx, monkeypatch) -> None:
         monkeypatch.setattr(
             "core.model_router.model_selection.obtener_modelos_disponibles",
@@ -139,6 +154,7 @@ class TestDashboardJson:
         data = json.loads(_dashboard_json())
         assert data["models"] == []
 
+    @pytest.mark.unit
     def test_json_lock_used(self, dashboard_ctx, monkeypatch) -> None:
         acquired = threading.Lock()
 

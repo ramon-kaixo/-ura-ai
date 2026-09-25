@@ -1,6 +1,7 @@
 """Tests para F14 bugs corregidos: F02, F03, F05."""
 
 from __future__ import annotations
+import pytest
 
 import tempfile
 from pathlib import Path
@@ -13,6 +14,7 @@ from motor.intelligence.retrieval.hybrid import HybridRetriever
 class TestF14F02CancelWorkflow:
     """F14-F02: MultiAgentRuntime.cancel() workflow_id opcional."""
 
+    @pytest.mark.unit
     def test_cancel_specific(self):
         runtime = MultiAgentRuntime()
         runtime._workflows["wf_test"] = {"status": "running"}
@@ -20,6 +22,7 @@ class TestF14F02CancelWorkflow:
         assert result is True
         assert runtime._workflows["wf_test"]["status"] == "cancelled"
 
+    @pytest.mark.unit
     def test_cancel_all(self):
         runtime = MultiAgentRuntime()
         runtime._workflows["w1"] = {"status": "running"}
@@ -28,6 +31,7 @@ class TestF14F02CancelWorkflow:
         assert isinstance(result, int)
         assert result == 2
 
+    @pytest.mark.unit
     def test_cancel_nonexistent(self):
         runtime = MultiAgentRuntime()
         result = runtime.cancel(workflow_id="nonexistent")
@@ -37,6 +41,7 @@ class TestF14F02CancelWorkflow:
 class TestF14F03EpisodeStoreCorruption:
     """F14-F03: EpisodeStore se auto-recrea tras corrupción SQLite."""
 
+    @pytest.mark.unit
     def test_corrupt_db_recreates(self):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
@@ -52,6 +57,7 @@ class TestF14F03EpisodeStoreCorruption:
         finally:
             Path(db_path).unlink(missing_ok=True)
 
+    @pytest.mark.unit
     def test_clean_db_works(self):
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
@@ -70,6 +76,7 @@ class TestF14F03EpisodeStoreCorruption:
 class TestF14F05HybridRetrieverFallback:
     """F14-F05: HybridRetriever cae gracefully sin Qdrant."""
 
+    @pytest.mark.unit
     def test_vector_fails_uses_lexical(self):
         class FailingRetriever:
             def search(self, query: str, k: int = 10):
@@ -83,6 +90,7 @@ class TestF14F05HybridRetrieverFallback:
         results = hybrid.search("test", k=5)
         assert len(results) >= 1
 
+    @pytest.mark.unit
     def test_both_fail_return_empty(self):
         class FailingRetriever:
             def search(self, query: str, k: int = 10):
@@ -92,6 +100,7 @@ class TestF14F05HybridRetrieverFallback:
         results = hybrid.search("test", k=5)
         assert results == []
 
+    @pytest.mark.unit
     def test_both_work_returns_fused(self):
         class SimpleRetriever:
             def search(self, query: str, k: int = 10):

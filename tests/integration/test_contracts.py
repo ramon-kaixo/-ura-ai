@@ -6,6 +6,7 @@ campos: si un endpoint añade, quita o cambia un campo, el test falla.
 
 from __future__ import annotations
 
+import pytest
 from typing import Any
 
 import pytest
@@ -80,6 +81,7 @@ def _validar_exacto(modelo: type[BaseModel], datos: dict[str, Any]) -> BaseModel
 # ── Contratos ─────────────────────────────────────────────────────────
 
 
+@pytest.mark.integration
 def test_contrato_health(mochila_client: Any) -> None:
     r = mochila_client.get("/health")
     assert r.status_code == 200, r.text
@@ -88,6 +90,7 @@ def test_contrato_health(mochila_client: Any) -> None:
     assert contrato.providers["fake"].status == "ok"
 
 
+@pytest.mark.integration
 def test_contrato_models(mochila_client: Any) -> None:
     r = mochila_client.get("/v1/models")
     assert r.status_code == 200, r.text
@@ -96,6 +99,7 @@ def test_contrato_models(mochila_client: Any) -> None:
     assert any("fake" in i for i in ids)
 
 
+@pytest.mark.integration
 def test_contrato_breaker_status(mochila_client: Any) -> None:
     r = mochila_client.get("/breaker")
     assert r.status_code == 200, r.text
@@ -105,6 +109,7 @@ def test_contrato_breaker_status(mochila_client: Any) -> None:
     assert contrato.state == "closed"
 
 
+@pytest.mark.integration
 def test_contrato_breaker_reset(mochila_client: Any) -> None:
     r = mochila_client.post("/breaker/reset/fake")
     assert r.status_code == 200, r.text
@@ -113,11 +118,13 @@ def test_contrato_breaker_reset(mochila_client: Any) -> None:
     assert contrato.provider == "fake"
 
 
+@pytest.mark.integration
 def test_contrato_breaker_reset_404(mochila_client: Any) -> None:
     r = mochila_client.post("/breaker/reset/no_existe")
     assert r.status_code == 404
 
 
+@pytest.mark.integration
 def test_contrato_chat_completion(mochila_client: Any) -> None:
     r = mochila_client.post(
         "/v1/chat/completions",
@@ -147,6 +154,7 @@ def test_contrato_chat_completion(mochila_client: Any) -> None:
     assert r.headers.get("X-Mochila-Modelo") == "pepe"
 
 
+@pytest.mark.integration
 def test_contrato_chat_sin_mensajes_invalidos(mochila_client: Any) -> None:
     """El esquema de entrada rechaza mensajes mal formados."""
     r = mochila_client.post(
@@ -156,6 +164,7 @@ def test_contrato_chat_sin_mensajes_invalidos(mochila_client: Any) -> None:
     assert r.status_code == 422
 
 
+@pytest.mark.integration
 def test_contrato_chat_stream_sse(mochila_client: Any) -> None:
     """El contrato de streaming responde SSE (text/event-stream)."""
     r = mochila_client.post(
@@ -171,6 +180,7 @@ def test_contrato_chat_stream_sse(mochila_client: Any) -> None:
     assert "data:" in r.text
 
 
+@pytest.mark.integration
 def test_contrato_provider_caido_devuelve_502(mochila_client: Any) -> None:
     """Contrato de error: provider que falla -> 502 con JSON {error}."""
 
@@ -219,6 +229,7 @@ def test_contrato_provider_caido_devuelve_502(mochila_client: Any) -> None:
     assert "error" in r.json() or "detail" in r.json()
 
 
+@pytest.mark.integration
 def test_contrato_chatrequest_rechaza_mensajes_invalidos() -> None:
     """El esquema de entrada exige mensajes como lista (no string ni dict)."""
 

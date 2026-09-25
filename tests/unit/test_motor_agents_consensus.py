@@ -29,6 +29,7 @@ def _result(agent_id: str, output: dict | None = None, error: str = "") -> Agent
 
 
 class TestConsensusResult:
+    @pytest.mark.unit
     def test_vote_summary(self):
         result = ConsensusResult(
             success=True,
@@ -42,15 +43,18 @@ class TestConsensusResult:
 
 
 class TestMajorityVoting:
+    @pytest.mark.unit
     def test_name(self):
         assert MajorityVoting().name() == "majority"
 
+    @pytest.mark.unit
     def test_empty_results(self):
         result = MajorityVoting().aggregate([])
         assert result.success is False
         assert result.outcome == {}
         assert result.total_votes == 0
 
+    @pytest.mark.unit
     def test_single_winner(self):
         results = [
             _result("a1", {"ans": 1}),
@@ -63,6 +67,7 @@ class TestMajorityVoting:
         assert result.vote_counts == {"[('ans', 1)]": 2, "[('ans', 2)]": 1}
         assert result.total_votes == 3
 
+    @pytest.mark.unit
     def test_tie(self):
         results = [
             _result("a1", {"ans": 1}),
@@ -73,30 +78,36 @@ class TestMajorityVoting:
         assert result.outcome["_tie"] is True
         assert len(result.outcome["_tied_keys"]) == 2
 
+    @pytest.mark.unit
     def test_result_key_error_output(self):
         results = [_result("a1", error="boom")]
         result = MajorityVoting().aggregate(results)
         assert result.vote_counts == {"error:boom": 1}
 
+    @pytest.mark.unit
     def test_result_key_empty_output(self):
         r = _result("a1", None)
         assert MajorityVoting()._result_key(r) == "error:"
 
 
 class TestUnanimousVoting:
+    @pytest.mark.unit
     def test_name(self):
         assert UnanimousVoting().name() == "unanimous"
 
+    @pytest.mark.unit
     def test_empty_results(self):
         result = UnanimousVoting().aggregate([])
         assert result.success is False
         assert result.total_votes == 0
 
+    @pytest.mark.unit
     def test_single_result_succeeds(self):
         result = UnanimousVoting().aggregate([_result("a1", {"ans": 1})])
         assert result.success is True
         assert result.total_votes == 1
 
+    @pytest.mark.unit
     def test_unanimous(self):
         results = [
             _result("a1", {"ans": 1}),
@@ -107,6 +118,7 @@ class TestUnanimousVoting:
         assert result.outcome == {"ans": 1}
         assert len(result.vote_counts) == 1
 
+    @pytest.mark.unit
     def test_not_unanimous(self):
         results = [
             _result("a1", {"ans": 1}),
@@ -119,34 +131,40 @@ class TestUnanimousVoting:
 
 
 class TestVotingEngine:
+    @pytest.mark.unit
     def test_default_strategy_majority(self):
         engine = VotingEngine()
         assert isinstance(engine.strategy, MajorityVoting)
 
+    @pytest.mark.unit
     def test_strategy_setter(self):
         engine = VotingEngine()
         strategy = UnanimousVoting()
         engine.strategy = strategy
         assert engine.strategy is strategy
 
+    @pytest.mark.unit
     def test_register_and_get(self):
         engine = VotingEngine()
         engine.register_strategy(UnanimousVoting())
         assert isinstance(engine.get_strategy("unanimous"), UnanimousVoting)
         assert engine.get_strategy("nope") is None
 
+    @pytest.mark.unit
     def test_vote_uses_current_strategy(self):
         engine = VotingEngine(strategy=UnanimousVoting())
         result = engine.vote([_result("a1", {"ans": 1})])
         assert result.success is True
         assert result.strategy == "unanimous"
 
+    @pytest.mark.unit
     def test_vote_with(self):
         engine = VotingEngine()
         engine.register_strategy(UnanimousVoting())
         result = engine.vote_with([_result("a1", {"ans": 1})], "unanimous")
         assert result.success is True
 
+    @pytest.mark.unit
     def test_vote_with_unknown_raises(self):
         engine = VotingEngine()
         with pytest.raises(ValueError, match="Unknown strategy"):
@@ -154,49 +172,59 @@ class TestVotingEngine:
 
 
 class TestNormalizedConfidence:
+    @pytest.mark.unit
     def test_default_when_no_output(self):
         result = _result("a1", None)
         assert normalized_confidence(result) == 1.0
 
+    @pytest.mark.unit
     def test_uses_confidence(self):
         result = _result("a1", {"confidence": 0.4})
         assert normalized_confidence(result) == 0.4
 
+    @pytest.mark.unit
     def test_clamps_bounds(self):
         assert normalized_confidence(_result("a1", {"confidence": 5.0})) == 1.0
         assert normalized_confidence(_result("a1", {"confidence": -2.0})) == 0.0
 
+    @pytest.mark.unit
     def test_non_numeric_returns_one(self):
         assert normalized_confidence(_result("a1", {"confidence": "alto"})) == 1.0
 
 
 class TestAgentWeightRegistry:
+    @pytest.mark.unit
     def test_default_weight(self):
         registry = AgentWeightRegistry()
         assert registry.get_weight("a1") == 1.0
 
+    @pytest.mark.unit
     def test_set_and_get(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 2.0)
         assert registry.get_weight("a1") == 2.0
 
+    @pytest.mark.unit
     def test_set_clamps_negative(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", -5.0)
         assert registry.get_weight("a1") == 0.0
 
+    @pytest.mark.unit
     def test_reset(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 2.0)
         registry.reset()
         assert registry.all_weights() == {}
 
+    @pytest.mark.unit
     def test_reset_agent(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 2.0)
         assert registry.reset_agent("a1") is True
         assert registry.reset_agent("a1") is False
 
+    @pytest.mark.unit
     def test_all_weights_copy(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 1.5)
@@ -206,18 +234,22 @@ class TestAgentWeightRegistry:
 
 
 class TestWeightedConsensus:
+    @pytest.mark.unit
     def test_name(self):
         assert WeightedConsensus().name() == "weighted"
 
+    @pytest.mark.unit
     def test_default_registry(self):
         assert isinstance(WeightedConsensus().registry, AgentWeightRegistry)
 
+    @pytest.mark.unit
     def test_empty_results(self):
         result = WeightedConsensus().aggregate([])
         assert result.success is False
         assert result.weighted is True
         assert result.total_votes == 0
 
+    @pytest.mark.unit
     def test_winner_weighted(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 3.0)
@@ -232,6 +264,7 @@ class TestWeightedConsensus:
         assert result.weight_details["a1"] == 3.0
         assert result.weight_details["a2"] == 1.0
 
+    @pytest.mark.unit
     def test_confidence_multiplies_weight(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 2.0)
@@ -241,6 +274,7 @@ class TestWeightedConsensus:
         assert result.success is True
         assert result.weight_details["a1"] == 1.0
 
+    @pytest.mark.unit
     def test_tie(self):
         registry = AgentWeightRegistry()
         registry.set_weight("a1", 1.0)
@@ -253,12 +287,14 @@ class TestWeightedConsensus:
         assert result.success is False
         assert result.outcome["_tie"] is True
 
+    @pytest.mark.unit
     def test_error_result_key(self):
         strategy = WeightedConsensus()
         result = strategy.aggregate([_result("a1", error="boom")])
         assert result.success is True
         assert result.vote_counts == {"error:boom": 1.0}
 
+    @pytest.mark.unit
     def test_outcome_para_no_match_returns_empty(self):
         results = [_result("a1", {"ans": 1})]
         strategy = WeightedConsensus()
@@ -269,16 +305,20 @@ class TestWeightedConsensus:
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_mayoria_single(self):
         assert _mayoria({"a": 1.0, "b": 0.5}) == ["a"]
 
+    @pytest.mark.unit
     def test_mayoria_tie(self):
         assert sorted(_mayoria({"a": 1.0, "b": 1.0})) == ["a", "b"]
 
+    @pytest.mark.unit
     def test_mayoria_empty(self):
         with pytest.raises(ValueError):
             _mayoria({})
 
+    @pytest.mark.unit
     def test_outcome_para_matches(self):
         results = [_result("a1", {"ans": 1}), _result("a2", {"ans": 2})]
         strategy = WeightedConsensus()
@@ -287,6 +327,7 @@ class TestHelpers:
 
 
 class TestStrategyRegistration:
+    @pytest.mark.unit
     def test_custom_strategy(self):
         class Custom(VotingStrategy):
             def name(self) -> str:

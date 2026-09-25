@@ -7,6 +7,7 @@ Mac: ping a GX10.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from tests.infra.conftest import run_cmd
 from tests.redes import GX10_TS_IP, MAC_TS_IP

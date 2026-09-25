@@ -8,6 +8,7 @@ y doc_id_from_text (prefix).
 
 from __future__ import annotations
 
+import pytest
 import sys
 import types
 from unittest import mock
@@ -29,9 +30,11 @@ def _fake_lingua_module() -> types.ModuleType:
 
 
 class TestDetectLanguage:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert dq.detect_language("   ") == "unknown"
 
+    @pytest.mark.unit
     def test_cache_hit(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dq._LANG_CACHE.clear()
         dq._LANG_CACHE["abc"] = "zz"
@@ -39,6 +42,7 @@ class TestDetectLanguage:
         assert dq.detect_language("texto de prueba") == "zz"
         dq._LANG_CACHE.clear()
 
+    @pytest.mark.unit
     def test_lingua_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dq._LANG_CACHE.clear()
         lingua = _fake_lingua_module()
@@ -50,6 +54,7 @@ class TestDetectLanguage:
         assert dq.detect_language("Hola mundo") == "spanish"
         dq._LANG_CACHE.clear()
 
+    @pytest.mark.unit
     def test_lingua_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dq._LANG_CACHE.clear()
         lingua = _fake_lingua_module()
@@ -60,12 +65,14 @@ class TestDetectLanguage:
         assert dq.detect_language("Hola mundo") == "unknown"
         dq._LANG_CACHE.clear()
 
+    @pytest.mark.unit
     def test_lingua_exception_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
         dq._LANG_CACHE.clear()
         monkeypatch.setattr("builtins.__import__", lambda name, *a, **k: (_ for _ in ()).throw(ImportError("no lingua")))
         assert dq.detect_language("The quick brown fox") == "en"
         dq._LANG_CACHE.clear()
 
+    @pytest.mark.unit
     def test_fast_lang_detect_todos(self) -> None:
         assert dq._fast_lang_detect("the and you that for are") == "en"
         assert dq._fast_lang_detect("que los las del por con una") == "es"
@@ -74,96 +81,121 @@ class TestDetectLanguage:
 
 
 class TestSourceReliability:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert dq.source_reliability("") == 0.5
 
+    @pytest.mark.unit
     def test_dominio_conocido(self) -> None:
         assert dq.source_reliability("https://github.com/foo") == 0.9
         assert dq.source_reliability("https://wikipedia.org/x") == 0.8
         assert dq.source_reliability("https://medium.com/x") == 0.5
 
+    @pytest.mark.unit
     def test_dominio_desconocido(self) -> None:
         assert dq.source_reliability("https://example.com") == 0.5
 
 
 class TestExtractPublicationDate:
+    @pytest.mark.unit
     def test_iso_formato(self) -> None:
         assert dq.extract_publication_date("fecha 2024-03-15 publicada") == "2024-03-15T00:00:00"
 
+    @pytest.mark.unit
     def test_dmy_formato(self) -> None:
         assert dq.extract_publication_date("publicado 15/03/2024 aqui") == "2024-03-15T00:00:00"
 
+    @pytest.mark.unit
     def test_fecha_invalida(self) -> None:
         assert dq.extract_publication_date("2024-13-45") is None
 
+    @pytest.mark.unit
     def test_sin_fecha(self) -> None:
         assert dq.extract_publication_date("sin fechas aqui") is None
 
 
 class TestContentType:
+    @pytest.mark.unit
     def test_code_fence(self) -> None:
         assert dq.content_type("```python\nx = 1\n```") == "code"
 
+    @pytest.mark.unit
     def test_code_keywords(self) -> None:
         assert dq.content_type("def foo():\n    return 1") == "code"
         assert dq.content_type("import os\nimport sys") == "code"
 
+    @pytest.mark.unit
     def test_html(self) -> None:
         assert dq.content_type("<html><body><p>hola</p></body></html>") == "html"
 
+    @pytest.mark.unit
     def test_table(self) -> None:
         assert dq.content_type("| a | b |\n|---|---|\n| 1 | 2 |") == "table"
 
+    @pytest.mark.unit
     def test_documentation(self) -> None:
         largo = "x" * 250
         assert dq.content_type("\n".join([largo] * 60)) == "documentation"
 
+    @pytest.mark.unit
     def test_article(self) -> None:
         assert dq.content_type("texto normal corto") == "article"
 
 
 class TestIsStale:
+    @pytest.mark.unit
     def test_none(self) -> None:
         assert dq.is_stale(None) is True
 
+    @pytest.mark.unit
     def test_viejo(self) -> None:
         assert dq.is_stale("2020-01-01T00:00:00+00:00", ttl_days=30) is True
 
+    @pytest.mark.unit
     def test_reciente(self) -> None:
         assert dq.is_stale("2099-01-01T00:00:00+00:00", ttl_days=30) is False
 
+    @pytest.mark.unit
     def test_sin_tz(self) -> None:
         assert dq.is_stale("2099-01-01T00:00:00") is False
 
+    @pytest.mark.unit
     def test_invalido(self) -> None:
         assert dq.is_stale("no es fecha") is True
         assert dq.is_stale(None) is True
 
 
 class TestAdaptiveThreshold:
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert dq.adaptive_threshold([]) == 0.5
 
+    @pytest.mark.unit
     def test_plano(self) -> None:
         assert dq.adaptive_threshold([0.5, 0.5, 0.5]) == 0.5
 
+    @pytest.mark.unit
     def test_diverso(self) -> None:
         t = dq.adaptive_threshold([0.1, 0.9], base_threshold=0.5)
         assert t >= 0.5
 
+    @pytest.mark.unit
     def test_clamp(self) -> None:
         t = dq.adaptive_threshold([0.0, 1.0], base_threshold=0.5, std_factor=3.0)
         assert t <= 1.0
 
+    @pytest.mark.unit
     def test_min_threshold(self) -> None:
         t = dq.adaptive_threshold([0.5, 0.51], base_threshold=0.5, min_threshold=0.2)
         assert t >= 0.2
 
+    @pytest.mark.unit
     def test_std_unico(self) -> None:
         assert dq.adaptive_threshold([0.7]) == 0.5  # len 1 → stdev 0 → base
 
 
 class TestDocId:
+    @pytest.mark.unit
     def test_determinista(self) -> None:
         a = dq.doc_id_from_text("hola")
         b = dq.doc_id_from_text("hola")

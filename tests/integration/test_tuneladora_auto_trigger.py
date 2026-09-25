@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
@@ -17,11 +18,13 @@ def trigger(tmp_path: Path) -> AutoTrigger:
 
 
 class TestInit:
+    @pytest.mark.integration
     def test_defaults(self, tmp_path: Path) -> None:
         t = AutoTrigger(nervioso=tmp_path / "n")
         assert t.strict is True
         assert t.mode == "gate"
 
+    @pytest.mark.integration
     def test_properties(self, trigger: AutoTrigger) -> None:
         trigger.strict = False
         trigger.mode = "check"
@@ -30,6 +33,7 @@ class TestInit:
 
 
 class TestPipelineIntegration:
+    @pytest.mark.integration
     def test_validate_with_pipeline_ok(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         from types import SimpleNamespace as _SN
@@ -41,6 +45,7 @@ class TestPipelineIntegration:
             result = trigger.validate_with_pipeline([Path("a.py")])
         assert result["status"] == "ok"
 
+    @pytest.mark.integration
     def test_validate_with_pipeline_warn(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         from types import SimpleNamespace as _SN
@@ -52,6 +57,7 @@ class TestPipelineIntegration:
             result = trigger.validate_with_pipeline([Path("a.py")])
         assert result["status"] == "warn"
 
+    @pytest.mark.integration
     def test_validate_with_pipeline_fail(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         from types import SimpleNamespace as _SN
@@ -63,16 +69,19 @@ class TestPipelineIntegration:
             result = trigger.validate_with_pipeline([Path("a.py")])
         assert result["status"] == "fail"
 
+    @pytest.mark.integration
     def test_validate_sin_pipeline(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", False)
         result = trigger.validate_with_pipeline([Path("a.py")])
         assert result["status"] == "skip"
         assert "no disponible" in result["message"]
 
+    @pytest.mark.integration
     def test_validate_sin_archivos(self, trigger: AutoTrigger) -> None:
         result = trigger.validate_with_pipeline([])
         assert result["status"] == "skip"
 
+    @pytest.mark.integration
     def test_validate_pipeline_error(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         with (
@@ -86,28 +95,34 @@ class TestPipelineIntegration:
         assert result["status"] == "skip"
         assert "boom" in result["message"]
 
+    @pytest.mark.integration
     def test_trigger_validation_sin_archivos(self, trigger: AutoTrigger) -> None:
         assert trigger.trigger_validation([])["status"] == "skip"
 
+    @pytest.mark.integration
     def test_trigger_validation_delega(self, trigger: AutoTrigger) -> None:
         with mock.patch.object(trigger, "validate_with_pipeline", return_value={"status": "ok", "message": "m"}):
             result = trigger.trigger_validation([Path("a.py")])
         assert result["status"] == "ok"
 
+    @pytest.mark.integration
     def test_validate_files_sin_pipeline(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", False)
         assert trigger.validate_files([Path("a.py")])["status"] == "skip"
 
+    @pytest.mark.integration
     def test_validate_files_vacio(self, trigger: AutoTrigger) -> None:
         assert trigger.validate_files([])["status"] == "skip"
 
 
 class TestShouldRun:
+    @pytest.mark.integration
     def test_maintenance_con_cooldown(self, trigger: AutoTrigger) -> None:
         trigger.set_cooldown("maintenance", 3600)
         with mock.patch.object(trigger, "_check_ruff_errors", return_value=True):
             assert trigger.should_run_maintenance() is False
 
+    @pytest.mark.integration
     def test_maintenance_sin_cooldown(self, trigger: AutoTrigger) -> None:
         with (
             mock.patch.object(trigger, "_check_ruff_errors", return_value=True),
@@ -115,38 +130,46 @@ class TestShouldRun:
         ):
             assert trigger.should_run_maintenance() is True
 
+    @pytest.mark.integration
     def test_refinement_no_path(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         assert trigger.should_run_refinement(tmp_path / "no_existe.py") is False
 
+    @pytest.mark.integration
     def test_refinement_cooldown(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x\n" * 400)
         trigger.set_cooldown(f"refine:{f}", 3600)
         assert trigger.should_run_refinement(f) is False
 
+    @pytest.mark.integration
     def test_healing(self, trigger: AutoTrigger) -> None:
         with mock.patch.object(trigger, "_check_recent_failures", return_value=True):
             assert trigger.should_run_healing("gate") is True
 
+    @pytest.mark.integration
     def test_healing_cooldown(self, trigger: AutoTrigger) -> None:
         trigger.set_cooldown("heal:gate", 60)
         assert trigger.should_run_healing("gate") is False
 
+    @pytest.mark.integration
     def test_intensive(self, trigger: AutoTrigger) -> None:
         with mock.patch.object(trigger, "_check_time_window", return_value=True):
             assert trigger.should_run_intensive() is True
 
 
 class TestCooldown:
+    @pytest.mark.integration
     def test_set_y_remaining(self, trigger: AutoTrigger) -> None:
         trigger.set_cooldown("x", 60)
         assert trigger._on_cooldown("x") is True
         assert trigger.cooldown_remaining("x") > 0
 
+    @pytest.mark.integration
     def test_sin_cooldown(self, trigger: AutoTrigger) -> None:
         assert trigger._on_cooldown("x") is False
         assert trigger.cooldown_remaining("x") == 0.0
 
+    @pytest.mark.integration
     def test_reset(self, trigger: AutoTrigger) -> None:
         trigger.set_cooldown("x", 60)
         trigger.reset_cooldown("x")
@@ -154,22 +177,26 @@ class TestCooldown:
 
 
 class TestEvents:
+    @pytest.mark.integration
     def test_record_y_get(self, trigger: AutoTrigger) -> None:
         trigger.record_event(TriggerEvent(condition="c", value=1, threshold=2, severity="info", message="m"))
         events = trigger.get_events()
         assert len(events) == 1
         assert events[0].condition == "c"
 
+    @pytest.mark.integration
     def test_filtro_severidad(self, trigger: AutoTrigger) -> None:
         trigger.record_event(TriggerEvent(condition="a", value=1, threshold=2, severity="info"))
         trigger.record_event(TriggerEvent(condition="b", value=1, threshold=2, severity="critical"))
         assert len(trigger.get_events(severity="critical")) == 1
 
+    @pytest.mark.integration
     def test_limit(self, trigger: AutoTrigger) -> None:
         for i in range(10):
             trigger.record_event(TriggerEvent(condition=f"c{i}", value=i, threshold=0))
         assert len(trigger.get_events(limit=3)) == 3
 
+    @pytest.mark.integration
     def test_stats(self, trigger: AutoTrigger) -> None:
         trigger.set_cooldown("k", 100)
         stats = trigger.get_stats()
@@ -178,6 +205,7 @@ class TestEvents:
 
 
 class TestChecksInternos:
+    @pytest.mark.integration
     def test_ruff_errors_detecta(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -186,6 +214,7 @@ class TestChecksInternos:
         assert trigger._check_ruff_errors() is True
         assert len(trigger._events) == 1
 
+    @pytest.mark.integration
     def test_ruff_errores_pocos(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -193,6 +222,7 @@ class TestChecksInternos:
         )
         assert trigger._check_ruff_errors() is False
 
+    @pytest.mark.integration
     def test_ruff_error_silencioso(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -200,10 +230,12 @@ class TestChecksInternos:
         )
         assert trigger._check_ruff_errors() is False
 
+    @pytest.mark.integration
     def test_parse_ruff_count(self, trigger: AutoTrigger) -> None:
         assert trigger._parse_ruff_count("Found 42 errors") == 42
         assert trigger._parse_ruff_count("All checks passed") == 0
 
+    @pytest.mark.integration
     def test_git_dirty(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -211,6 +243,7 @@ class TestChecksInternos:
         )
         assert trigger._check_git_dirty() is True
 
+    @pytest.mark.integration
     def test_git_limpio(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr(
             "subprocess.run",
@@ -218,25 +251,30 @@ class TestChecksInternos:
         )
         assert trigger._check_git_dirty() is False
 
+    @pytest.mark.integration
     def test_file_needs_refinement_largo(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         f = tmp_path / "largo.py"
         f.write_text("x\n" * 400)
         assert trigger._file_needs_refinement(f) is True
 
+    @pytest.mark.integration
     def test_file_no_necesita(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         f = tmp_path / "corto.py"
         f.write_text("def a():\n    pass\n")
         assert trigger._file_needs_refinement(f) is False
 
+    @pytest.mark.integration
     def test_recent_failures_sin_log(self, trigger: AutoTrigger) -> None:
         assert trigger._check_recent_failures() is False
 
+    @pytest.mark.integration
     def test_recent_failures_con_log(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         log_file = trigger._nervioso / "tuneladora_errors.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)
         log_file.write_text("ERROR x\nCRITICAL y\nERROR z\nERROR w\n")
         assert trigger._check_recent_failures() is True
 
+    @pytest.mark.integration
     def test_time_window(self, trigger: AutoTrigger) -> None:
         now_hour = __import__("time").localtime().tm_hour
         assert trigger._check_time_window(0, 23) is True
@@ -244,6 +282,7 @@ class TestChecksInternos:
 
 
 class TestTriggerCondition:
+    @pytest.mark.integration
     def test_dataclass(self) -> None:
         c = TriggerCondition(name="n", description="d", check_fn="f", threshold=10, cooldown=60)
         assert c.name == "n"
@@ -251,6 +290,7 @@ class TestTriggerCondition:
 
 
 class TestGaps:
+    @pytest.mark.integration
     def test_validate_files_ok(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         from types import SimpleNamespace as _SN
@@ -262,6 +302,7 @@ class TestGaps:
             result = trigger.validate_files([Path("a.py")])
         assert result["status"] == "ok"
 
+    @pytest.mark.integration
     def test_validate_files_fail(self, trigger: AutoTrigger, monkeypatch) -> None:
         monkeypatch.setattr("scripts.pro.tuneladora.auto_trigger._PIPELINE_AVAILABLE", True)
         from types import SimpleNamespace as _SN
@@ -273,6 +314,7 @@ class TestGaps:
             result = trigger.validate_files([Path("a.py")])
         assert result["status"] == "fail"
 
+    @pytest.mark.integration
     def test_trigger_validation_fail_strict(self, trigger: AutoTrigger) -> None:
         trigger.strict = True
         with mock.patch.object(
@@ -283,6 +325,7 @@ class TestGaps:
             result = trigger.trigger_validation([Path("a.py")])
         assert result["status"] == "fail"
 
+    @pytest.mark.integration
     def test_trigger_validation_fail_non_strict(self, trigger: AutoTrigger) -> None:
         trigger.strict = False
         with mock.patch.object(
@@ -293,6 +336,7 @@ class TestGaps:
             result = trigger.trigger_validation([Path("a.py")])
         assert result["status"] == "fail"
 
+    @pytest.mark.integration
     def test_git_dirty_muchos_registra_evento(self, trigger: AutoTrigger, monkeypatch) -> None:
         out = "\n".join(f" M f{i}.py" for i in range(8))
         monkeypatch.setattr(
@@ -302,11 +346,13 @@ class TestGaps:
         assert trigger._check_git_dirty() is True
         assert len(trigger._events) == 1
 
+    @pytest.mark.integration
     def test_file_needs_refinement_densidad_baja(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         f = tmp_path / "denso.py"
         f.write_text("a\n\n\n\n\nb\n\n\n\n\n")
         assert trigger._file_needs_refinement(f) is True
 
+    @pytest.mark.integration
     def test_recent_failures_pocos(self, trigger: AutoTrigger, tmp_path: Path) -> None:
         log_file = trigger._nervioso / "tuneladora_errors.log"
         log_file.parent.mkdir(parents=True, exist_ok=True)

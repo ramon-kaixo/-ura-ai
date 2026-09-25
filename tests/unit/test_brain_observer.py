@@ -1,6 +1,7 @@
 """Tests for BrainObserver (motor/brain/observer.py)."""
 from __future__ import annotations
 
+import pytest
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,6 +15,7 @@ def observer() -> BrainObserver:
 
 
 class TestRegisterProvider:
+    @pytest.mark.unit
     def test_register_adds_provider(self, observer: BrainObserver) -> None:
         fn = MagicMock(return_value={"status": "ok"})
         observer.register_provider("test", fn)
@@ -21,18 +23,21 @@ class TestRegisterProvider:
 
 
 class TestObserveAll:
+    @pytest.mark.unit
     def test_observe_all_returns_list(self, observer: BrainObserver) -> None:
         observer.register_provider("test", MagicMock(return_value={"status": "ok"}))
         results = observer.observe_all()
         assert isinstance(results, list)
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_observe_all_records_history(self, observer: BrainObserver) -> None:
         observer.register_provider("mem", MagicMock(return_value={"status": "ok", "latency_ms": 10}))
         observer.observe_all()
         assert "mem" in observer._history
         assert len(observer._history["mem"]) == 1
 
+    @pytest.mark.unit
     def test_observe_provider_error(self, observer: BrainObserver) -> None:
         observer.register_provider("fail", MagicMock(side_effect=RuntimeError("crash")))
         results = observer.observe_all()
@@ -41,14 +46,19 @@ class TestObserveAll:
 
 
 class TestAnalyze:
+    @pytest.mark.unit
     def test_analyze_ok_status(self, observer: BrainObserver) -> None:
         obs = observer._analyze("test", {"status": "ok", "latency_ms": 10})
         assert obs.status == "ok"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_analyze_latency_warning(self, observer: BrainObserver) -> None:
         obs = observer._analyze("test", {"status": "ok", "latency_ms": 600})
         assert obs.status == "warning"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_analyze_latency_critical(self, observer: BrainObserver) -> None:
         obs = observer._analyze("test", {"status": "ok", "latency_ms": 1500})
         assert obs.status == "ok"
@@ -56,9 +66,11 @@ class TestAnalyze:
 
 
 class TestGetCritical:
+    @pytest.mark.unit
     def test_get_critical_empty(self, observer: BrainObserver) -> None:
         assert observer.get_critical() == []
 
+    @pytest.mark.unit
     def test_get_critical_with_anomaly(self, observer: BrainObserver) -> None:
         observer._history["t"] = [
             HealthObservation(100, "t", "error", {}, "fail")

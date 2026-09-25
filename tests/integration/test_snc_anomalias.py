@@ -27,11 +27,13 @@ from monitor.snc import (
 
 @pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
 class TestCheckZombies:
+    @pytest.mark.integration
     def test_returns_empty_when_no_zombies(self, tmp_path) -> None:
         result = check_zombies()
         assert isinstance(result, list)
 
     @pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
+    @pytest.mark.integration
     def test_detects_zombie(self, tmp_path) -> None:
         fake_proc = tmp_path / "12345"
         fake_proc.mkdir()
@@ -42,6 +44,7 @@ class TestCheckZombies:
                 assert 12345 in zombies
 
     @pytest.mark.skipif(sys.platform == "darwin", reason="Requiere /proc (Linux-only)")
+    @pytest.mark.integration
     def test_skips_non_digit(self, tmp_path) -> None:
         fake = tmp_path / "abc"
         fake.mkdir()
@@ -52,6 +55,7 @@ class TestCheckZombies:
 
 
 class TestLimpiarZombies:
+    @pytest.mark.integration
     def test_kills_zombie(self) -> None:
         killed = []
 
@@ -65,10 +69,12 @@ class TestLimpiarZombies:
 
 
 class TestCheckBucleCpu:
+    @pytest.mark.integration
     def test_returns_list(self) -> None:
         result = check_bucle_cpu(umbral=999.0)
         assert isinstance(result, list)
 
+    @pytest.mark.integration
     def test_filters_by_threshold(self) -> None:
         fake_ps = (
             "USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND\n"
@@ -82,6 +88,7 @@ class TestCheckBucleCpu:
             assert len(result) == 1
             assert result[0][0] == 1234
 
+    @pytest.mark.integration
     def test_empty_when_no_process(self) -> None:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.stdout = "USER PID %CPU COMM\n"
@@ -94,22 +101,26 @@ class TestAislarBucle:
     def setup_method(self) -> None:
         _pending_sigcont.clear()
 
+    @pytest.mark.integration
     def test_skips_if_pid_zero(self) -> None:
         with patch("monitor.snc.os.kill") as mock_kill:
             _aislar_bucle(0, "opencode", 95.0)
             mock_kill.assert_not_called()
 
+    @pytest.mark.integration
     def test_skips_if_pid_negative(self) -> None:
         with patch("monitor.snc.os.kill") as mock_kill:
             _aislar_bucle(-1, "test", 50.0)
             mock_kill.assert_not_called()
 
+    @pytest.mark.integration
     def test_skips_if_already_pending(self) -> None:
         _pending_sigcont[42] = "python3"
         with patch("monitor.snc.os.kill") as mock_kill:
             _aislar_bucle(42, "python3", 95.0)
             mock_kill.assert_not_called()
 
+    @pytest.mark.integration
     def test_sends_sigstop_and_schedules_timer(self) -> None:
         _pending_sigcont.clear()
         with patch("monitor.snc.os.kill") as mock_kill, patch("monitor.snc.threading.Timer") as mock_timer:  # noqa: SIM117
@@ -123,6 +134,7 @@ class TestAislarBucle:
                         args=[42, "python3"],
                     )
 
+    @pytest.mark.integration
     def test_adds_to_pending(self) -> None:
         _pending_sigcont.clear()
         with patch("monitor.snc.os.kill"), patch("monitor.snc.threading.Timer"):  # noqa: SIM117
@@ -136,6 +148,7 @@ class TestSigcontSeguro:
     def setup_method(self) -> None:
         _pending_sigcont.clear()
 
+    @pytest.mark.integration
     def test_sigcont_if_stopped_and_same_name(self, tmp_path) -> None:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
@@ -147,6 +160,7 @@ class TestSigcontSeguro:
                     mock_kill.assert_called_once_with(42, signal.SIGCONT)
                     assert 42 not in _pending_sigcont
 
+    @pytest.mark.integration
     def test_skips_if_pid_gone(self) -> None:
         _pending_sigcont[42] = "python3"
         with patch("pathlib.Path.exists", return_value=False), patch("os.kill") as mock_kill:
@@ -154,6 +168,7 @@ class TestSigcontSeguro:
             mock_kill.assert_not_called()
             assert 42 not in _pending_sigcont
 
+    @pytest.mark.integration
     def test_skips_if_process_recycled(self, tmp_path) -> None:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
@@ -165,6 +180,7 @@ class TestSigcontSeguro:
                     mock_kill.assert_not_called()
                     assert 42 not in _pending_sigcont
 
+    @pytest.mark.integration
     def test_skips_if_not_stopped(self, tmp_path) -> None:
         _pending_sigcont[42] = "python3"
         fake_status = tmp_path / "status"
@@ -178,12 +194,14 @@ class TestSigcontSeguro:
 
 
 class TestCheckOpenCodeColgado:
+    @pytest.mark.integration
     def test_returns_none_when_not_running(self) -> None:
         with patch("subprocess.run") as mock_run:
             mock_run.return_value.stdout = ""
             result = check_opencode_colgado()
             assert result is None
 
+    @pytest.mark.integration
     def test_returns_pid_when_cpu_high(self) -> None:
         with patch("subprocess.run") as mock_run:
 
@@ -200,6 +218,7 @@ class TestCheckOpenCodeColgado:
             result = check_opencode_colgado()
             assert result == 1234
 
+    @pytest.mark.integration
     def test_returns_none_when_cpu_low(self) -> None:
         with patch("subprocess.run") as mock_run:
 
@@ -218,6 +237,7 @@ class TestCheckOpenCodeColgado:
 
 
 class TestCheckUmbrales:
+    @pytest.mark.integration
     def test_false_when_all_ok(self) -> None:
         state = {
             "services": {
@@ -230,6 +250,7 @@ class TestCheckUmbrales:
         }
         assert _check_umbrales(state) is False
 
+    @pytest.mark.integration
     def test_true_when_2_criticos_fallan(self) -> None:
         state = {
             "services": {
@@ -243,6 +264,7 @@ class TestCheckUmbrales:
         }
         assert _check_umbrales(state) is True
 
+    @pytest.mark.integration
     def test_true_when_4_totales_fallan(self) -> None:
         state = {
             "services": {
@@ -259,6 +281,7 @@ class TestCheckUmbrales:
         }
         assert _check_umbrales(state) is True
 
+    @pytest.mark.integration
     def test_false_when_1_critico_and_2_totales(self) -> None:
         state = {
             "services": {
@@ -275,5 +298,6 @@ class TestCheckUmbrales:
 
 
 class TestCPUSDetectionDisabled:
+    @pytest.mark.integration
     def test_flag_is_false(self) -> None:
         assert _CPU_DETECTION_ENABLED is False

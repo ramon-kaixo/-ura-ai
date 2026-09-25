@@ -1,6 +1,7 @@
 """Tests para core/model_router/vram_guard.py — ConcurrentVRAMGuard."""
 from __future__ import annotations
 
+import pytest
 import asyncio
 from unittest import mock
 
@@ -15,12 +16,15 @@ def guard() -> ConcurrentVRAMGuard:
 
 
 class TestPropiedades:
+    @pytest.mark.unit
     def test_slots_iniciales(self, guard: ConcurrentVRAMGuard) -> None:
         assert guard.slots_disponibles == 1
 
+    @pytest.mark.unit
     def test_esperando_cola_inicial(self, guard: ConcurrentVRAMGuard) -> None:
         assert guard.esperando_cola == 0
 
+    @pytest.mark.unit
     def test_metricas(self, guard: ConcurrentVRAMGuard) -> None:
         m = guard.metricas()
         assert m["max_concurrent"] == 1
@@ -112,6 +116,7 @@ class TestAdquirirLiberar:
 
 
 class TestSingleton:
+    @pytest.mark.unit
     def test_vram_guard_instancia(self) -> None:
         assert isinstance(vram_guard, ConcurrentVRAMGuard)
         assert vram_guard._max_jobs == 1
@@ -121,6 +126,7 @@ class TestCrossLoop:
     """Regression: asyncio.run() por peticion crea loops efimeros distintos;
     el semaforo no debe quedar ligado a un event loop concreto."""
 
+    @pytest.mark.unit
     def test_dos_loops_consecutivos_sin_contencion(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=5.0)
 
@@ -134,6 +140,7 @@ class TestCrossLoop:
         assert r1 == "ok"
         assert r2 == "ok"
 
+    @pytest.mark.unit
     def test_dos_loops_con_contencion(self) -> None:
         g = ConcurrentVRAMGuard(max_concurrent_jobs=1, ttl_segundos=2.0)
 

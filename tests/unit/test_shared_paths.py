@@ -1,6 +1,7 @@
 """Tests for shared/paths.py — canonical path definitions."""
 
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -18,10 +19,12 @@ from shared.paths import (
 
 
 class TestPaths:
+    @pytest.mark.unit
     def test_ura_root_default(self):
         assert isinstance(URA_ROOT, Path)
         assert URA_ROOT.exists()
 
+    @pytest.mark.unit
     def test_ura_root_from_env(self, monkeypatch):
         monkeypatch.setenv("URA_ROOT", "/tmp/test_ura")
         import importlib
@@ -31,16 +34,20 @@ class TestPaths:
         assert Path("/tmp/test_ura") == shared.paths.URA_ROOT
         importlib.reload(shared.paths)
 
+    @pytest.mark.unit
     def test_all_paths_are_path_objects(self):
         for p in [SCRIPTS, SCRIPTS_PRO, NERVIOSO, DEPLOY, TESTS, LOGS, CONFIG, DOCS]:
             assert isinstance(p, Path)
 
+    @pytest.mark.unit
     def test_scripts_is_relative_to_root(self):
         assert SCRIPTS == URA_ROOT / "scripts"
 
+    @pytest.mark.unit
     def test_scripts_pro_is_relative_to_root(self):
         assert SCRIPTS_PRO == URA_ROOT / "scripts/pro"
 
+    @pytest.mark.unit
     def test_derived_paths_are_relative(self):
         assert DEPLOY == URA_ROOT / "deploy"
         assert DOCS == URA_ROOT / "docs"
@@ -49,6 +56,7 @@ class TestPaths:
         assert TESTS == URA_ROOT / "tests"
         assert NERVIOSO == URA_ROOT / ".nervioso"
 
+    @pytest.mark.unit
     def test_ura_root_env_fallback(self, monkeypatch):
         monkeypatch.delenv("URA_ROOT", raising=False)
         import importlib

@@ -1,6 +1,7 @@
 """Tests de la migracion v15 (fix triggers FTS5 en SQLite 3.45.1)."""
 
 from __future__ import annotations
+import pytest
 
 import sqlite3
 from pathlib import Path
@@ -78,6 +79,7 @@ def _db_v14(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.unit
 def test_migracion_v15_corrige_triggers(tmp_path) -> None:
     path = _db_v14(tmp_path)
     conn = sqlite3.connect(path)
@@ -95,6 +97,7 @@ def test_migracion_v15_corrige_triggers(tmp_path) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_delete_funciona_tras_migracion(tmp_path) -> None:
     from knowledge.engine.asset_store import SQLiteAssetStore
     from knowledge.engine.ontology.internal import AssetSource, AssetType, KnowledgeAsset
@@ -121,6 +124,7 @@ def test_delete_funciona_tras_migracion(tmp_path) -> None:
     assert store.asset_exists("a1") is False
 
 
+@pytest.mark.unit
 def test_rebuild_limpia_huerfanos(tmp_path) -> None:
     path = _db_v14(tmp_path)
     conn = sqlite3.connect(path)
@@ -137,5 +141,6 @@ def test_rebuild_limpia_huerfanos(tmp_path) -> None:
     conn.close()
 
 
+@pytest.mark.unit
 def test_schema_version_actualizada() -> None:
     assert SCHEMA_VERSION == 15

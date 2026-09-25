@@ -6,6 +6,7 @@ Anywhere: verifica estructura del repo.
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest

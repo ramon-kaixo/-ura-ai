@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -36,6 +37,7 @@ def store(db_path: Path) -> SQLiteGovernanceStore:
     return SQLiteGovernanceStore(db_path)
 
 
+@pytest.mark.unit
 def test_set_policy(store, db_path) -> None:
     assert store.set_policy("a1", {"action": "read", "roles": ["admin"]}) is True
     conn = sqlite3.connect(db_path)
@@ -47,15 +49,18 @@ def test_set_policy(store, db_path) -> None:
     assert row["actor"] == "system"
 
 
+@pytest.mark.unit
 def test_set_policy_error(tmp_path) -> None:
     bad = SQLiteGovernanceStore(tmp_path / "no.db")
     assert bad.set_policy("a1", {}) is False
 
 
+@pytest.mark.unit
 def test_check_sin_politicas(store) -> None:
     assert store.check("a1", "read", "anon") is True
 
 
+@pytest.mark.unit
 def test_check_rol_permitido(store) -> None:
     store.set_policy("a1", {"action": "read", "roles": ["admin", "editor"]})
     assert store.check("a1", "read", "admin") is True
@@ -63,17 +68,20 @@ def test_check_rol_permitido(store) -> None:
     assert store.check("a1", "read", "anon") is False
 
 
+@pytest.mark.unit
 def test_check_action_distinta(store) -> None:
     store.set_policy("a1", {"action": "read", "roles": ["admin"]})
     assert store.check("a1", "write", "anon") is True
 
 
+@pytest.mark.unit
 def test_check_roles_vacios_continua(store) -> None:
     store.set_policy("a1", {"action": "read", "roles": []})
     store.set_policy("a1", {"action": "read", "roles": ["admin"]})
     assert store.check("a1", "read", "admin") is True
 
 
+@pytest.mark.unit
 def test_check_json_invalido_continua(store, db_path) -> None:
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -86,11 +94,13 @@ def test_check_json_invalido_continua(store, db_path) -> None:
     assert store.check("a1", "read", "admin") is True
 
 
+@pytest.mark.unit
 def test_check_error(tmp_path) -> None:
     bad = SQLiteGovernanceStore(tmp_path / "no.db")
     assert bad.check("a1", "read", "x") is True
 
 
+@pytest.mark.unit
 def test_get_policies(store) -> None:
     store.set_policy("a1", {"action": "read", "roles": ["admin"]})
     rows = store.get_policies("a1")
@@ -99,15 +109,18 @@ def test_get_policies(store) -> None:
     assert "policy" in rows[0]
 
 
+@pytest.mark.unit
 def test_get_policies_vacio(store) -> None:
     assert store.get_policies("a2") == []
 
 
+@pytest.mark.unit
 def test_get_policies_error(tmp_path) -> None:
     bad = SQLiteGovernanceStore(tmp_path / "no.db")
     assert bad.get_policies("a1") == []
 
 
+@pytest.mark.unit
 def test_list_policies(store) -> None:
     store.set_policy("a1", {"action": "read", "roles": ["admin"]})
     store.set_policy("a2", {"action": "delete", "roles": ["admin"]})
@@ -115,6 +128,7 @@ def test_list_policies(store) -> None:
     assert len(rows) == 1
 
 
+@pytest.mark.unit
 def test_list_policies_error(tmp_path) -> None:
     bad = SQLiteGovernanceStore(tmp_path / "no.db")
     assert bad.list_policies() == []

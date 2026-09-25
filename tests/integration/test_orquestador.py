@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 import sys
 from pathlib import Path
@@ -25,17 +26,20 @@ def _tarea() -> dict:
 
 
 class TestCargarTarea:
+    @pytest.mark.integration
     def test_valida_campos(self, tmp_path: Path) -> None:
         f = tmp_path / "t.json"
         f.write_text(json.dumps(_tarea()))
         assert cargar_tarea(f)["id"] == "T-1"
 
+    @pytest.mark.integration
     def test_falta_campo(self, tmp_path: Path) -> None:
         f = tmp_path / "t.json"
         f.write_text('{"id": "x"}')
         with pytest.raises(ValueError):
             cargar_tarea(f)
 
+    @pytest.mark.integration
     def test_json_invalido(self, tmp_path: Path) -> None:
         f = tmp_path / "t.json"
         f.write_text("{no json")
@@ -44,11 +48,13 @@ class TestCargarTarea:
 
 
 class TestFases:
+    @pytest.mark.integration
     def test_contexto(self) -> None:
         r = fase_contexto(_tarea())
         assert r["ok"] is True
         assert "memoria" in r["info"]
 
+    @pytest.mark.integration
     def test_commit_skip(self) -> None:
         r = fase_commit(_tarea())
         assert r["ok"] is True
@@ -56,6 +62,7 @@ class TestFases:
 
 
 class TestEjecutar:
+    @pytest.mark.integration
     def test_para_en_fallo(self) -> None:
         import orquestador as orq
 
@@ -69,16 +76,19 @@ class TestEjecutar:
         assert report["estado"] == "fallida"
         assert "commit" not in report["resultados"]
 
+    @pytest.mark.integration
     def test_estado_completada(self) -> None:
         tarea = _tarea()
         report = ejecutar_tarea(tarea, fases=["contexto", "planificacion", "commit"])
         assert report["estado"] == "completada"
 
+    @pytest.mark.integration
     def test_fase_desconocida(self) -> None:
         tarea = _tarea()
         report = ejecutar_tarea(tarea, fases=["no-existe"])
         assert report["estado"] == "fallida"
 
+    @pytest.mark.integration
     def test_guarda_log(self, tmp_path: Path) -> None:
         import orquestador as orq
 
@@ -87,6 +97,7 @@ class TestEjecutar:
         logs = list((tmp_path / "logs").glob("*.json"))
         assert len(logs) == 1
 
+    @pytest.mark.integration
     def test_fases_orden(self) -> None:
         assert FASES == [
             "contexto",
@@ -101,6 +112,7 @@ class TestEjecutar:
 
 
 class TestFasesSubprocess:
+    @pytest.mark.integration
     def test_revision_ok(self) -> None:
         from orquestador import fase_revision
 
@@ -108,6 +120,7 @@ class TestFasesSubprocess:
             r = fase_revision(_tarea())
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_revision_falla(self) -> None:
         from orquestador import fase_revision
 
@@ -115,6 +128,7 @@ class TestFasesSubprocess:
             r = fase_revision(_tarea())
         assert r["ok"] is False
 
+    @pytest.mark.integration
     def test_tests_ok(self) -> None:
         from orquestador import fase_tests
 
@@ -122,6 +136,7 @@ class TestFasesSubprocess:
             r = fase_tests(_tarea())
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_tests_fallan(self) -> None:
         from orquestador import fase_tests
 
@@ -129,6 +144,7 @@ class TestFasesSubprocess:
             r = fase_tests(_tarea())
         assert r["ok"] is False
 
+    @pytest.mark.integration
     def test_auditoria_ok(self) -> None:
         import json as _json
 
@@ -142,6 +158,7 @@ class TestFasesSubprocess:
         assert r["ok"] is True
         assert "10/10" in r["detail"]
 
+    @pytest.mark.integration
     def test_auditoria_no_json(self) -> None:
         from orquestador import fase_auditoria
 
@@ -149,6 +166,7 @@ class TestFasesSubprocess:
             r = fase_auditoria(_tarea())
         assert r["ok"] is False
 
+    @pytest.mark.integration
     def test_quality_gate_acepta(self) -> None:
         from orquestador import fase_quality_gate
 
@@ -156,6 +174,7 @@ class TestFasesSubprocess:
             r = fase_quality_gate(_tarea())
         assert r["ok"] is True
 
+    @pytest.mark.integration
     def test_quality_gate_rechaza(self) -> None:
         from orquestador import fase_quality_gate
 

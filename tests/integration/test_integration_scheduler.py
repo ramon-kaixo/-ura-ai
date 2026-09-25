@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -19,11 +20,13 @@ def maintainer() -> AutoMaintainer:
 
 
 class TestSchedulerIntegration:
+    @pytest.mark.integration
     def test_get_status_without_start(self, maintainer):
         status = maintainer.get_scheduler_status()
         assert status["running"] is False
         assert status["reason"] == "Scheduler not started"
 
+    @pytest.mark.integration
     def test_start_scheduler_adds_pipelines(self, maintainer):
         # Verificar que los pipelines se registran (sin iniciar asyncio)
         try:
@@ -42,6 +45,7 @@ class TestSchedulerIntegration:
         except ImportError as e:
             pytest.skip(f"Scheduler no disponible: {e}")
 
+    @pytest.mark.integration
     def test_scheduler_add_and_remove_pipeline(self, maintainer):
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
@@ -54,6 +58,7 @@ class TestSchedulerIntegration:
         except ImportError as e:
             pytest.skip(f"Scheduler no disponible: {e}")
 
+    @pytest.mark.integration
     def test_scheduler_pipeline_interval(self, maintainer):
         try:
             from scripts.pro.tuneladora.scheduler import TuneladoraScheduler
@@ -72,6 +77,7 @@ class TestSchedulerIntegration:
         except ImportError as e:
             pytest.skip(f"Scheduler no disponible: {e}")
 
+    @pytest.mark.integration
     def test_scheduler_start_needs_loop(self, maintainer):
         """Verificar que start() requiere event loop (comportamiento esperado)."""
         try:
@@ -87,12 +93,14 @@ class TestSchedulerIntegration:
 
 @mock.patch("subprocess.run")
 class TestAutoFixCode:
+    @pytest.mark.integration
     def test_auto_fix_code_runs_ruff(self, mock_run, maintainer):
         mock_run.return_value = mock.Mock(returncode=0, stdout="fixed 1 error", stderr="")
         result = maintainer.auto_fix_code("motor/brain/")
         assert "fix_log" in result
         assert mock_run.called
 
+    @pytest.mark.integration
     def test_auto_fix_code_no_changes(self, mock_run, maintainer):
         # Simula: ruff fix ok, ruff format ok, git diff clean
         def side_effect(*args, **kwargs):
@@ -106,6 +114,7 @@ class TestAutoFixCode:
         result = maintainer.auto_fix_code("motor/brain/")
         assert result["status"] == "no_changes"
 
+    @pytest.mark.integration
     def test_auto_fix_code_commits_changes(self, mock_run, maintainer):
         def side_effect(*args, **kwargs):
             cmd = kwargs.get("args") or args[0]
@@ -118,6 +127,7 @@ class TestAutoFixCode:
         result = maintainer.auto_fix_code("motor/brain/")
         assert result["status"] == "committed"
 
+    @pytest.mark.integration
     def test_auto_fix_code_risk_safe(self, maintainer):
         from motor.brain.alerts import Alert
         from motor.brain.auto_maintain import MaintenanceProposal
@@ -129,6 +139,7 @@ class TestAutoFixCode:
         risk = AutoMaintainer._classify_risk(proposal)
         assert risk == "safe"
 
+    @pytest.mark.integration
     def test_auto_fix_code_action_type(self, maintainer):
         """auto_fix_code se mapea a tipo 'format'."""
         action = AutoMaintainer._action_to_type("auto_fix_code")

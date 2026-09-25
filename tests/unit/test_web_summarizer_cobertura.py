@@ -10,6 +10,7 @@ Sin dependencias externas: stdlib + motor.core.web.
 """
 
 from __future__ import annotations
+import pytest
 
 from motor.core.web.models import WebDocument
 from motor.core.web.summarizer.summarizer import (
@@ -32,28 +33,36 @@ def _doc(url: str, text: str, title: str = "") -> WebDocument:
 class TestSplitSentences:
     """División en frases."""
 
+    @pytest.mark.unit
     def test_dos_frases(self) -> None:
         assert split_sentences("Hola mundo. Esto es una frase.") == ["Hola mundo.", "Esto es una frase."]
 
+    @pytest.mark.unit
     def test_frase_unica(self) -> None:
         assert split_sentences("Solo una frase completa.") == ["Solo una frase completa."]
 
+    @pytest.mark.unit
     def test_normaliza_saltos(self) -> None:
         assert split_sentences("Línea uno\nlínea dos.") == ["Línea uno línea dos."]
 
+    @pytest.mark.unit
     def test_frase_corta_anexada(self) -> None:
         assert split_sentences("Primera frase. x")[0].endswith("x")
 
+    @pytest.mark.unit
     def test_frase_corta_mayuscula_anexada_a_anterior(self) -> None:
         # "Y" es corta (< _MIN_SENTENCE_LEN) y va tras frase larga -> se anexa
         assert split_sentences("Primera frase. Y")[0] == "Primera frase. Y"
 
+    @pytest.mark.unit
     def test_vacio_devuelve_vacio(self) -> None:
         assert split_sentences("") == [""]
 
+    @pytest.mark.unit
     def test_espacios(self) -> None:
         assert split_sentences("   ") == [""]
 
+    @pytest.mark.unit
     def test_frase_minima_longitud(self) -> None:
         # len("a") == 1 < _MIN_SENTENCE_LEN, se anexa a anterior o queda sola
         result = split_sentences("a")
@@ -63,14 +72,17 @@ class TestSplitSentences:
 class TestTfScores:
     """Frecuencia de términos."""
 
+    @pytest.mark.unit
     def test_cuentas_y_saturacion(self) -> None:
         tf = _tf_scores("aaa aaa aaa aaa aaa b")
         assert tf["aaa"] <= 0.3
         assert 0 < tf["b"] <= 1.0
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _tf_scores("") == {}
 
+    @pytest.mark.unit
     def test_mayusculas_normalizadas(self) -> None:
         tf = _tf_scores("Hola hola")
         assert tf["hola"] == 0.3  # saturación _MAX_TF
@@ -79,16 +91,20 @@ class TestTfScores:
 class TestTitleOverlap:
     """Solapamiento título-frase."""
 
+    @pytest.mark.unit
     def test_con_solapamiento(self) -> None:
         ratio = _title_overlap("Gatos felices", "los gatos corren felices")
         assert ratio > 0
 
+    @pytest.mark.unit
     def test_solapamiento_total(self) -> None:
         assert _title_overlap("a b", "a b") == 1.0
 
+    @pytest.mark.unit
     def test_titulo_vacio(self) -> None:
         assert _title_overlap("", "cualquier frase") == 0.0
 
+    @pytest.mark.unit
     def test_sin_solapamiento(self) -> None:
         assert _title_overlap("zzz", "abc def") == 0.0
 
@@ -96,15 +112,19 @@ class TestTitleOverlap:
 class TestLengthAndPosition:
     """Longitud y posición."""
 
+    @pytest.mark.unit
     def test_length_centrado_en_20(self) -> None:
         assert abs(_length_score(20) - 1.0) < 1e-6
 
+    @pytest.mark.unit
     def test_length_lejano_bajo(self) -> None:
         assert _length_score(200) < 0.1
 
+    @pytest.mark.unit
     def test_position_single(self) -> None:
         assert _position_score(0, 1) == 1.0
 
+    @pytest.mark.unit
     def test_position_multi(self) -> None:
         assert _position_score(0, 4) == 1.0
         assert _position_score(3, 4) < _position_score(0, 4)
@@ -113,14 +133,17 @@ class TestLengthAndPosition:
 class TestScoreSentence:
     """Puntuación combinada de frase."""
 
+    @pytest.mark.unit
     def test_sin_palabras_devuelve_cero(self) -> None:
         assert score_sentence("!!!", {"a": 0.1}, "t", 0, 1) == 0.0
 
+    @pytest.mark.unit
     def test_con_terminos(self) -> None:
         score = score_sentence("hola mundo", {"hola": 0.2, "mundo": 0.3}, "hola", 0, 3)
         assert score > 0
         assert score < 1
 
+    @pytest.mark.unit
     def test_posicion_influye(self) -> None:
         s0 = score_sentence("una frase", {"una": 0.1, "frase": 0.1}, "", 0, 3)
         s2 = score_sentence("una frase", {"una": 0.1, "frase": 0.1}, "", 2, 3)
@@ -130,6 +153,7 @@ class TestScoreSentence:
 class TestExtractiveSummarizer:
     """Resumidor extractivo."""
 
+    @pytest.mark.unit
     def test_resume_un_documento(self) -> None:
         text = "Primera frase sobre el tema. Segunda frase con más detalle. Tercera frase final."
         summary: Summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", text)])
@@ -139,16 +163,19 @@ class TestExtractiveSummarizer:
         assert len(summary.sentence_origins) == len(summary.sentences)
         assert summary.sentence_origins[0]["url"] == "https://example.com/a"
 
+    @pytest.mark.unit
     def test_max_length_recorta(self) -> None:
         text = "Uno de cada. Dos de cada. Tres de cada. Cuatro de cada. Cinco de cada."
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", text)], max_length=2)
         assert len(summary.sentences) <= 2
 
+    @pytest.mark.unit
     def test_deduplica_frases_repetidas(self) -> None:
         text = "La misma frase repetida. La misma frase repetida. Otra distinta."
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", text)])
         assert summary.sentences.count("La misma frase repetida.") == 1
 
+    @pytest.mark.unit
     def test_multiple_documentos(self) -> None:
         summary = ExtractiveSummarizer().summarize(
             [
@@ -159,6 +186,7 @@ class TestExtractiveSummarizer:
         )
         assert len(summary.source_documents) == 2
 
+    @pytest.mark.unit
     def test_caracteres_restringidos(self) -> None:
         # HALLAZGO: la intención del test (saltar frases solo-con-especiales) NO
         # está implementada en producción; la frase se conserva tal cual.
@@ -166,25 +194,30 @@ class TestExtractiveSummarizer:
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", "!!! ...")])
         assert summary.sentences == ["!!! ..."]
 
+    @pytest.mark.unit
     def test_texto_vacio(self) -> None:
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", "")])
         assert summary.sentences == []
         assert summary.text == ""
 
+    @pytest.mark.unit
     def test_documentos_vacios(self) -> None:
         summary = ExtractiveSummarizer().summarize([])
         assert summary.sentences == []
         assert summary.source_documents == []
 
+    @pytest.mark.unit
     def test_compression_ratio_cero_sin_texto(self) -> None:
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", "")])
         assert summary.compression_ratio == 0.0
 
+    @pytest.mark.unit
     def test_compression_ratio_positivo(self) -> None:
         text = ". ".join(f"Frase{i}" for i in range(20))  # mayúscula tras punto (regex de split)
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", text)], max_length=2)
         assert summary.compression_ratio > 0
 
+    @pytest.mark.unit
     def test_puntuacion_y_posicion_consistentes(self) -> None:
         text = "Primera. Segunda. Tercera."
         summary = ExtractiveSummarizer().summarize([_doc("https://example.com/a", text)], max_length=3)
@@ -196,11 +229,13 @@ class TestExtractiveSummarizer:
 class TestSummaryDataclass:
     """Acceso a campos de Summary y SentenceInfo."""
 
+    @pytest.mark.unit
     def test_summary_campos(self) -> None:
         s = Summary(text="t", sentences=["t"], source_documents=["u"], sentence_origins=[{}], compression_ratio=0.5)
         assert s.text == "t"
         assert s.compression_ratio == 0.5
 
+    @pytest.mark.unit
     def test_sentence_info_campos(self) -> None:
         si = SentenceInfo(text="t", score=0.9, position=1, document_url="u", document_title="T")
         assert si.document_title == "T"

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -19,17 +20,20 @@ def queue(db_path: Path) -> PendingQueue:
 
 
 class TestPendingQueue:
+    @pytest.mark.integration
     def test_add_returns_id(self, queue: PendingQueue):
         fid = queue.add(archivo="test.py", herramienta="ruff", severidad="high", error_raw="F821")
         assert isinstance(fid, int)
         assert fid > 0
 
+    @pytest.mark.integration
     def test_list_pending(self, queue: PendingQueue):
         queue.add(archivo="a.py", herramienta="ruff", severidad="high", error_raw="E1")
         queue.add(archivo="b.py", herramienta="ruff", severidad="low", error_raw="E2")
         items = queue.list_pending()
         assert len(items) == 2
 
+    @pytest.mark.integration
     def test_list_pending_filter_severity(self, queue: PendingQueue):
         queue.add(archivo="a.py", herramienta="ruff", severidad="high", error_raw="E1")
         queue.add(archivo="b.py", herramienta="ruff", severidad="low", error_raw="E2")
@@ -37,17 +41,20 @@ class TestPendingQueue:
         assert len(items) == 1
         assert items[0]["archivo"] == "a.py"
 
+    @pytest.mark.integration
     def test_resolve(self, queue: PendingQueue):
         fid = queue.add(archivo="a.py", herramienta="ruff", severidad="high", error_raw="E1")
         queue.resolve(fid, estado="hecho")
         items = queue.list_pending()
         assert len(items) == 0
 
+    @pytest.mark.integration
     def test_record_run(self, queue: PendingQueue):
         rid = queue.record_run(mode="check", verdict="OK", seconds=1.5)
         assert isinstance(rid, int)
         assert rid > 0
 
+    @pytest.mark.integration
     def test_stats(self, queue: PendingQueue):
         queue.record_run(mode="check", verdict="OK", seconds=1.0)
         queue.record_run(mode="fix", verdict="FAIL", seconds=2.0)
@@ -57,12 +64,14 @@ class TestPendingQueue:
         assert s["fail_runs"] == 1
         assert s["pending_fixes"] == 0
 
+    @pytest.mark.integration
     def test_add_with_estado_imposible(self, queue: PendingQueue):
         fid = queue.add(archivo="x.py", herramienta="ruff", severidad="high", error_raw="no llm", estado="imposible")
         assert fid > 0
         items = queue.list_pending()
         assert len(items) == 0  # 'imposible' no es 'pendiente'
 
+    @pytest.mark.integration
     def test_ok_flag_on_bad_db(self, tmp_path: Path):
         block = tmp_path / "block"
         block.write_text("")  # crear archivo en lugar de dir
@@ -75,6 +84,7 @@ class TestPendingQueue:
 
 
 class TestPendingQueueConcurrency:
+    @pytest.mark.integration
     def test_concurrent_add(self, queue: PendingQueue):
         ids = []
         for i in range(5):
@@ -84,6 +94,7 @@ class TestPendingQueueConcurrency:
         items = queue.list_pending()
         assert len(items) == 5
 
+    @pytest.mark.integration
     def test_db_cleanup(self, db_path: Path):
         q = PendingQueue(db_path)
         q.add(archivo="a.py", herramienta="ruff", severidad="high", error_raw="E1")

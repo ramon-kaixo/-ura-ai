@@ -1,3 +1,4 @@
+import pytest
 """Tests para ura_chat.py — CLI interactivo."""
 
 import builtins
@@ -5,6 +6,7 @@ from unittest.mock import patch
 
 
 class TestUraChatCli:
+    @pytest.mark.unit
     def test_chat_quit_command(self, capsys):
         from ura_chat import chat_loop
 
@@ -13,6 +15,7 @@ class TestUraChatCli:
             captured = capsys.readouterr()
             assert "Hasta luego" in captured.out
 
+    @pytest.mark.unit
     def test_chat_eof_terminates(self, capsys):
         from ura_chat import chat_loop
 
@@ -21,6 +24,7 @@ class TestUraChatCli:
             captured = capsys.readouterr()
             assert "Hasta luego" in captured.out
 
+    @pytest.mark.unit
     def test_chat_empty_input_skipped(self):
         from ura_chat import chat_loop
 
@@ -28,6 +32,7 @@ class TestUraChatCli:
             chat_loop()
             mock_post.assert_not_called()
 
+    @pytest.mark.unit
     def test_chat_mode_change(self, capsys):
         from ura_chat import chat_loop
 
@@ -36,6 +41,7 @@ class TestUraChatCli:
             captured = capsys.readouterr()
             assert "Modo cambiado a: test" in captured.out
 
+    @pytest.mark.unit
     def test_chat_post_success(self, capsys):
         from ura_chat import chat_loop
 
@@ -60,6 +66,7 @@ class TestUraChatCli:
                 assert "respuesta test" in captured.out
                 mock_post.assert_called_once()
 
+    @pytest.mark.unit
     def test_chat_post_error(self, capsys):
         from ura_chat import chat_loop
 

@@ -15,6 +15,7 @@ Sin dependencias externas: stdlib + motor.core.fusion.
 """
 
 from __future__ import annotations
+import pytest
 
 from motor.core.fusion.context_builder import ContextBuilder
 from motor.core.fusion.engine import FusionStage
@@ -74,6 +75,7 @@ def _context(**kw) -> FusionContext:
 
 
 class TestThresholdSelector:
+    @pytest.mark.unit
     def test_selecciona_por_confianza(self) -> None:
         s = ThresholdSelector(min_confidence=0.5)
         fr = FusionResult(accepted=(_fact(conf=0.9), _fact(conf=0.4), _fact(conf=0.6)))
@@ -81,28 +83,33 @@ class TestThresholdSelector:
         assert len(sel) == 2
         assert all(f.confidence >= 0.5 for f in sel)
 
+    @pytest.mark.unit
     def test_ordena_descendente(self) -> None:
         s = ThresholdSelector(min_confidence=0.1)
         fr = FusionResult(accepted=(_fact(conf=0.4), _fact(conf=0.9), _fact(conf=0.6)))
         confs = [f.confidence for f in s.select(fr)]
         assert confs == [0.9, 0.6, 0.4]
 
+    @pytest.mark.unit
     def test_respeta_max_candidates_del_selector(self) -> None:
         s = ThresholdSelector(min_confidence=0.0, max_candidates=2)
         fr = FusionResult(accepted=(_fact(conf=0.9), _fact(conf=0.8), _fact(conf=0.7)))
         assert len(s.select(fr)) == 2
 
+    @pytest.mark.unit
     def test_respeta_max_candidates_del_call(self) -> None:
         s = ThresholdSelector(min_confidence=0.0, max_candidates=10)
         fr = FusionResult(accepted=(_fact(conf=0.9), _fact(conf=0.8), _fact(conf=0.7)))
         assert len(s.select(fr, max_candidates=2)) == 2
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         s = ThresholdSelector()
         assert s.select(FusionResult()) == []
 
 
 class TestMemoryCandidateSelectionStage:
+    @pytest.mark.unit
     def test_propiedades(self) -> None:
         st = MemoryCandidateSelectionStage()
         assert st.stage == FusionStage.SELECTION
@@ -110,6 +117,7 @@ class TestMemoryCandidateSelectionStage:
         assert st.version == "1.0.0"
         assert st.deterministic is True
 
+    @pytest.mark.unit
     def test_ejecuta_sin_ambiguos(self) -> None:
         st = MemoryCandidateSelectionStage()
         ctx = _context(facts=[_fact(), _fact(conf=0.2)])
@@ -119,6 +127,7 @@ class TestMemoryCandidateSelectionStage:
         assert out.provenance.selector_name == "ThresholdSelector"
         assert len(out.transforms) == 1
 
+    @pytest.mark.unit
     def test_skip_entidades_ambiguas(self) -> None:
         st = MemoryCandidateSelectionStage()
         ctx = _context(
@@ -128,6 +137,7 @@ class TestMemoryCandidateSelectionStage:
         out = st.execute(ctx)
         assert any("ambiguous" in w for w in out.warnings)
 
+    @pytest.mark.unit
     def test_memory_disponible_escribe_entries(self) -> None:
         class FakeMemory:
             def __init__(self) -> None:
@@ -145,6 +155,7 @@ class TestMemoryCandidateSelectionStage:
         assert memory.entries[0].source == "fusion_pipeline"
         assert memory.entries[0].event_type.value == "fact_added"
 
+    @pytest.mark.unit
     def test_memory_duplicado_se_ignora(self) -> None:
         class FakeMemory:
             def append(self, entry) -> None:
@@ -157,6 +168,7 @@ class TestMemoryCandidateSelectionStage:
         # pipeline: el KeyError se traga pero no decrementa el contador).
         assert out.statistics["memory_entries_written"] == 1
 
+    @pytest.mark.unit
     def test_memory_sin_seleccion_no_escribe(self) -> None:
         st = MemoryCandidateSelectionStage()
         ctx = _context(facts=[], statistics={"_memory_instance": object()})
@@ -165,6 +177,7 @@ class TestMemoryCandidateSelectionStage:
 
 
 class TestSimpleKnowledgeMerger:
+    @pytest.mark.unit
     def test_merge_una_claim(self) -> None:
         m = SimpleKnowledgeMerger()
         claims = [_claim("Apple vende iPhones", conf=0.9)]
@@ -176,6 +189,7 @@ class TestSimpleKnowledgeMerger:
         assert facts[0].confidence == 0.9
         assert facts[0].evidence_ids == ("t-Apple vende iPhones",)
 
+    @pytest.mark.unit
     def test_merge_claim_corta(self) -> None:
         m = SimpleKnowledgeMerger()
         facts = m.merge([_claim("Apple", conf=0.5)], [])
@@ -183,21 +197,25 @@ class TestSimpleKnowledgeMerger:
         assert facts[0].predicate == ""
         assert facts[0].object == ""
 
+    @pytest.mark.unit
     def test_merge_vacia(self) -> None:
         m = SimpleKnowledgeMerger()
         assert m.merge([], []) == []
 
+    @pytest.mark.unit
     def test_version(self) -> None:
         assert SimpleKnowledgeMerger().version == "1.0.0"
 
 
 class TestKnowledgeMergerStage:
+    @pytest.mark.unit
     def test_propiedades(self) -> None:
         st = KnowledgeMergerStage()
         assert st.stage == FusionStage.MERGE
         assert st.name == "KnowledgeMergerStage"
         assert st.version == "1.0.0"
 
+    @pytest.mark.unit
     def test_merge_facts(self) -> None:
         st = KnowledgeMergerStage()
         ctx = _context(claims=[_claim("Apple vende iPhones"), _claim("Apple vende Macs")])
@@ -206,12 +224,14 @@ class TestKnowledgeMergerStage:
         assert out.statistics["facts_merged"] == 2
         assert out.provenance.merger_name == "SimpleKnowledgeMerger"
 
+    @pytest.mark.unit
     def test_sin_claims_no_facts(self) -> None:
         st = KnowledgeMergerStage()
         out = st.execute(_context())
         assert out.facts == []
         assert out.statistics["facts_merged"] == 0
 
+    @pytest.mark.unit
     def test_excluye_claims_ambiguos(self) -> None:
         st = KnowledgeMergerStage()
         claims = [_claim("Apple vende iPhones"), _claim("Tesla vende coches")]
@@ -224,6 +244,7 @@ class TestKnowledgeMergerStage:
 
 
 class TestBasicChangeDetector:
+    @pytest.mark.unit
     def test_added_updated_confirmed(self) -> None:
         d = BasicChangeDetector()
         new = [
@@ -241,12 +262,14 @@ class TestBasicChangeDetector:
         assert delta.facts_added[0].id == "f-a"
         assert delta.facts_updated[0].id == "f-b"
 
+    @pytest.mark.unit
     def test_todos_added(self) -> None:
         d = BasicChangeDetector()
         delta = d.detect_delta([_fact()], [])
         assert len(delta.facts_added) == 1
         assert delta.has_changes is True
 
+    @pytest.mark.unit
     def test_sin_cambios(self) -> None:
         d = BasicChangeDetector()
         f = _fact()
@@ -255,9 +278,11 @@ class TestBasicChangeDetector:
         assert len(delta.facts_updated) == 0
         assert delta.has_changes is False
 
+    @pytest.mark.unit
     def test_version(self) -> None:
         assert BasicChangeDetector().version == "1.0.0"
 
+    @pytest.mark.unit
     def test_existing_sin_id_ignorado(self) -> None:
         d = BasicChangeDetector()
         f = _fact(subject="A", predicate="p", obj="nuevo", id="f-a")
@@ -268,12 +293,14 @@ class TestBasicChangeDetector:
 
 
 class TestKnowledgeDeltaStage:
+    @pytest.mark.unit
     def test_propiedades(self) -> None:
         st = KnowledgeDeltaStage()
         assert st.stage == FusionStage.DELTA
         assert st.name == "KnowledgeDeltaStage"
         assert st.version == "1.0.0"
 
+    @pytest.mark.unit
     def test_delta_stats(self) -> None:
         st = KnowledgeDeltaStage()
         f = _fact(subject="A", predicate="p", obj="nuevo", id="f-a")
@@ -286,6 +313,7 @@ class TestKnowledgeDeltaStage:
         assert out.statistics["has_changes"] is True
         assert out.provenance.change_detector_name == "BasicChangeDetector"
 
+    @pytest.mark.unit
     def test_sin_cambios(self) -> None:
         st = KnowledgeDeltaStage()
         f = _fact()
@@ -293,6 +321,7 @@ class TestKnowledgeDeltaStage:
         out = st.execute(ctx)
         assert out.statistics["has_changes"] is False
 
+    @pytest.mark.unit
     def test_ambiguos_warning(self) -> None:
         st = KnowledgeDeltaStage()
         ctx = _context(facts=[_fact()], statistics={"ambiguous_entity_ids": ["x"]})
@@ -301,6 +330,7 @@ class TestKnowledgeDeltaStage:
 
 
 class TestNaiveConflictResolver:
+    @pytest.mark.unit
     def test_detecta_contradiccion(self) -> None:
         r = NaiveConflictResolver()
         claims = [_claim("Apple vende iPhones", subject="apple", predicate="vende", object="iPhones"),
@@ -310,35 +340,41 @@ class TestNaiveConflictResolver:
         assert conflicts[0].conflict_type == ConflictType.CONTRADICTION
         assert "iPhones" in conflicts[0].description
 
+    @pytest.mark.unit
     def test_no_conflicto_mismo_objeto(self) -> None:
         r = NaiveConflictResolver()
         claims = [_claim("Apple vende iPhones", subject="apple", predicate="vende", object="iPhones"),
                   _claim("Apple vende iPhones", subject="Apple", predicate="vende", object="iPhones")]
         assert r.detect(claims) == []
 
+    @pytest.mark.unit
     def test_no_conflicto_distinto_sujeto(self) -> None:
         r = NaiveConflictResolver()
         claims = [_claim("Apple vende iPhones", subject="apple", predicate="vende", object="iPhones"),
                   _claim("Tesla vende coches", subject="tesla", predicate="vende", object="coches")]
         assert r.detect(claims) == []
 
+    @pytest.mark.unit
     def test_sujeto_vacio_ignorado(self) -> None:
         r = NaiveConflictResolver()
         claims = [_claim("x", subject="", predicate="", object="")]
         assert r.detect(claims) == []
 
+    @pytest.mark.unit
     def test_sujeto_vacio_solo_b(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("Apple vende iPhones", subject="apple", predicate="vende", object="iPhones")
         b = _claim("x", subject="", predicate="vende", object="Macs")
         assert r.detect([a, b]) == []
 
+    @pytest.mark.unit
     def test_predicado_distinto_no_conflicto(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("Apple vende iPhones", subject="apple", predicate="vende", object="iPhones")
         b = _claim("Apple compra Macs", subject="Apple", predicate="compra", object="Macs")
         assert r.detect([a, b]) == []
 
+    @pytest.mark.unit
     def test_resuelve_con_ganador(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("Apple vende iPhones", conf=0.9)
@@ -350,6 +386,7 @@ class TestNaiveConflictResolver:
         assert conflicts[0].resolved is True
         assert "Preferring" in conflicts[0].resolution or conflicts[0].resolution
 
+    @pytest.mark.unit
     def test_empate_queda_sin_resolver(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("Apple vende iPhones", conf=0.5)
@@ -359,6 +396,7 @@ class TestNaiveConflictResolver:
         assert len(unresolved) == 1
         assert conflicts[0].resolved is False
 
+    @pytest.mark.unit
     def test_resolve_ignora_claims_faltantes(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("Apple vende iPhones", conf=0.9)
@@ -368,33 +406,39 @@ class TestNaiveConflictResolver:
         assert facts == []
         assert unresolved == []
 
+    @pytest.mark.unit
     def test_version(self) -> None:
         assert NaiveConflictResolver().version == "1.0.0"
 
+    @pytest.mark.unit
     def test_check_pair_sujeto_vacio_uno(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("x", subject="apple", predicate="vende", object="iPhones")
         b = _claim("y", subject="", predicate="vende", object="Macs")
         assert r._check_pair(a, b) is None
 
+    @pytest.mark.unit
     def test_check_pair_subject_distinto(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("x", subject="apple", predicate="vende", object="iPhones")
         b = _claim("y", subject="tesla", predicate="vende", object="Macs")
         assert r._check_pair(a, b) is None
 
+    @pytest.mark.unit
     def test_check_pair_predicate_distinto(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("x", subject="apple", predicate="vende", object="iPhones")
         b = _claim("y", subject="Apple", predicate="compra", object="Macs")
         assert r._check_pair(a, b) is None
 
+    @pytest.mark.unit
     def test_check_pair_objeto_igual(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("x", subject="apple", predicate="vende", object="iPhones")
         b = _claim("y", subject="Apple", predicate="vende", object="iPhones")
         assert r._check_pair(a, b) is None
 
+    @pytest.mark.unit
     def test_check_pair_conflicto(self) -> None:
         r = NaiveConflictResolver()
         a = _claim("x", subject="apple", predicate="vende", object="iPhones")
@@ -407,17 +451,20 @@ class TestNaiveConflictResolver:
 
 
 class TestConflictDetectionStage:
+    @pytest.mark.unit
     def test_propiedades(self) -> None:
         st = ConflictDetectionStage()
         assert st.stage == FusionStage.CONFLICT_DETECTION
         assert st.name == "ConflictDetectionStage"
         assert st.version == "1.0.0"
 
+    @pytest.mark.unit
     def test_sin_claims_return(self) -> None:
         st = ConflictDetectionStage()
         out = st.execute(_context())
         assert out.conflicts == []
 
+    @pytest.mark.unit
     def test_detecta_y_resuelve(self) -> None:
         st = ConflictDetectionStage()
         claims = [_claim("Apple vende iPhones", conf=0.9, subject="apple", predicate="vende", object="iPhones"),
@@ -430,6 +477,7 @@ class TestConflictDetectionStage:
         assert out.conflict_graph.has_conflicts is True
         assert out.provenance.conflict_resolver_name == "NaiveConflictResolver"
 
+    @pytest.mark.unit
     def test_ambiguos_skip(self) -> None:
         st = ConflictDetectionStage()
         claims = [_claim("Apple vende iPhones", text_id="t-x")]
@@ -438,6 +486,7 @@ class TestConflictDetectionStage:
         assert out.statistics["conflicts_detected"] == 0
         assert any("ambiguous" in w for w in out.warnings)
 
+    @pytest.mark.unit
     def test_todos_ambiguos_no_stats_conflicto(self) -> None:
         st = ConflictDetectionStage()
         claims = [_claim("t-x contenido ambiguo", text_id="t-x")]
@@ -448,6 +497,7 @@ class TestConflictDetectionStage:
 
 
 class TestFusionRegistry:
+    @pytest.mark.unit
     def test_register_get_engine(self) -> None:
         r = FusionRegistry()
         engine = object()
@@ -455,6 +505,7 @@ class TestFusionRegistry:
         assert r.get_engine("a") is engine
         assert r.list_engines() == ["a"]
 
+    @pytest.mark.unit
     def test_get_engine_missing(self) -> None:
         r = FusionRegistry()
         try:
@@ -463,6 +514,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_default_missing(self) -> None:
         r = FusionRegistry()
         try:
@@ -471,6 +523,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_conflict_resolvers(self) -> None:
         r = FusionRegistry()
         res = object()
@@ -483,6 +536,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_source_scorers(self) -> None:
         r = FusionRegistry()
         s = object()
@@ -495,6 +549,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_mergers(self) -> None:
         r = FusionRegistry()
         m = object()
@@ -507,6 +562,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_change_detectors(self) -> None:
         r = FusionRegistry()
         d = object()
@@ -519,6 +575,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_selectors(self) -> None:
         r = FusionRegistry()
         s = object()
@@ -531,6 +588,7 @@ class TestFusionRegistry:
         except KeyError:
             pass
 
+    @pytest.mark.unit
     def test_entity_resolvers(self) -> None:
         r = FusionRegistry()
         e = object()
@@ -562,11 +620,13 @@ class _FakeIndex:
 
 
 class TestContextBuilder:
+    @pytest.mark.unit
     def test_sin_index_devuelve_vacio(self) -> None:
         b = ContextBuilder()
         assert b.build_context(query="que vende apple") == ""
         assert b.index is None
 
+    @pytest.mark.unit
     def test_con_index_y_query(self) -> None:
         facts = [
             _fact(subject="Apple", predicate="vende", obj="iPhones", conf=0.9),
@@ -578,42 +638,50 @@ class TestContextBuilder:
         assert "Apple | vende | Macs" in ctx
         assert "# Conocimiento disponible" in ctx
 
+    @pytest.mark.unit
     def test_include_entities_prioridad(self) -> None:
         facts = [_fact(subject="Apple", predicate="vende", obj="iPhones", conf=0.9)]
         b = ContextBuilder(_FakeIndex(facts))
         ctx = b.build_context(query="", include_entities=["Apple"])
         assert "Apple | vende | iPhones" in ctx
 
+    @pytest.mark.unit
     def test_include_entities_con_query(self) -> None:
         facts = [_fact(subject="Apple", predicate="vende", obj="iPhones", conf=0.9)]
         b = ContextBuilder(_FakeIndex(facts))
         ctx = b.build_context(query="irrelevante", include_entities=["Apple"])
         assert "Apple | vende | iPhones" in ctx
 
+    @pytest.mark.unit
     def test_max_facts_recorta(self) -> None:
         facts = [_fact(subject=f"Empresa{i}", predicate="p", obj="o", conf=0.9) for i in range(5)]
         b = ContextBuilder(_FakeIndex(facts))
         ctx = b.build_context(query="Empresa1 Empresa2", max_facts=1)
         assert ctx.count("- ") == 1
 
+    @pytest.mark.unit
     def test_sin_facts_vacio(self) -> None:
         b = ContextBuilder(_FakeIndex([]))
         assert b.build_context(query="nada") == ""
 
+    @pytest.mark.unit
     def test_sin_query_ni_entities_vacio(self) -> None:
         b = ContextBuilder(_FakeIndex([_fact()]))
         assert b.build_context(query="", include_entities=None) == ""
 
+    @pytest.mark.unit
     def test_entities_sin_query(self) -> None:
         b = ContextBuilder(_FakeIndex([_fact()]))
         assert b.build_context(query="", include_entities=["Apple"]) != ""
 
+    @pytest.mark.unit
     def test_entries_duplicadas_dedup(self) -> None:
         f = _fact(subject="Apple", predicate="vende", obj="iPhones", conf=0.9)
         b = ContextBuilder(_FakeIndex([f, f]))
         ctx = b.build_context(query="que vende apple")
         assert ctx.count("- ") == 1
 
+    @pytest.mark.unit
     def test_tupla_con_version_no_current_ignorada(self) -> None:
         from motor.core.fusion.models import VersionState
 
@@ -632,6 +700,7 @@ class TestContextBuilder:
         b = ContextBuilder(_FakeIndex([(ff, FakeVersion())]))
         assert b.build_context(query="que vende apple") == ""
 
+    @pytest.mark.unit
     def test_tupla_con_version_current_formateada(self) -> None:
         from motor.core.fusion.models import VersionState
 
@@ -655,12 +724,14 @@ class TestContextBuilder:
         assert "Apple | vende | iPhones" in ctx
         assert "0.90" in ctx
 
+    @pytest.mark.unit
     def test_set_index(self) -> None:
         b = ContextBuilder()
         b.set_index(_FakeIndex([_fact()]))
         assert b.index is not None
         assert b.build_context(query="Apple") != ""
 
+    @pytest.mark.unit
     def test_collect_facts_sin_index(self) -> None:
         b = ContextBuilder()
         assert b._collect_facts("query", None) == []

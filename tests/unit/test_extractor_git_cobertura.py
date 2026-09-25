@@ -12,6 +12,7 @@ es el real del módulo.
 
 from __future__ import annotations
 
+import pytest
 import subprocess
 from collections.abc import Callable
 from pathlib import Path
@@ -85,6 +86,7 @@ def local_repo(tmp_path: Path) -> Path:
 class TestRegistry:
     """Registro automático del extractor en el registry global."""
 
+    @pytest.mark.unit
     def test_git_extractor_registered(self) -> None:
         extractor = get_registry().get("git")
         assert isinstance(extractor, GitExtractor)
@@ -97,6 +99,7 @@ class TestRegistry:
 class TestExtract:
     """Flujo completo de GitExtractor.extract."""
 
+    @pytest.mark.unit
     def test_sin_git_cli(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", False)
         result = GitExtractor().extract(AssetSource("github", "https://github.com/user/repo"))
@@ -105,6 +108,7 @@ class TestExtract:
         assert result.asset is None
         assert result.duration_ms >= 0
 
+    @pytest.mark.unit
     def test_location_vacia(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         result = GitExtractor().extract(AssetSource("filesystem", ""))
@@ -112,6 +116,7 @@ class TestExtract:
         assert result.errors == ["Empty location"]
         assert result.asset is None
 
+    @pytest.mark.unit
     def test_resolve_devuelve_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         monkeypatch.setattr(GitExtractor, "_resolve_work_dir", lambda self, source, location: "Not a git repository: /x")
@@ -121,6 +126,7 @@ class TestExtract:
         assert result.errors == ["Not a git repository: /x"]
         assert result.asset is None
 
+    @pytest.mark.unit
     def test_exito_local_sin_limpieza(self, monkeypatch: pytest.MonkeyPatch, local_repo: Path) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         monkeypatch.setattr(git_mod, "_git_cmd", _fake_git_cmd(_FULL_OUTPUTS))
@@ -154,6 +160,7 @@ class TestExtract:
         assert "cloned_from" not in md
         assert rmtree_calls == []
 
+    @pytest.mark.unit
     def test_exito_remoto_limpieza_temp(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         tmp_dir = tmp_path / "clone-target"
@@ -173,6 +180,7 @@ class TestExtract:
         assert md["clone_size"] == md["size"]
         assert rmtree_calls == [(str(tmp_dir),)]
 
+    @pytest.mark.unit
     def test_excepcion_capturada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
 
@@ -186,6 +194,7 @@ class TestExtract:
         assert result.errors == ["Extraction error: boom"]
         assert result.asset is None
 
+    @pytest.mark.unit
     def test_temp_sin_work_dir_no_limpia(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         monkeypatch.setattr(GitExtractor, "_resolve_work_dir", lambda self, source, location: ("", True))
@@ -197,6 +206,7 @@ class TestExtract:
         assert result.asset is not None
         assert rmtree_calls == []
 
+    @pytest.mark.unit
     def test_limite_tamano_error(self, monkeypatch: pytest.MonkeyPatch, local_repo: Path) -> None:
         monkeypatch.setattr(git_mod, "_HAS_GIT", True)
         monkeypatch.setattr(GitExtractor, "_repo_size", staticmethod(lambda p: MAX_CLONE_SIZE + 1))
@@ -211,6 +221,7 @@ class TestExtract:
 class TestResolveWorkDir:
     """Resolución del directorio de trabajo: remoto (clone) o local."""
 
+    @pytest.mark.unit
     def test_remoto_kind_github(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         tmp_dir = tmp_path / "t"
         tmp_dir.mkdir()
@@ -221,6 +232,7 @@ class TestResolveWorkDir:
 
         assert work == (str(tmp_dir), True)
 
+    @pytest.mark.unit
     def test_remoto_por_url_https(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         tmp_dir = tmp_path / "t"
         tmp_dir.mkdir()
@@ -231,6 +243,7 @@ class TestResolveWorkDir:
 
         assert work == (str(tmp_dir), True)
 
+    @pytest.mark.unit
     def test_remoto_por_ssh(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         tmp_dir = tmp_path / "t"
         tmp_dir.mkdir()
@@ -241,11 +254,13 @@ class TestResolveWorkDir:
 
         assert work == (str(tmp_dir), True)
 
+    @pytest.mark.unit
     def test_local_repo(self, local_repo: Path) -> None:
         work = GitExtractor()._resolve_work_dir(AssetSource("filesystem", str(local_repo)), str(local_repo))
 
         assert work == (str(local_repo), False)
 
+    @pytest.mark.unit
     def test_local_directorio_dot_git(self, tmp_path: Path) -> None:
         git_dir = tmp_path / "repo" / ".git"
         git_dir.mkdir(parents=True)
@@ -255,6 +270,7 @@ class TestResolveWorkDir:
 
         assert work == (str(git_dir.parent), False)
 
+    @pytest.mark.unit
     def test_existe_sin_git(self, tmp_path: Path) -> None:
         loc = str(tmp_path / "plain")
         (tmp_path / "plain").mkdir()
@@ -263,6 +279,7 @@ class TestResolveWorkDir:
 
         assert work == f"Not a git repository: {loc}"
 
+    @pytest.mark.unit
     def test_location_no_encontrada(self) -> None:
         loc = "/no/such/dir-xyz"
 
@@ -274,6 +291,7 @@ class TestResolveWorkDir:
 class TestCloneRepo:
     """GitExtractor._clone_repo: clonado con git CLI."""
 
+    @pytest.mark.unit
     def test_exito_devuelve_target(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod.subprocess, "run", lambda *args, **kw: SimpleNamespace(returncode=0, stderr=None))
 
@@ -281,6 +299,7 @@ class TestCloneRepo:
 
         assert target == "/tmp/t"
 
+    @pytest.mark.unit
     def test_fallo_raise_runtime_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             git_mod.subprocess,
@@ -291,6 +310,8 @@ class TestCloneRepo:
         with pytest.raises(RuntimeError, match="fatal: boom"):
             GitExtractor._clone_repo("https://github.com/user/repo", "/tmp/t")
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_comando_y_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[dict[str, Any]] = []
 
@@ -313,24 +334,28 @@ class TestCloneRepo:
 class TestFindGitDir:
     """GitExtractor._find_git_dir: detección del directorio .git."""
 
+    @pytest.mark.unit
     def test_subdirectorio_dot_git(self, tmp_path: Path) -> None:
         p = tmp_path / "repo"
         (p / ".git").mkdir(parents=True)
 
         assert GitExtractor._find_git_dir(str(p)) == str(p / ".git")
 
+    @pytest.mark.unit
     def test_propio_directorio_dot_git(self, tmp_path: Path) -> None:
         p = tmp_path / ".git"
         p.mkdir()
 
         assert GitExtractor._find_git_dir(str(p)) == str(p)
 
+    @pytest.mark.unit
     def test_sin_git_retorna_none(self, tmp_path: Path) -> None:
         p = tmp_path / "plain"
         p.mkdir()
 
         assert GitExtractor._find_git_dir(str(p)) is None
 
+    @pytest.mark.unit
     def test_dot_git_como_archivo(self, tmp_path: Path) -> None:
         p = tmp_path / "repo"
         p.mkdir()
@@ -342,6 +367,7 @@ class TestFindGitDir:
 class TestBuildGitAsset:
     """GitExtractor._build_git_asset: construcción del KnowledgeAsset."""
 
+    @pytest.mark.unit
     def test_construccion_local(self, monkeypatch: pytest.MonkeyPatch, local_repo: Path) -> None:
         monkeypatch.setattr(git_mod, "_git_cmd", _fake_git_cmd(_FULL_OUTPUTS))
         now = "2026-08-15T10:00:00+00:00"
@@ -361,6 +387,7 @@ class TestBuildGitAsset:
         assert asset.metadata["wraps"] == f"source:{local_repo}"
         assert "cloned_from" not in asset.metadata
 
+    @pytest.mark.unit
     def test_temp_anade_clonado(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         work = tmp_path / "work"
         work.mkdir()
@@ -372,6 +399,7 @@ class TestBuildGitAsset:
         assert asset.metadata["cloned_from"] == "https://github.com/user/repo"
         assert asset.metadata["clone_size"] == asset.metadata["size"]
 
+    @pytest.mark.unit
     def test_repo_demasiado_grande(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod, "_git_cmd", _fake_git_cmd(_FULL_OUTPUTS))
         monkeypatch.setattr(GitExtractor, "_repo_size", staticmethod(lambda p: MAX_CLONE_SIZE + 1))
@@ -384,6 +412,7 @@ class TestBuildGitAsset:
 class TestRepoSize:
     """GitExtractor._repo_size: tamaño del repo recorriendo el árbol."""
 
+    @pytest.mark.unit
     def test_suma_archivos_y_subdirectorios(self, tmp_path: Path) -> None:
         (tmp_path / "a.txt").write_bytes(b"12345")
         sub = tmp_path / "sub"
@@ -392,6 +421,7 @@ class TestRepoSize:
 
         assert GitExtractor._repo_size(str(tmp_path)) == 12
 
+    @pytest.mark.unit
     def test_symlink_roto_ignorado(self, tmp_path: Path) -> None:
         (tmp_path / "ok.txt").write_bytes(b"abc")
         (tmp_path / "broken").symlink_to(tmp_path / "missing-target")
@@ -402,6 +432,7 @@ class TestRepoSize:
 class TestExtractGitMetadata:
     """GitExtractor._extract_git_metadata: parsing de salidas de git."""
 
+    @pytest.mark.unit
     def test_completo(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         (tmp_path / "README.md").write_text("Hello", encoding="utf-8")
         outputs: dict[str, str | None] = {
@@ -428,6 +459,7 @@ class TestExtractGitMetadata:
         assert md["branch_count"] == 2
         assert md["readme_preview"] == "Hello"
 
+    @pytest.mark.unit
     def test_salidas_vacias(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         outputs = {"config": None, "rev-parse": None, "log": None, "tag": None, "branch": None}
         monkeypatch.setattr(git_mod, "_git_cmd", _fake_git_cmd(outputs))
@@ -436,6 +468,7 @@ class TestExtractGitMetadata:
 
         assert md == {}
 
+    @pytest.mark.unit
     def test_comandos_git_emitidos(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         calls: list[tuple[str, list[str]]] = []
 
@@ -455,6 +488,7 @@ class TestExtractGitMetadata:
             ["branch", "-a"],
         ]
 
+    @pytest.mark.unit
     def test_readme_recortado_a_500(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         (tmp_path / "README.md").write_text("a" * 600, encoding="utf-8")
         monkeypatch.setattr(git_mod, "_git_cmd", _fake_git_cmd({}))
@@ -467,6 +501,7 @@ class TestExtractGitMetadata:
 class TestHashGitRepo:
     """GitExtractor._hash_git_repo: hash determinista del repo."""
 
+    @pytest.mark.unit
     def test_determinista_y_sensible_a_cambios(self) -> None:
         md = {"commits": [{"hash": "aa", "message": "msg"}], "origin_url": "u", "tag_count": 2, "branch_count": 3}
 
@@ -474,11 +509,13 @@ class TestHashGitRepo:
         assert GitExtractor._hash_git_repo(md) != GitExtractor._hash_git_repo({**md, "origin_url": "other"})
         assert len(GitExtractor._hash_git_repo(md)) == 64
 
+    @pytest.mark.unit
     def test_solo_primeros_10_commits(self) -> None:
         commits = [{"hash": f"h{i}", "message": f"m{i}"} for i in range(12)]
 
         assert GitExtractor._hash_git_repo({"commits": commits}) == GitExtractor._hash_git_repo({"commits": commits[:10]})
 
+    @pytest.mark.unit
     def test_sin_commits_ni_claves(self) -> None:
         assert GitExtractor._hash_git_repo({}) == GitExtractor._hash_git_repo({"commits": [{"hash": "", "message": ""}]})
 
@@ -486,21 +523,26 @@ class TestHashGitRepo:
 class TestGitCmd:
     """_git_cmd: ejecución de comandos git auxiliares."""
 
+    @pytest.mark.unit
     def test_exito(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod.subprocess, "run", lambda *args, **kw: SimpleNamespace(returncode=0, stdout="out\n", stderr=""))
 
         assert _git_cmd("/repo", ["config", "--get", "remote.origin.url"]) == "out\n"
 
+    @pytest.mark.unit
     def test_stdout_vacio_retorna_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod.subprocess, "run", lambda *args, **kw: SimpleNamespace(returncode=0, stdout="   \n", stderr=""))
 
         assert _git_cmd("/repo", ["rev-parse", "HEAD"]) is None
 
+    @pytest.mark.unit
     def test_returncode_no_cero_retorna_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(git_mod.subprocess, "run", lambda *args, **kw: SimpleNamespace(returncode=1, stdout="", stderr="err"))
 
         assert _git_cmd("/repo", ["log"]) is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_retorna_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*args: Any, **kw: Any) -> Any:
             raise subprocess.TimeoutExpired(["git"], 30)
@@ -509,6 +551,7 @@ class TestGitCmd:
 
         assert _git_cmd("/repo", ["log"]) is None
 
+    @pytest.mark.unit
     def test_oserror_retorna_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(*args: Any, **kw: Any) -> Any:
             raise OSError("no git")
@@ -517,6 +560,7 @@ class TestGitCmd:
 
         assert _git_cmd("/repo", ["log"]) is None
 
+    @pytest.mark.unit
     def test_comando_con_prefijo_git_y_cwd(self, monkeypatch: pytest.MonkeyPatch) -> None:
         calls: list[dict[str, Any]] = []
 
@@ -536,18 +580,23 @@ class TestGitCmd:
 class TestSanitizeGitUrl:
     """_sanitize_git_url: normalización de URLs de git."""
 
+    @pytest.mark.unit
     def test_ssh_con_dos_puntos_inalterada(self) -> None:
         assert _sanitize_git_url("git@github.com:user/repo.git") == "git@github.com:user/repo.git"
 
+    @pytest.mark.unit
     def test_http_inalterada(self) -> None:
         assert _sanitize_git_url("http://example.com/r.git") == "http://example.com/r.git"
 
+    @pytest.mark.unit
     def test_https_inalterada(self) -> None:
         assert _sanitize_git_url("https://example.com/r.git") == "https://example.com/r.git"
 
+    @pytest.mark.unit
     def test_ssh_sin_dos_puntos_inalterada(self) -> None:
         assert _sanitize_git_url("git@example.com") == "git@example.com"
 
+    @pytest.mark.unit
     def test_otro_scheme_inalterado(self) -> None:
         assert _sanitize_git_url("file:///repo") == "file:///repo"
 
@@ -556,14 +605,17 @@ class TestFindReadme:
     """_find_readme: localización del README del repo."""
 
     @pytest.mark.parametrize("name", ["README.md", "README.rst", "README.txt", "README"])
+    @pytest.mark.unit
     def test_encuentra_readme(self, tmp_path: Path, name: str) -> None:
         (tmp_path / name).write_text("contenido", encoding="utf-8")
 
         assert _find_readme(str(tmp_path)) == "contenido"
 
+    @pytest.mark.unit
     def test_sin_readme_retorna_none(self, tmp_path: Path) -> None:
         assert _find_readme(str(tmp_path)) is None
 
+    @pytest.mark.unit
     def test_error_de_lectura_retorna_none(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         (tmp_path / "README.md").write_text("x", encoding="utf-8")
 
@@ -578,15 +630,19 @@ class TestFindReadme:
 class TestComputeGitQuality:
     """_compute_git_quality: puntuación de calidad del asset."""
 
+    @pytest.mark.unit
     def test_vacio_retorna_base(self) -> None:
         assert _compute_git_quality({}) == 0.3
 
+    @pytest.mark.unit
     def test_solo_commits_menos_de_10(self) -> None:
         assert _compute_git_quality({"commit_count": 5}) == 0.5
 
+    @pytest.mark.unit
     def test_10_commits_suma_bonus(self) -> None:
         assert _compute_git_quality({"commit_count": 10}) == 0.6
 
+    @pytest.mark.unit
     def test_completo_limitado_a_1(self) -> None:
         md = {"commit_count": 10, "tag_count": 1, "branch_count": 2, "origin_url": "u", "readme_preview": "r"}
 

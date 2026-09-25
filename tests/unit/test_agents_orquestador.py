@@ -1,3 +1,4 @@
+import pytest
 """Tests for core/agents/orquestador.py."""
 
 from unittest.mock import patch
@@ -6,6 +7,7 @@ from motor.core.agents.orquestador import AgenteOrquestador
 
 
 class TestDecidir:
+    @pytest.mark.unit
     def test_ram_saturada(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 90}}
@@ -14,6 +16,7 @@ class TestDecidir:
         assert accion == "PAUSAR"
         assert "RAM al 90%" in razon
 
+    @pytest.mark.unit
     def test_f821_alto(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 50}, "f821": 15}
@@ -22,6 +25,7 @@ class TestDecidir:
         assert accion == "REPARAR"
         assert "15 F821" in razon
 
+    @pytest.mark.unit
     def test_sistema_estable(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 50}, "f821": 0}
@@ -31,6 +35,7 @@ class TestDecidir:
         assert accion == "ESPERAR"
         assert "Sistema estable" in razon
 
+    @pytest.mark.unit
     def test_refactorizar(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 50}, "f821": 0}
@@ -40,6 +45,7 @@ class TestDecidir:
         assert accion == "REFACTORIZAR"
         assert "5 funciones pendientes" in razon
 
+    @pytest.mark.unit
     def test_ram_limite_85(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 85}}
@@ -49,6 +55,7 @@ class TestDecidir:
         # 85% no es > 85, así que no pausa
         assert accion != "PAUSAR"
 
+    @pytest.mark.unit
     def test_f821_default_alto(self):
         orq = AgenteOrquestador()
         tele = {"hardware": {"ram_pct": 50}}
@@ -60,6 +67,7 @@ class TestDecidir:
 
 
 class TestContarPendientes:
+    @pytest.mark.unit
     def test_funcion_pequena_no_cuenta(self, tmp_path):
         f = tmp_path / "small.py"
         f.write_text("def foo():\n    pass\n")
@@ -67,6 +75,7 @@ class TestContarPendientes:
             result = AgenteOrquestador._contar_pendientes()
             assert result == 0
 
+    @pytest.mark.unit
     def test_funcion_grande_cuenta(self, tmp_path):
         # Función de más de 80 líneas
         lines = ["def big():"] + ["    x = 1"] * 82
@@ -76,6 +85,7 @@ class TestContarPendientes:
             result = AgenteOrquestador._contar_pendientes()
             assert result == 1
 
+    @pytest.mark.unit
     def test_ignora_venv(self, tmp_path):
         f = tmp_path / ".venv" / "test.py"
         f.parent.mkdir()
@@ -86,6 +96,7 @@ class TestContarPendientes:
 
 
 class TestContarPendientesExtra:
+    @pytest.mark.unit
     def test_ast_error_ignorado(self, tmp_path, monkeypatch) -> None:
         """Branches except del parseo AST."""
         import motor.core.agents.orquestador as mod
@@ -96,6 +107,7 @@ class TestContarPendientesExtra:
         total = mod.AgenteOrquestador._contar_pendientes()
         assert total == 0  # malo.py ignorado, normal.py no excede 80 lineas
 
+    @pytest.mark.unit
     def test_rglob_error_ignorado(self, monkeypatch) -> None:
         """Branche except del rglob (error al recorrer URA_ROOT)."""
         import pathlib

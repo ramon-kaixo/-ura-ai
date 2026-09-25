@@ -30,6 +30,7 @@ def imagen_png(tmp_path_factory) -> Path:
 
 
 class TestExtraerImagen:
+    @pytest.mark.unit
     def test_extraer_jpg(self, imagen_jpg: Path) -> None:
         result = ie.extraer_imagen(imagen_jpg)
         assert result["tipo"] == "imagen"
@@ -38,12 +39,14 @@ class TestExtraerImagen:
         assert "tamano_bytes" in result["metadatos"]
         assert result["ruta"] == str(imagen_jpg)
 
+    @pytest.mark.unit
     def test_extraer_png(self, imagen_png: Path) -> None:
         result = ie.extraer_imagen(imagen_png)
         assert result["tipo"] == "imagen"
         assert result["metadatos"]["formato"] == "PNG"
         assert result["metadatos"]["dimensiones"] == "50x50"
 
+    @pytest.mark.unit
     def test_paleta_colores(self, imagen_jpg: Path) -> None:
         paleta = ie._paleta_colores(imagen_jpg, k=3)
         assert isinstance(paleta, list)
@@ -52,6 +55,7 @@ class TestExtraerImagen:
             assert color.startswith("#")
             assert len(color) == 7
 
+    @pytest.mark.unit
     def test_exif_pillow_sin_exif(self, imagen_png: Path) -> None:
         exif = ie._exif_pillow(imagen_png)
         assert exif["fecha"] == ""

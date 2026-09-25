@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,7 @@ def ltm(tmp_path: Path) -> LongTermMemory:
 
 
 class TestStoreRetrieve:
+    @pytest.mark.integration
     def test_store_and_retrieve(self, ltm: LongTermMemory) -> None:
         entry = LTMEntry(key="test:1", value={"a": 1}, source="unit", tags=("tag1",))
         ltm.store(entry)
@@ -24,9 +26,11 @@ class TestStoreRetrieve:
         assert retrieved.source == "unit"
         assert "tag1" in retrieved.tags
 
+    @pytest.mark.integration
     def test_retrieve_missing(self, ltm: LongTermMemory) -> None:
         assert ltm.retrieve("missing") is None
 
+    @pytest.mark.integration
     def test_store_updates(self, ltm: LongTermMemory) -> None:
         ltm.store(LTMEntry(key="k", value={"v": 1}, source="src"))
         ltm.store(LTMEntry(key="k", value={"v": 2}, source="src"))
@@ -36,6 +40,7 @@ class TestStoreRetrieve:
 
 
 class TestSearch:
+    @pytest.mark.integration
     def test_search_by_source(self, ltm: LongTermMemory) -> None:
         ltm.store(LTMEntry(key="a", value={"x": 1}, source="src1"))
         ltm.store(LTMEntry(key="b", value={"y": 2}, source="src2"))
@@ -43,12 +48,14 @@ class TestSearch:
         assert len(results) == 1
         assert results[0].key == "a"
 
+    @pytest.mark.integration
     def test_search_by_tag(self, ltm: LongTermMemory) -> None:
         ltm.store(LTMEntry(key="a", value={}, source="s", tags=("critical",)))
         ltm.store(LTMEntry(key="b", value={}, source="s", tags=("info",)))
         results = ltm.search(tag="critical")
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_search_limit(self, ltm: LongTermMemory) -> None:
         for i in range(10):
             ltm.store(LTMEntry(key=f"k{i}", value={"n": i}, source="s"))
@@ -56,20 +63,24 @@ class TestSearch:
 
 
 class TestDelete:
+    @pytest.mark.integration
     def test_delete_existing(self, ltm: LongTermMemory) -> None:
         ltm.store(LTMEntry(key="k", value={}, source="s"))
         assert ltm.delete("k")
         assert ltm.retrieve("k") is None
 
+    @pytest.mark.integration
     def test_delete_missing(self, ltm: LongTermMemory) -> None:
         assert not ltm.delete("missing")
 
 
 class TestMisc:
+    @pytest.mark.integration
     def test_count(self, ltm: LongTermMemory) -> None:
         ltm.store(LTMEntry(key="a", value={}, source="s"))
         ltm.store(LTMEntry(key="b", value={}, source="s"))
         assert ltm.count() == 2
 
+    @pytest.mark.integration
     def test_vacuum(self, ltm: LongTermMemory) -> None:
         ltm.vacuum()

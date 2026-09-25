@@ -11,6 +11,7 @@ Cubre:
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from motor.agents import (
     Agent,
@@ -42,6 +43,7 @@ from motor.agents import (
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_make_agent_id_deterministic() -> None:
     a = make_agent_id("task1", 1000.0)
     b = make_agent_id("task1", 1000.0)
@@ -49,18 +51,21 @@ def test_make_agent_id_deterministic() -> None:
     assert len(a) == 16
 
 
+@pytest.mark.unit
 def test_make_task_id_deterministic() -> None:
     a = make_task_id("Find info about X", 1000.0)
     b = make_task_id("Find info about X", 1000.0)
     assert a == b
 
 
+@pytest.mark.unit
 def test_make_plan_id_deterministic() -> None:
     a = make_plan_id("agent1", 1)
     b = make_plan_id("agent1", 1)
     assert a == b
 
 
+@pytest.mark.unit
 def test_make_step_id_deterministic() -> None:
     pid = make_plan_id("a1", 1)
     a = make_step_id(pid, 0)
@@ -73,24 +78,28 @@ def test_make_step_id_deterministic() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_agent_task_immutable() -> None:
     t = AgentTask(task_id="t1", objective="test")
     with pytest.raises(AttributeError):
         t.objective = "changed"
 
 
+@pytest.mark.unit
 def test_agent_result_immutable() -> None:
     r = AgentResult(agent_id="a1", task_id="t1", state=AgentState.COMPLETED)
     with pytest.raises(AttributeError):
         r.state = AgentState.FAILED
 
 
+@pytest.mark.unit
 def test_agent_context_mutable() -> None:
     c = AgentContext()
     c.conversation.append({"role": "user", "content": "hello"})
     assert len(c.conversation) == 1
 
 
+@pytest.mark.unit
 def test_agent_execution_defaults() -> None:
     e = AgentExecution(
         agent_id="a1",
@@ -103,6 +112,7 @@ def test_agent_execution_defaults() -> None:
     assert e.cost_units == 0
 
 
+@pytest.mark.unit
 def test_agent_policy_defaults() -> None:
     p = AgentPolicy()
     assert p.max_duration_seconds == 300
@@ -110,6 +120,7 @@ def test_agent_policy_defaults() -> None:
     assert p.retry_max_attempts == 3
 
 
+@pytest.mark.unit
 def test_tool_contract_defaults() -> None:
     c = ToolContract(name="web.search")
     assert c.timeout_seconds == 30
@@ -117,6 +128,7 @@ def test_tool_contract_defaults() -> None:
     assert c.expected_cost_units == 5
 
 
+@pytest.mark.unit
 def test_agent_state_values() -> None:
     assert AgentState.CREATED.value == "created"
     assert AgentState.PERMISSION_DENIED.value == "permission_denied"
@@ -125,6 +137,7 @@ def test_agent_state_values() -> None:
     assert len(AgentState) == 12
 
 
+@pytest.mark.unit
 def test_capability_values() -> None:
     assert AgentCapability.MEMORY_READ.value == "memory.read"
     assert AgentCapability.FACTS_READ.value == "facts.read"
@@ -136,34 +149,40 @@ def test_capability_values() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_valid_transition_created_to_planning() -> None:
     sm = AgentStateMachine()
     assert sm.transition(AgentState.CREATED, AgentState.PLANNING) == AgentState.PLANNING
 
 
+@pytest.mark.unit
 def test_valid_transition_created_to_cancelled() -> None:
     sm = AgentStateMachine()
     assert sm.transition(AgentState.CREATED, AgentState.CANCELLED) == AgentState.CANCELLED
 
 
+@pytest.mark.unit
 def test_invalid_transition_created_to_completed() -> None:
     sm = AgentStateMachine()
     with pytest.raises(ValueError, match="Invalid state transition"):
         sm.transition(AgentState.CREATED, AgentState.COMPLETED)
 
 
+@pytest.mark.unit
 def test_invalid_transition_completed_to_running() -> None:
     sm = AgentStateMachine()
     with pytest.raises(ValueError):
         sm.transition(AgentState.COMPLETED, AgentState.RUNNING)
 
 
+@pytest.mark.unit
 def test_invalid_transition_cancelled_to_running() -> None:
     sm = AgentStateMachine()
     with pytest.raises(ValueError):
         sm.transition(AgentState.CANCELLED, AgentState.RUNNING)
 
 
+@pytest.mark.unit
 def test_full_valid_flow() -> None:
     sm = AgentStateMachine()
     flow = [
@@ -180,6 +199,7 @@ def test_full_valid_flow() -> None:
     assert state == AgentState.COMPLETED
 
 
+@pytest.mark.unit
 def test_valid_transitions_from_state() -> None:
     sm = AgentStateMachine()
     transitions = sm.valid_transitions(AgentState.RUNNING)
@@ -189,6 +209,7 @@ def test_valid_transitions_from_state() -> None:
     assert AgentState.PERMISSION_DENIED in transitions
 
 
+@pytest.mark.unit
 def test_is_terminal() -> None:
     sm = AgentStateMachine()
     assert sm.is_terminal(AgentState.COMPLETED)
@@ -203,54 +224,63 @@ def test_is_terminal() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_capability_gate_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(CapabilityGate)
 
 
+@pytest.mark.unit
 def test_planner_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(Planner)
 
 
+@pytest.mark.unit
 def test_executor_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(Executor)
 
 
+@pytest.mark.unit
 def test_scheduler_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(Scheduler)
 
 
+@pytest.mark.unit
 def test_agent_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(Agent)
 
 
+@pytest.mark.unit
 def test_tool_runner_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(ToolRunner)
 
 
+@pytest.mark.unit
 def test_audit_logger_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(AuditLogger)
 
 
+@pytest.mark.unit
 def test_task_queue_is_abc() -> None:
     import inspect
 
     assert inspect.isabstract(TaskQueue)
 
 
+@pytest.mark.unit
 def test_state_machine_is_abc() -> None:
     import inspect
 
@@ -262,6 +292,7 @@ def test_state_machine_is_abc() -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.unit
 def test_all_exported_symbols() -> None:
     from motor.agents import __all__
 

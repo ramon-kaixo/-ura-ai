@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/router/ — utils, capability, health, providers."""
 from __future__ import annotations
 
+import pytest
 import threading
 from types import SimpleNamespace
 
@@ -13,30 +14,37 @@ from motor.core.llm.router.utils import _build_error, _classify_error, _is_error
 
 
 class TestClassifyError:
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self) -> None:
         import httpx
 
         assert _classify_error(httpx.TimeoutException("t")) == "timeout"
 
+    @pytest.mark.unit
     def test_connect(self) -> None:
         import httpx
 
         assert _classify_error(httpx.ConnectError("c")) == "connection_error"
 
+    @pytest.mark.unit
     def test_protocol(self) -> None:
         import httpx
 
         assert _classify_error(httpx.RemoteProtocolError("p")) == "protocol_error"
 
+    @pytest.mark.unit
     def test_http_status(self) -> None:
         import httpx
 
         resp = httpx.Response(503, request=httpx.Request("GET", "http://x"))
         assert _classify_error(httpx.HTTPStatusError("e", request=resp.request, response=resp)) == "http_503"
 
+    @pytest.mark.unit
     def test_generico(self) -> None:
         assert _classify_error(ValueError("v")) == "unexpected:ValueError"
 
+    @pytest.mark.unit
     def test_sin_httpx(self, monkeypatch) -> None:
         import builtins
 
@@ -52,9 +60,11 @@ class TestClassifyError:
 
 
 class TestIsErrorResult:
+    @pytest.mark.unit
     def test_prefijo_error(self) -> None:
         assert _is_error_result("Error: algo") is True
 
+    @pytest.mark.unit
     def test_no_error(self) -> None:
         assert _is_error_result("respuesta") is False
         assert _is_error_result({"a": 1}) is False
@@ -62,16 +72,19 @@ class TestIsErrorResult:
 
 
 class TestBuildError:
+    @pytest.mark.unit
     def test_embed(self) -> None:
         out = _build_error("embed", "fallo")
         assert isinstance(out, list)
         assert len(out[0]) > 0
         assert all(x == 0.0 for x in out[0])
 
+    @pytest.mark.unit
     def test_embed_async(self) -> None:
         out = _build_error("embed_async", "fallo")
         assert isinstance(out, list)
 
+    @pytest.mark.unit
     def test_otros(self) -> None:
         assert _build_error("generate", "boom") == "Error: boom"
 
@@ -96,34 +109,41 @@ class FakeRegistry:
 
 
 class TestFindProvidersByCapability:
+    @pytest.mark.unit
     def test_encuentra(self) -> None:
         reg = FakeRegistry({"a": SimpleNamespace(supports=lambda c: c == "embed"), "b": SimpleNamespace(supports=lambda c: True)})
         assert find_providers_by_capability("embed", reg) == ["a", "b"]
 
+    @pytest.mark.unit
     def test_error_check_ignorado(self) -> None:
         reg = FakeRegistry({"a": SimpleNamespace(supports=lambda c: (_ for _ in ()).throw(RuntimeError("x"))), "b": SimpleNamespace(supports=lambda c: True)})
         assert find_providers_by_capability("c", reg) == ["b"]
 
 
 class TestSelectProviderByCapability:
+    @pytest.mark.unit
     def test_preferred_ok(self) -> None:
         reg = FakeRegistry({"pref": SimpleNamespace(supports=lambda c: True), "b": SimpleNamespace(supports=lambda c: True)})
         assert select_provider_by_capability("c", "pref", reg) == "pref"
 
+    @pytest.mark.unit
     def test_preferred_no_soporta_fallback(self) -> None:
         reg = FakeRegistry({"pref": SimpleNamespace(supports=lambda c: False), "b": SimpleNamespace(supports=lambda c: True)})
         assert select_provider_by_capability("c", "pref", reg) == "b"
 
+    @pytest.mark.unit
     def test_preferred_supports_raise_fallback(self) -> None:
         reg = FakeRegistry(
             {"pref": SimpleNamespace(supports=lambda c: (_ for _ in ()).throw(RuntimeError("x"))), "b": SimpleNamespace(supports=lambda c: True)}
         )
         assert select_provider_by_capability("c", "pref", reg) == "b"
 
+    @pytest.mark.unit
     def test_preferred_keyerror_fallback(self) -> None:
         reg = FakeRegistry({"b": SimpleNamespace(supports=lambda c: True)})
         assert select_provider_by_capability("c", "fantasma", reg) == "b"
 
+    @pytest.mark.unit
     def test_sin_capaz_raise(self) -> None:
         reg = FakeRegistry({"a": SimpleNamespace(supports=lambda c: False)})
         with pytest.raises(RuntimeError, match="No provider supports"):
@@ -131,6 +151,7 @@ class TestSelectProviderByCapability:
 
 
 class TestHealthCache:
+    @pytest.mark.unit
     def test_store_y_get(self) -> None:
         cache: dict = {}
         lock = threading.Lock()
@@ -138,12 +159,14 @@ class TestHealthCache:
         out = health_get_cached("p", cache, lock, 100.0)
         assert out == {"ok": True}
 
+    @pytest.mark.unit
     def test_get_sin_entrada(self) -> None:
         cache: dict = {}
         lock = threading.Lock()
         assert health_get_cached("p", cache, lock, 100.0) is None
         assert "p" in cache  # marcado en progreso (0.0, None)
 
+    @pytest.mark.unit
     def test_ttl_expirado(self, monkeypatch) -> None:
         cache: dict = {"p": (0.0, {"ok": True})}
         lock = threading.Lock()
@@ -151,6 +174,7 @@ class TestHealthCache:
         out = health_get_cached("p", cache, lock, 100.0)
         assert out is None  # expirado -> re-marca en progreso
 
+    @pytest.mark.unit
     def test_espera_en_progreso(self, monkeypatch) -> None:
         cache: dict = {"p": (0.0, None)}
         lock = threading.Lock()
@@ -164,12 +188,14 @@ class TestHealthCache:
         out = health_get_cached("p", cache, lock, 100.0)
         assert out == {"ok": True}
 
+    @pytest.mark.unit
     def test_remove(self) -> None:
         cache: dict = {"p": (1.0, {})}
         lock = threading.Lock()
         health_remove_cache("p", cache, lock)
         assert "p" not in cache
 
+    @pytest.mark.unit
     def test_remove_inexistente(self) -> None:
         cache: dict = {}
         lock = threading.Lock()
@@ -177,37 +203,44 @@ class TestHealthCache:
 
 
 class TestResolve:
+    @pytest.mark.unit
     def test_provider_explicito(self) -> None:
         reg = FakeRegistry({"ollama": object()})
         out = resolve("generate", "ollama", reg, DEFAULT_ROUTES)
         assert out is not None
 
+    @pytest.mark.unit
     def test_provider_no_registrado(self) -> None:
         reg = FakeRegistry({"ollama": object()})
         with pytest.raises(RuntimeError, match="not in registry"):
             resolve("generate", "nope", reg, DEFAULT_ROUTES)
 
+    @pytest.mark.unit
     def test_por_ruta(self) -> None:
         prov = object()
         reg = FakeRegistry({"ollama": prov})
         assert resolve("generate", None, reg, DEFAULT_ROUTES) is prov
 
+    @pytest.mark.unit
     def test_ruta_no_existe_default(self) -> None:
         prov = object()
         reg = FakeRegistry({"ollama": prov})
         assert resolve("tarea_rara", None, reg, DEFAULT_ROUTES) is prov
 
+    @pytest.mark.unit
     def test_sin_default_raise(self) -> None:
         reg = FakeRegistry({})
         reg._default = None
         with pytest.raises(RuntimeError, match="No provider available"):
             resolve("tarea", None, reg, {})
 
+    @pytest.mark.unit
     def test_ruta_no_registrada_fallback_default(self) -> None:
         prov = object()
         reg = FakeRegistry({"ollama": prov})
         assert resolve("tarea", None, reg, {"tarea": "noexiste"}) is prov
 
+    @pytest.mark.unit
     def test_ruta_no_registrada_sin_default_raise(self) -> None:
         reg = FakeRegistry({})
         reg._default = None
@@ -216,18 +249,22 @@ class TestResolve:
 
 
 class TestResolveName:
+    @pytest.mark.unit
     def test_provider_explicito(self) -> None:
         reg = FakeRegistry({"ollama": object()})
         assert resolve_name("g", "ollama", reg, DEFAULT_ROUTES) == "ollama"
 
+    @pytest.mark.unit
     def test_por_ruta(self) -> None:
         reg = FakeRegistry({"ollama": object()})
         assert resolve_name("generate", None, reg, DEFAULT_ROUTES) == "ollama"
 
+    @pytest.mark.unit
     def test_ruta_no_registrada_default(self) -> None:
         reg = FakeRegistry({"ollama": object()})
         assert resolve_name("t", None, reg, {"t": "nope"}) == "ollama"
 
+    @pytest.mark.unit
     def test_desconocido(self) -> None:
         reg = FakeRegistry({})
         reg._default = None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 
 import pytest
@@ -15,17 +16,20 @@ def scheduler(tmp_path: Path) -> UnifiedScheduler:
 
 
 class TestRegistration:
+    @pytest.mark.integration
     def test_register_pipeline(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="test", handler=lambda: {"status": "ok"})
         scheduler.register(p)
         assert scheduler.get_pipeline("test") is p
 
+    @pytest.mark.integration
     def test_unregister(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="x", handler=lambda: {})
         scheduler.register(p)
         scheduler.unregister("x")
         assert scheduler.get_pipeline("x") is None
 
+    @pytest.mark.integration
     def test_list_pipelines_ordered(self, scheduler: UnifiedScheduler) -> None:
         p1 = UnifiedPipeline(name="low", handler=lambda: {}, priority=20)
         p2 = UnifiedPipeline(name="high", handler=lambda: {}, priority=5)
@@ -37,22 +41,26 @@ class TestRegistration:
 
 
 class TestRunPipeline:
+    @pytest.mark.integration
     def test_run_pipeline_success(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="ok", handler=lambda: {"summary": "done"})
         scheduler.register(p)
         result = scheduler.run_pipeline("ok")
         assert result["_status"] == "completed"
 
+    @pytest.mark.integration
     def test_run_pipeline_disabled(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="off", handler=lambda: {}, enabled=False)
         scheduler.register(p)
         result = scheduler.run_pipeline("off")
         assert result["status"] == "skipped"
 
+    @pytest.mark.integration
     def test_run_pipeline_missing(self, scheduler: UnifiedScheduler) -> None:
         result = scheduler.run_pipeline("nope")
         assert "error" in result
 
+    @pytest.mark.integration
     def test_run_pipeline_error(self, scheduler: UnifiedScheduler) -> None:
         def failing() -> dict:
             msg = "intentional error"
@@ -64,6 +72,7 @@ class TestRunPipeline:
         assert result["_status"] == "failed"
         assert "intentional error" in result["error"]
 
+    @pytest.mark.integration
     def test_circuit_breaker_trips(self, scheduler: UnifiedScheduler) -> None:
         def failing() -> dict:
             raise RuntimeError("epic fail")
@@ -76,6 +85,7 @@ class TestRunPipeline:
         result = scheduler.run_pipeline("bomb")
         assert result["status"] == "circuit_open"
 
+    @pytest.mark.integration
     def test_circuit_reset(self, scheduler: UnifiedScheduler) -> None:
         def failing() -> dict:
             raise RuntimeError("fail")
@@ -90,6 +100,7 @@ class TestRunPipeline:
 
 
 class TestCooldown:
+    @pytest.mark.integration
     def test_run_respects_cooldown(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="cd", handler=lambda: {"summary": "ok"}, cooldown=3600)
         scheduler.register(p)
@@ -99,6 +110,7 @@ class TestCooldown:
 
 
 class TestMetrics:
+    @pytest.mark.integration
     def test_get_metrics(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="m", handler=lambda: {})
         scheduler.register(p)
@@ -110,16 +122,19 @@ class TestMetrics:
 
 
 class TestRunDue:
+    @pytest.mark.integration
     def test_run_due_no_pipelines(self, scheduler: UnifiedScheduler) -> None:
         results = scheduler.run_due()
         assert results == []
 
+    @pytest.mark.integration
     def test_run_due_disabled_pipeline(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="off", handler=lambda: {"summary": "done"}, enabled=False)
         scheduler.register(p)
         results = scheduler.run_due()
         assert results == []
 
+    @pytest.mark.integration
     def test_run_due_maintenance_not_due(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="maintenance", handler=lambda: {"summary": "done"}, cooldown=3600)
         scheduler.register(p)
@@ -127,6 +142,7 @@ class TestRunDue:
         results = scheduler.run_due()
         assert len(results) == 0
 
+    @pytest.mark.integration
     def test_run_due_unknown_name_runs(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="custom_check", handler=lambda: {"summary": "custom ok"})
         scheduler.register(p)
@@ -134,6 +150,7 @@ class TestRunDue:
         assert len(results) == 1
         assert results[0]["_status"] == "completed"
 
+    @pytest.mark.integration
     def test_run_due_records_in_ltm(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="custom", handler=lambda: {"summary": "ltm test"})
         scheduler.register(p)
@@ -142,12 +159,14 @@ class TestRunDue:
 
 
 class TestIntegration:
+    @pytest.mark.integration
     def test_memory_ltm_after_run(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="integration", handler=lambda: {"summary": "stored"})
         scheduler.register(p)
         scheduler.run_pipeline("integration")
         assert scheduler._ltm.count() == 1
 
+    @pytest.mark.integration
     def test_memory_episodic_after_run(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="ep_test", handler=lambda: {"summary": "ep test"})
         scheduler.register(p)
@@ -156,6 +175,7 @@ class TestIntegration:
         assert len(episodes) == 1
         assert episodes[0].status == "completed"
 
+    @pytest.mark.integration
     def test_memory_semantic_after_run(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="sem_test", handler=lambda: {"summary": "sem test"})
         scheduler.register(p)
@@ -163,6 +183,7 @@ class TestIntegration:
         metrics = scheduler.get_metrics()
         assert metrics["pipelines"] >= 1
 
+    @pytest.mark.integration
     def test_all_memories_integrated(self, scheduler: UnifiedScheduler) -> None:
         p = UnifiedPipeline(name="full_test", handler=lambda: {"summary": "full"})
         scheduler.register(p)

@@ -7,6 +7,7 @@ con ruta directa al archivo.
 """
 from __future__ import annotations
 
+import pytest
 import importlib.util
 import sys
 from pathlib import Path
@@ -44,12 +45,14 @@ def sandbox(monkeypatch, tmp_path) -> Sandbox:
 
 
 class TestLog:
+    @pytest.mark.unit
     def test_log_escribe(self, sandbox: Sandbox, tmp_path) -> None:
         sandbox._log("TEST", "detalle")
         content = (tmp_path / "sandbox.log").read_text()
         assert "[TEST]" in content
         assert "detalle" in content
 
+    @pytest.mark.unit
     def test_log_error_no_lanza(self, sandbox: Sandbox) -> None:
         with mock.patch("builtins.open", side_effect=OSError("ro")):
             sandbox._log("TEST", "x")  # no debe lanzar
@@ -121,23 +124,28 @@ class TestTestImprovement:
 
 
 class TestSafeImport:
+    @pytest.mark.unit
     def test_modulo_ok(self, sandbox: Sandbox) -> None:
         assert sandbox.safe_import("json") is True
 
+    @pytest.mark.unit
     def test_modulo_no_encontrado(self, sandbox: Sandbox) -> None:
         assert sandbox.safe_import("modulo_inexistente_xyz") is False
 
+    @pytest.mark.unit
     def test_error_carga(self, sandbox: Sandbox, monkeypatch) -> None:
         spec = SimpleNamespace(loader=None)
         monkeypatch.setattr("importlib.util.find_spec", mock.Mock(return_value=spec))
         assert sandbox.safe_import("algo") is False
 
+    @pytest.mark.unit
     def test_excepcion_import(self, sandbox: Sandbox, monkeypatch) -> None:
         monkeypatch.setattr("importlib.util.find_spec", mock.Mock(side_effect=ImportError("boom")))
         assert sandbox.safe_import("algo") is False
 
 
 class TestBackupRollback:
+    @pytest.mark.unit
     def test_create_backup_ok(self, sandbox: Sandbox, tmp_path) -> None:
         src = tmp_path / "mod.py"
         src.write_text("codigo")
@@ -145,9 +153,11 @@ class TestBackupRollback:
         assert backup is not None
         assert Path(backup).read_text() == "codigo"
 
+    @pytest.mark.unit
     def test_create_backup_no_existe(self, sandbox: Sandbox) -> None:
         assert sandbox.create_backup("/tmp/no_existe_xyz.py") is None
 
+    @pytest.mark.unit
     def test_create_backup_error(self, sandbox: Sandbox, monkeypatch) -> None:
         monkeypatch.setattr(_sandbox_mod.shutil, "copy2", mock.Mock(side_effect=OSError("ro")))
         src = Path("/tmp/existe_para_backup.py")
@@ -157,6 +167,7 @@ class TestBackupRollback:
         finally:
             src.unlink()
 
+    @pytest.mark.unit
     def test_rollback_ok(self, sandbox: Sandbox, tmp_path) -> None:
         dest = tmp_path / "mod.py"
         dest.write_text("modificado")
@@ -165,9 +176,11 @@ class TestBackupRollback:
         assert sandbox.rollback(str(dest), str(backup)) is True
         assert dest.read_text() == "original"
 
+    @pytest.mark.unit
     def test_rollback_backup_no_existe(self, sandbox: Sandbox) -> None:
         assert sandbox.rollback("/tmp/d.py", "/tmp/no_backup.py") is False
 
+    @pytest.mark.unit
     def test_rollback_error(self, sandbox: Sandbox, monkeypatch, tmp_path) -> None:
         backup = tmp_path / "b.py"
         backup.write_text("x")
@@ -176,6 +189,7 @@ class TestBackupRollback:
 
 
 class TestCleanup:
+    @pytest.mark.unit
     def test_elimina_antiguos(self, sandbox: Sandbox, tmp_path) -> None:
         bdir = tmp_path / ".ura" / "sandbox_backups"
         bdir.mkdir(parents=True, exist_ok=True)
@@ -192,6 +206,7 @@ class TestCleanup:
         assert not viejo.exists()
         assert nuevo.exists()
 
+    @pytest.mark.unit
     def test_cleanup_error(self, sandbox: Sandbox, monkeypatch, tmp_path) -> None:
         (tmp_path / "backups").mkdir(parents=True)
         monkeypatch.setattr(_sandbox_mod, "shutil", mock.Mock())
@@ -199,6 +214,7 @@ class TestCleanup:
 
 
 class TestSingleton:
+    @pytest.mark.unit
     def test_get_sandbox_singleton(self) -> None:
         a = get_sandbox()
         b = get_sandbox()

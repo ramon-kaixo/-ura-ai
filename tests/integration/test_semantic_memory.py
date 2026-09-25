@@ -10,17 +10,21 @@ from motor.intelligence.memory.semantic import SemanticFact, SemanticMemoryStore
 
 
 class TestFactExtractorInterface:
+    @pytest.mark.integration
     def test_interface_cannot_instantiate(self):
         with pytest.raises(TypeError):
             FactExtractor()
 
 
 class TestRuleBasedFactExtractor:
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_empty_payload(self):
         extractor = RuleBasedFactExtractor()
         facts = extractor.extract(Episode(payload=""))
         assert facts == []
 
+    @pytest.mark.integration
     def test_attribute_pattern(self):
         extractor = RuleBasedFactExtractor()
         ep = Episode(payload="La temperatura es 42 grados")
@@ -29,18 +33,21 @@ class TestRuleBasedFactExtractor:
         assert facts[0].predicate == "temperatura"
         assert "42" in facts[0].object_value
 
+    @pytest.mark.integration
     def test_relation_pattern(self):
         extractor = RuleBasedFactExtractor()
         ep = Episode(payload="El servidor contiene 64GB de RAM")
         facts = extractor.extract(ep)
         assert any("servidor" in f.subject and "64GB" in f.object_value for f in facts)
 
+    @pytest.mark.integration
     def test_error_pattern(self):
         extractor = RuleBasedFactExtractor()
         ep = Episode(payload="Error: conexion rechazada")
         facts = extractor.extract(ep)
         assert any(f.predicate == "error" for f in facts)
 
+    @pytest.mark.integration
     def test_importance_and_confidence_from_episode(self):
         extractor = RuleBasedFactExtractor()
         ep = Episode(payload="El sistema es muy rapido", importance=0.9, confidence=0.8)
@@ -48,6 +55,7 @@ class TestRuleBasedFactExtractor:
         assert all(f.importance == 0.9 for f in facts)
         assert all(f.confidence == 0.8 * 0.9 for f in facts)
 
+    @pytest.mark.integration
     def test_source_episode_id(self):
         extractor = RuleBasedFactExtractor()
         ep = Episode(id="ep001", payload="El modulo usa Python")
@@ -59,19 +67,23 @@ class TestRuleBasedFactExtractor:
 
 
 class TestSemanticFact:
+    @pytest.mark.integration
     def test_auto_id(self):
         f = SemanticFact(subject="s", predicate="p", object_value="o")
         assert f.id != ""
 
+    @pytest.mark.integration
     def test_auto_timestamps(self):
         f = SemanticFact(subject="s", predicate="p", object_value="o")
         assert f.created_at != ""
         assert f.updated_at != ""
 
+    @pytest.mark.integration
     def test_key(self):
         f = SemanticFact(subject="sistema", predicate="tiene", object_value="memoria")
         assert f.key == "sistema|tiene|memoria"
 
+    @pytest.mark.integration
     def test_merge_increases_version(self):
         f1 = SemanticFact(subject="s", predicate="p", object_value="o", source_episode_ids=["e1"])
         f2 = SemanticFact(subject="s", predicate="p", object_value="o", source_episode_ids=["e2"], confidence=0.9)
@@ -80,6 +92,7 @@ class TestSemanticFact:
         assert f1.confidence == 0.9
         assert "e2" in f1.source_episode_ids
 
+    @pytest.mark.integration
     def test_merge_preserves_highest(self):
         f1 = SemanticFact(subject="s", predicate="p", object_value="o", importance=0.8, confidence=0.6)
         f2 = SemanticFact(subject="s", predicate="p", object_value="o", importance=0.5, confidence=0.9)
@@ -87,6 +100,7 @@ class TestSemanticFact:
         assert f1.importance == 0.8
         assert f1.confidence == 0.9
 
+    @pytest.mark.integration
     def test_merge_tags(self):
         f1 = SemanticFact(subject="s", predicate="p", object_value="o", tags=["a"])
         f2 = SemanticFact(subject="s", predicate="p", object_value="o", tags=["b"])
@@ -94,6 +108,7 @@ class TestSemanticFact:
         assert "a" in f1.tags
         assert "b" in f1.tags
 
+    @pytest.mark.integration
     def test_to_dict(self):
         f = SemanticFact(subject="s", predicate="p", object_value="o", importance=0.9, source_episode_ids=["e1"])
         d = f.to_dict()
@@ -106,12 +121,14 @@ class TestSemanticFact:
 
 
 class TestSemanticMemoryStore:
+    @pytest.mark.integration
     def test_store_and_get(self):
         store = SemanticMemoryStore()
         f = SemanticFact(subject="s", predicate="p", object_value="o")
         fid = store.store(f)
         assert store.get(fid) is not None
 
+    @pytest.mark.integration
     def test_dedup_by_key(self):
         store = SemanticMemoryStore()
         f1 = SemanticFact(subject="s", predicate="p", object_value="o", tags=["a"])
@@ -124,6 +141,7 @@ class TestSemanticMemoryStore:
         assert "a" in merged.tags
         assert "b" in merged.tags
 
+    @pytest.mark.integration
     def test_search_by_text(self):
         store = SemanticMemoryStore()
         store.store(SemanticFact(subject="sistema", predicate="tiene", object_value="memoria"))
@@ -131,6 +149,7 @@ class TestSemanticMemoryStore:
         results = store.search(text="memoria")
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_search_by_tags(self):
         store = SemanticMemoryStore()
         store.store(SemanticFact(subject="a", predicate="es", object_value="1", tags=["urgente"]))
@@ -138,6 +157,7 @@ class TestSemanticMemoryStore:
         results = store.search(tags=["urgente"])
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_search_by_type(self):
         store = SemanticMemoryStore()
         store.store(SemanticFact(subject="a", predicate="es", object_value="1", fact_type="attribute"))
@@ -145,6 +165,7 @@ class TestSemanticMemoryStore:
         results = store.search(fact_type="error")
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_search_by_entity(self):
         store = SemanticMemoryStore()
         store.store(SemanticFact(subject="sistema", predicate="tiene", object_value="RAM"))
@@ -152,36 +173,43 @@ class TestSemanticMemoryStore:
         results = store.search(entity="sistema")
         assert len(results) == 1
 
+    @pytest.mark.integration
     def test_get_nonexistent(self):
         store = SemanticMemoryStore()
         assert store.get("nope") is None
 
+    @pytest.mark.integration
     def test_get_by_key_nonexistent(self):
         store = SemanticMemoryStore()
         assert store.get_by_key("x", "y", "z") is None
 
+    @pytest.mark.integration
     def test_delete(self):
         store = SemanticMemoryStore()
         fid = store.store(SemanticFact(subject="s", predicate="p", object_value="o"))
         assert store.delete(fid) is True
         assert store.get(fid) is None
 
+    @pytest.mark.integration
     def test_delete_nonexistent(self):
         store = SemanticMemoryStore()
         assert store.delete("nope") is False
 
+    @pytest.mark.integration
     def test_count(self):
         store = SemanticMemoryStore()
         assert store.count() == 0
         store.store(SemanticFact(subject="a", predicate="b", object_value="c"))
         assert store.count() == 1
 
+    @pytest.mark.integration
     def test_clear_all(self):
         store = SemanticMemoryStore()
         store.store(SemanticFact(subject="a", predicate="b", object_value="c"))
         assert store.clear_all() == 1
         assert store.count() == 0
 
+    @pytest.mark.integration
     def test_search_limit(self):
         store = SemanticMemoryStore()
         for i in range(20):
@@ -189,6 +217,7 @@ class TestSemanticMemoryStore:
         results = store.search(text="v", k=5)
         assert len(results) == 5
 
+    @pytest.mark.integration
     def test_search_empty(self):
         store = SemanticMemoryStore()
         assert store.search(text="nothing") == []
@@ -198,6 +227,7 @@ class TestSemanticMemoryStore:
 
 
 class TestConsolidation:
+    @pytest.mark.integration
     def test_consolidate_episodes(self):
         store = SemanticMemoryStore()
         extractor = RuleBasedFactExtractor()
@@ -209,6 +239,7 @@ class TestConsolidation:
         assert count >= 2
         assert store.count() >= 1
 
+    @pytest.mark.integration
     def test_consolidate_dedup(self):
         store = SemanticMemoryStore()
         extractor = RuleBasedFactExtractor()
@@ -219,6 +250,7 @@ class TestConsolidation:
         count = consolidate_episodes(episodes, store, extractor)
         assert store.count() < count  # deduplicated
 
+    @pytest.mark.integration
     def test_consolidate_empty_episodes(self):
         store = SemanticMemoryStore()
         extractor = RuleBasedFactExtractor()
@@ -230,6 +262,7 @@ class TestConsolidation:
 
 
 class TestPersistence:
+    @pytest.mark.integration
     def test_sqlite_roundtrip(self, tmp_path):
         db_path = str(tmp_path / "semantic.db")
         store = SemanticMemoryStore(persist_path=db_path)
@@ -244,6 +277,7 @@ class TestPersistence:
 
 
 class TestThreadSafety:
+    @pytest.mark.integration
     def test_concurrent_store(self):
         import concurrent.futures
 
@@ -257,6 +291,7 @@ class TestThreadSafety:
             concurrent.futures.wait(futures)
         assert store.count() == n  # all unique subjects
 
+    @pytest.mark.integration
     def test_concurrent_search(self):
         import concurrent.futures
 

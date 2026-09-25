@@ -1,6 +1,7 @@
 """Tests para knowledge/engine/subscribers.py — handlers del Event Bus."""
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -34,6 +35,7 @@ def reset_subscribed(monkeypatch):
 
 
 class TestSubscribeAll:
+    @pytest.mark.unit
     def test_registra_handlers(self, tmp_path) -> None:
         bus = FakeBus()
         subs.subscribe_all(bus, tmp_path / "db.sqlite", tmp_path / "src")
@@ -42,12 +44,14 @@ class TestSubscribeAll:
         assert "SearchPerformed" in tipos
         assert "ArchiveCompleted" in tipos
 
+    @pytest.mark.unit
     def test_idempotente(self, tmp_path) -> None:
         bus = FakeBus()
         subs.subscribe_all(bus, tmp_path / "db.sqlite", tmp_path / "src")
         subs.subscribe_all(bus, tmp_path / "db.sqlite", tmp_path / "src")
         assert len(bus.subscribed) == 7  # solo primera vez
 
+    @pytest.mark.unit
     def test_con_vector(self, tmp_path) -> None:
         bus = FakeBus()
         embedder = mock.Mock()
@@ -58,6 +62,7 @@ class TestSubscribeAll:
 
 
 class TestCompileArchiveHandler:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         handler = subs._make_compile_archive_handler(tmp_path / "db.sqlite", tmp_path / "src")
         enqueue = mock.Mock()
@@ -68,6 +73,7 @@ class TestCompileArchiveHandler:
         enqueue.assert_called_once()
         process.assert_called_once()
 
+    @pytest.mark.unit
     def test_error(self, tmp_path) -> None:
         handler = subs._make_compile_archive_handler(tmp_path / "db.sqlite", tmp_path / "src")
         with mock.patch("knowledge.engine.jobs.enqueue_archive_job", mock.Mock(side_effect=OSError("boom"))):
@@ -75,6 +81,7 @@ class TestCompileArchiveHandler:
 
 
 class TestCompileAuditHandler:
+    @pytest.mark.unit
     def test_success(self) -> None:
         handler = subs._make_compile_audit_handler()
         audit = mock.Mock()
@@ -83,6 +90,7 @@ class TestCompileAuditHandler:
         audit.log_compile.assert_called_once()
         assert audit.log_compile.call_args.kwargs["result"] == "success"
 
+    @pytest.mark.unit
     def test_failure(self) -> None:
         handler = subs._make_compile_audit_handler()
         audit = mock.Mock()
@@ -92,6 +100,7 @@ class TestCompileAuditHandler:
 
 
 class TestCompileMetricsHandler:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         handler = subs._make_compile_metrics_handler()
         with mock.patch("knowledge.engine.metrics.record_compile") as record:
@@ -100,6 +109,7 @@ class TestCompileMetricsHandler:
 
 
 class TestSearchAuditHandler:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         handler = subs._make_search_audit_handler()
         audit = mock.Mock()
@@ -110,6 +120,7 @@ class TestSearchAuditHandler:
 
 
 class TestArchiveMetricsHandler:
+    @pytest.mark.unit
     def test_ok(self) -> None:
         handler = subs._make_archive_metrics_handler()
         event = SimpleNamespace(kind="backup")
@@ -119,6 +130,7 @@ class TestArchiveMetricsHandler:
 
 
 class TestLineageSubscriber:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         handler = subs._make_lineage_subscriber(tmp_path / "db.sqlite")
         store = mock.Mock()
@@ -129,6 +141,7 @@ class TestLineageSubscriber:
         assert ol["eventType"] == "COMPLETE"
         assert ol["run"]["runId"] == "cid123"
 
+    @pytest.mark.unit
     def test_error(self, tmp_path) -> None:
         handler = subs._make_lineage_subscriber(tmp_path / "db.sqlite")
         with mock.patch("knowledge.engine.lineage_store.SQLiteLineageStore", mock.Mock(side_effect=OSError("x"))):
@@ -136,6 +149,7 @@ class TestLineageSubscriber:
 
 
 class TestVectorIndexSubscriber:
+    @pytest.mark.unit
     def test_event_fallido_no_indexa(self, tmp_path) -> None:
         embedder = mock.Mock()
         store = mock.Mock()
@@ -143,6 +157,7 @@ class TestVectorIndexSubscriber:
         handler(SimpleNamespace(success=False, asset_id="a1"))
         embedder.embed.assert_not_called()
 
+    @pytest.mark.unit
     def test_asset_no_existe(self, tmp_path) -> None:
         embedder = mock.Mock()
         store = mock.Mock()
@@ -153,6 +168,7 @@ class TestVectorIndexSubscriber:
             handler(SimpleNamespace(success=True, asset_id="a1"))
         embedder.embed.assert_not_called()
 
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         embedder = mock.Mock()
         embedder.max_input_tokens = 100
@@ -171,6 +187,7 @@ class TestVectorIndexSubscriber:
         assert item.asset_id == "a1"
         assert item.vector == [0.1, 0.2]
 
+    @pytest.mark.unit
     def test_sin_texto(self, tmp_path) -> None:
         embedder = mock.Mock()
         store = mock.Mock()
@@ -185,6 +202,7 @@ class TestVectorIndexSubscriber:
 
 
 class TestFusionSubscriber:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         handler = subs._make_fusion_subscriber(tmp_path / "db.sqlite")
         with mock.patch("knowledge.engine.orchestrator.compile_result_to_claims", mock.Mock(return_value=[mock.Mock()])):
@@ -194,6 +212,7 @@ class TestFusionSubscriber:
         record.assert_called_once()
         assert record.call_args.kwargs["claims"] == 1
 
+    @pytest.mark.unit
     def test_sin_claims(self, tmp_path) -> None:
         handler = subs._make_fusion_subscriber(tmp_path / "db.sqlite")
         with mock.patch("knowledge.engine.orchestrator.compile_result_to_claims", mock.Mock(return_value=[])):
@@ -201,6 +220,7 @@ class TestFusionSubscriber:
                 handler(FakeEvent())
         record.assert_not_called()
 
+    @pytest.mark.unit
     def test_error(self, tmp_path) -> None:
         handler = subs._make_fusion_subscriber(tmp_path / "db.sqlite")
         with mock.patch("knowledge.engine.orchestrator.compile_result_to_claims", mock.Mock(side_effect=OSError("x"))):
@@ -210,6 +230,7 @@ class TestFusionSubscriber:
 
 
 class TestGovernanceSubscriber:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         handler = subs._make_governance_subscriber(tmp_path / "db.sqlite")
         store = mock.Mock()
@@ -218,6 +239,7 @@ class TestGovernanceSubscriber:
         store.set_policy.assert_called_once()
         assert store.set_policy.call_args.kwargs["actor"] == "system"
 
+    @pytest.mark.unit
     def test_sin_documentos(self, tmp_path) -> None:
         handler = subs._make_governance_subscriber(tmp_path / "db.sqlite")
         store = mock.Mock()

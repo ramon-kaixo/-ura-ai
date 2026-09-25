@@ -1,6 +1,7 @@
 """Tests para la sección 'Modo análisis de planes' de AGENTS.md."""
 
 from __future__ import annotations
+import pytest
 
 import re
 from pathlib import Path
@@ -16,21 +17,25 @@ def _section() -> str:
     return match.group(0)
 
 
+@pytest.mark.unit
 def test_seccion_existe() -> None:
     section = _section()
     assert "TASK-20260816-010" in section
 
 
+@pytest.mark.unit
 def test_trigger_documentado() -> None:
     section = _section()
     assert 'empieza con "Analiza este plan/proyecto según la metodología URA:"' in section
 
 
+@pytest.mark.unit
 def test_no_ejecutar_codigo() -> None:
     section = _section()
     assert "No ejecutes código" in section
 
 
+@pytest.mark.unit
 def test_veredictos_documentados() -> None:
     section = _section()
     assert "GO" in section
@@ -38,12 +43,14 @@ def test_veredictos_documentados() -> None:
     assert "NO-GO" in section
 
 
+@pytest.mark.unit
 def test_registro_en_coordination_json() -> None:
     section = _section()
     assert "docs/udo/coordination.json" in section
     assert "veredicto" in section
 
 
+@pytest.mark.unit
 def test_detectar_mensaje_modo_analisis() -> None:
     trigger = "Analiza este plan/proyecto según la metodología URA:"
     assert trigger.startswith("Analiza este plan/proyecto según la metodología URA:")

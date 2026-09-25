@@ -1,3 +1,4 @@
+import pytest
 """Cobertura 100% de motor.core.agents.reparador (AgenteReparador) — paths directos de _nivel_1/_nivel_2/_nivel_3."""
 
 import json
@@ -13,15 +14,18 @@ def _run_result(returncode: int, stderr: str = "", stdout: str = "") -> MagicMoc
 
 
 class TestRepararCaminos:
+    @pytest.mark.unit
     def test_archivo_inexistente_devuelve_error(self) -> None:
         ok, nivel, msg = AgenteReparador().reparar("/tmp/ura_inexistente_xyz.py", [])
         assert (ok, nivel) == (False, -1)
         assert "no encontrado" in msg
 
+    @pytest.mark.unit
     def test_ruta_inexistente_como_path(self) -> None:
         ok, nivel, _ = AgenteReparador().reparar(Path("/tmp/ura_inexistente_xyz.py"), [])
         assert (ok, nivel) == (False, -1)
 
+    @pytest.mark.unit
     def test_acepta_path_directo(self, tmp_path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
@@ -31,6 +35,7 @@ class TestRepararCaminos:
         assert (ok, nivel) == (True, 1)
         assert "determinista" in msg
 
+    @pytest.mark.unit
     def test_backup_existente_no_se_copia(self, tmp_path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
@@ -43,6 +48,7 @@ class TestRepararCaminos:
             rep.reparar(str(f), [])
         mock_copy.assert_not_called()
 
+    @pytest.mark.unit
     def test_nivel_2_devuelve_mensaje_deepseek(self, tmp_path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
@@ -55,6 +61,7 @@ class TestRepararCaminos:
         assert (ok, nivel) == (True, 2)
         assert "DeepSeek" in msg
 
+    @pytest.mark.unit
     def test_nivel_3_devuelve_mensaje_opencode(self, tmp_path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
@@ -68,6 +75,7 @@ class TestRepararCaminos:
         assert (ok, nivel) == (True, 3)
         assert "OpenCode" in msg
 
+    @pytest.mark.unit
     def test_todos_los_niveles_fallan(self, tmp_path) -> None:
         f = tmp_path / "a.py"
         f.write_text("x = 1\n")
@@ -83,6 +91,7 @@ class TestRepararCaminos:
 
 
 class TestGenerar:
+    @pytest.mark.unit
     def test_usa_llm_inyectado(self) -> None:
         llm = MagicMock()
         llm.generate.return_value = "fixed"
@@ -90,6 +99,7 @@ class TestGenerar:
         assert result == "fixed"
         llm.generate.assert_called_once_with("p", model="m", options={"t": 0})
 
+    @pytest.mark.unit
     def test_cae_al_generate_de_motor(self) -> None:
         with patch("motor.core.llm.generate", return_value="motor") as mock_gen:
             result = AgenteReparador()._generate("p", "m")
@@ -98,6 +108,7 @@ class TestGenerar:
 
 
 class TestNivel1:
+    @pytest.mark.unit
     def test_arregla_con_las_tres_pasadas(self, tmp_path) -> None:
         f = tmp_path / "rotos.py"
         f.write_text("x = 1\n")
@@ -106,6 +117,7 @@ class TestNivel1:
             assert rep._nivel_1(f) is True
         assert mock_run.call_count == 3
 
+    @pytest.mark.unit
     def test_syntax_error_tras_pasadas_devuelve_false(self, tmp_path) -> None:
         f = tmp_path / "rotos.py"
         f.write_text("x =\n")
@@ -113,6 +125,8 @@ class TestNivel1:
         with patch("motor.core.agents.reparador.subprocess.run", return_value=_run_result(0)):
             assert rep._nivel_1(f) is False
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_devuelve_false(self, tmp_path) -> None:
         f = tmp_path / "rotos.py"
         f.write_text("x = 1\n")
@@ -125,6 +139,7 @@ class TestNivel1:
 
 
 class TestNivel2:
+    @pytest.mark.unit
     def test_sin_errores_f821_no_llama_al_llm(self, tmp_path) -> None:
         f = tmp_path / "ok.py"
         f.write_text("x = 1\n")
@@ -134,6 +149,7 @@ class TestNivel2:
             assert rep._nivel_2(f, "modelo") is True
         llm.generate.assert_not_called()
 
+    @pytest.mark.unit
     def test_repara_con_fences_markdown_python(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -145,6 +161,7 @@ class TestNivel2:
         assert f.read_text() == "\nx = 1\n"
         llm.generate.assert_called_once()
 
+    @pytest.mark.unit
     def test_repara_con_fences_genericos(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -155,6 +172,7 @@ class TestNivel2:
             assert rep._nivel_2(f, "modelo") is True
         assert f.read_text() == "\nx = 2\n"
 
+    @pytest.mark.unit
     def test_errores_leo_de_stdout_cuando_stderr_vacio(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -164,6 +182,7 @@ class TestNivel2:
         with patch("motor.core.agents.reparador.subprocess.run", return_value=_run_result(1, stdout="F821 en stdout")):
             assert rep._nivel_2(f, "modelo") is True
 
+    @pytest.mark.unit
     def test_sin_fences_escribe_tal_cual(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -174,6 +193,7 @@ class TestNivel2:
             assert rep._nivel_2(f, "modelo") is True
         assert f.read_text() == "x = 3"
 
+    @pytest.mark.unit
     def test_respuesta_vacia_compila_vacio(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -184,6 +204,7 @@ class TestNivel2:
             assert rep._nivel_2(f, "modelo") is True
         assert f.read_text() == ""
 
+    @pytest.mark.unit
     def test_error_del_llm_devuelve_false(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -201,6 +222,7 @@ class TestNivel3:
         resp.read.return_value = json.dumps({"choices": [{"message": {"content": fixed}}]}).encode()
         return resp
 
+    @pytest.mark.unit
     def test_repara_con_llm_potente(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -213,6 +235,7 @@ class TestNivel3:
             assert rep._nivel_3(f) is True
         assert f.read_text() == "\nx = 4\n"
 
+    @pytest.mark.unit
     def test_repara_con_fences_genericos(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -225,6 +248,7 @@ class TestNivel3:
             assert rep._nivel_3(f) is True
         assert f.read_text() == "\nx = 5\n"
 
+    @pytest.mark.unit
     def test_sin_fences_escribe_tal_cual(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -237,6 +261,7 @@ class TestNivel3:
             assert rep._nivel_3(f) is True
         assert f.read_text() == "x = 6"
 
+    @pytest.mark.unit
     def test_respuesta_vacia_compila_vacio(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")
@@ -249,6 +274,7 @@ class TestNivel3:
             assert rep._nivel_3(f) is True
         assert f.read_text() == ""
 
+    @pytest.mark.unit
     def test_error_http_devuelve_false(self, tmp_path) -> None:
         f = tmp_path / "roto.py"
         f.write_text("print(x)\n")

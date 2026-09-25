@@ -1,3 +1,4 @@
+import pytest
 """Tests for scripts/pro/ura_query.py."""
 
 from unittest.mock import patch
@@ -8,6 +9,7 @@ from scripts.pro.ura_query import main, run_query
 class TestRunQuery:
     @patch("scripts.pro.ura_query.query")
     @patch("scripts.pro.ura_query.get_sources")
+    @pytest.mark.unit
     def test_sources_only_plain(self, mock_get_sources, mock_query, capsys):
         mock_query.return_value = [{"content": "a", "source": "x", "similarity": 0.9}]
         mock_get_sources.return_value = [{"source": "x", "chunks_used": 1}]
@@ -22,6 +24,7 @@ class TestRunQuery:
 
     @patch("scripts.pro.ura_query.query")
     @patch("scripts.pro.ura_query.get_sources")
+    @pytest.mark.unit
     def test_sources_only_json(self, mock_get_sources, mock_query, capsys):
         mock_query.return_value = []
         mock_get_sources.return_value = [{"source": "a", "chunks_used": 2}]
@@ -34,6 +37,7 @@ class TestRunQuery:
         assert '"chunks_used": 2' in captured.out
 
     @patch("scripts.pro.ura_query.query")
+    @pytest.mark.unit
     def test_results_plain(self, mock_query, capsys):
         mock_query.return_value = [
             {"content": "hello world", "source": "doc.md", "similarity": 0.85}
@@ -47,6 +51,7 @@ class TestRunQuery:
         assert "hello world" in captured.out
 
     @patch("scripts.pro.ura_query.query")
+    @pytest.mark.unit
     def test_results_json(self, mock_query, capsys):
         mock_query.return_value = [
             {"content": "hello", "source": "doc.md", "similarity": 0.85}
@@ -60,6 +65,7 @@ class TestRunQuery:
         assert '"similarity": 0.85' in captured.out
 
     @patch("scripts.pro.ura_query.query")
+    @pytest.mark.unit
     def test_empty_results(self, mock_query, capsys):
         mock_query.return_value = []
 
@@ -71,6 +77,7 @@ class TestRunQuery:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_no_args(self, capsys):
         result = main([])
         captured = capsys.readouterr()
@@ -78,6 +85,7 @@ class TestMain:
         assert "URA RAG query" in captured.out
 
     @patch("scripts.pro.ura_query.query")
+    @pytest.mark.unit
     def test_with_args(self, mock_query, capsys):
         mock_query.return_value = []
         result = main(["hello"])

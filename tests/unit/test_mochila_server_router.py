@@ -1,5 +1,6 @@
 """Tests cobertura mochila_server — router/endpoints (split)."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from _mochila_helpers import (  # noqa: F401
 
 
 class TestV1Models:
+    @pytest.mark.unit
     def test_health_error_solo_auto(self, client, ms):  # noqa: F811
         class HealthErrorProvider(FakeProvider):
             async def health(self) -> dict:
@@ -33,6 +35,7 @@ class TestV1Models:
         ids = [m["id"] for m in resp.json()["data"]]
         assert "gemini/auto" in ids
 
+    @pytest.mark.unit
     def test_health_ok_sin_modelos(self, client, ms):  # noqa: F811
         class SinModelos(FakeProvider):
             async def health(self) -> dict:
@@ -45,6 +48,7 @@ class TestV1Models:
         ids = [m["id"] for m in resp.json()["data"]]
         assert "gemini/auto" in ids
 
+    @pytest.mark.unit
     def test_cache_hit(self, client, ms):  # noqa: F811
         ms.CACHE_MODELS = [{"id": "ollama/auto", "provider": "ollama", "object": "model"}]
         ms.CACHE_MODELS_TS = time.time()
@@ -69,6 +73,7 @@ class TestResolverRuta:
 
 
 class TestToolCalls:
+    @pytest.mark.unit
     def test_tool_calls_ok(self, client, ms, monkeypatch):  # noqa: F811
 
         class ToolProvider(FakeProvider):
@@ -116,6 +121,7 @@ class TestToolCalls:
         finally:
             ms.PROVIDERS["ollama"] = FakeProvider("ollama")
 
+    @pytest.mark.unit
     def test_tool_call_arguments_invalidos(self, client, ms, monkeypatch):  # noqa: F811
         class ToolProvider(FakeProvider):
             async def chat(self, modelo, mensajes, stream=False, tools=None, max_tokens=4096, temperature=0.0):
@@ -164,6 +170,7 @@ class TestToolCalls:
 
 
 class TestProxyGateway:
+    @pytest.mark.unit
     def test_get_ok(self, client, ms, monkeypatch):  # noqa: F811
         async def fake_get(request, headers):
             return JSONResponse(content={"ok": True}, status_code=200)
@@ -173,6 +180,7 @@ class TestProxyGateway:
         assert resp.status_code == 200
         assert resp.json() == {"ok": True}
 
+    @pytest.mark.unit
     def test_get_connect_error(self, client, ms, monkeypatch):  # noqa: F811
         async def fake_get(request, headers):
             raise httpx.ConnectError("boom")
@@ -181,6 +189,7 @@ class TestProxyGateway:
         resp = client.get("/api/foo", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 502
 
+    @pytest.mark.unit
     def test_post_stream(self, client, ms, monkeypatch):  # noqa: F811
         async def fake_proxy_stream(request, body, headers, is_opencode, guardian, path):
             yield b'{"x": 1}\n'
@@ -194,6 +203,7 @@ class TestProxyGateway:
         assert resp.status_code == 200
         assert b'"x": 1' in resp.content
 
+    @pytest.mark.unit
     def test_post_stream_opencode_guardian(self, client, ms, monkeypatch):  # noqa: F811
         capturado: dict = {}
 
@@ -212,6 +222,7 @@ class TestProxyGateway:
         assert capturado["is_opencode"] is True
         assert capturado["guardian"] is not None
 
+    @pytest.mark.unit
     def test_post_no_stream(self, client, ms, monkeypatch):  # noqa: F811
         async def fake_post(request, body, headers):
             return JSONResponse(content={"ok": 2}, status_code=200)
@@ -225,6 +236,7 @@ class TestProxyGateway:
         assert resp.status_code == 200
         assert resp.json() == {"ok": 2}
 
+    @pytest.mark.unit
     def test_vram_denegada(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "_adquirir_vram", AsyncMock(return_value=None))
         resp = client.post("/api/chat", json={"model": "m"}, headers={"Authorization": "Bearer test-key"})
@@ -256,6 +268,7 @@ class TestAdquirirVram:
 
 
 class TestAdminVRAM:
+    @pytest.mark.unit
     def test_acquire_boot_grant(self, client, ms):  # noqa: F811
         ms.scheduler.acquire_boot_vram = AsyncMock(return_value=True)
         resp = client.post("/admin/acquire_boot_vram?mb=100", headers={"Authorization": "Bearer test-key"})
@@ -265,6 +278,7 @@ class TestAdminVRAM:
 
 
 class TestMemoriaEndpoints:
+    @pytest.mark.unit
     def test_analizar(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "analizar", AsyncMock(return_value={"resultado": "analizado"}))
         resp = client.post(
@@ -273,6 +287,7 @@ class TestMemoriaEndpoints:
         assert resp.status_code == 200
         assert resp.json()["resultado"] == "analizado"
 
+    @pytest.mark.unit
     def test_sintetizar(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "sintetizar", AsyncMock(return_value={"resultado": "sintesis"}))
         resp = client.post(
@@ -280,6 +295,7 @@ class TestMemoriaEndpoints:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_fase_saber(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "fase_saber", AsyncMock(return_value={"resultado": "saber"}))
         resp = client.post(
@@ -287,6 +303,7 @@ class TestMemoriaEndpoints:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_fase_hacer(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "fase_hacer", AsyncMock(return_value={"resultado": "hacer"}))
         resp = client.post(
@@ -294,6 +311,7 @@ class TestMemoriaEndpoints:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_fase_comprar(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "fase_comprar", AsyncMock(return_value={"resultado": "comprar"}))
         resp = client.post(
@@ -301,11 +319,13 @@ class TestMemoriaEndpoints:
         )
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_vigilancia_parte(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "generar_parte", AsyncMock(return_value={"parte": "ok"}))
         resp = client.get("/memoria/vigilancia/parte", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_consultar(self, client, ms, monkeypatch):  # noqa: F811
         spy = AsyncMock(return_value={"resultado": "q"})
         monkeypatch.setattr(ms, "memoria_consultar", spy)
@@ -317,11 +337,13 @@ class TestMemoriaEndpoints:
         assert resp.status_code == 200
         spy.assert_awaited_once_with("pregunta", True)
 
+    @pytest.mark.unit
     def test_ingestar(self, client, ms, monkeypatch):  # noqa: F811
         monkeypatch.setattr(ms, "procesar_inbox_completo", AsyncMock(return_value={"ok": 1}))
         resp = client.post("/memoria/ingestar", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
 
+    @pytest.mark.unit
     def test_ingestar_video_404(self, client):  # noqa: F811
         resp = client.post(
             "/memoria/ingestar/video",
@@ -330,6 +352,7 @@ class TestMemoriaEndpoints:
         )
         assert resp.status_code == 404
 
+    @pytest.mark.unit
     def test_ingestar_video_ok(self, client):  # noqa: F811
         with tempfile.NamedTemporaryFile(suffix=".mp4") as f:
             resp = client.post(
@@ -340,6 +363,7 @@ class TestMemoriaEndpoints:
         assert resp.status_code == 200
         assert resp.json()["status"] == "stub"
 
+    @pytest.mark.unit
     def test_memoria_health_ok(self, client, ms, monkeypatch):  # noqa: F811
         info = MagicMock()
         info.points_count = 42
@@ -352,6 +376,7 @@ class TestMemoriaEndpoints:
         assert resp.json()["status"] == "ok"
         assert resp.json()["puntos"] == 42
 
+    @pytest.mark.unit
     def test_memoria_health_error(self, client, ms, monkeypatch):  # noqa: F811
         def explota():
             raise RuntimeError("qdrant caido")
@@ -364,6 +389,7 @@ class TestMemoriaEndpoints:
 
 
 class TestStatusEndpoint:
+    @pytest.mark.unit
     def test_status_ok(self, client):  # noqa: F811
         resp = client.get("/status", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
@@ -372,6 +398,7 @@ class TestStatusEndpoint:
 
 
 class TestMotorV2:
+    @pytest.mark.unit
     def test_branch_motor_v2(self, monkeypatch):
         import importlib.util
 

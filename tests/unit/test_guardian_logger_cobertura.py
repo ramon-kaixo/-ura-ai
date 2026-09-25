@@ -1,6 +1,7 @@
 """Cobertura para core/logs/guardian_logger.py (TASK-20260818-009, A6)."""
 from __future__ import annotations
 
+import pytest
 import json
 from unittest import mock
 
@@ -15,6 +16,7 @@ def _log_tmp(tmp_path, monkeypatch):
     yield
 
 
+@pytest.mark.unit
 def test_ensure_log_dir_crea_directorio(tmp_path, monkeypatch):
     destino = tmp_path / "sub" / "nested" / "guardian.jsonl"
     monkeypatch.setattr(gl, "GUARDIAN_LOG", str(destino))
@@ -22,11 +24,13 @@ def test_ensure_log_dir_crea_directorio(tmp_path, monkeypatch):
     assert destino.parent.exists()
 
 
+@pytest.mark.unit
 def test_ensure_log_dir_sin_directorio(monkeypatch):
     monkeypatch.setattr(gl, "GUARDIAN_LOG", "solo_archivo.json")
     gl._ensure_log_dir()  # no debe lanzar
 
 
+@pytest.mark.unit
 def test_publish_evento(mock_publish):
     gl._publish_to_event_bus({"event": "e1", "reason": "r" * 250, "result_type": "failure"})
     args = mock_publish.call_args
@@ -35,11 +39,13 @@ def test_publish_evento(mock_publish):
     assert len(args[0][1]["reason"]) == 200
 
 
+@pytest.mark.unit
 def test_publish_fallo_ignorado(mock_publish):
     mock_publish.side_effect = RuntimeError("bus caido")
     gl._publish_to_event_bus({"event": "e1"})  # no debe lanzar
 
 
+@pytest.mark.unit
 def test_save_qdrant_disponible_guarda_incidente():
     fake = mock.Mock()
     fake.disponible = True
@@ -58,6 +64,7 @@ def test_save_qdrant_disponible_guarda_incidente():
     assert payload["exit_code"] == -1
 
 
+@pytest.mark.unit
 def test_save_qdrant_no_disponible_no_guarda():
     fake = mock.Mock()
     fake.disponible = False
@@ -67,11 +74,13 @@ def test_save_qdrant_no_disponible_no_guarda():
     fake.guardar_incidente.assert_not_called()
 
 
+@pytest.mark.unit
 def test_save_qdrant_excepcion_ignorada():
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia", side_effect=RuntimeError("qdrant down")):
         gl._save_to_qdrant({"event": "x"}, config=mock.Mock())  # no debe lanzar
 
 
+@pytest.mark.unit
 def test_log_event_escribe_archivo(tmp_path):
     gl.log_event("ok_event", model="m", file="f.py", reason="razon", attempts=1)
     lineas = (tmp_path / "guardian.jsonl").read_text().splitlines()
@@ -81,17 +90,20 @@ def test_log_event_escribe_archivo(tmp_path):
     assert rec["penalty"] == ""
 
 
+@pytest.mark.unit
 def test_log_event_penalty_truncado(tmp_path):
     gl.log_event("p", penalty="x" * 200)
     rec = json.loads((tmp_path / "guardian.jsonl").read_text().splitlines()[0])
     assert len(rec["penalty"]) == 120
 
 
+@pytest.mark.unit
 def test_log_event_error_escritura_loguea(tmp_path, monkeypatch):
     monkeypatch.setattr(gl, "GUARDIAN_LOG", str(tmp_path / "no-existe" / "g.jsonl"))
     gl.log_event("x")  # OSError capturado
 
 
+@pytest.mark.unit
 def test_log_event_failure_publica_y_guarda(mock_publish):
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia", return_value=mock.Mock(disponible=True)) as inst:
         gl.log_event("fallo", result_type="failure", attempts=1)
@@ -101,6 +113,7 @@ def test_log_event_failure_publica_y_guarda(mock_publish):
     inst.assert_called_once()
 
 
+@pytest.mark.unit
 def test_log_event_warning_solo_publica(mock_publish):
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia") as inst:
         gl.log_event("aviso", result_type="warning")
@@ -108,6 +121,7 @@ def test_log_event_warning_solo_publica(mock_publish):
     inst.assert_not_called()
 
 
+@pytest.mark.unit
 def test_log_event_attempts_alto_publica_sin_failure(mock_publish):
     with mock.patch("motor.core.qdrant_client.QdrantClient.instancia") as inst:
         gl.log_event("e", attempts=3)

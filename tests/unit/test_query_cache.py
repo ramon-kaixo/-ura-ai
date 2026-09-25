@@ -1,3 +1,4 @@
+import pytest
 """Tests de query_cache."""
 
 import asyncio
@@ -5,6 +6,7 @@ import asyncio
 from motor.core.query_cache import AsyncQueryCache
 
 
+@pytest.mark.unit
 def test_cache_basic() -> None:
     cache = AsyncQueryCache(max_size=10, ttl=60)
 
@@ -31,6 +33,7 @@ def test_cache_basic() -> None:
     asyncio.run(_run())
 
 
+@pytest.mark.unit
 def test_cache_key_unique() -> None:
     cache = AsyncQueryCache()
     k1 = cache.compute_key("test")
@@ -40,6 +43,7 @@ def test_cache_key_unique() -> None:
     assert k1 != k3  # Diferente para diferentes queries
 
 
+@pytest.mark.unit
 def test_cache_key_params() -> None:
     cache = AsyncQueryCache()
     k1 = cache.compute_key("test", use_reranker=True)

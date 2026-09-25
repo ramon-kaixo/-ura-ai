@@ -8,6 +8,7 @@ falsos (no httpx: el adaptador no toca red, delega en el provider inyectado).
 
 from __future__ import annotations
 
+import pytest
 import json
 from typing import Any
 
@@ -78,14 +79,17 @@ class FakeProvider:
 
 
 class TestMessagesToPrompt:
+    @pytest.mark.unit
     def test_content_str(self) -> None:
         prompt = _messages_to_prompt([{"role": "user", "content": "hola"}])
         assert prompt == "<user>hola</user>"
 
+    @pytest.mark.unit
     def test_role_default_user(self) -> None:
         prompt = _messages_to_prompt([{"content": "sin rol"}])
         assert prompt == "<user>sin rol</user>"
 
+    @pytest.mark.unit
     def test_content_list_filtra_texto(self) -> None:
         mensajes = [
             {
@@ -99,10 +103,12 @@ class TestMessagesToPrompt:
         ]
         assert _messages_to_prompt(mensajes) == "<assistant>uno\ndos</assistant>"
 
+    @pytest.mark.unit
     def test_varios_mensajes(self) -> None:
         prompt = _messages_to_prompt([{"role": "a", "content": "1"}, {"role": "b", "content": "2"}])
         assert prompt == "<a>1</a>\n<b>2</b>"
 
+    @pytest.mark.unit
     def test_content_ausente(self) -> None:
         assert _messages_to_prompt([{"role": "user"}]) == "<user></user>"
 
@@ -113,6 +119,7 @@ class TestMessagesToPrompt:
 
 
 class TestExtraerToolCall:
+    @pytest.mark.unit
     def test_json_valido_args_str(self) -> None:
         calls = _extraer_tool_call(json.dumps({"name": "f", "arguments": '{"x": 1}'}))
         assert calls is not None
@@ -121,23 +128,29 @@ class TestExtraerToolCall:
         assert calls[0]["function"]["name"] == "f"
         assert calls[0]["function"]["arguments"] == '{"x": 1}'
 
+    @pytest.mark.unit
     def test_json_valido_args_dict(self) -> None:
         calls = _extraer_tool_call(json.dumps({"name": "f", "arguments": {"x": 1}}, ensure_ascii=False))
         assert calls is not None
         assert json.loads(calls[0]["function"]["arguments"]) == {"x": 1}
 
+    @pytest.mark.unit
     def test_json_invalido(self) -> None:
         assert _extraer_tool_call("no-json{") is None
 
+    @pytest.mark.unit
     def test_content_no_str(self) -> None:
         assert _extraer_tool_call(None) is None
         assert _extraer_tool_call({"a": 1}) is None
 
+    @pytest.mark.unit
     def test_dict_sin_name_o_arguments(self) -> None:
         assert _extraer_tool_call('{"name": "f"}') is None
         assert _extraer_tool_call('{"arguments": "{}"}') is None
         assert _extraer_tool_call('{"otra": "cosa"}') is None
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_typeerror_en_json_loads(self, monkeypatch) -> None:
         def _explota(_s: str):
             raise TypeError("boom")
@@ -152,9 +165,11 @@ class TestExtraerToolCall:
 
 
 class TestNextTrozo:
+    @pytest.mark.unit
     def test_retorna_elemento(self) -> None:
         assert _next_trozo(iter([1, 2])) == 1
 
+    @pytest.mark.unit
     def test_stop_iteration(self) -> None:
         assert _next_trozo(iter([])) is _FIN_ITER
 
@@ -165,6 +180,7 @@ class TestNextTrozo:
 
 
 class TestChunks:
+    @pytest.mark.unit
     def test_chunk_delta(self) -> None:
         c = _chunk_delta("m1", {"content": "x"}, None)
         assert c["object"] == "chat.completion.chunk"
@@ -173,22 +189,26 @@ class TestChunks:
         assert c["choices"][0]["finish_reason"] is None
         assert c["id"].startswith("mochila-")
 
+    @pytest.mark.unit
     def test_chunk_delta_con_finish(self) -> None:
         c = _chunk_delta("m1", {}, "stop")
         assert c["choices"][0]["finish_reason"] == "stop"
 
+    @pytest.mark.unit
     def test_chunk_fin_sin_usage(self) -> None:
         c = _chunk_fin("m1", {})
         assert c["choices"][0]["delta"] == {}
         assert c["choices"][0]["finish_reason"] == "stop"
         assert c["usage"] == {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0}
 
+    @pytest.mark.unit
     def test_chunk_fin_con_usage(self) -> None:
         c = _chunk_fin("m1", {"prompt_tokens": 3, "completion_tokens": 5, "total_tokens": 8})
         assert c["usage"]["prompt_tokens"] == 3
         assert c["usage"]["completion_tokens"] == 5
         assert c["usage"]["total_tokens"] == 8
 
+    @pytest.mark.unit
     def test_chunk_fin_usage_parcial(self) -> None:
         c = _chunk_fin("m1", {"prompt_tokens": 1})
         assert c["usage"]["completion_tokens"] == 0
@@ -200,14 +220,19 @@ class TestChunks:
 
 
 class TestAdapterPropiedades:
+    @pytest.mark.unit
     def test_nombre(self) -> None:
         a = _MotorChatAdapter("prov", FakeProvider())
         assert a.nombre == "prov"
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_con_atributo(self) -> None:
         a = _MotorChatAdapter("prov", FakeProvider(timeout=42))
         assert a.timeout == 42
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_sin_atributo_default_60(self) -> None:
         class SinTimeout:
             pass

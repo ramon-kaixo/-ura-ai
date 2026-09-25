@@ -1,6 +1,7 @@
 """Tests para motor/core/fusion/stages/extraction.py y motor/assistant/api/middleware.py."""
 from __future__ import annotations
 
+import pytest
 import time
 from types import SimpleNamespace
 
@@ -20,18 +21,21 @@ class FakeEvidence:
 
 
 class TestExtractionStage:
+    @pytest.mark.unit
     def test_meta(self) -> None:
         s = ExtractionStage()
         assert s.name == "ExtractionStage"
         assert s.version == "1.0.0"
         assert s.stage.value == "extraction"
 
+    @pytest.mark.unit
     def test_sin_bundle(self) -> None:
         s = ExtractionStage()
         ctx = FusionContext(bundle=None)
         out = s._execute(ctx)
         assert out.claims == []
 
+    @pytest.mark.unit
     def test_extrae_claims(self) -> None:
         s = ExtractionStage()
         bundle = SimpleNamespace(evidence=[FakeEvidence("ev1", "texto uno", 0.9), FakeEvidence("ev2", "texto dos", 0.5)])
@@ -45,6 +49,7 @@ class TestExtractionStage:
         assert c.text_id == "ev1"
         assert out.statistics["claims_extracted"] == 2
 
+    @pytest.mark.unit
     def test_claim_id_unico(self) -> None:
         s = ExtractionStage()
         bundle = SimpleNamespace(evidence=[FakeEvidence("ev1", "texto"), FakeEvidence("ev1", "texto")])
@@ -55,15 +60,18 @@ class TestExtractionStage:
 
 
 class TestRateLimiter:
+    @pytest.mark.unit
     def test_primer_request_ok(self) -> None:
         rl = _RateLimiter()
         rl.check("user1")  # no debe lanzar
 
+    @pytest.mark.unit
     def test_multiples_ok(self) -> None:
         rl = _RateLimiter()
         for _ in range(5):
             rl.check("u")
 
+    @pytest.mark.unit
     def test_limite_excedido(self, monkeypatch) -> None:
         from fastapi import HTTPException
 
@@ -73,6 +81,7 @@ class TestRateLimiter:
             rl.check("u")
         assert e.value.status_code == 429
 
+    @pytest.mark.unit
     def test_ventana_limpia_viejos(self, monkeypatch) -> None:
         rl = _RateLimiter()
         # request viejos (fuera de ventana 60s)
@@ -82,6 +91,7 @@ class TestRateLimiter:
         rl._requests["u"] = [50.0] * 59  # viejos
         rl.check("u")  # limpia los 59 viejos, queda 1 -> no excede
 
+    @pytest.mark.unit
     def test_singleton(self) -> None:
         from motor.assistant.api.middleware import _rate_limiter
 
@@ -89,13 +99,16 @@ class TestRateLimiter:
 
 
 class TestScopedCid:
+    @pytest.mark.unit
     def test_con_user(self) -> None:
         cid = _scoped_cid("user-1234567890abcdef", "conv1")
         assert cid == "usr_user-1234567890a__conv1"
 
+    @pytest.mark.unit
     def test_sin_user(self) -> None:
         assert _scoped_cid("", "conv1") == "conv1"
 
+    @pytest.mark.unit
     def test_user_largo_truncado(self) -> None:
         cid = _scoped_cid("x" * 50, "c")
         assert len(cid.split("__")[0]) <= 20

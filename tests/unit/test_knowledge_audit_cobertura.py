@@ -8,6 +8,7 @@ ingesta, ingest sin archivo, fallo SQLite y métricas no disponibles).
 """
 
 from __future__ import annotations
+import pytest
 
 import fcntl
 import json
@@ -38,6 +39,7 @@ class FakeEvent:
 
 
 class TestAuditServiceFacade:
+    @pytest.mark.unit
     def test_logs_sin_backend_son_noop(self) -> None:
         """Las 4 fachadas con backend None no hacen nada (líneas 50-52, 71-73, 93-95, 118-120)."""
         s = audit_service.AuditService()
@@ -46,6 +48,7 @@ class TestAuditServiceFacade:
         s.log_archive()
         s.log("a", "b", "c", "d")
 
+    @pytest.mark.unit
     def test_logs_con_backend_escriben(self, tmp_path) -> None:
         """Las 4 fachadas con backend real escriben un evento (write cubierto)."""
         backend = NDJSONAuditBackend(tmp_path / "audit")
@@ -60,6 +63,7 @@ class TestAuditServiceFacade:
         actions = [json.loads(l)["action"] for l in lines]
         assert actions == ["search", "compile", "archive", "custom"]
 
+    @pytest.mark.unit
     def test_backend_setter(self) -> None:
         """Setter del backend (línea 41)."""
         s = audit_service.AuditService()
@@ -67,11 +71,13 @@ class TestAuditServiceFacade:
         s.backend = backend
         assert s.backend is backend
 
+    @pytest.mark.unit
     def test_ingest_no_ndjson_returns_zero(self) -> None:
         """ingest() con backend que no es NDJSON → 0 (líneas 139-140)."""
         s = audit_service.AuditService(backend=mock.Mock())
         assert s.ingest(Path("/tmp/x.sqlite")) == 0
 
+    @pytest.mark.unit
     def test_close_no_ndjson_noop(self) -> None:
         """close() con backend no-NDJSON no llama al backend (líneas 143-145)."""
         backend = mock.Mock()
@@ -79,6 +85,7 @@ class TestAuditServiceFacade:
         s.close()
         backend.close.assert_not_called()
 
+    @pytest.mark.unit
     def test_close_ndjson_cierra_backend(self, tmp_path) -> None:
         """close() con backend NDJSON delega en el backend (líneas 144-145)."""
         backend = NDJSONAuditBackend(tmp_path / "audit")
@@ -86,6 +93,7 @@ class TestAuditServiceFacade:
         s.close()
         assert backend._handle.closed
 
+    @pytest.mark.unit
     def test_ingest_ndjson_delega(self, tmp_path, monkeypatch) -> None:
         """ingest() con backend NDJSON delega en ingest_into_sqlite (línea 141)."""
         backend = NDJSONAuditBackend(tmp_path / "audit")
@@ -108,6 +116,7 @@ class TestGetAuditSingleton:
     def teardown_method(self) -> None:
         audit_service._AUDIT_INSTANCE = self._orig
 
+    @pytest.mark.unit
     def test_doble_check_concurrencia(self) -> None:
         """Segundo check dentro del lock con otro thread esperando (líneas 164-165)."""
         dummy = audit_service.AuditService()
@@ -130,12 +139,14 @@ class TestGetAuditSingleton:
         t.join(timeout=5)
         assert results == [dummy]
 
+    @pytest.mark.unit
     def test_creacion_exitosa(self) -> None:
         """get_audit() crea la instancia con backend (línea 169)."""
         with mock.patch.object(audit_service, "NDJSONAuditBackend", return_value=mock.Mock()):
             s = audit_service.get_audit()
         assert s.backend is not None
 
+    @pytest.mark.unit
     def test_degradado_sin_backend(self) -> None:
         """Fallo al crear el backend → AuditService no-op con warning (líneas 170-172)."""
         with (
@@ -146,6 +157,7 @@ class TestGetAuditSingleton:
         assert s.backend is None
         warn.assert_called_once()
 
+    @pytest.mark.unit
     def test_set_audit_y_early_return(self) -> None:
         """set_audit + get_audit con instancia ya creada (líneas 161-162, 179)."""
         s = audit_service.AuditService()
@@ -154,12 +166,14 @@ class TestGetAuditSingleton:
 
 
 class TestRecordMetricSinMetrics:
+    @pytest.mark.unit
     def test_record_metric_import_fail(self) -> None:
         """record_metric sin knowledge.engine.metrics disponible → noop (líneas 50-51)."""
         fake = types.ModuleType("knowledge.engine.metrics")
         with mock.patch.dict(sys.modules, {"knowledge.engine.metrics": fake}):
             record_metric()
 
+    @pytest.mark.unit
     def test_record_metric_ok(self) -> None:
         """record_metric con métricas disponibles incrementa el contador (línea 50)."""
         fake = types.ModuleType("knowledge.engine.metrics")
@@ -172,6 +186,7 @@ class TestRecordMetricSinMetrics:
 
 
 class TestNDJSONCobertura:
+    @pytest.mark.unit
     def test_acquire_flock_bloqueado(self, tmp_path) -> None:
         """flock no disponible (otro fd retiene LOCK_EX) → False (líneas 70-75)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -184,6 +199,7 @@ class TestNDJSONCobertura:
             os.close(fd)
         b.close()
 
+    @pytest.mark.unit
     def test_health_check_oserror(self, tmp_path, monkeypatch) -> None:
         """health_check con OSError → AuditHealth no healthy (líneas 138-139)."""
 
@@ -196,6 +212,7 @@ class TestNDJSONCobertura:
         assert h.healthy is False
         b.close()
 
+    @pytest.mark.unit
     def test_read_lines_linea_vacia(self, tmp_path) -> None:
         """read_lines con línea vacía → saltada (línea 191)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -207,6 +224,7 @@ class TestNDJSONCobertura:
         assert len(b2.read_lines()) == 1
         b2.close()
 
+    @pytest.mark.unit
     def test_read_lines_linea_corrupta(self, tmp_path) -> None:
         """read_lines con línea no-JSON → saltada con warning (líneas 195-197)."""
         (tmp_path / "audit").mkdir(parents=True)
@@ -215,6 +233,7 @@ class TestNDJSONCobertura:
         assert b.read_lines() == []
         b.close()
 
+    @pytest.mark.unit
     def test_rotacion_error_oserror(self, tmp_path) -> None:
         """Fallo en rename durante la rotación → reabre y resetea (líneas 167-172)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -228,6 +247,7 @@ class TestNDJSONCobertura:
         assert b._handle.writable()
         b.close()
 
+    @pytest.mark.unit
     def test_ingest_linea_vacia(self, tmp_path, monkeypatch) -> None:
         """_ingest_events con línea vacía → continue (línea 209)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -244,6 +264,7 @@ class TestNDJSONCobertura:
         assert b2.ingest_into_sqlite(tmp_path / "db.sqlite") == 1
         b2.close()
 
+    @pytest.mark.unit
     def test_ingest_sin_archivo(self, tmp_path) -> None:
         """ingest sin archivo NDJSON → FileNotFoundError → 0 (líneas 247-248)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -252,6 +273,7 @@ class TestNDJSONCobertura:
         assert b.ingest_into_sqlite(tmp_path / "db.sqlite") == 0
         b.close()
 
+    @pytest.mark.unit
     def test_ingest_db_fallo(self, tmp_path, monkeypatch) -> None:
         """Fallo al abrir SQLite → warning y retorno parcial (líneas 267-269)."""
         b = NDJSONAuditBackend(tmp_path / "audit")
@@ -262,6 +284,7 @@ class TestNDJSONCobertura:
         assert b2.ingest_into_sqlite(tmp_path / "db.sqlite") == 0
         b2.close()
 
+    @pytest.mark.unit
     def test_ingest_metrics_no_disponibles(self, tmp_path, monkeypatch) -> None:
         """Ingesta completa pero métricas no disponibles → noop (líneas 276-277)."""
         b = NDJSONAuditBackend(tmp_path / "audit")

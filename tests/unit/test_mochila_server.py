@@ -111,10 +111,12 @@ def client(ms):
 
 
 class TestAuthMiddleware:
+    @pytest.mark.unit
     def test_sin_token_401(self, client):
         resp = client.post("/v1/chat/completions", json={})
         assert resp.status_code == 401
 
+    @pytest.mark.unit
     def test_token_invalido_401(self, client):
         resp = client.post(
             "/v1/chat/completions",
@@ -123,17 +125,21 @@ class TestAuthMiddleware:
         )
         assert resp.status_code == 401
 
+    @pytest.mark.unit
     def test_health_exento(self, client):
         assert client.get("/health").status_code == 200
 
+    @pytest.mark.unit
     def test_metrics_exento(self, client):
         assert client.get("/metrics").status_code == 200
 
+    @pytest.mark.unit
     def test_docs_exento(self, client):
         assert client.get("/openapi.json").status_code == 200
 
 
 class TestHealth:
+    @pytest.mark.unit
     def test_ok(self, client):
         resp = client.get("/health")
         data = resp.json()
@@ -142,6 +148,7 @@ class TestHealth:
 
 
 class TestV1Models:
+    @pytest.mark.unit
     def test_lista_modelos(self, client):
         resp = client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
@@ -151,11 +158,13 @@ class TestV1Models:
         assert "openrouter/openrouter-modelo-1" in ids
         assert "gemini/auto" in ids
 
+    @pytest.mark.unit
     def test_incluye_rutas(self, client, ms):
         resp = client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
         ids = [m["id"] for m in resp.json()["data"]]
         assert any(mid in ids for mid in ("ollama/qwen3-coder:30b", "openrouter/anthropic/claude-sonnet-4"))
 
+    @pytest.mark.unit
     def test_cache(self, client, ms):
         client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
         client.get("/v1/models", headers={"Authorization": "Bearer test-key"})
@@ -163,6 +172,7 @@ class TestV1Models:
 
 
 class TestChatCompletions:
+    @pytest.mark.unit
     def test_no_stream_ok(self, client, ms):
         resp = client.post(
             "/v1/chat/completions",
@@ -175,6 +185,7 @@ class TestChatCompletions:
         assert "X-Mochila-Provider" in resp.headers
         assert resp.headers["X-Mochila-Provider"] == "ollama"
 
+    @pytest.mark.unit
     def test_modelo_explicito(self, client, ms):
         resp = client.post(
             "/v1/chat/completions",
@@ -184,6 +195,7 @@ class TestChatCompletions:
         assert resp.status_code == 200
         assert resp.headers["X-Mochila-Provider"] == "gemini"
 
+    @pytest.mark.unit
     def test_uso_registrado(self, client, ms):
         client.post(
             "/v1/chat/completions",
@@ -193,6 +205,7 @@ class TestChatCompletions:
         resumen = ms.cost_tracker.resumen_hoy()
         assert resumen["total_tokens"] >= 15
 
+    @pytest.mark.unit
     def test_stream_ok(self, client, ms):
         with client.stream(
             "POST",
@@ -205,6 +218,7 @@ class TestChatCompletions:
         assert "hola" in body
         assert "[DONE]" in body
 
+    @pytest.mark.unit
     def test_provider_error_502(self, client, ms):
         from core.mochila.adapter import ProviderError
 
@@ -224,6 +238,7 @@ class TestChatCompletions:
         finally:
             ms.PROVIDERS["ollama"] = FakeProvider("ollama")
 
+    @pytest.mark.unit
     def test_respuesta_vacia_502(self, client, ms):
         class Vacio(FakeProvider):
             async def chat(self, *a, **k):
@@ -243,6 +258,7 @@ class TestChatCompletions:
 
 
 class TestRateLimitYBreaker:
+    @pytest.mark.unit
     def test_breaker_bloquea_503(self, client, ms):
         ms.circuit_breaker.registrar_fallo("ollama")
         ms.circuit_breaker.registrar_fallo("ollama")
@@ -259,6 +275,7 @@ class TestRateLimitYBreaker:
         finally:
             ms.circuit_breaker.reset("ollama")
 
+    @pytest.mark.unit
     def test_rate_limit_429(self, client, ms):
         ms.rate_limiter.configurar("ollama", 1)
         ms.rate_limiter.registrar("ollama")
@@ -272,29 +289,35 @@ class TestRateLimitYBreaker:
         finally:
             ms.rate_limiter.configurar("ollama", 30)
 
+    @pytest.mark.unit
     def test_breaker_endpoint(self, client):
         resp = client.get("/breaker", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
         assert set(resp.json()) == {"ollama", "openrouter", "gemini"}
 
+    @pytest.mark.unit
     def test_breaker_reset(self, client):
         resp = client.post("/breaker/reset/ollama", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
         assert resp.json()["status"] == "reset"
 
+    @pytest.mark.unit
     def test_breaker_reset_404(self, client):
         resp = client.post("/breaker/reset/nope", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 404
 
+    @pytest.mark.unit
     def test_rate_status(self, client):
         resp = client.get("/metrics/rate/ollama", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
         assert resp.json()["provider"] == "ollama"
 
+    @pytest.mark.unit
     def test_rate_status_404(self, client):
         resp = client.get("/metrics/rate/nope", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 404
 
+    @pytest.mark.unit
     def test_cost_summary(self, client):
         resp = client.get("/metrics/cost", headers={"Authorization": "Bearer test-key"})
         assert resp.status_code == 200
@@ -302,6 +325,7 @@ class TestRateLimitYBreaker:
 
 
 class TestMetrics:
+    @pytest.mark.unit
     def test_estructura(self, client):
         resp = client.get("/metrics")
         data = resp.json()
@@ -311,25 +335,30 @@ class TestMetrics:
 
 
 class TestHelpers:
+    @pytest.mark.unit
     def test_generar_id(self, ms):
         a = ms._generar_id()
         b = ms._generar_id()
         assert a.startswith("mochila-")
         assert a != b
 
+    @pytest.mark.unit
     def test_sse_bytes(self, ms):
         assert ms._sse_bytes({"a": 1}) == b"data: " + json.dumps({"a": 1}).encode() + b"\n\n"
 
+    @pytest.mark.unit
     def test_error_sse_con_penalty(self, ms):
         out = ms._error_sse("mensaje", "tipo", {"k": "v"})
         assert b'"penalty_context"' in out
         assert b'"type": "tipo"' in out
 
+    @pytest.mark.unit
     def test_chunk_es_fin(self, ms):
         assert ms._chunk_es_fin({"choices": [{"delta": {}, "finish_reason": "stop"}]}) is True
         assert ms._chunk_es_fin({"choices": [{"delta": {"content": "x"}, "finish_reason": None}]}) is False
         assert ms._chunk_es_fin({}) is False
 
+    @pytest.mark.unit
     def test_resolver_herramientas(self, ms, client):
         from core.mochila.mochila_server import ChatRequest
 
@@ -340,6 +369,7 @@ class TestHelpers:
         req_none = ChatRequest(model="auto", messages=[])
         assert ms._resolver_herramientas(req_none) is None
 
+    @pytest.mark.unit
     def test_evaluar_guardian_vacio(self, ms):
         class G:
             def evaluar_texto_stream(self, texto):
@@ -349,6 +379,7 @@ class TestHelpers:
         assert ab is False
         assert texto == "acum"
 
+    @pytest.mark.unit
     def test_evaluar_guardian_bloquea(self, ms, monkeypatch):
         monkeypatch.setattr("core.mochila.mochila_server.log_event", lambda *a, **k: None)
 
@@ -366,9 +397,11 @@ class TestHelpers:
 
 
 class TestProxyGateway:
+    @pytest.mark.unit
     def test_get_upstream_errores_conectando(self, client, ms):
         resp = client.get("/api/foo")
         assert resp.status_code in (401, 502)
 
+    @pytest.mark.unit
     def test_apaga_scheduler(self, client, ms):
         assert ms.scheduler is not None

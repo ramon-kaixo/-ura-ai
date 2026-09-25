@@ -1,6 +1,7 @@
 """Tests for WebLearningAdapter (motor/brain/web_adapter.py)."""
 from __future__ import annotations
 
+import pytest
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -18,6 +19,7 @@ def adapter() -> WebLearningAdapter:
 
 
 class TestSearch:
+    @pytest.mark.unit
     def test_search_returns_list(self, adapter: WebLearningAdapter) -> None:
         searcher_instance = MagicMock()
         searcher_instance.search.return_value = [
@@ -28,6 +30,7 @@ class TestSearch:
         assert isinstance(results, list)
         assert len(results) == 1
 
+    @pytest.mark.unit
     def test_search_scores_relevance(self, adapter: WebLearningAdapter) -> None:
         searcher_instance = MagicMock()
         searcher_instance.search.return_value = [
@@ -37,6 +40,7 @@ class TestSearch:
         results = adapter.search("test query")
         assert results[0]["relevance"] > 0
 
+    @pytest.mark.unit
     def test_search_no_searcher(self) -> None:
         a = WebLearningAdapter()
         with patch.object(a, "_load_modules"):
@@ -46,6 +50,7 @@ class TestSearch:
 
 
 class TestCrawl:
+    @pytest.mark.unit
     def test_crawl_returns_dict(self, adapter: WebLearningAdapter) -> None:
         crawler_instance = MagicMock()
         crawler_instance.crawl.return_value.content = "page content"
@@ -54,6 +59,7 @@ class TestCrawl:
         assert result["status"] == "ok"
         assert "page content" in result["content"]
 
+    @pytest.mark.unit
     def test_crawl_no_crawler(self) -> None:
         a = WebLearningAdapter()
         with patch.object(a, "_load_modules"):
@@ -61,6 +67,7 @@ class TestCrawl:
             result = a.crawl("http://ex.com")
             assert result == {"error": "No crawler available"}
 
+    @pytest.mark.unit
     def test_crawl_error(self, adapter: WebLearningAdapter) -> None:
         crawler_instance = MagicMock()
         crawler_instance.crawl.side_effect = Exception("timeout")
@@ -70,6 +77,7 @@ class TestCrawl:
 
 
 class TestSummarize:
+    @pytest.mark.unit
     def test_summarize_returns_string(self, adapter: WebLearningAdapter) -> None:
         summarizer_instance = MagicMock()
         summarizer_instance.summarize.return_value = "summary text"
@@ -77,6 +85,7 @@ class TestSummarize:
         result = adapter.summarize("long text to summarize")
         assert result == "summary text"
 
+    @pytest.mark.unit
     def test_summarize_no_summarizer(self) -> None:
         a = WebLearningAdapter()
         with patch.object(a, "_load_modules"):
@@ -86,6 +95,7 @@ class TestSummarize:
 
 
 class TestLearnFromWeb:
+    @pytest.mark.unit
     def test_learn_from_web_returns_dict(self, adapter: WebLearningAdapter) -> None:
         searcher_instance = MagicMock()
         searcher_instance.search.return_value = [
@@ -101,18 +111,22 @@ class TestLearnFromWeb:
 
 
 class TestScore:
+    @pytest.mark.unit
     def test_score_exact_match(self, adapter: WebLearningAdapter) -> None:
         score = adapter._score("test query", {"title": "test", "snippet": "this is a query result"})
         assert score == 1.0
 
+    @pytest.mark.unit
     def test_score_no_match(self, adapter: WebLearningAdapter) -> None:
         score = adapter._score("test query", {"title": "unrelated", "snippet": "nothing here"})
         assert score == 0.0
 
+    @pytest.mark.unit
     def test_score_partial(self, adapter: WebLearningAdapter) -> None:
         score = adapter._score("test query", {"title": "test only", "snippet": "no match here"})
         assert 0.0 < score <= 1.0
 
+    @pytest.mark.unit
     def test_score_empty_query(self, adapter: WebLearningAdapter) -> None:
         score = adapter._score("", {"title": "anything", "snippet": "something"})
         assert score == 0.0

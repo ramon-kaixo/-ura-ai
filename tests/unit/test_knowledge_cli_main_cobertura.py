@@ -6,6 +6,7 @@ _add_command y helpers, con los módulos CLI reales (que importan bien).
 
 from __future__ import annotations
 
+import pytest
 import argparse
 from pathlib import Path
 
@@ -28,24 +29,29 @@ def _subparser() -> argparse.ArgumentParser:
 
 
 class TestResolveDbPath:
+    @pytest.mark.unit
     def test_por_args(self) -> None:
         args = argparse.Namespace(db_path="/tmp/x.db")
         assert _resolve_db_path(args) == Path("/tmp/x.db")
 
+    @pytest.mark.unit
     def test_sin_db_path_usa_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_KNOWLEDGE_DB", "/env/db.sqlite")
         assert _resolve_db_path(argparse.Namespace(db_path="")) == Path("/env/db.sqlite")
 
+    @pytest.mark.unit
     def test_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.delenv("URA_KNOWLEDGE_DB", raising=False)
         assert _resolve_db_path(argparse.Namespace(db_path="")) == DEFAULT_DB_PATH
 
+    @pytest.mark.unit
     def test_default_sin_env_existe(self) -> None:
         assert str(DEFAULT_DB_PATH).endswith("knowledge.db")
         assert SCHEMA_FILE.name == "knowledge_graph.sql"
 
 
 class TestGetConn:
+    @pytest.mark.unit
     def test_crea_conexion(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr("knowledge.engine.connection.open_db", lambda p: ("conn", p))
         db = tmp_path / "sub" / "db.sqlite"
@@ -55,6 +61,7 @@ class TestGetConn:
 
 
 class TestAddCommand:
+    @pytest.mark.unit
     def test_registra_subcomando(self) -> None:
         sub = _subparser()
 
@@ -67,6 +74,7 @@ class TestAddCommand:
 
 
 class TestBuildParser:
+    @pytest.mark.unit
     def test_arbol_completo(self) -> None:
         parser = build_parser()
         # subparsers registrados
@@ -79,14 +87,17 @@ class TestBuildParser:
         }
         assert esperados <= names
 
+    @pytest.mark.unit
     def test_parser_help_no_falla(self) -> None:
         parser = build_parser()
         parser.print_help()
 
+    @pytest.mark.unit
     def test_default_func(self) -> None:
         parser = build_parser()
         assert callable(parser.get_default("func"))
 
+    @pytest.mark.unit
     def test_parse_search(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["search", "query", "--mode", "hybrid", "--limit", "5"])
@@ -94,73 +105,86 @@ class TestBuildParser:
         assert args.mode == "hybrid"
         assert args.limit == 5
 
+    @pytest.mark.unit
     def test_parse_rules_list(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["rules", "list"])
         assert args.rules_cmd == "list"
         assert callable(args.func)
 
+    @pytest.mark.unit
     def test_parse_agent_run(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["agent", "run", "a1", "--kind", "coverage"])
         assert args.agent_id == "a1"
         assert args.kind == "coverage"
 
+    @pytest.mark.unit
     def test_parse_feedback_rate(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["feedback", "rate", "doc1", "5"])
         assert args.doc_id == "doc1"
         assert args.rating == 5
 
+    @pytest.mark.unit
     def test_parse_archive_list(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["archive", "list"])
         assert args.archive_cmd == "list"
 
+    @pytest.mark.unit
     def test_parse_metadata_lineage(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["metadata", "lineage", "asset1"])
         assert args.metadata_cmd == "lineage"
         assert args.asset_id == "asset1"
 
+    @pytest.mark.unit
     def test_parse_memory_create(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["metadata", "memory", "create", "note", "titulo", "contenido"])
         assert args.memory_cmd == "create"
         assert args.kind == "note"
 
+    @pytest.mark.unit
     def test_parse_docs_generate(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["docs", "generate", "--output", "/tmp/out"])
         assert args.docs_cmd == "generate"
         assert args.output == "/tmp/out"
 
+    @pytest.mark.unit
     def test_parse_api(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["api", "--port", "5000"])
         assert args.port == 5000
 
+    @pytest.mark.unit
     def test_parse_verify_source_dir(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["verify", "--source-dir", "/src"])
         assert args.source_dir == "/src"
 
+    @pytest.mark.unit
     def test_parse_pipeline(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["pipeline", "--source-dir", "/s", "--archive-dir", "/a"])
         assert args.source_dir == "/s"
         assert args.archive_dir == "/a"
 
+    @pytest.mark.unit
     def test_parse_compile_incremental(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["compile-incremental", "--source-dir", "/s"])
         assert args.source_dir == "/s"
 
+    @pytest.mark.unit
     def test_parse_read(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["read", "doc_1"])
         assert args.doc_id == "doc_1"
 
+    @pytest.mark.unit
     def test_parse_related_depth(self) -> None:
         parser = build_parser()
         args = parser.parse_args(["related", "doc_1", "--depth", "3"])
@@ -168,6 +192,7 @@ class TestBuildParser:
 
 
 class TestMain:
+    @pytest.mark.unit
     def test_main_llama_func(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import sys
 
@@ -190,6 +215,7 @@ class TestMain:
         assert main_mod.main() == 42
         assert llamado["args"] is not None
 
+    @pytest.mark.unit
     def test_init_bus(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class FakeBus:
             def publish(self, *a: object, **k: object) -> None:
@@ -199,6 +225,7 @@ class TestMain:
         monkeypatch.setattr("knowledge.engine.subscribers.subscribe_all", lambda *a, **k: None)
         _init_bus()  # no debe lanzar
 
+    @pytest.mark.unit
     def test_init_bus_con_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("URA_KNOWLEDGE_DB", "/tmp/env.db")
         monkeypatch.setattr("knowledge.engine.eventbus.get_bus", lambda: object())
@@ -207,6 +234,7 @@ class TestMain:
 
 
 class TestMainExec:
+    @pytest.mark.unit
     def test_main_block(self) -> None:
         import sys
 

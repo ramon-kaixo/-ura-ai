@@ -217,6 +217,7 @@ def _engine(**kw) -> ConversationEngine:
 # ── ConversationEngine: básico ───────────────────────────────
 
 
+@pytest.mark.unit
 def test_engine_init_crea_dependencias() -> None:
     e = _engine()
     assert e._max_turns == 10000
@@ -224,6 +225,7 @@ def test_engine_init_crea_dependencias() -> None:
     assert e._lock is not None
 
 
+@pytest.mark.unit
 def test_get_or_create_nuevo() -> None:
     e = _engine()
     conv = e.get_or_create("nueva")
@@ -232,6 +234,7 @@ def test_get_or_create_nuevo() -> None:
     assert "nueva" in e._active
 
 
+@pytest.mark.unit
 def test_get_or_create_sin_id() -> None:
     e = _engine()
     conv = e.get_or_create("")
@@ -239,6 +242,7 @@ def test_get_or_create_sin_id() -> None:
     assert len(conv.conversation_id) == 12
 
 
+@pytest.mark.unit
 def test_get_or_create_existente() -> None:
     e = _engine()
     c1 = e.get_or_create("c1")
@@ -246,6 +250,7 @@ def test_get_or_create_existente() -> None:
     assert c1 is c2
 
 
+@pytest.mark.unit
 def test_get_or_create_desde_store() -> None:
     store = _MsgStoreFake()
     store._convs["c9"] = [Message(role="user", content="hola")]
@@ -255,6 +260,7 @@ def test_get_or_create_desde_store() -> None:
     assert conv.state is not None
 
 
+@pytest.mark.unit
 def test_create_conversation_con_id() -> None:
     e = _engine()
     conv = e.create_conversation("cid-fija", mode=ConversationMode.WORK, goal="meta")
@@ -264,6 +270,7 @@ def test_create_conversation_con_id() -> None:
     assert "cid-fija" in e._active
 
 
+@pytest.mark.unit
 def test_create_conversation_sin_id() -> None:
     e = _engine()
     conv = e.create_conversation()
@@ -271,6 +278,7 @@ def test_create_conversation_sin_id() -> None:
     assert conv.state.mode == ConversationMode.CONVERSATION
 
 
+@pytest.mark.unit
 def test_get_conversation_activa() -> None:
     e = _engine()
     e.create_conversation("c-activa")
@@ -279,6 +287,7 @@ def test_get_conversation_activa() -> None:
     assert conv.conversation_id == "c-activa"
 
 
+@pytest.mark.unit
 def test_get_conversation_desde_store() -> None:
     store = _MsgStoreFake()
     store._convs["c-hist"] = [Message(role="user", content="viejo")]
@@ -290,11 +299,13 @@ def test_get_conversation_desde_store() -> None:
     assert "c-hist" in e._active
 
 
+@pytest.mark.unit
 def test_get_conversation_inexistente() -> None:
     e = _engine()
     assert e.get_conversation("no-existe") is None
 
 
+@pytest.mark.unit
 def test_resolve_reference_sin_ultimo_usuario() -> None:
     e = _engine()
     e.add_message("c1", "assistant", "solo respuesta")
@@ -302,6 +313,7 @@ def test_resolve_reference_sin_ultimo_usuario() -> None:
     assert resolved == "eso otra vez"  # sin last_user_message → sin reemplazo
 
 
+@pytest.mark.unit
 def test_handle_task_triggers_complete_con_pendientes() -> None:
     pro = _ProactivoFake()
 
@@ -321,6 +333,7 @@ def test_handle_task_triggers_complete_con_pendientes() -> None:
     assert completados == ["t1"]
 
 
+@pytest.mark.unit
 def test_contexto_basico_con_state_previo() -> None:
     e = _engine()
     e.create_conversation("c1", mode=ConversationMode.EXPLANATION)
@@ -329,6 +342,7 @@ def test_contexto_basico_con_state_previo() -> None:
     assert e._active["c1"].state.mode == ConversationMode.EXPLANATION
 
 
+@pytest.mark.unit
 def test_contexto_basico_sin_state() -> None:
     e = _engine()
     conv = e.get_or_create("c1")
@@ -337,6 +351,7 @@ def test_contexto_basico_sin_state() -> None:
     assert r["mode_result"] is not None  # previous_mode=None → sin crash
 
 
+@pytest.mark.unit
 def test_query_semantic_facts_con_datos(monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.intelligence.memory.semantic as sem
 
@@ -355,6 +370,7 @@ def test_query_semantic_facts_con_datos(monkeypatch: pytest.MonkeyPatch) -> None
     assert "Hechos conocidos" in out
 
 
+@pytest.mark.unit
 def test_query_semantic_facts_error(monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.intelligence.memory.semantic as sem
 
@@ -367,6 +383,7 @@ def test_query_semantic_facts_error(monkeypatch: pytest.MonkeyPatch) -> None:
     assert ConversationEngine._query_semantic_facts("q") == ""
 
 
+@pytest.mark.unit
 def test_query_semantic_facts_sin_datos(monkeypatch: pytest.MonkeyPatch) -> None:
     import motor.intelligence.memory.semantic as sem
 
@@ -378,6 +395,7 @@ def test_query_semantic_facts_sin_datos(monkeypatch: pytest.MonkeyPatch) -> None
     assert ConversationEngine._query_semantic_facts("q") == ""
 
 
+@pytest.mark.unit
 def test_add_message_ok() -> None:
     store = _MsgStoreFake()
     vm = _VectorMemFake()
@@ -389,18 +407,21 @@ def test_add_message_ok() -> None:
     assert e._active["c1"].messages[-1] is msg
 
 
+@pytest.mark.unit
 def test_add_message_contenido_none() -> None:
     e = _engine()
     with pytest.raises(ValueError):
         e.add_message("c1", "user", None)  # type: ignore[arg-type]
 
 
+@pytest.mark.unit
 def test_add_message_rol_invalido() -> None:
     e = _engine()
     with pytest.raises(ValueError):
         e.add_message("c1", "robot", "hola")  # type: ignore[arg-type]
 
 
+@pytest.mark.unit
 def test_add_message_max_turns() -> None:
     e = _engine(max_turns=2)
     e.add_message("c1", "user", "uno")
@@ -409,6 +430,7 @@ def test_add_message_max_turns() -> None:
         e.add_message("c1", "user", "tres")
 
 
+@pytest.mark.unit
 def test_get_context() -> None:
     cw = _ContextWindowFake()
     e = _engine(context_window=cw)
@@ -418,6 +440,7 @@ def test_get_context() -> None:
     assert cw.calls[-1][1] == "sys"
 
 
+@pytest.mark.unit
 def test_get_context_con_summary() -> None:
     store = _MsgStoreFake()
     msgs = [Message(role="user" if i % 2 == 0 else "assistant", content=f"mensaje largo numero {i}") for i in range(20)]
@@ -428,12 +451,14 @@ def test_get_context_con_summary() -> None:
     assert "[Resumen:" in cw.calls[-1][1]
 
 
+@pytest.mark.unit
 def test_get_summary_corto() -> None:
     e = _engine()
     conv = Conversation(conversation_id="c1", messages=[Message(role="user", content="hola")])
     assert e._get_summary(conv) == ""
 
 
+@pytest.mark.unit
 def test_get_summary_largo() -> None:
     e = _engine()
     msgs = [Message(role="user" if i % 2 == 0 else "assistant", content=f"palabras importantes numero {i}") for i in range(20)]
@@ -443,17 +468,20 @@ def test_get_summary_largo() -> None:
     assert "palabras" in s
 
 
+@pytest.mark.unit
 def test_detect_intent() -> None:
     e = _engine()
     assert e.detect_intent("hola") == UserIntent.CHAT
 
 
+@pytest.mark.unit
 def test_resolve_reference_sin_contexto() -> None:
     e = _engine()
     e.get_or_create("c1")
     assert e.resolve_reference("hazlo ahora", "c1") == "ejecuta ahora"
 
 
+@pytest.mark.unit
 def test_resolve_reference_con_anterior() -> None:
     store = _MsgStoreFake()
     e = _engine(message_store=store)
@@ -462,6 +490,7 @@ def test_resolve_reference_con_anterior() -> None:
     assert "explícame" in resolved or resolved == "eso otra vez"
 
 
+@pytest.mark.unit
 def test_resolve_reference_sin_match() -> None:
     e = _engine()
     assert e.resolve_reference("nada especial aquí", "c1") == "nada especial aquí"
@@ -470,6 +499,7 @@ def test_resolve_reference_sin_match() -> None:
 # ── ConversationEngine: process_user_message ─────────────────
 
 
+@pytest.mark.unit
 def test_process_user_message_basico() -> None:
     e = _engine()
     r = e.process_user_message("c1", "hola")
@@ -480,6 +510,7 @@ def test_process_user_message_basico() -> None:
     assert r["sentiment"] == "neutral"
 
 
+@pytest.mark.unit
 def test_process_user_message_interrupcion() -> None:
     inter = _InterrupcionFake(detected=True)
     e = _engine(interruption_system=inter)
@@ -488,6 +519,7 @@ def test_process_user_message_interrupcion() -> None:
     assert "recuperado" in r["interruption_context"]
 
 
+@pytest.mark.unit
 def test_process_user_message_con_vector_memory() -> None:
     vm = _VectorMemFake(matches=[{"content": "recuerdo similar de antes"}])
     e = _engine(vector_memory=vm)
@@ -495,6 +527,7 @@ def test_process_user_message_con_vector_memory() -> None:
     assert "recuerdo similar" in r["episodic_context"]
 
 
+@pytest.mark.unit
 def test_process_user_message_correccion() -> None:
     corr = _CorreccionesFake()
     e = _engine(intent_engine=_IntentoFake(intent=UserIntent.CORRECT), corrections=corr)
@@ -502,18 +535,21 @@ def test_process_user_message_correccion() -> None:
     assert r["correction_recorded"] is True
 
 
+@pytest.mark.unit
 def test_process_user_message_trend() -> None:
     e = _engine(trend_awareness=_TrendFake(needs=True))
     r = e.process_user_message("c1", "algo actual")
     assert r["needs_web_search"] is True
 
 
+@pytest.mark.unit
 def test_process_user_message_con_rag() -> None:
     e = _engine(rag=_RagFake())
     r = e.process_user_message("c1", "consulta")
     assert r["rag_context"] == "contexto-rag"
 
 
+@pytest.mark.unit
 def test_process_user_message_proactivo() -> None:
     pro = _ProactivoFake()
     pro.suggestion = "Tienes tareas pendientes"
@@ -522,6 +558,7 @@ def test_process_user_message_proactivo() -> None:
     assert "pendientes" in r["proactive_suggestion"]
 
 
+@pytest.mark.unit
 def test_process_user_message_semantic_facts() -> None:
     e = _engine()
     facts = e._query_semantic_facts("consulta")
@@ -531,6 +568,7 @@ def test_process_user_message_semantic_facts() -> None:
 # ── ConversationEngine: internos ─────────────────────────────
 
 
+@pytest.mark.unit
 def test_contexto_basico() -> None:
     e = _engine()
     r = e._contexto_basico("hola", "c1")
@@ -539,6 +577,7 @@ def test_contexto_basico() -> None:
     assert r["is_interruption"] is False
 
 
+@pytest.mark.unit
 def test_contexto_memoria_sin_interrupcion() -> None:
     e = _engine()
     r = e._contexto_memoria("hola", "c1", type("M", (), {"mode": ConversationMode.CONVERSATION})(), False)
@@ -546,6 +585,7 @@ def test_contexto_memoria_sin_interrupcion() -> None:
     assert r["interruption_context"] == ""
 
 
+@pytest.mark.unit
 def test_build_adjustments() -> None:
     e = _engine()
     sent = type("S", (), {"sentiment": Sentiment.FRUSTRATED})()
@@ -557,6 +597,7 @@ def test_build_adjustments() -> None:
     assert adj2.get("correct") is True
 
 
+@pytest.mark.unit
 def test_handle_task_triggers_add() -> None:
     pro = _ProactivoFake()
 
@@ -569,6 +610,7 @@ def test_handle_task_triggers_add() -> None:
     assert len(pro.tasks) == 1
 
 
+@pytest.mark.unit
 def test_handle_task_triggers_complete() -> None:
     pro = _ProactivoFake()
 
@@ -580,11 +622,13 @@ def test_handle_task_triggers_complete() -> None:
     e._handle_task_triggers("ya lo hice", "c1")  # sin pending → no completa
 
 
+@pytest.mark.unit
 def test_handle_task_triggers_none() -> None:
     e = _engine()
     e._handle_task_triggers("hola", "c1")  # no lanza
 
 
+@pytest.mark.unit
 def test_evict_if_needed() -> None:
     e = _engine()
     e._max_turns = 100
@@ -593,6 +637,7 @@ def test_evict_if_needed() -> None:
     assert len(e._active) <= 100
 
 
+@pytest.mark.unit
 def test_list_conversations() -> None:
     store = _MsgStoreFake()
     store._convs["a"] = [Message(role="user", content="x")]
@@ -600,6 +645,7 @@ def test_list_conversations() -> None:
     assert e.list_conversations() == [{"id": "a", "messages": 1}]
 
 
+@pytest.mark.unit
 def test_delete_conversation() -> None:
     store = _MsgStoreFake()
     store._convs["a"] = [Message(role="user", content="x")]
@@ -613,11 +659,13 @@ def test_delete_conversation() -> None:
 # ── main.py ──────────────────────────────────────────────────
 
 
+@pytest.mark.unit
 def test_main_app_exists() -> None:
     assert main_mod.app is not None
     assert main_mod._VERSION == "1.0.0"
 
 
+@pytest.mark.unit
 def test_main_health_endpoint() -> None:
     import asyncio
 
@@ -626,6 +674,7 @@ def test_main_health_endpoint() -> None:
     assert r["version"] == "1.0.0"
 
 
+@pytest.mark.unit
 def test_main_root_endpoint() -> None:
     import asyncio
 
@@ -634,6 +683,7 @@ def test_main_root_endpoint() -> None:
     assert r["docs"] == "/docs"
 
 
+@pytest.mark.unit
 def test_main_metrics_endpoint() -> None:
     import asyncio
 
@@ -641,6 +691,7 @@ def test_main_metrics_endpoint() -> None:
     assert "text/plain" in r.media_type
 
 
+@pytest.mark.unit
 def test_main_app_routes() -> None:
     from fastapi.routing import APIRoute
 
@@ -650,6 +701,7 @@ def test_main_app_routes() -> None:
     assert "/" in paths
 
 
+@pytest.mark.unit
 def test_main_main_arranca(monkeypatch: pytest.MonkeyPatch) -> None:
     import uvicorn
 
@@ -673,6 +725,7 @@ def test_main_main_arranca(monkeypatch: pytest.MonkeyPatch) -> None:
     assert arrancado["n"] == 1
 
 
+@pytest.mark.unit
 def test_main_logger_stream_handler(monkeypatch: pytest.MonkeyPatch) -> None:
     import logging
 

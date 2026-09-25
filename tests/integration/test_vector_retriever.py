@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 from dataclasses import dataclass, field
 from unittest.mock import MagicMock
 
@@ -79,6 +80,7 @@ def mock_vector_store():
 class TestVectorAugmentedRetrieverHeuristicOnly:
     """Sin embedder ni vector_store — solo búsqueda heurística."""
 
+    @pytest.mark.integration
     def test_retrieves_heuristic_results(self, mock_graph, mock_asset_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store)
         result = r.retrieve_assets("test query")
@@ -87,41 +89,48 @@ class TestVectorAugmentedRetrieverHeuristicOnly:
         assert result[0].asset_id == "a1"
         assert result[1].asset_id == "a2"
 
+    @pytest.mark.integration
     def test_use_vector_flag_ignored_when_no_backend(self, mock_graph, mock_asset_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store)
         result = r.retrieve_assets("test query", use_vector=True)
         assert len(result) == 2
 
+    @pytest.mark.integration
     def test_embedder_present_but_vector_disabled(self, mock_graph, mock_asset_store, mock_embedder):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, embedder=mock_embedder)
         result = r.retrieve_assets("test query", use_vector=False)
         assert len(result) == 2
         mock_embedder.embed_query.assert_not_called()
 
+    @pytest.mark.integration
     def test_store_present_but_vector_disabled(self, mock_graph, mock_asset_store, mock_vector_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, vector_store=mock_vector_store)
         result = r.retrieve_assets("test query", use_vector=False)
         assert len(result) == 2
         mock_vector_store.search.assert_not_called()
 
+    @pytest.mark.integration
     def test_embedder_not_available_fallback(self, mock_graph, mock_asset_store, mock_embedder):
         mock_embedder.available = False
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, embedder=mock_embedder)
         result = r.retrieve_assets("test query", use_vector=True)
         assert len(result) == 2
 
+    @pytest.mark.integration
     def test_store_not_available_fallback(self, mock_graph, mock_asset_store, mock_vector_store):
         mock_vector_store.available = False
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, vector_store=mock_vector_store)
         result = r.retrieve_assets("test query", use_vector=True)
         assert len(result) == 2
 
+    @pytest.mark.integration
     def test_empty_heuristic_results(self, mock_graph, mock_asset_store):
         mock_graph.retrieve_assets.return_value = []
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store)
         result = r.retrieve_assets("test query")
         assert len(result) == 0
 
+    @pytest.mark.integration
     def test_asset_store_returns_none_skipped(self, mock_graph, mock_asset_store):
         mock_graph.retrieve_assets.return_value = [
             FakeRetrievalResult(asset_id="nonexistent"),
@@ -131,16 +140,19 @@ class TestVectorAugmentedRetrieverHeuristicOnly:
         result = r.retrieve_assets("test query")
         assert len(result) == 0
 
+    @pytest.mark.integration
     def test_passes_asset_type_to_graph(self, mock_graph, mock_asset_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store)
         r.retrieve_assets("test query", asset_type="pdf")  # type: ignore[arg-type]
         mock_graph.retrieve_assets.assert_called_with("test query", limit=10, asset_type="pdf")
 
+    @pytest.mark.integration
     def test_respects_limit(self, mock_graph, mock_asset_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store)
         result = r.retrieve_assets("test query", limit=1)
         assert len(result) == 1
 
+    @pytest.mark.integration
     def test_rrf_k_custom(self, mock_graph, mock_asset_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, rrf_k=1)
         result = r.retrieve_assets("test query")
@@ -150,6 +162,7 @@ class TestVectorAugmentedRetrieverHeuristicOnly:
 class TestVectorAugmentedRetrieverVectorEnabled:
     """Con embedder + vector_store — RRF fusiona resultados."""
 
+    @pytest.mark.integration
     def test_rrf_fuses_heuristic_and_vector(self, mock_graph, mock_asset_store, mock_embedder, mock_vector_store):
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, mock_embedder, mock_vector_store)
         result = r.retrieve_assets("test query", use_vector=True)
@@ -160,6 +173,7 @@ class TestVectorAugmentedRetrieverVectorEnabled:
         assert "a3" in ids
         assert "a4" in ids
 
+    @pytest.mark.integration
     def test_vector_search_failure_fallback(self, mock_graph, mock_asset_store, mock_embedder, mock_vector_store):
         mock_vector_store.search.side_effect = RuntimeError("Qdrant timeout")
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, mock_embedder, mock_vector_store)
@@ -168,12 +182,14 @@ class TestVectorAugmentedRetrieverVectorEnabled:
         assert len(result) == 2
         assert result[0].asset_id == "a1"
 
+    @pytest.mark.integration
     def test_embed_query_failure_fallback(self, mock_graph, mock_asset_store, mock_embedder, mock_vector_store):
         mock_embedder.embed_query.side_effect = RuntimeError("Ollama down")
         r = VectorAugmentedRetriever(mock_graph, mock_asset_store, mock_embedder, mock_vector_store)
         result = r.retrieve_assets("test query", use_vector=True)
         assert len(result) == 2
 
+    @pytest.mark.integration
     def test_rrf_same_asset_in_both(self, mock_graph, mock_asset_store, mock_embedder, mock_vector_store):
         """Mismo asset_id aparece en heurístico y vectorial — score sumado."""
         mock_graph.retrieve_assets.return_value = [
@@ -187,6 +203,7 @@ class TestVectorAugmentedRetrieverVectorEnabled:
         assert len(result) == 1
         assert result[0].asset_id == "a1"
 
+    @pytest.mark.integration
     def test_missing_asset_in_store_skipped(self, mock_graph, mock_asset_store, mock_embedder, mock_vector_store):
         mock_asset_store.get_asset.side_effect = lambda aid: _make_asset(aid) if aid != "a3" else None
         mock_vector_store.search.return_value = [

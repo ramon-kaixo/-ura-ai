@@ -1,6 +1,7 @@
 """Tests para core/mochila/guardian_middleware.py y core/path_setup.py."""
 
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 
@@ -35,16 +36,19 @@ class TestGuardianMiddleware:
         app.add_middleware(GuardianMiddleware)
         return TestClient(app)
 
+    @pytest.mark.unit
     def test_paths_permitidos(self) -> None:
         client = self._app()
         assert client.get("/health").status_code == 200
         assert client.get("/v1/models").status_code == 200
 
+    @pytest.mark.unit
     def test_get_no_guardado(self) -> None:
         client = self._app()
         r = client.get("/protected")
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_post_permitido(self) -> None:
         with mock.patch("core.mochila.guardian_middleware.guardian") as g:
             g.ejecutar.return_value = {"permitido": True}
@@ -52,6 +56,7 @@ class TestGuardianMiddleware:
             r = client.post("/protected")
         assert r.status_code == 200
 
+    @pytest.mark.unit
     def test_post_bloqueado(self) -> None:
         with mock.patch("core.mochila.guardian_middleware.guardian") as g:
             g.ejecutar.return_value = {"permitido": False, "razon": "regla x"}
@@ -62,6 +67,7 @@ class TestGuardianMiddleware:
         assert data["error"] == "Guardian bloqueo la operacion"
         assert data["detalle"]["permitido"] is False
 
+    @pytest.mark.unit
     def test_init_guardian(self) -> None:
         with mock.patch("core.mochila.guardian_middleware.guardian") as g:
             g.estado.return_value = {"reglas": ["r1", "r2"]}
@@ -72,6 +78,7 @@ class TestGuardianMiddleware:
 
 
 class TestPathSetup:
+    @pytest.mark.unit
     def test_setup_path_agrega_raiz(self, monkeypatch) -> None:
         import core.path_setup as ps
 
@@ -81,6 +88,7 @@ class TestPathSetup:
         assert root.name == Path(__file__).resolve().parents[2].name
         assert str(root) in __import__("sys").path
 
+    @pytest.mark.unit
     def test_setup_path_idempotente(self, monkeypatch) -> None:
         import sys
 
@@ -92,6 +100,7 @@ class TestPathSetup:
         ps.setup_path()
         assert len(sys.path) == n_paths
 
+    @pytest.mark.unit
     def test_get_project_root_sin_setup(self, monkeypatch) -> None:
         import core.path_setup as ps
 

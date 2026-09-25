@@ -1,3 +1,4 @@
+import pytest
 """Tests for scripts/pro/cleanup_assistant.py."""
 from unittest.mock import MagicMock, patch
 
@@ -6,6 +7,7 @@ from scripts.pro.cleanup_assistant import cleanup, main
 
 class TestCleanup:
     @patch("scripts.pro.cleanup_assistant.MessageStore")
+    @pytest.mark.unit
     def test_cleanup_returns_count(self, mock_store_class):
         mock_store = MagicMock()
         mock_store.cleanup_old.return_value = 42
@@ -16,6 +18,7 @@ class TestCleanup:
         mock_store.cleanup_old.assert_called_once_with(days=30)
 
     @patch("scripts.pro.cleanup_assistant.MessageStore")
+    @pytest.mark.unit
     def test_cleanup_different_days(self, mock_store_class):
         mock_store = MagicMock()
         mock_store.cleanup_old.return_value = 0
@@ -25,6 +28,7 @@ class TestCleanup:
         mock_store.cleanup_old.assert_called_once_with(days=7)
 
     @patch("scripts.pro.cleanup_assistant.MessageStore")
+    @pytest.mark.unit
     def test_cleanup_zero_days(self, mock_store_class):
         mock_store = MagicMock()
         mock_store.cleanup_old.return_value = 100
@@ -36,6 +40,7 @@ class TestCleanup:
 
 class TestMain:
     @patch("scripts.pro.cleanup_assistant.MessageStore")
+    @pytest.mark.unit
     def test_main_prints(self, mock_store_class, capsys):
         mock_store = MagicMock()
         mock_store.cleanup_old.return_value = 42
@@ -46,6 +51,7 @@ class TestMain:
         assert "Limpieza completada: 42 mensajes antiguos eliminados" in captured.out
 
     @patch("scripts.pro.cleanup_assistant.MessageStore")
+    @pytest.mark.unit
     def test_main_zero_deleted(self, mock_store_class, capsys):
         mock_store = MagicMock()
         mock_store.cleanup_old.return_value = 0

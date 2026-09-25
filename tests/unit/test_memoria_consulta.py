@@ -1,6 +1,7 @@
 """Tests para core/memoria/consulta.py — consultar, CPUReRanker, PipelineConsultaRAG."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -14,9 +15,11 @@ from core.memoria.consulta import (
 
 
 class TestEsSuficiente:
+    @pytest.mark.unit
     def test_vacio_no_suficiente(self) -> None:
         assert _es_suficiente([]) is False
 
+    @pytest.mark.unit
     def test_menos_de_3_buenas(self) -> None:
         rs = [
             {"score": 0.8},
@@ -25,10 +28,12 @@ class TestEsSuficiente:
         ]
         assert _es_suficiente(rs) is False
 
+    @pytest.mark.unit
     def test_3_o_mas_buenas(self) -> None:
         rs = [{"score": 0.8}, {"score": 0.7}, {"score": 0.6}]
         assert _es_suficiente(rs) is True
 
+    @pytest.mark.unit
     def test_mezcla(self) -> None:
         rs = [{"score": 0.9}, {"score": 0.4}, {"score": 0.6}, {"score": 0.55}]
         assert _es_suficiente(rs) is True
@@ -145,19 +150,23 @@ class TestConsultar:
 
 
 class TestCPUReRanker:
+    @pytest.mark.unit
     def test_inicializa(self) -> None:
         r = CPUReRanker()
         assert r.modelo_cargado is True
 
+    @pytest.mark.unit
     def test_score_coincidencia_total(self) -> None:
         r = CPUReRanker()
         assert r._calcular_score_cross_encoder("hola mundo", "hola mundo") == pytest.approx(1.0)
 
+    @pytest.mark.unit
     def test_score_parcial(self) -> None:
         r = CPUReRanker()
         s = r._calcular_score_cross_encoder("hola mundo", "hola sol")
         assert 0.1 < s < 1.0
 
+    @pytest.mark.unit
     def test_score_sin_coincidencias(self) -> None:
         r = CPUReRanker()
         assert r._calcular_score_cross_encoder("a b", "x y z") == pytest.approx(0.1)

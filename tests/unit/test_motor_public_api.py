@@ -1,8 +1,10 @@
 """Tests para motor/cli/public_api.py y motor/core/evaluation/__init__.py — re-exports."""
 from __future__ import annotations
+import pytest
 
 
 class TestPublicApi:
+    @pytest.mark.unit
     def test_imports_core(self) -> None:
         from motor.cli.public_api import (
             DegradedMode,
@@ -22,12 +24,14 @@ class TestPublicApi:
         assert callable(has_secret)
         assert callable(require_secret)
 
+    @pytest.mark.unit
     def test_imports_events(self) -> None:
         from motor.cli.public_api import SYSTEM_STARTED, EventBus
 
         assert EventBus is not None
         assert isinstance(SYSTEM_STARTED, str)
 
+    @pytest.mark.unit
     def test_imports_memory(self) -> None:
         from motor.cli.public_api import Episode, EpisodeStore, EpisodeStoreConfig
 
@@ -35,6 +39,7 @@ class TestPublicApi:
         assert EpisodeStore is not None
         assert EpisodeStoreConfig is not None
 
+    @pytest.mark.unit
     def test_imports_retrieval(self) -> None:
         from motor.cli.public_api import HybridRetriever, LexicalRetriever, VectorRetriever
 
@@ -42,6 +47,7 @@ class TestPublicApi:
         assert LexicalRetriever is not None
         assert VectorRetriever is not None
 
+    @pytest.mark.unit
     def test_imports_observability(self) -> None:
         from motor.cli.public_api import HealthRegistry, MetricsRegistry, format_prometheus
 
@@ -49,6 +55,7 @@ class TestPublicApi:
         assert MetricsRegistry is not None
         assert callable(format_prometheus)
 
+    @pytest.mark.unit
     def test_all_completo(self) -> None:
         import motor.cli.public_api as api
 
@@ -57,12 +64,14 @@ class TestPublicApi:
 
 
 class TestEvaluationInit:
+    @pytest.mark.unit
     def test_exports(self) -> None:
         import motor.core.evaluation as ev
 
         for name in ev.__all__:
             assert hasattr(ev, name), f"__all__ incluye {name} pero no existe"
 
+    @pytest.mark.unit
     def test_clases_importables(self) -> None:
         from motor.core.evaluation import (
             ContinuousEvaluator,

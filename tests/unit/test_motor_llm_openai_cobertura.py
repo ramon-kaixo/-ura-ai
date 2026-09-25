@@ -14,6 +14,7 @@ Usa mock sobre el módulo (httpx global del módulo) y get_secret parcheado.
 
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -88,6 +89,7 @@ def _stream_ctx(lines, status=200):
 
 
 class TestGenerate:
+    @pytest.mark.unit
     def test_ok(self, provider, openai_mod) -> None:
         body = {"choices": [{"message": {"content": "  hola  "}}], "usage": {"prompt_tokens": 1, "completion_tokens": 2}}
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(200, body)) as m:
@@ -100,6 +102,7 @@ class TestGenerate:
         assert m.call_args.kwargs["json"]["messages"] == [{"role": "user", "content": "pregunta"}]
         assert m.call_args.kwargs["json"]["temperature"] == 0.9
 
+    @pytest.mark.unit
     def test_modelo_y_options_explicitas(self, provider, openai_mod) -> None:
         body = {"choices": [{"message": {"content": "x"}}]}
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(200, body)) as m:
@@ -109,6 +112,8 @@ class TestGenerate:
         assert m.call_args.kwargs["json"]["temperature"] == 0.1
         assert m.call_args.kwargs["json"]["extra"] == 1
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout(self, provider, openai_mod) -> None:
         from httpx import TimeoutException
 
@@ -116,11 +121,13 @@ class TestGenerate:
             out = provider.generate("p")
         assert "excedió" in out
 
+    @pytest.mark.unit
     def test_http_status_error(self, provider, openai_mod) -> None:
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(429, raise_for_status=True)):
             out = provider.generate("p")
         assert "429" in out
 
+    @pytest.mark.unit
     def test_request_error(self, provider, openai_mod) -> None:
         from httpx import RequestError
 
@@ -128,6 +135,7 @@ class TestGenerate:
             out = provider.generate("p")
         assert "conectar" in out
 
+    @pytest.mark.unit
     def test_error_generico(self, provider, openai_mod) -> None:
         with mock.patch.object(openai_mod.httpx, "post", side_effect=ValueError("boom")):
             out = provider.generate("p")
@@ -135,6 +143,7 @@ class TestGenerate:
 
 
 class TestGenerateStream:
+    @pytest.mark.unit
     def test_stream_ok(self, provider, openai_mod) -> None:
         lines = [
             'data: {"choices": [{"delta": {"content": "hola"}}]}',
@@ -146,6 +155,7 @@ class TestGenerateStream:
             trozos = list(provider.generate_stream("p"))
         assert trozos == ["hola", " mundo"]
 
+    @pytest.mark.unit
     def test_stream_linea_vacia_y_sin_data(self, provider, openai_mod) -> None:
         lines = [
             "",
@@ -158,6 +168,7 @@ class TestGenerateStream:
             trozos = list(provider.generate_stream("p"))
         assert trozos == ["solo"]
 
+    @pytest.mark.unit
     def test_stream_json_invalido(self, provider, openai_mod) -> None:
         lines = [
             "data: no-es-json",
@@ -169,6 +180,7 @@ class TestGenerateStream:
             trozos = list(provider.generate_stream("p"))
         assert trozos == ["ok"]
 
+    @pytest.mark.unit
     def test_stream_delta_sin_content(self, provider, openai_mod) -> None:
         lines = [
             'data: {"choices": [{"delta": {"role": "assistant"}}]}',
@@ -180,6 +192,7 @@ class TestGenerateStream:
             trozos = list(provider.generate_stream("p"))
         assert trozos == ["a"]
 
+    @pytest.mark.unit
     def test_stream_sin_done(self, provider, openai_mod) -> None:
         lines = [
             'data: {"choices": [{"delta": {"content": "fin"}}]}',
@@ -189,6 +202,7 @@ class TestGenerateStream:
             trozos = list(provider.generate_stream("p"))
         assert trozos == ["fin"]
 
+    @pytest.mark.unit
     def test_stream_status_error(self, provider, openai_mod) -> None:
         ctx = _stream_ctx([], status=500)
         with mock.patch.object(openai_mod.httpx, "stream", return_value=ctx), pytest.raises(RuntimeError):
@@ -196,6 +210,7 @@ class TestGenerateStream:
 
 
 class TestChatGenerate:
+    @pytest.mark.unit
     def test_con_tools(self, provider, openai_mod) -> None:
         body = {
             "choices": [{"message": {"content": "resp", "tool_calls": [{"id": "1"}]}}],
@@ -207,6 +222,7 @@ class TestChatGenerate:
         assert out["tool_calls"] == [{"id": "1"}]
         assert "tools" in m.call_args.kwargs["json"]
 
+    @pytest.mark.unit
     def test_sin_tools(self, provider, openai_mod) -> None:
         body = {"choices": [{"message": {"content": "resp"}}]}
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(200, body)) as m:
@@ -214,6 +230,7 @@ class TestChatGenerate:
         assert out["content"] == "resp"
         assert "tools" not in m.call_args.kwargs["json"]
 
+    @pytest.mark.unit
     def test_status_error(self, provider, openai_mod) -> None:
         with (
             mock.patch.object(openai_mod.httpx, "post", return_value=_resp(500, raise_for_status=False)),
@@ -223,6 +240,7 @@ class TestChatGenerate:
 
 
 class TestEmbed:
+    @pytest.mark.unit
     def test_ok(self, provider, openai_mod) -> None:
         body = {"data": [{"embedding": [0.1, 0.2]}]}
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(200, body)) as m:
@@ -230,6 +248,7 @@ class TestEmbed:
         assert out == [[0.1, 0.2]]
         assert m.call_args.kwargs["json"]["model"] == "mi-embed"
 
+    @pytest.mark.unit
     def test_fallo_batch_reintento_individual_ok(self, provider, openai_mod) -> None:
         body = {"data": [{"embedding": [0.5]}]}
         with mock.patch.object(
@@ -238,6 +257,7 @@ class TestEmbed:
             out = provider.embed(["a", "b"])
         assert out == [[0.5], [0.5]]
 
+    @pytest.mark.unit
     def test_fallo_batch_y_individual(self, provider, openai_mod) -> None:
         with mock.patch.object(
             openai_mod.httpx, "post", side_effect=[_resp(500, raise_for_status=True), _resp(500, raise_for_status=True)]
@@ -245,6 +265,7 @@ class TestEmbed:
             out = provider.embed(["a"])
         assert out == [[0.0] * 1536]
 
+    @pytest.mark.unit
     def test_fallo_batch_con_modelo_distinto(self, provider, openai_mod) -> None:
         with mock.patch.object(
             openai_mod.httpx, "post", side_effect=[_resp(500, raise_for_status=True), _resp(500, raise_for_status=True)]
@@ -253,6 +274,7 @@ class TestEmbed:
         # modelo != embedding_model -> no loguea warning; reintenta individual y falla
         assert out == [[0.0] * 1536]
 
+    @pytest.mark.unit
     def test_modelo_explicito(self, provider, openai_mod) -> None:
         body = {"data": [{"embedding": [1.0]}]}
         with mock.patch.object(openai_mod.httpx, "post", return_value=_resp(200, body)) as m:
@@ -319,6 +341,7 @@ class TestEmbedAsync:
 
 
 class TestHealth:
+    @pytest.mark.unit
     def test_ok(self, provider, openai_mod) -> None:
         resp = mock.MagicMock()
         resp.is_error = False
@@ -329,6 +352,7 @@ class TestHealth:
         assert out["modelos_disponibles"] == ["m1", "m2"]
         assert out["provider"] == "openai"
 
+    @pytest.mark.unit
     def test_is_error(self, provider, openai_mod) -> None:
         resp = mock.MagicMock()
         resp.is_error = True
@@ -339,6 +363,7 @@ class TestHealth:
         assert out["status"] == "error"
         assert "no auth" in out["detail"]
 
+    @pytest.mark.unit
     def test_excepcion(self, provider, openai_mod) -> None:
         with mock.patch.object(openai_mod.httpx, "get", side_effect=RuntimeError("net")):
             out = provider.health()

@@ -1,3 +1,4 @@
+import pytest
 """Tests property-based para evaluation/metrics (generados por plantilla, ajustados)."""
 
 from hypothesis import given, settings
@@ -12,6 +13,8 @@ from motor.core.evaluation.metrics import recall_at_k, precision_at_k, _average_
     retrieved=st.lists(st.text()),
     k=st.integers(min_value=0, max_value=50),
 )
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_metrics_recall_at_k(relevant, retrieved, k):
     """Recall@K con entradas válidas no lanza y devuelve [0,1]."""
     r = recall_at_k(relevant, retrieved, k)
@@ -24,6 +27,8 @@ def test_funcion_metrics_recall_at_k(relevant, retrieved, k):
     retrieved=st.lists(st.text()),
     k=st.integers(min_value=0, max_value=50),
 )
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_metrics_precision_at_k(relevant, retrieved, k):
     """Precision@K con entradas válidas no lanza y devuelve [0,1]."""
     r = precision_at_k(relevant, retrieved, k)
@@ -32,6 +37,8 @@ def test_funcion_metrics_precision_at_k(relevant, retrieved, k):
 
 @settings(max_examples=50, deadline=None)
 @given(relevances=st.lists(st.floats(min_value=0.0, max_value=1.0)), k=st.integers(min_value=0, max_value=50))
+@pytest.mark.hypothesis
+@pytest.mark.unit
 def test_funcion_metrics__dcg(relevances, k):
     """_dcg no lanza y devuelve float."""
     from motor.core.evaluation.metrics import _dcg

@@ -1,5 +1,6 @@
 """Tests cobertura motor qdrant_client — buscar/eliminar/incidentes (split)."""
 from __future__ import annotations
+import pytest
 
 from _qdrant_helpers import (  # noqa: F401
     COLECCION_DOCUMENTOS,
@@ -18,9 +19,11 @@ from _qdrant_helpers import (  # noqa: F401
 
 
 class TestBuscarPorSimilitud:
+    @pytest.mark.unit
     def test_no_disponible(self, client: QdrantClient) -> None:  # noqa: F811
         assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_rest_ok(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -32,6 +35,7 @@ class TestBuscarPorSimilitud:
         assert payload["limit"] == 3
         assert payload["vector"] == [0.1, 0.2]
 
+    @pytest.mark.unit
     def test_rest_no_200(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -39,6 +43,7 @@ class TestBuscarPorSimilitud:
             mpost.return_value = FakeResp(500)
             assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_rest_error(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -46,6 +51,7 @@ class TestBuscarPorSimilitud:
             mpost.side_effect = OSError("net")
             assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_native_ok(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -61,6 +67,7 @@ class TestBuscarPorSimilitud:
             out = client.buscar_por_similitud([0.1], limit=5)
         assert out == [{"payload": {"a": 1}, "score": 0.9}, {"payload": {"b": 2}, "score": 0.8}]
 
+    @pytest.mark.unit
     def test_native_points_none(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -70,12 +77,14 @@ class TestBuscarPorSimilitud:
         with patch.dict(sys.modules, native_modules):
             assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_native_sin_cliente(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
         client._cliente = None
         assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_native_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -85,6 +94,7 @@ class TestBuscarPorSimilitud:
         with patch.dict(sys.modules, native_modules):
             assert client.buscar_por_similitud([0.1]) == []
 
+    @pytest.mark.unit
     def test_buscar_documentos(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         with patch.object(client, "generar_embedding", return_value=[0.5]) as memb, patch.object(
@@ -102,9 +112,11 @@ class TestBuscarPorSimilitud:
 
 
 class TestEliminarPorFiltro:
+    @pytest.mark.unit
     def test_no_disponible(self, client: QdrantClient) -> None:  # noqa: F811
         assert client.eliminar_por_filtro({"a": 1}) is False
 
+    @pytest.mark.unit
     def test_rest_dispatch(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -112,12 +124,14 @@ class TestEliminarPorFiltro:
             assert client.eliminar_por_filtro({"a": 1}) is True
         m.assert_called_with({"a": 1}, COLECCION_DOCUMENTOS)
 
+    @pytest.mark.unit
     def test_native_sin_cliente(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
         client._cliente = None
         assert client.eliminar_por_filtro({"a": 1}) is False
 
+    @pytest.mark.unit
     def test_native_ok(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -130,6 +144,7 @@ class TestEliminarPorFiltro:
         assert selector.filter.must[0].key == "source"
         assert selector.filter.must[0].match.value == "x"
 
+    @pytest.mark.unit
     def test_native_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -139,6 +154,7 @@ class TestEliminarPorFiltro:
         with patch.dict(sys.modules, native_modules):
             assert client.eliminar_por_filtro({"a": 1}) is False
 
+    @pytest.mark.unit
     def test_rest_error(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -153,9 +169,11 @@ class TestEliminarPorFiltro:
 
 
 class TestGuardarIncidente:
+    @pytest.mark.unit
     def test_no_disponible(self, client: QdrantClient) -> None:  # noqa: F811
         assert client.guardar_incidente({}) is False
 
+    @pytest.mark.unit
     def test_rest_dispatch(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -163,12 +181,14 @@ class TestGuardarIncidente:
             assert client.guardar_incidente({"ts": "t"}) is True
         m.assert_called_with({"ts": "t"})
 
+    @pytest.mark.unit
     def test_native_sin_cliente(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
         client._cliente = None
         assert client.guardar_incidente({}) is False
 
+    @pytest.mark.unit
     def test_native_ok(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -182,6 +202,7 @@ class TestGuardarIncidente:
         assert points[0].payload["tipo_incidencia"] == "CRASH"
         assert points[0].vector == [0.5] * 7
 
+    @pytest.mark.unit
     def test_native_error(self, client: QdrantClient, native_modules: dict) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = False
@@ -194,6 +215,7 @@ class TestGuardarIncidente:
 
 
 class TestGuardarRest:
+    @pytest.mark.unit
     def test_ok(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -204,6 +226,7 @@ class TestGuardarRest:
         assert point["vector"] == [0.0] * 7
         assert point["payload"]["tipo_incidencia"] == "Unknown"
 
+    @pytest.mark.unit
     def test_no_2xx(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True
@@ -211,6 +234,7 @@ class TestGuardarRest:
             mput.return_value = FakeResp(500)
             assert client._guardar_rest({}) is False
 
+    @pytest.mark.unit
     def test_error(self, client: QdrantClient) -> None:  # noqa: F811
         client.disponible = True
         client._modo_rest = True

@@ -5,6 +5,7 @@ mockea archiver/compiler/metrics/lock.
 """
 from __future__ import annotations
 
+import pytest
 import json
 import sqlite3
 from pathlib import Path
@@ -66,6 +67,7 @@ def _insert(db_path: Path, job_type: str, status: str, payload: str = "{}", star
 
 
 class TestEnqueue:
+    @pytest.mark.unit
     def test_encola_job(self, db: Path) -> None:
         enqueue_archive_job(db, Path("/tmp/fuente"))
         rows = _rows(db)
@@ -77,22 +79,26 @@ class TestEnqueue:
         assert payload["source_dir"] == "/tmp/fuente"
         assert payload["db_path"] == str(db)
 
+    @pytest.mark.unit
     def test_dedup_misma_fuente(self, db: Path) -> None:
         enqueue_archive_job(db, Path("/tmp/fuente"))
         enqueue_archive_job(db, Path("/tmp/fuente"))
         assert len(_rows(db)) == 1
 
+    @pytest.mark.unit
     def test_fuentes_distintas(self, db: Path) -> None:
         enqueue_archive_job(db, Path("/tmp/a"))
         enqueue_archive_job(db, Path("/tmp/b"))
         assert len(_rows(db)) == 2
 
+    @pytest.mark.unit
     def test_error_open_db(self, db: Path) -> None:
         with mock.patch("knowledge.engine.jobs.open_db", side_effect=RuntimeError("boom")):
             enqueue_archive_job(db, Path("/tmp/x"))  # no debe lanzar
 
 
 class TestProcessArchiveJobs:
+    @pytest.mark.unit
     def test_completa_job(self, db: Path) -> None:
         enqueue_archive_job(db, Path("/tmp/fuente"))
         with mock.patch("knowledge.engine.archiver.archive_source") as archive, mock.patch(
@@ -103,6 +109,7 @@ class TestProcessArchiveJobs:
         archive.assert_called_once()
         record.assert_called_with(kind="source", status="completed")
 
+    @pytest.mark.unit
     def test_falla_job(self, db: Path) -> None:
         enqueue_archive_job(db, Path("/tmp/fuente"))
         with mock.patch("knowledge.engine.archiver.archive_source", side_effect=RuntimeError("boom")), mock.patch(
@@ -114,6 +121,7 @@ class TestProcessArchiveJobs:
         assert "boom" in error
         record.assert_called_with(kind="source", status="failed")
 
+    @pytest.mark.unit
     def test_source_dir_relativo(self, db: Path) -> None:
         payload = json.dumps({"source_dir": "relativa", "db_path": str(db)})
         _insert(db, "archive_source", "pending", payload)
@@ -122,6 +130,8 @@ class TestProcessArchiveJobs:
         assert _rows(db)[0][0] == "failed"
         archive.assert_not_called()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_db_path_payload_relativo(self, db: Path) -> None:
         payload = json.dumps({"source_dir": "/tmp/abs", "db_path": "relativa"})
         _insert(db, "archive_source", "pending", payload)
@@ -130,6 +140,8 @@ class TestProcessArchiveJobs:
         assert _rows(db)[0][0] == "failed"
         archive.assert_not_called()
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_db_path_payload_distinto_absoluto(self, db: Path) -> None:
         payload = json.dumps({"source_dir": "/tmp/abs", "db_path": "/otra/base.sqlite"})
         _insert(db, "archive_source", "pending", payload)
@@ -138,6 +150,7 @@ class TestProcessArchiveJobs:
         archive.assert_called_once()
         assert _rows(db)[0][0] == "completed"
 
+    @pytest.mark.unit
     def test_stale_recovery(self, db: Path) -> None:
         _insert(db, "archive_source", "running", "{}", started_at="2020-01-01 00:00:00")
         with mock.patch("knowledge.engine.metrics.record_archive"), mock.patch(
@@ -146,13 +159,16 @@ class TestProcessArchiveJobs:
             process_archive_jobs(db)
         retry.labels.assert_called_once_with(job_type="archive_source", reason="stale")
 
+    @pytest.mark.unit
     def test_sin_jobs(self, db: Path) -> None:
         process_archive_jobs(db)  # no debe lanzar
 
+    @pytest.mark.unit
     def test_error_global(self, db: Path) -> None:
         with mock.patch("knowledge.engine.jobs.open_db", side_effect=RuntimeError("boom")):
             process_archive_jobs(db)  # no debe lanzar
 
+    @pytest.mark.unit
     def test_retry_metrics_falla_silencioso(self, db: Path) -> None:
         _insert(db, "archive_source", "running", "{}", started_at="2020-01-01 00:00:00")
         with mock.patch("knowledge.engine.metrics.record_archive"), mock.patch(
@@ -163,6 +179,7 @@ class TestProcessArchiveJobs:
 
 
 class TestCompileWorker:
+    @pytest.mark.unit
     def test_compila_job(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         result = SimpleNamespace(success=True, errors=())
@@ -173,6 +190,7 @@ class TestCompileWorker:
         assert n == 1
         assert _rows(db, "compile")[0][0] == "completed"
 
+    @pytest.mark.unit
     def test_compila_falla(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         result = SimpleNamespace(success=False, errors=(SimpleNamespace(message="err1"),))
@@ -185,6 +203,7 @@ class TestCompileWorker:
         assert status == "failed"
         assert "err1" in error
 
+    @pytest.mark.unit
     def test_lock_ocupado(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         from knowledge.engine.lock import LockAcquisitionError
@@ -194,6 +213,7 @@ class TestCompileWorker:
         assert n == 0
         assert _rows(db, "compile")[0][0] == "pending"
 
+    @pytest.mark.unit
     def test_excepcion_inesperada(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         with mock.patch("knowledge.engine.compiler.compile_source", side_effect=RuntimeError("boom")), mock.patch(
@@ -205,10 +225,12 @@ class TestCompileWorker:
         assert status == "failed"
         assert "boom" in error
 
+    @pytest.mark.unit
     def test_error_leyendo_jobs(self, db: Path) -> None:
         with mock.patch("knowledge.engine.jobs.open_db", side_effect=RuntimeError("boom")):
             assert compile_worker(db, Path("/tmp/fuente")) == 0
 
+    @pytest.mark.unit
     def test_mark_done_error_silencioso(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         result = SimpleNamespace(success=True, errors=())
@@ -228,6 +250,7 @@ class TestCompileWorker:
         ), mock.patch("knowledge.engine.jobs.open_db", side_effect=fake_open_db):
             assert compile_worker(db, Path("/tmp/fuente")) == 1
 
+    @pytest.mark.unit
     def test_mark_failed_error_silencioso(self, db: Path) -> None:
         _insert(db, "compile", "pending")
         result = SimpleNamespace(success=False, errors=())

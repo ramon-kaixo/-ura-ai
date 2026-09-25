@@ -60,12 +60,15 @@ class TestOpenClawDeterminism(unittest.TestCase):
             if f.exists():
                 f.unlink()
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_runbook_loads_correctly(self) -> None:
         """Test: el runbook se carga correctamente y tiene version."""
         runbook = load_runbook()
         assert "version" in runbook
         assert "scenarios" in runbook
 
+    @pytest.mark.integration
     def test_state_file_reading(self) -> None:
         """Test: OpenClaw lee el state file escrito por SNC."""
         # Simular state file de emergencia
@@ -87,6 +90,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
             assert not state["services"]["network"]["ok"]
             assert state["services"]["ollama"]["ok"]
 
+    @pytest.mark.integration
     def test_emergency_detection(self) -> None:
         """Test: OpenClaw detecta estado EMERGENCY."""
         critical = {"status": "CRITICAL"}
@@ -99,6 +103,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
         assert not is_emergency(ok)
         assert not is_emergency(unknown)
 
+    @pytest.mark.integration
     def test_forbidden_commands_blocked(self) -> None:
         """Test: comandos prohibidos son bloqueados."""
         forbidden = ["rm -rf", "shutdown", "reboot", "halt"]
@@ -109,6 +114,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
         assert not is_forbidden("systemctl restart ollama", forbidden)
         assert not is_forbidden("curl localhost:11434", forbidden)
 
+    @pytest.mark.integration
     def test_execute_runbook_blocks_forbidden(self) -> None:
         """Test: OpenClaw bloquea comandos prohibidos del runbook."""
         runbook_with_forbidden = {
@@ -128,6 +134,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
         )
         assert result == "blocked"
 
+    @pytest.mark.integration
     def test_execute_runbook_runs_safe_commands(self) -> None:
         """Test: OpenClaw ejecuta comandos seguros del runbook."""
         safe_action = {
@@ -140,6 +147,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
             result = execute_runbook_action("test_svc", safe_action, safe_runbook)
             assert result == "ok"
 
+    @pytest.mark.integration
     def test_process_emergency_ignores_healthy_services(self) -> None:
         """Test: OpenClaw ignora servicios saludables en emergencia."""
         state = {
@@ -157,6 +165,7 @@ class TestOpenClawDeterminism(unittest.TestCase):
             call_args = mock_exec.call_args[0]
             assert call_args[0] == "network"
 
+    @pytest.mark.integration
     def test_process_emergency_alerts_unknown_services(self) -> None:
         """Test: OpenClaw alerta si un servicio caído no está en runbook."""
         state = {
@@ -171,10 +180,13 @@ class TestOpenClawDeterminism(unittest.TestCase):
             # unknown_svc no está en runbook, no debería ejecutarse
             mock_exec.assert_not_called()
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_dead_man_timeout_constant(self) -> None:
         """Test: dead-man timeout es 60 segundos."""
         assert DEAD_MAN_TIMEOUT == 60
 
+    @pytest.mark.integration
     def test_stats_file_writing(self) -> None:
         """Test: stats se escriben en formato JSON válido."""
         from monitor.openclaw import save_stats, stats
@@ -223,6 +235,7 @@ class TestOpenClawIntegration(unittest.TestCase):
             self.test_state.unlink()
 
     @pytest.mark.skip(reason="process_emergency no reconoce scenarios del runbook (refactor pendiente)")
+    @pytest.mark.integration
     def test_simulated_network_failure_opens_runbook(self) -> None:
         """TEST CLAVE: Simular caída de red → OpenClaw lee EMERGENCY → abre runbook."""
         # 1. Verificar que el state file simula una caída de red
@@ -249,6 +262,7 @@ class TestOpenClawIntegration(unittest.TestCase):
                 # Network debería ser procesado
                 assert mock_exec.called
 
+    @pytest.mark.integration
     def test_openclaw_does_not_act_without_emergency(self) -> None:
         """TEST: OpenClaw NO se activa si el sistema está OK."""
         ok_state = {

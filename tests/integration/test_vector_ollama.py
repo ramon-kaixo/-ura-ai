@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import time
 from typing import TYPE_CHECKING
 from unittest.mock import patch
@@ -35,6 +36,7 @@ def mock_llm():
 class TestOllamaEmbedderProtocol:
     """Verifica que OllamaEmbedder puede tratarse como Embedder."""
 
+    @pytest.mark.integration
     def test_is_embedder(self, mock_llm):
         embedder: Embedder = OllamaEmbedder(model="test-model")
         assert isinstance(embedder, OllamaEmbedder)
@@ -43,6 +45,7 @@ class TestOllamaEmbedderProtocol:
 class TestEmbed:
     """Tests para embed()."""
 
+    @pytest.mark.integration
     def test_embed_texts(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
         embedder = OllamaEmbedder(model="test-model")
@@ -52,15 +55,18 @@ class TestEmbed:
         assert embedder.vector_size == 3
         mock_llm["embed"].assert_called_with(["hello", "world"], model="test-model")
 
+    @pytest.mark.integration
     def test_embed_empty(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.embed([]) == []
 
+    @pytest.mark.integration
     def test_embed_not_available(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         embedder._degraded = True
         assert embedder.embed(["text"]) == []
 
+    @pytest.mark.integration
     def test_embed_cache_hit(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2]]
         embedder = OllamaEmbedder(model="test-model")
@@ -69,6 +75,7 @@ class TestEmbed:
         assert v1 == v2
         assert mock_llm["embed"].call_count == 1
 
+    @pytest.mark.integration
     def test_embed_no_cache_for_batch(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1], [0.2], [0.3]]
         embedder = OllamaEmbedder(model="test-model")
@@ -77,6 +84,7 @@ class TestEmbed:
         embedder.embed(["a", "b", "c"])
         assert mock_llm["embed"].call_count == 2
 
+    @pytest.mark.integration
     def test_embed_cache_expiry(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2]]
         embedder = OllamaEmbedder(model="test-model", cache_ttl=1)
@@ -86,6 +94,7 @@ class TestEmbed:
         assert mock_llm["embed"].call_count == 2
         assert v2 == [[0.1, 0.2]]
 
+    @pytest.mark.integration
     def test_embed_http_error_degraded(self, mock_llm):
         mock_llm["embed"].side_effect = Exception("Ollama down")
         embedder = OllamaEmbedder(model="test-model")
@@ -93,6 +102,7 @@ class TestEmbed:
         assert result == []
         assert embedder.available is False
 
+    @pytest.mark.integration
     def test_embed_auto_detect_vector_size(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1] * 768]
         embedder = OllamaEmbedder(model="test-model")
@@ -103,16 +113,19 @@ class TestEmbed:
 class TestEmbedQuery:
     """Tests para embed_query()."""
 
+    @pytest.mark.integration
     def test_embed_query(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2, 0.3]]
         embedder = OllamaEmbedder(model="test-model")
         vec = embedder.embed_query("test query")
         assert vec == [0.1, 0.2, 0.3]
 
+    @pytest.mark.integration
     def test_embed_query_empty(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.embed_query("") == []
 
+    @pytest.mark.integration
     def test_embed_query_not_available(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         embedder._degraded = True
@@ -122,28 +135,34 @@ class TestEmbedQuery:
 class TestProperties:
     """Tests para properties del protocolo."""
 
+    @pytest.mark.integration
     def test_vector_size_default(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.vector_size == 0
 
+    @pytest.mark.integration
     def test_max_input_tokens(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.max_input_tokens == 0
 
+    @pytest.mark.integration
     def test_max_input_tokens_unknown(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.max_input_tokens == 0
 
+    @pytest.mark.integration
     def test_available_true(self, mock_llm):
         mock_llm["health"].return_value = {"status": "ok", "modelos_disponibles": [], "latency_ms": 5}
         embedder = OllamaEmbedder(model="test-model")
         assert embedder.available is True
 
+    @pytest.mark.integration
     def test_available_false(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         embedder._degraded = True
         assert embedder.available is False
 
+    @pytest.mark.integration
     def test_available_http_error(self, mock_llm):
         mock_llm["health"].return_value = {"status": "error", "detail": "Connection refused", "latency_ms": 100}
         embedder = OllamaEmbedder(model="test-model")
@@ -151,6 +170,7 @@ class TestProperties:
         assert embedder.available is False
         assert not embedder.check_available()
 
+    @pytest.mark.integration
     def test_available_after_degraded(self, mock_llm):
         mock_llm["embed"].side_effect = Exception("Ollama down")
         embedder = OllamaEmbedder(model="test-model")
@@ -161,6 +181,7 @@ class TestProperties:
 class TestLifecycle:
     """Tests para close() y limpieza."""
 
+    @pytest.mark.integration
     def test_close(self, mock_llm):
         embedder = OllamaEmbedder(model="test-model")
         embedder.close()
@@ -169,6 +190,7 @@ class TestLifecycle:
 class TestDeterminism:
     """Verifica determinismo (depende del modelo, mock simula)."""
 
+    @pytest.mark.integration
     def test_determinism_embed(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2, 0.3]]
         e1 = OllamaEmbedder(model="test-model")
@@ -177,6 +199,7 @@ class TestDeterminism:
         v2 = e2.embed(["hello"])
         assert v1 == v2
 
+    @pytest.mark.integration
     def test_determinism_embed_query(self, mock_llm):
         mock_llm["embed"].return_value = [[0.1, 0.2, 0.3]]
         e1 = OllamaEmbedder(model="test-model")

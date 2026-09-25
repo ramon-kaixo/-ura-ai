@@ -1,6 +1,7 @@
 """Tests para scripts/pro/tuneladora/notifier.py (Gap #3)."""
 
 from __future__ import annotations
+import pytest
 
 import io
 import time
@@ -31,6 +32,7 @@ def _reporte_fail() -> dict:
 
 
 class TestConstruirMensaje:
+    @pytest.mark.integration
     def test_incluye_campos(self) -> None:
         msg = _construir_mensaje(_reporte_fail())
         assert "FAIL" in msg
@@ -39,6 +41,7 @@ class TestConstruirMensaje:
 
 
 class TestNotificarLog:
+    @pytest.mark.integration
     def test_crea_failures_log(self, tmp_path: Path) -> None:
         _notificar_log("[FAIL] mensaje", tmp_path)
         log = tmp_path / "FAILURES.log"
@@ -47,6 +50,7 @@ class TestNotificarLog:
         assert "mensaje" in content
         assert "FAIL" in content
 
+    @pytest.mark.integration
     def test_append_no_sobrescribe(self, tmp_path: Path) -> None:
         _notificar_log("[FAIL] primero", tmp_path)
         _notificar_log("[FAIL] segundo", tmp_path)
@@ -55,6 +59,7 @@ class TestNotificarLog:
 
 
 class TestNotificarMemoria:
+    @pytest.mark.integration
     def test_guarda_episode(self) -> None:
         store = mock.Mock()
         with mock.patch(
@@ -68,6 +73,7 @@ class TestNotificarMemoria:
         assert episode.payload == "mensaje"
         assert episode.metadata["verdict"] == "FAIL"
 
+    @pytest.mark.integration
     def test_falla_silencioso(self) -> None:
         with (
             mock.patch(
@@ -81,12 +87,14 @@ class TestNotificarMemoria:
 
 
 class TestNotificarTerminal:
+    @pytest.mark.integration
     def test_tty_escribe_rojo(self) -> None:
         stream = io.StringIO()
         stream.isatty = lambda: True
         _notificar_terminal("alerta", stream)
         assert "\033[91m" in stream.getvalue()
 
+    @pytest.mark.integration
     def test_no_tty_no_escribe(self) -> None:
         stream = io.StringIO()
         stream.isatty = lambda: False
@@ -95,18 +103,21 @@ class TestNotificarTerminal:
 
 
 class TestNotificarSystemd:
+    @pytest.mark.integration
     def test_llama_systemd_cat(self) -> None:
         with mock.patch("subprocess.run") as m_run:
             _notificar_systemd("msg")
         m_run.assert_called_once()
         assert "systemd-cat" in m_run.call_args[0][0]
 
+    @pytest.mark.integration
     def test_sin_systemd_cat_silencioso(self) -> None:
         with mock.patch("subprocess.run", side_effect=FileNotFoundError):
             _notificar_systemd("msg")  # no debe lanzar
 
 
 class TestNotificarFallo:
+    @pytest.mark.integration
     def test_notifica_todos_los_canales(self, tmp_path: Path) -> None:
         with (
             mock.patch("scripts.pro.tuneladora.notifier._notificar_systemd") as m_sys,
@@ -120,6 +131,7 @@ class TestNotificarFallo:
         m_term.assert_called_once()
         assert (tmp_path / "FAILURES.log").exists()
 
+    @pytest.mark.integration
     def test_canales_no_bloquean(self, tmp_path: Path) -> None:
         with (
             mock.patch(
@@ -142,6 +154,7 @@ class TestIntegracionRunner:
         cfg.ura_root = tmp_path
         return PipelineRunner(cfg, mode="check", files=["a.py"])
 
+    @pytest.mark.integration
     def test_finish_genera_reporte_y_notifica_fail(self, tmp_path: Path) -> None:
         cfg = Configuration()
         cfg.ura_root = tmp_path
@@ -163,6 +176,7 @@ class TestIntegracionRunner:
         m_notificar.assert_called_once()
         assert m_notificar.call_args[0][0]["verdict"] == "FAIL"
 
+    @pytest.mark.integration
     def test_finish_ok_no_notifica(self, tmp_path: Path) -> None:
         cfg = Configuration()
         cfg.ura_root = tmp_path
@@ -183,6 +197,7 @@ class TestIntegracionRunner:
 
 
 class TestQualityGateIntegracion:
+    @pytest.mark.integration
     def test_finish_fail_ejecuta_quality_gate(self, tmp_path: Path) -> None:
         cfg = Configuration()
         cfg.ura_root = tmp_path
@@ -206,6 +221,7 @@ class TestQualityGateIntegracion:
         m_qg.assert_called_once()
         assert m_qg.call_args[0][0]["verdict"] == "FAIL"
 
+    @pytest.mark.integration
     def test_finish_ok_no_ejecuta_quality_gate(self, tmp_path: Path) -> None:
         cfg = Configuration()
         cfg.ura_root = tmp_path

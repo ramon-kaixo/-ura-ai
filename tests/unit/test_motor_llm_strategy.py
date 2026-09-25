@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/router/strategy.py — retry, circuit breaker, fallback."""
 from __future__ import annotations
 
+import pytest
 from types import SimpleNamespace
 from unittest import mock
 
@@ -18,6 +19,7 @@ def _mock_metrics(monkeypatch):
 
 
 class TestGetCb:
+    @pytest.mark.unit
     def test_crea_si_no_existe(self, monkeypatch) -> None:
         cbs: dict = {}
         cb_cls = mock.Mock()
@@ -26,17 +28,20 @@ class TestGetCb:
         assert out is cb_cls.return_value
         assert "p" in cbs
 
+    @pytest.mark.unit
     def test_reusa(self) -> None:
         cbs = {"p": "ya"}
         assert strat._get_cb("p", cbs) == "ya"
 
 
 class TestIsTransientError:
+    @pytest.mark.unit
     def test_builtins(self) -> None:
         assert strat._is_transient_error(TimeoutError()) is True
         assert strat._is_transient_error(ConnectionError()) is True
         assert strat._is_transient_error(ValueError()) is False
 
+    @pytest.mark.unit
     def test_httpx(self) -> None:
         import httpx
 
@@ -49,6 +54,7 @@ class TestIsTransientError:
         err2 = httpx.HTTPStatusError("e", request=resp2.request, response=resp2)
         assert strat._is_transient_error(err2) is False
 
+    @pytest.mark.unit
     def test_sin_httpx(self, monkeypatch) -> None:
         import builtins
 
@@ -97,12 +103,14 @@ class TestCallWithRetry:
         monkeypatch.setattr("motor.core.llm.observability.metrics", metrics)
         return cb, cbs, prov, metrics
 
+    @pytest.mark.unit
     def test_exito(self, monkeypatch) -> None:
         _cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="respuesta")
         r = call_with_retry(prov, "generate", "task", "p", None, cbs, prompt="hola")
         assert r == "respuesta"
         assert metrics.records  # success record
 
+    @pytest.mark.unit
     def test_retry_deshabilitado(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=TimeoutError())
         monkeypatch.setattr(strat.time, "sleep", mock.Mock())
@@ -110,6 +118,7 @@ class TestCallWithRetry:
         assert r.startswith("Error:")
         prov.generate.assert_called_once()
 
+    @pytest.mark.unit
     def test_retry_transient(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=TimeoutError())
         sleep = mock.Mock()
@@ -119,6 +128,7 @@ class TestCallWithRetry:
         assert prov.generate.call_count == 3
         assert sleep.call_count == 2  # backoff entre intentos
 
+    @pytest.mark.unit
     def test_error_no_transiente_sin_retry(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_error=ValueError("bad"))
         monkeypatch.setattr(strat.time, "sleep", mock.Mock())
@@ -126,6 +136,7 @@ class TestCallWithRetry:
         assert r.startswith("Error:")
         prov.generate.assert_called_once()
 
+    @pytest.mark.unit
     def test_sin_intentos_retorna_unknown(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         monkeypatch.setattr(strat.time, "sleep", mock.Mock())
@@ -133,6 +144,7 @@ class TestCallWithRetry:
         assert r == "Error: unknown"
         prov.generate.assert_not_called()
 
+    @pytest.mark.unit
     def test_circuit_open(self, monkeypatch) -> None:
 
         class CbOpen:
@@ -149,6 +161,7 @@ class TestCallWithRetry:
         r = call_with_retry(prov, "generate", "task", "p", None, cbs)
         assert r == "Error: circuit_breaker_open"
 
+    @pytest.mark.unit
     def test_con_monitor(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         monitor = mock.Mock()
@@ -157,6 +170,7 @@ class TestCallWithRetry:
         monitor.start_operation.assert_called_once()
         monitor.finish_operation.assert_called_once()
 
+    @pytest.mark.unit
     def test_con_profiler_detector_baseline(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         profiler = mock.Mock()
@@ -169,6 +183,7 @@ class TestCallWithRetry:
         detector.evaluate_from_profile.assert_called_once()
         baseline.record.assert_called_once()
 
+    @pytest.mark.unit
     def test_profiler_sin_detector_ni_baseline(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         profiler = mock.Mock()
@@ -178,6 +193,7 @@ class TestCallWithRetry:
         profiler.start.assert_called_once()
         profiler.stop.assert_called_once()
 
+    @pytest.mark.unit
     def test_profiler_con_detector_sin_baseline(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         profiler = mock.Mock()
@@ -189,6 +205,7 @@ class TestCallWithRetry:
         baseline_cb = call_with_retry(prov, "generate", "task", "p", None, {"p": FakeCB()}, profiler=profiler, detector=detector, baseline=None)
         assert baseline_cb == "ok"
 
+    @pytest.mark.unit
     def test_profiler_sin_perfil(self, monkeypatch) -> None:
         _cb, cbs, prov, _metrics = self._setup(monkeypatch, prov_result="ok")
         profiler = mock.Mock()
@@ -197,6 +214,7 @@ class TestCallWithRetry:
         assert r == "ok"
         profiler.start.assert_called_once()
 
+    @pytest.mark.unit
     def test_method_no_generate_no_tokens(self, monkeypatch) -> None:
         _cb, cbs, prov, metrics = self._setup(monkeypatch, prov_result="ok")
         prov.health.return_value = "ok"
@@ -214,6 +232,7 @@ class TestCallWithFallback:
         reg.get.side_effect = lambda n: providers[n]
         return reg
 
+    @pytest.mark.unit
     def test_exito_primario(self, monkeypatch) -> None:
         cb = FakeCB()
         cbs = {"p": cb}
@@ -224,6 +243,7 @@ class TestCallWithFallback:
         assert r == "ok"
         assert name == "p"
 
+    @pytest.mark.unit
     def test_fallback_usa_segundo(self, monkeypatch) -> None:
         prim = mock.Mock()
         prim.generate.side_effect = [ValueError("bad"), ValueError("bad")]
@@ -235,6 +255,7 @@ class TestCallWithFallback:
         assert r == "ok"
         assert name == "f"
 
+    @pytest.mark.unit
     def test_fallback_deshabilitado(self, monkeypatch) -> None:
         prim = mock.Mock()
         prim.generate.side_effect = ValueError("bad")
@@ -244,6 +265,7 @@ class TestCallWithFallback:
         assert name == "p"
         assert r.startswith("Error:")
 
+    @pytest.mark.unit
     def test_sin_fallbacks_disponibles(self, monkeypatch) -> None:
         prim = mock.Mock()
         prim.generate.side_effect = ValueError("bad")
@@ -252,6 +274,7 @@ class TestCallWithFallback:
         _r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
         assert name == "p"
 
+    @pytest.mark.unit
     def test_fallback_open_skip(self, monkeypatch) -> None:
         prim = mock.Mock()
         prim.generate.side_effect = ValueError("bad")
@@ -261,6 +284,7 @@ class TestCallWithFallback:
         _r, name = call_with_fallback(prim, "generate", "task", "p", reg, cbs, "hola")
         assert name == "p"  # fallback no disponible, sin intento
 
+    @pytest.mark.unit
     def test_fallback_tambien_falla(self, monkeypatch) -> None:
         prim = mock.Mock()
         prim.generate.side_effect = ValueError("bad")

@@ -8,6 +8,7 @@ working tree del desarrollador.
 
 from __future__ import annotations
 
+import pytest
 import subprocess
 import tempfile
 from pathlib import Path
@@ -54,6 +55,7 @@ def backup(tmp_path: Path, engine: PipelineEngine) -> BackupPlugin:
 
 
 class TestCleanup:
+    @pytest.mark.integration
     def test_cleanup_logs_no_dir(self, cleanup):
         with mock.patch("pathlib.Path.exists") as m:
             m.return_value = False
@@ -61,6 +63,7 @@ class TestCleanup:
             assert result["removed"] == 0
             assert "reason" in result
 
+    @pytest.mark.integration
     def test_cleanup_logs_removes_old(self, cleanup):
         import os as _os
         import time as _time
@@ -78,28 +81,33 @@ class TestCleanup:
                 result = cleanup.cleanup_logs(days=30)
                 assert isinstance(result, dict)
 
+    @pytest.mark.integration
     def test_vacuum_sqlite_ok(self, cleanup):
         with mock.patch("sqlite3.connect") as m:
             m.return_value = mock.Mock()
             result = cleanup.vacuum_sqlite()
             assert "results" in result
 
+    @pytest.mark.integration
     def test_check_disk_returns_percent(self, cleanup):
         result = cleanup.check_disk()
         assert "percent" in result
         assert result["libre_gb"] > 0
 
     @pytest.mark.slow
+    @pytest.mark.integration
     def test_detect_duplicates_no_crash(self, cleanup):
         result = cleanup.detect_duplicates()
         assert isinstance(result, dict)
         assert "groups" in result
 
+    @pytest.mark.integration
     def test_tech_debt_report_no_crash(self, cleanup):
         result = cleanup.tech_debt_report()
         assert isinstance(result, dict)
         assert "todos" in result
 
+    @pytest.mark.integration
     def test_forense_no_dir(self, cleanup):
         with mock.patch("pathlib.Path.exists") as m:
             m.return_value = False
@@ -108,6 +116,7 @@ class TestCleanup:
 
 
 class TestInstaller:
+    @pytest.mark.integration
     def test_check_requirements(self, installer):
         result = installer.check_requirements()
         assert "python" in result
@@ -115,6 +124,7 @@ class TestInstaller:
         assert "git" in result
         assert "disk" in result
 
+    @pytest.mark.integration
     def test_install_returns_dict(self, installer):
         with mock.patch.object(installer, "check_requirements") as mock_req:
             mock_req.return_value = {
@@ -128,21 +138,25 @@ class TestInstaller:
 
 
 class TestBackup:
+    @pytest.mark.integration
     def test_backup_code_returns_dict(self, backup):
         result = backup.backup_code("test_backup")
         assert isinstance(result, dict)
 
+    @pytest.mark.integration
     def test_backup_code_dirty_tree_raises(self, backup, tmp_path):
         (tmp_path / "uncommitted.txt").write_text("x")
         with pytest.raises(RuntimeError, match="Working tree dirty"):
             backup.backup_code("test_backup")
 
+    @pytest.mark.integration
     def test_backup_database_no_db(self, backup):
         with mock.patch("pathlib.Path.rglob") as m:
             m.return_value = []
             result = backup.backup_database()
             assert result["copied"] == 0
 
+    @pytest.mark.integration
     def test_rollback_returns_dict(self, backup):
         result = backup.rollback()
         assert isinstance(result, dict)

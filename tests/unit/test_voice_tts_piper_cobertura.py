@@ -7,6 +7,7 @@ speak_to_file, con subprocess/sounddevice/soundfile mockeados.
 
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -35,11 +36,13 @@ def tts(tmp_path, monkeypatch):
 
 
 class TestInit:
+    @pytest.mark.unit
     def test_ok(self, tts) -> None:
         _mod, motor = tts
         assert motor.model_path.endswith("onnx")
         assert motor.device_index is None
 
+    @pytest.mark.unit
     def test_modelo_no_existe(self, tmp_path, monkeypatch) -> None:
         from motor.core.voice import tts_piper as mod
 
@@ -47,6 +50,7 @@ class TestInit:
         with pytest.raises(FileNotFoundError):
             mod.PiperTTSMotor()
 
+    @pytest.mark.unit
     def test_config_no_existe(self, tmp_path, monkeypatch) -> None:
         from motor.core.voice import tts_piper as mod
 
@@ -59,6 +63,7 @@ class TestInit:
         with pytest.raises(FileNotFoundError):
             mod.PiperTTSMotor()
 
+    @pytest.mark.unit
     def test_piper_no_existe(self, tmp_path, monkeypatch) -> None:
         from motor.core.voice import tts_piper as mod
 
@@ -72,18 +77,21 @@ class TestInit:
 
 
 class TestFindDevice:
+    @pytest.mark.unit
     def test_encuentra_anker(self, tts) -> None:
         _mod, motor = tts
         devs = [{"name": "USB PowerConf S500", "max_output_channels": 2}]
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=devs):
             assert motor._find_anker_output_device() == 0
 
+    @pytest.mark.unit
     def test_sin_match(self, tts) -> None:
         _mod, motor = tts
         devs = [{"name": "HDMI", "max_output_channels": 2}]
         with mock.patch.object(SOUNDDEVICE, "query_devices", return_value=devs):
             assert motor._find_anker_output_device() is None
 
+    @pytest.mark.unit
     def test_excepcion(self, tts) -> None:
         _mod, motor = tts
         with mock.patch.object(SOUNDDEVICE, "query_devices", side_effect=RuntimeError("x")):
@@ -91,6 +99,7 @@ class TestFindDevice:
 
 
 class TestExecutePiper:
+    @pytest.mark.unit
     def test_ok(self, tts, tmp_path, monkeypatch) -> None:
         _mod, motor = tts
         wav = tmp_path / "out.wav"
@@ -110,6 +119,7 @@ class TestExecutePiper:
         wait.assert_called_once()
         assert not wav.exists()
 
+    @pytest.mark.unit
     def test_ok_con_pipeline(self, tts, tmp_path) -> None:
         _mod, motor = tts
         pipeline = mock.MagicMock()
@@ -127,12 +137,14 @@ class TestExecutePiper:
             motor._execute_piper_and_play("hola")
         assert pipeline.is_playing_tts is False
 
+    @pytest.mark.unit
     def test_sin_wav_generado(self, tts, tmp_path) -> None:
         _mod, motor = tts
         motor.output_wav = str(tmp_path / "no-existe.wav")
         with mock.patch("subprocess.Popen", return_value=mock.MagicMock()):
             motor._execute_piper_and_play("hola")
 
+    @pytest.mark.unit
     def test_excepcion_capturada(self, tts, tmp_path) -> None:
         _mod, motor = tts
         wav = tmp_path / "out.wav"
@@ -142,6 +154,7 @@ class TestExecutePiper:
             motor._execute_piper_and_play("hola")
         assert not wav.exists()
 
+    @pytest.mark.unit
     def test_pipeline_sin_tts_flag(self, tts) -> None:
         _mod, motor = tts
         pipeline = mock.MagicMock()
@@ -154,12 +167,14 @@ class TestExecutePiper:
 
 
 class TestHablarAsync:
+    @pytest.mark.unit
     def test_texto_vacio_no_crea_thread(self, tts) -> None:
         _mod, motor = tts
         with mock.patch("threading.Thread") as th:
             motor.hablar_asincrono("   ")
         th.assert_not_called()
 
+    @pytest.mark.unit
     def test_crea_thread_daemon(self, tts) -> None:
         _mod, motor = tts
         with mock.patch("threading.Thread") as th:
@@ -172,6 +187,7 @@ class TestHablarAsync:
 
 
 class TestSpeakToFile:
+    @pytest.mark.unit
     def test_ok(self, tts) -> None:
         _mod, motor = tts
         out = "/tmp/ura_test_speak.wav"
@@ -181,6 +197,7 @@ class TestSpeakToFile:
         popen.assert_called_once()
         assert proc.communicate.call_count == 1
 
+    @pytest.mark.unit
     def test_con_pipeline(self, tts) -> None:
         _mod, motor = tts
         pipeline = mock.MagicMock()
@@ -190,6 +207,7 @@ class TestSpeakToFile:
         assert pipeline.is_playing_tts is False
 
 
+@pytest.mark.unit
 def test_repr(tts) -> None:
     _mod, motor = tts
     assert "PiperTTSMotor" in repr(motor)

@@ -13,6 +13,7 @@ sobre los resultados de extract().
 
 from __future__ import annotations
 
+import pytest
 import hashlib
 import sys
 from pathlib import Path
@@ -87,6 +88,7 @@ def _docx_core_props(extra: dict[str, Any] | None = None) -> SimpleNamespace:
 
 
 class TestModuleRegistration:
+    @pytest.mark.unit
     def test_registered_with_metadata(self) -> None:
         extractor = office._registry.get("office")
         assert extractor is not None
@@ -98,12 +100,14 @@ class TestModuleRegistration:
 
 
 class TestExtract:
+    @pytest.mark.unit
     def test_file_not_found(self, tmp_path: Path) -> None:
         result = office.OfficeExtractor().extract(AssetSource("filesystem", str(tmp_path / "no.docx")))
         assert result.asset is None
         assert result.errors == [f"File not found: {tmp_path / 'no.docx'}"]
         assert result.duration_ms >= 0
 
+    @pytest.mark.unit
     def test_too_large(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "big.docx")
         monkeypatch.setattr(office, "MAX_OFFICE_SIZE", 0)
@@ -111,6 +115,7 @@ class TestExtract:
         assert result.asset is None
         assert result.errors == [f"File too large: {path.stat().st_size} bytes (max 0)"]
 
+    @pytest.mark.unit
     def test_hash_error(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "doc.docx")
 
@@ -124,6 +129,7 @@ class TestExtract:
 
 
 class TestUnsupportedExtension:
+    @pytest.mark.unit
     def test_degrades_with_reason(self, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "notes.txt")
         result = office.OfficeExtractor().extract(AssetSource("filesystem", str(path)))
@@ -138,6 +144,7 @@ class TestUnsupportedExtension:
 
 
 class TestDegradedNoLibraries:
+    @pytest.mark.unit
     def test_docx_not_installed(self, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "doc.docx")
         result = office.OfficeExtractor().extract(AssetSource("filesystem", str(path)))
@@ -146,6 +153,7 @@ class TestDegradedNoLibraries:
         assert asset.metadata["_degraded_reason"] == "python-docx not installed"
         assert asset.quality == pytest.approx(0.3)
 
+    @pytest.mark.unit
     def test_xlsx_not_installed(self, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "sheet.xlsx")
         result = office.OfficeExtractor().extract(AssetSource("filesystem", str(path)))
@@ -153,6 +161,7 @@ class TestDegradedNoLibraries:
         assert asset.asset_type == AssetType.OFFICE_SHEET
         assert asset.metadata["_degraded_reason"] == "openpyxl not installed"
 
+    @pytest.mark.unit
     def test_pptx_not_installed(self, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "slides.pptx")
         result = office.OfficeExtractor().extract(AssetSource("filesystem", str(path)))
@@ -162,6 +171,7 @@ class TestDegradedNoLibraries:
 
 
 class TestDocxExtraction:
+    @pytest.mark.unit
     def test_full_metadata(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "doc.docx")
         paragraphs = [
@@ -208,6 +218,7 @@ class TestDocxExtraction:
         assert md["sections_count"] == 3
         assert asset.quality == pytest.approx(0.95)
 
+    @pytest.mark.unit
     def test_minimal_doc(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "min.docx", b"small")
         doc = SimpleNamespace(
@@ -246,6 +257,7 @@ last_modified_by="",
 
 
 class TestXlsxExtraction:
+    @pytest.mark.unit
     def test_full_with_props(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "sheet.xlsx")
         sheets = {"Hoja1": FakeWorksheet(10), "Hoja2": FakeWorksheet(None)}
@@ -280,6 +292,7 @@ class TestXlsxExtraction:
         assert result.warnings == ["Row counts may be approximate (read_only mode)"]
         assert asset.quality == pytest.approx(0.7)
 
+    @pytest.mark.unit
     def test_without_props(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "sheet.xlsx")
         wb = FakeWorkbook({"Hoja1": FakeWorksheet(3)}, None)
@@ -296,6 +309,7 @@ class TestXlsxExtraction:
 
 
 class TestPptxExtraction:
+    @pytest.mark.unit
     def test_full_with_text_shapes(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "slides.pptx")
         slide1 = SimpleNamespace(
@@ -343,6 +357,7 @@ class TestPptxExtraction:
         assert md["text_preview"] == "Hola mundo"
         assert asset.quality == pytest.approx(0.8)
 
+    @pytest.mark.unit
     def test_without_text_shapes(self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
         path = _make_file(tmp_path, "slides.pptx")
         prs = SimpleNamespace(
@@ -374,27 +389,34 @@ class TestPptxExtraction:
 
 
 class TestComputeOfficeQuality:
+    @pytest.mark.unit
     def test_base_clean(self) -> None:
         assert office._compute_office_quality({}) == pytest.approx(0.4)
 
+    @pytest.mark.unit
     def test_content_detection(self) -> None:
         assert office._compute_office_quality({"paragraph_count": 1}) == pytest.approx(0.55)
         assert office._compute_office_quality({"sheet_count": 2}) == pytest.approx(0.55)
         assert office._compute_office_quality({"slide_count": 3}) == pytest.approx(0.55)
 
+    @pytest.mark.unit
     def test_title_and_author(self) -> None:
         assert office._compute_office_quality({"office_title": "T", "office_author": "A"}) == pytest.approx(0.65)
 
+    @pytest.mark.unit
     def test_word_threshold(self) -> None:
         assert office._compute_office_quality({"word_count": 50}) == pytest.approx(0.4)
         assert office._compute_office_quality({"word_count": 51}) == pytest.approx(0.55)
 
+    @pytest.mark.unit
     def test_tables(self) -> None:
         assert office._compute_office_quality({"tables_count": 1}) == pytest.approx(0.55)
 
+    @pytest.mark.unit
     def test_degraded_loses_bonus(self) -> None:
         assert office._compute_office_quality({"_degraded": True}) == pytest.approx(0.3)
 
+    @pytest.mark.unit
     def test_clamped_at_one(self) -> None:
         full = {
             "paragraph_count": 1,

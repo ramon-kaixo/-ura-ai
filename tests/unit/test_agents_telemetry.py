@@ -1,3 +1,4 @@
+import pytest
 """Tests for core/agents/telemetry.py."""
 
 from unittest.mock import MagicMock, patch
@@ -6,12 +7,14 @@ from motor.core.agents.telemetry import Telemetria
 
 
 class TestCheckOllama:
+    @pytest.mark.unit
     def test_con_llm_inyectado(self):
         mock_llm = MagicMock()
         mock_llm.health.return_value = {"status": "ok", "modelos_disponibles": ["a", "b"]}
         tel = Telemetria(llm=mock_llm)
         assert tel._check_ollama() == "2 modelos"
 
+    @pytest.mark.unit
     def test_con_llm_down(self):
         mock_llm = MagicMock()
         mock_llm.health.return_value = {"status": "error"}
@@ -19,6 +22,7 @@ class TestCheckOllama:
         assert tel._check_ollama() == "down"
 
     @patch("motor.core.llm.health", return_value={"status": "ok", "modelos_disponibles": ["x"]})
+    @pytest.mark.unit
     def test_fallback_a_motor(self, mock_health):
         tel = Telemetria(llm=None)
         assert tel._check_ollama() == "1 modelos"
@@ -26,6 +30,7 @@ class TestCheckOllama:
 
 
 class TestLlmStats:
+    @pytest.mark.unit
     def test_con_config(self, tmp_path, monkeypatch):
         config = tmp_path / "chunk_config.json"
         config.write_text('{"chunk_actual": 4096, "modelo": "qwen", "historico": [1, 2]}')
@@ -35,6 +40,7 @@ class TestLlmStats:
         assert result["modelo"] == "qwen"
         assert result["historico_ajustes"] == 2
 
+    @pytest.mark.unit
     def test_sin_config(self, tmp_path, monkeypatch):
         monkeypatch.setattr("motor.core.agents.telemetry.NERVIOSO", tmp_path)
         result = Telemetria.llm_stats()
@@ -44,6 +50,7 @@ class TestLlmStats:
 
 class TestF821Count:
     @patch("motor.core.agents.telemetry.subprocess.run")
+    @pytest.mark.unit
     def test_cuenta_errores(self, mock_run):
         mock_run.return_value.stdout = "F821\nF821\nF821\n"
         result = Telemetria.f821_count()
@@ -51,12 +58,14 @@ class TestF821Count:
         mock_run.assert_called_once()
 
     @patch("motor.core.agents.telemetry.subprocess.run", side_effect=Exception("boom"))
+    @pytest.mark.unit
     def test_error(self, mock_run):
         result = Telemetria.f821_count()
         assert result == -1
 
 
 class TestReporteCompleto:
+    @pytest.mark.unit
     def test_estructura(self):
         tel = Telemetria()
         with (
@@ -74,6 +83,7 @@ class TestReporteCompleto:
 
 
 class TestHardware:
+    @pytest.mark.unit
     def test_con_psutil(self):
         fake_vm = MagicMock()
         fake_vm.total = 16 * 1024 * 1024 * 1024
@@ -91,6 +101,7 @@ class TestHardware:
         assert result["ram_total_mb"] == 16384
         assert result["ram_pct"] == 50.0
 
+    @pytest.mark.unit
     def test_sin_psutil_proc(self, monkeypatch):
         import sys
 
@@ -103,6 +114,7 @@ class TestHardware:
             result = Telemetria.hardware()
         assert result["ram_libre_mb"] == 64
 
+    @pytest.mark.unit
     def test_sin_psutil_exception(self, monkeypatch):
         import os
         import sys
@@ -116,6 +128,7 @@ class TestHardware:
 
 
 class TestRed:
+    @pytest.mark.unit
     def test_ok(self):
         fake_r = MagicMock()
         fake_r.status_code = 200
@@ -130,6 +143,7 @@ class TestRed:
         assert result["ollama"] == "3 modelos"
         mock_get.assert_called_once()
 
+    @pytest.mark.unit
     def test_router_error(self):
         with (
             patch("httpx.get", side_effect=Exception("conn")),
@@ -139,6 +153,7 @@ class TestRed:
             result = tel.red()
         assert result["model_router"] == "down"
 
+    @pytest.mark.unit
     def test_ollama_error(self):
         fake_r = MagicMock()
         fake_r.status_code = 200
@@ -153,6 +168,7 @@ class TestRed:
 
 
 class TestCheckOllamaExtra:
+    @pytest.mark.unit
     def test_modelos_no_lista(self):
         mock_llm = MagicMock()
         mock_llm.health.return_value = {"status": "ok", "modelos_disponibles": "notalist"}
@@ -161,10 +177,12 @@ class TestCheckOllamaExtra:
 
 
 class TestShadowHealth:
+    @pytest.mark.unit
     def test_on_layer_start(self, caplog):
         tel = Telemetria()
         tel.on_layer_start(1, "test")
 
+    @pytest.mark.unit
     def test_on_layer_end(self):
         tel = Telemetria()
         tel.on_layer_end(1, "test", "ok", 12.5)

@@ -1,6 +1,7 @@
 """Tests para motor/core/evaluation/ — continuous y regression."""
 from __future__ import annotations
 
+import pytest
 import json
 from types import SimpleNamespace
 
@@ -17,24 +18,29 @@ from motor.core.evaluation.regression import (
 
 
 class TestRegressionFinding:
+    @pytest.mark.unit
     def test_direction_y_change(self) -> None:
         f = RegressionFinding("cfg", "recall", 0.8, 0.6, -0.05)
         assert f.direction == "down"
         assert f.change_pct == pytest.approx(-25.0, abs=0.1)
         assert f.is_regression() is True  # bajó >5%
 
+    @pytest.mark.unit
     def test_subida_no_regresion(self) -> None:
         f = RegressionFinding("cfg", "recall", 0.5, 0.7, -0.05)
         assert f.is_regression() is False
 
+    @pytest.mark.unit
     def test_latencia_subida_es_regresion(self) -> None:
         f = RegressionFinding("cfg", "latency_p50", 10.0, 15.0, 0.10)
         assert f.is_regression() is True  # subió >10%
 
+    @pytest.mark.unit
     def test_baseline_cero_no_regresion(self) -> None:
         f = RegressionFinding("cfg", "recall", 0.0, 0.5, -0.05)
         assert f.is_regression() is False
 
+    @pytest.mark.unit
     def test_to_dict_y_repr(self) -> None:
         f = RegressionFinding("cfg", "recall", 0.8, 0.6, -0.05)
         d = f.to_dict()
@@ -52,23 +58,27 @@ class TestRegressionFinding:
         }
         assert "🔴" in repr(f)
 
+    @pytest.mark.unit
     def test_redondeo_valores(self) -> None:
         f = RegressionFinding("c", "mrr", 0.81234, 0.60678, -0.05)
         assert f.baseline_value == 0.8123
         assert f.current_value == 0.6068
         assert f.change_pct == pytest.approx(-25.3, abs=0.1)
 
+    @pytest.mark.unit
     def test_latencia_baja_no_regresion(self) -> None:
         f = RegressionFinding("c", "latency_p95", 20.0, 15.0, 0.20)
         assert f.is_regression() is False  # bajó = mejora
         assert f.direction == "down"
 
+    @pytest.mark.unit
     def test_latencia_subida_dentro_umbral(self) -> None:
         f = RegressionFinding("c", "latency_p50", 10.0, 10.5, 0.10)
         assert f.is_regression() is False  # +5% < 10%
 
 
 class TestRegressionReport:
+    @pytest.mark.unit
     def test_passed_y_totales(self) -> None:
         ok = RegressionFinding("c", "recall", 0.8, 0.7, -0.05)  # no regression
         bad = RegressionFinding("c", "mrr", 0.8, 0.5, -0.05)  # regression
@@ -79,10 +89,12 @@ class TestRegressionReport:
         assert d["total_findings"] == 2
         assert d["total_regressions"] == 2
 
+    @pytest.mark.unit
     def test_passed_true(self) -> None:
         rep = RegressionReport("base", 1.0, [], 1, 2)
         assert rep.passed is True
 
+    @pytest.mark.unit
     def test_to_dict_y_summary(self) -> None:
         rep = RegressionReport("base", 1.0, [], 2, 3)
         d = rep.to_dict()
@@ -90,6 +102,7 @@ class TestRegressionReport:
         assert "PASS" in rep.summary()
         assert "Configs: 2" in rep.summary()
 
+    @pytest.mark.unit
     def test_summary_con_findings(self) -> None:
         bad = RegressionFinding("c", "mrr", 0.8, 0.5, -0.05)
         rep = RegressionReport("base", 1.0, [bad], 1, 1)
@@ -100,6 +113,7 @@ class TestRegressionReport:
 
 
 class TestRegressionBaseline:
+    @pytest.mark.unit
     def test_set_get(self) -> None:
         b = RegressionBaseline("b1")
         b.set("cfg", "recall", 0.8)
@@ -107,6 +121,7 @@ class TestRegressionBaseline:
         assert b.get("cfg", "nope") is None
         assert b.name == "b1"
 
+    @pytest.mark.unit
     def test_set_results_con_objects(self) -> None:
         b = RegressionBaseline()
         r = SimpleNamespace(config_name="cfg", metrics={"recall@10": 0.8}, latency_stats={"mean_ms": 5.0, "max_ms": 10.0})
@@ -116,12 +131,15 @@ class TestRegressionBaseline:
         assert b.get("cfg", "latency_p95") == 10.0
         assert b.get("cfg", "throughput") is not None
 
+    @pytest.mark.unit
     def test_set_results_con_dicts(self) -> None:
         b = RegressionBaseline()
         r = {"config": "cfg", "metrics": {"mrr": 0.5}, "latency_stats": {}}
         b.set_results([r])
         assert b.get("cfg", "mrr") == 0.5
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_save_load(self, tmp_path) -> None:
         b = RegressionBaseline("base1")
         b.set("cfg", "recall", 0.75)
@@ -133,6 +151,8 @@ class TestRegressionBaseline:
         assert b2._created_at == b._created_at  # type: ignore[attr-defined]
         assert b2._updated_at == b._updated_at  # type: ignore[attr-defined]
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_load_sin_timestamps(self, tmp_path) -> None:
         p = tmp_path / "b2.json"
         p.write_text(json.dumps({"baselines": {"cfg.recall": 0.9}}))
@@ -140,6 +160,7 @@ class TestRegressionBaseline:
         assert b.name == "loaded"
         assert b.get("cfg", "recall") == 0.9
 
+    @pytest.mark.unit
     def test_set_results_throughput(self) -> None:
         b = RegressionBaseline()
         r = SimpleNamespace(
@@ -151,6 +172,7 @@ class TestRegressionBaseline:
         # throughput = len(self._data) / mean_ms * 1000 (placeholder interno)
         assert b.get("cfg", "throughput") == pytest.approx(3 / 5 * 1000)
 
+    @pytest.mark.unit
     def test_set_results_sin_latencia(self) -> None:
         b = RegressionBaseline()
         r = SimpleNamespace(config_name="cfg", metrics={"recall@10": 0.8}, latency_stats={})
@@ -158,6 +180,7 @@ class TestRegressionBaseline:
         assert b.get("cfg", "latency_p50") is None
         assert b.get("cfg", "throughput") is None
 
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         b = RegressionBaseline("n")
         b.set("a", "m", 1.0)
@@ -166,6 +189,7 @@ class TestRegressionBaseline:
 
 
 class TestRegressionDetector:
+    @pytest.mark.unit
     def test_sin_regresion(self) -> None:
         b = RegressionBaseline("base")
         b.set("cfg", "recall@10", 0.8)
@@ -173,6 +197,7 @@ class TestRegressionDetector:
         rep = RegressionDetector(b).check([r])
         assert rep.passed is True
 
+    @pytest.mark.unit
     def test_con_regresion(self) -> None:
         b = RegressionBaseline("base")
         b.set("cfg", "recall@10", 0.8)
@@ -181,12 +206,14 @@ class TestRegressionDetector:
         assert rep.passed is False
         assert rep.total_regressions == 1
 
+    @pytest.mark.unit
     def test_metric_sin_baseline_se_omite(self) -> None:
         b = RegressionBaseline("base")
         r = SimpleNamespace(config_name="cfg", metrics={"recall@10": 0.8}, latency_stats={})
         rep = RegressionDetector(b).check([r])
         assert rep.total_regressions == 0
 
+    @pytest.mark.unit
     def test_latencia_regresion(self) -> None:
         b = RegressionBaseline("base")
         b.set("cfg", "latency_p50", 5.0)
@@ -194,6 +221,7 @@ class TestRegressionDetector:
         rep = RegressionDetector(b).check([r])
         assert rep.passed is False
 
+    @pytest.mark.unit
     def test_thresholds_personalizados(self) -> None:
         b = RegressionBaseline("base")
         b.set("cfg", "recall@10", 0.8)
@@ -201,6 +229,7 @@ class TestRegressionDetector:
         rep = RegressionDetector(b, thresholds={"recall": -0.30}).check([r])
         assert rep.passed is True  # bajó 12.5% < 30%
 
+    @pytest.mark.unit
     def test_dicts_input(self) -> None:
         b = RegressionBaseline("base")
         b.set("cfg", "mrr", 0.5)
@@ -210,6 +239,7 @@ class TestRegressionDetector:
 
 
 class TestContinuousEvaluationResult:
+    @pytest.mark.unit
     def test_passed_y_to_dict(self) -> None:
         r = ContinuousEvaluationResult("exp", "pass", {"m": 1}, None, [], 1.5, [])
         assert r.passed is True
@@ -217,10 +247,12 @@ class TestContinuousEvaluationResult:
         assert d["status"] == "pass"
         assert d["elapsed_seconds"] == 1.5
 
+    @pytest.mark.unit
     def test_no_passed(self) -> None:
         r = ContinuousEvaluationResult("exp", "fail", {}, None, [], 0.0, [])
         assert r.passed is False
 
+    @pytest.mark.unit
     def test_save(self, tmp_path) -> None:
         r = ContinuousEvaluationResult("exp", "pass", {}, None, [], 1.0, [])
         p = tmp_path / "res.json"
@@ -235,11 +267,13 @@ class TestContinuousEvaluator:
         c.add_query(EvaluationQuery("q1", "buscar gpu", {"d1"}))
         return c
 
+    @pytest.mark.unit
     def test_configs(self, corpus) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: ["d1"], {"k": 1}, "desc")
         assert len(ev._configs) == 1
 
+    @pytest.mark.unit
     def test_setters(self, corpus) -> None:
         ev = ContinuousEvaluator()
         ev.set_fail_on_regression(False)
@@ -247,6 +281,7 @@ class TestContinuousEvaluator:
         assert ev._fail_on_regression is False
         assert ev._critical_thresholds == {"recall": -0.1}
 
+    @pytest.mark.unit
     def test_run_sin_baseline(self, corpus) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: ["d1"])
@@ -255,6 +290,7 @@ class TestContinuousEvaluator:
         assert res.passed is True
         assert "rankings" in res.metrics_summary
 
+    @pytest.mark.unit
     def test_run_corpus_vacio(self) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: [])
@@ -262,6 +298,7 @@ class TestContinuousEvaluator:
         assert any("Corpus vacío" in e for e in res.errors)
         assert res.status == "warning"
 
+    @pytest.mark.unit
     def test_run_con_baseline_path(self, corpus, tmp_path) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: ["d1"])
@@ -270,6 +307,7 @@ class TestContinuousEvaluator:
         assert res.regression_report is None  # sin baseline previo: crea nueva
         assert p.exists()  # baseline guardada
 
+    @pytest.mark.unit
     def test_run_con_regresion_fail(self, corpus, tmp_path) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: ["d1"])
@@ -281,6 +319,7 @@ class TestContinuousEvaluator:
         res2 = ev2.run(corpus, k=10, baseline_path=str(p))
         assert res2.status == "fail"
 
+    @pytest.mark.unit
     def test_run_warning_sin_fail_on_regression(self, corpus, tmp_path) -> None:
         ev = ContinuousEvaluator("rag")
         ev.add_config("bm25", lambda q: ["d1"])

@@ -7,27 +7,32 @@ from core.guardians.ast_sentinel import ASTSentinel
 s = ASTSentinel()
 
 
+@pytest.mark.unit
 def test_limpio() -> None:
     v = s.analizar('def f(a:int,b:int)->int:\n """S"""\n return a+b', "b")
     assert v.ok
 
 
+@pytest.mark.unit
 def test_malo() -> None:
     v = s.analizar("def f():\n try:\n  pass\n except:\n  pass", "m")
     assert not v.ok
 
 
+@pytest.mark.unit
 def test_sin_tipos() -> None:
     v = s.analizar("def f(a,b):\n return a", "s")
     assert not v.ok
 
 
+@pytest.mark.unit
 def test_cc_boolop_exacto() -> None:
     codigo = 'def f(a:int)->int:\n """d"""\n if a:\n  pass\n return a and a and a\n'
     v = s.analizar(codigo, "b")
     assert v.m["cc_max"] == 4
 
 
+@pytest.mark.unit
 def test_cc_limite_max_cc() -> None:
     cuerpo9 = "".join(f" if a=={i}: a=i\n" for i in range(2, 11))
     v10 = s.analizar(f'def g(a:int)->int:\n """d"""\n{cuerpo9} return a\n', "g")
@@ -38,6 +43,7 @@ def test_cc_limite_max_cc() -> None:
     assert any("CC" in e for e in v11.errs)
 
 
+@pytest.mark.unit
 def test_sin_doc_solo_en_prod() -> None:
     sin_doc = "def f(a:int)->int:\n return a\n"
     v_dev = s.analizar(sin_doc, "dev", prod=False)
@@ -46,18 +52,21 @@ def test_sin_doc_solo_en_prod() -> None:
     assert any("sin doc" in w for w in v_prod.warns)
 
 
+@pytest.mark.unit
 def test_cc_max_retornado() -> None:
     codigo = 'def f(a:int)->int:\n """d"""\n if a:\n  a=2\n return a\n'
     v = s.analizar(codigo, "b")
     assert v.m["cc_max"] == 2
 
 
+@pytest.mark.unit
 def test_magic_whitelist_no_avisa() -> None:
     codigo = 'def h(a:int)->bool:\n """d"""\n x=0\n y=1\n z=-1\n w=2\n t=True\n u=False\n return t or u or bool(a)\n'
     v = s.analizar(codigo, "h")
     assert not any("magic" in w for w in v.warns)
 
 
+@pytest.mark.unit
 def test_magic_detecta_constante() -> None:
     codigo = 'def q(a:int)->int:\n """d"""\n return a*42\n'
     v = s.analizar(codigo, "q")

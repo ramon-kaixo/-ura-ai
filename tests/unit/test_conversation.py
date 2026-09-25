@@ -1,6 +1,7 @@
 """Tests para ConversationEngine (deps inyectadas, MessageStore real SQLite)."""
 from __future__ import annotations
 
+import pytest
 import contextlib
 from pathlib import Path
 from unittest.mock import MagicMock
@@ -97,12 +98,14 @@ def engine(
 # ---------------------------------------------------------------------------
 
 class TestCreateConversation:
+    @pytest.mark.unit
     def test_without_id(self, engine: ConversationEngine) -> None:
         conv = engine.create_conversation()
         assert conv.conversation_id
         assert conv.state is not None
         assert conv.state.mode == ConversationMode.CONVERSATION
 
+    @pytest.mark.unit
     def test_with_id_and_goal(self, engine: ConversationEngine) -> None:
         conv = engine.create_conversation(
             conversation_id="custom-1",
@@ -120,15 +123,18 @@ class TestCreateConversation:
 # ---------------------------------------------------------------------------
 
 class TestGetConversation:
+    @pytest.mark.unit
     def test_not_found(self, engine: ConversationEngine) -> None:
         assert engine.get_conversation("no-such") is None
 
+    @pytest.mark.unit
     def test_from_cache(self, engine: ConversationEngine) -> None:
         engine.create_conversation(conversation_id="cached")
         conv = engine.get_conversation("cached")
         assert conv is not None
         assert conv.conversation_id == "cached"
 
+    @pytest.mark.unit
     def test_from_store(self, engine: ConversationEngine, store: MessageStore) -> None:
         store.append("stored", Message(role="user", content="saved"))
         conv = engine.get_conversation("stored")
@@ -142,15 +148,18 @@ class TestGetConversation:
 # ---------------------------------------------------------------------------
 
 class TestAddMessage:
+    @pytest.mark.unit
     def test_adds_and_returns(self, engine: ConversationEngine) -> None:
         msg = engine.add_message("conv-a", "user", "test message")
         assert msg.role == "user"
         assert msg.content == "test message"
 
+    @pytest.mark.unit
     def test_content_none_raises(self, engine: ConversationEngine) -> None:
         with pytest.raises(ValueError, match="content cannot be None"):
             engine.add_message("conv-b", "user", None)  # type: ignore[arg-type]
 
+    @pytest.mark.unit
     def test_exceeds_max_turns(self, engine: ConversationEngine) -> None:
         engine.add_message("conv-c", "user", "msg1")
         engine.add_message("conv-c", "assistant", "r1")
@@ -160,6 +169,7 @@ class TestAddMessage:
         with pytest.raises(RuntimeError, match="exceeded max turns"):
             engine.add_message("conv-c", "assistant", "r3")
 
+    @pytest.mark.unit
     def test_stores_in_message_store(
         self, engine: ConversationEngine, store: MessageStore,
     ) -> None:
@@ -168,6 +178,7 @@ class TestAddMessage:
         assert len(msgs) == 1
         assert msgs[0].content == "persist me"
 
+    @pytest.mark.unit
     def test_content_empty_string_allowed(self, engine: ConversationEngine) -> None:
         msg = engine.add_message("conv-e", "user", "")
         assert msg.content == ""
@@ -178,11 +189,13 @@ class TestAddMessage:
 # ---------------------------------------------------------------------------
 
 class TestGetOrCreate:
+    @pytest.mark.unit
     def test_existing_in_cache(self, engine: ConversationEngine) -> None:
         engine.create_conversation(conversation_id="goc-cache")
         conv = engine.get_or_create("goc-cache")
         assert conv.conversation_id == "goc-cache"
 
+    @pytest.mark.unit
     def test_existing_in_store(
         self, engine: ConversationEngine, store: MessageStore,
     ) -> None:
@@ -191,6 +204,7 @@ class TestGetOrCreate:
         assert conv.conversation_id == "goc-store"
         assert len(conv.messages) == 1
 
+    @pytest.mark.unit
     def test_new_conversation(self, engine: ConversationEngine) -> None:
         conv = engine.get_or_create("goc-new")
         assert conv.conversation_id == "goc-new"
@@ -202,6 +216,7 @@ class TestGetOrCreate:
 # ---------------------------------------------------------------------------
 
 class TestDetectIntent:
+    @pytest.mark.unit
     def test_delegates_to_intent_engine(
         self, engine: ConversationEngine, mock_intent: MagicMock,
     ) -> None:
@@ -216,10 +231,12 @@ class TestDetectIntent:
 # ---------------------------------------------------------------------------
 
 class TestResolveReference:
+    @pytest.mark.unit
     def test_no_match(self, engine: ConversationEngine) -> None:
         result = engine.resolve_reference("nada que ver", "conv-ref")
         assert result == "nada que ver"
 
+    @pytest.mark.unit
     def test_eso_replaced_with_context(
         self, engine: ConversationEngine,
     ) -> None:
@@ -227,6 +244,7 @@ class TestResolveReference:
         result = engine.resolve_reference("hazlo de nuevo", "conv-ref2")
         assert "ejecuta" in result
 
+    @pytest.mark.unit
     def test_el_anterior_replaced(
         self, engine: ConversationEngine,
     ) -> None:
@@ -239,6 +257,7 @@ class TestResolveReference:
 # list_conversations
 # ---------------------------------------------------------------------------
 
+@pytest.mark.unit
 def test_list_conversations(engine: ConversationEngine) -> None:
     engine.add_message("l1", "user", "first")
     engine.add_message("l2", "user", "second")
@@ -251,6 +270,7 @@ def test_list_conversations(engine: ConversationEngine) -> None:
 # ---------------------------------------------------------------------------
 
 class TestDeleteConversation:
+    @pytest.mark.unit
     def test_removes_from_cache_and_store(
         self, engine: ConversationEngine, store: MessageStore,
     ) -> None:
@@ -259,6 +279,7 @@ class TestDeleteConversation:
         assert engine.get_conversation("del-1") is None
         assert store.get_conversation("del-1") == []
 
+    @pytest.mark.unit
     def test_nonexistent(self, engine: ConversationEngine) -> None:
         assert engine.delete_conversation("no-such-del") is False
 
@@ -268,6 +289,7 @@ class TestDeleteConversation:
 # ---------------------------------------------------------------------------
 
 class TestProcessUserMessage:
+    @pytest.mark.unit
     def test_coherent_result_with_injected_deps(
         self, engine: ConversationEngine, mock_intent: MagicMock,
     ) -> None:
@@ -280,6 +302,7 @@ class TestProcessUserMessage:
         assert isinstance(result["sentiment_score"], float)
         assert isinstance(result["resolved_message"], str)
 
+    @pytest.mark.unit
     def test_interruption_detected(
         self, engine: ConversationEngine,
         mock_interruptions: MagicMock,
@@ -290,6 +313,7 @@ class TestProcessUserMessage:
         assert result["is_interruption"] is True
         assert result["interruption_context"] == "contexto anterior"
 
+    @pytest.mark.unit
     def test_sentiment_frustrated_triggers_apologize(
         self, engine: ConversationEngine,
     ) -> None:
@@ -305,6 +329,7 @@ class TestProcessUserMessage:
         adj = result["response_adjustments"]
         assert adj.get("apologize") is True
 
+    @pytest.mark.unit
     def test_correction_intent(
         self, engine: ConversationEngine, mock_intent: MagicMock,
     ) -> None:
@@ -315,11 +340,13 @@ class TestProcessUserMessage:
         assert result["correction_recorded"] is True
         assert result["relevant_corrections"] == 1
 
+    @pytest.mark.unit
     def test_sanitizes_message(self, engine: ConversationEngine) -> None:
         engine._prompt_sanitizer.sanitize = MagicMock(return_value="limpio")
         engine.process_user_message("conv-san", "mensaje sucio")
         assert engine._prompt_sanitizer.sanitize.called
 
+    @pytest.mark.unit
     def test_needs_web_search(
         self, engine: ConversationEngine, mock_trends: MagicMock,
     ) -> None:
@@ -336,21 +363,25 @@ class TestProcessUserMessage:
 # ---------------------------------------------------------------------------
 
 class TestBuildAdjustments:
+    @pytest.mark.unit
     def test_frustrated_apologize(self, engine: ConversationEngine) -> None:
         sentiment = MagicMock(sentiment=Sentiment.FRUSTRATED, score=-0.8)
         adj = engine._build_adjustments(sentiment, {})
         assert adj == {"apologize": True}
 
+    @pytest.mark.unit
     def test_impatient_shorten(self, engine: ConversationEngine) -> None:
         sentiment = MagicMock(sentiment=Sentiment.IMPATIENT, score=-0.3)
         adj = engine._build_adjustments(sentiment, {})
         assert adj == {"shorten": True}
 
+    @pytest.mark.unit
     def test_unclear_feedback(self, engine: ConversationEngine) -> None:
         sentiment = MagicMock(sentiment=Sentiment.NEUTRAL, score=0.0)
         adj = engine._build_adjustments(sentiment, {"was_unclear": True})
         assert adj == {"clarify": True}
 
+    @pytest.mark.unit
     def test_wrong_feedback(self, engine: ConversationEngine) -> None:
         sentiment = MagicMock(sentiment=Sentiment.NEUTRAL, score=0.0)
         adj = engine._build_adjustments(sentiment, {"was_wrong": True})

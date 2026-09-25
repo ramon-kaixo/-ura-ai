@@ -7,6 +7,7 @@ librerías opcionales (openpyxl/docx/pptx/whisper/pytesseract) y helpers.
 
 from __future__ import annotations
 
+import pytest
 import ipaddress
 import sys
 import types
@@ -41,6 +42,7 @@ except OSError:
 
 
 class TestBaseExtractors:
+    @pytest.mark.integration
     def test_hash_stream(self, tmp_path: Path) -> None:
         import hashlib
 
@@ -49,10 +51,12 @@ class TestBaseExtractors:
         sha, size = _hash_stream(p)
         assert sha == hashlib.sha256(b"hola").hexdigest() and size == 4
 
+    @pytest.mark.integration
     def test_check_import_missing(self) -> None:
         assert _check_import("modulo_que_no_existe_xyz", "paquete") is False
         assert _check_import("sys") is True
 
+    @pytest.mark.integration
     def test_registry_metodos(self) -> None:
         reg = ExtractorRegistry()
         assert reg.count == 0
@@ -78,6 +82,7 @@ class TestMarkdownCobertura:
         p.write_text(f"---\ntitle: Mi Doc\ntags: [a, b]\n---\n{body}", encoding="utf-8")
         return p
 
+    @pytest.mark.integration
     def test_extract_completo(self, tmp_path: Path) -> None:
         p = self._sample(tmp_path)
         result = MarkdownExtractor().extract(_source(str(p)))
@@ -87,10 +92,12 @@ class TestMarkdownCobertura:
         assert result.asset.metadata["tags"] == ["a", "b"]
         assert result.asset.relationships
 
+    @pytest.mark.integration
     def test_extract_no_existe(self) -> None:
         result = MarkdownExtractor().extract(_source("/no/existe/md"))
         assert result.errors and "not found" in result.errors[0]
 
+    @pytest.mark.integration
     def test_extract_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         p = self._sample(tmp_path)
 
@@ -101,6 +108,7 @@ class TestMarkdownCobertura:
         result = MarkdownExtractor().extract(_source(str(p)))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_frontmatter_variantes(self) -> None:
         from knowledge.engine.extractors.markdown import _parse_frontmatter
 
@@ -110,6 +118,7 @@ class TestMarkdownCobertura:
         assert _parse_frontmatter("---\n- a\n- b\n---\nx")[0] is None
         assert _parse_frontmatter("---\nclave: [no cerrado\n---\nx")[0] is None
 
+    @pytest.mark.integration
     def test_helpers(self) -> None:
         from knowledge.engine.extractors.markdown import (
             _count_headings,
@@ -131,6 +140,7 @@ class TestMarkdownCobertura:
         assert _find_internal_links("[x](abc123def456.md)") == ["abc123def456"]
         assert _find_external_links("[x](https://example.com/a)") == ["https://example.com/a"]
 
+    @pytest.mark.integration
     def test_quality(self) -> None:
         from knowledge.engine.extractors.markdown import _compute_quality
 
@@ -142,12 +152,14 @@ class TestMarkdownCobertura:
 
 
 class TestAudioCobertura:
+    @pytest.mark.integration
     def test_extract_normal(self, tmp_path: Path) -> None:
         p = tmp_path / "a.mp3"
         p.write_bytes(b"\x00" * 100)
         result = AudioExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.asset_type == AssetType.AUDIO
 
+    @pytest.mark.integration
     def test_file_too_large(self, tmp_path: Path) -> None:
         p = tmp_path / "a.mp3"
         with p.open("wb") as f:
@@ -156,6 +168,7 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.errors and "too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_ffprobe_fallido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.audio"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", True)
@@ -171,6 +184,7 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
     def test_ffprobe_json_invalido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.audio"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", True)
@@ -186,6 +200,8 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_ffprobe_timeout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import subprocess
 
@@ -201,6 +217,7 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
     def test_ffprobe_exitoso(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         json_output = {
             "format": {"duration": "3.5", "bit_rate": "128000", "format_name": "mp3"},
@@ -229,6 +246,7 @@ class TestAudioCobertura:
         assert m["audio_duration_sec"] == "3.5"
         assert m["audio_codec"] == "mp3"
 
+    @pytest.mark.integration
     def test_whisper_exitoso(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.audio"]
         fake_model = types.SimpleNamespace(transcribe=lambda p: {"text": "hola mundo", "language": "es"})
@@ -241,6 +259,7 @@ class TestAudioCobertura:
         assert m["transcript"] == "hola mundo"
         assert m["transcription_performed"] is True
 
+    @pytest.mark.integration
     def test_whisper_fallido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.audio"]
         monkeypatch.setattr(mod, "_HAS_WHISPER", True)
@@ -256,6 +275,7 @@ class TestAudioCobertura:
         assert m["transcription_performed"] is False
         assert m["transcription_error"]
 
+    @pytest.mark.integration
     def test_degradado_sin_ffprobe(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.audio"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", False)
@@ -264,6 +284,7 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
     def test_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(path: str | Path) -> tuple[str, int]:
             raise PermissionError("nope")
@@ -275,6 +296,7 @@ class TestAudioCobertura:
         result = AudioExtractor().extract(_source(str(p)))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_quality_transcripcion(self) -> None:
         from knowledge.engine.extractors.audio import _compute_audio_quality
 
@@ -341,6 +363,7 @@ class TestImageCobertura:
         p.write_bytes(b"\xff\xd8\xff" + b"\x00" * 100)
         return p
 
+    @pytest.mark.integration
     def test_extract_ok_thumbnail(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         sys.modules["knowledge.engine.extractors.image"]
         fake = _FakeImg(exif=_FakeExif({}, {}))
@@ -351,6 +374,7 @@ class TestImageCobertura:
         assert m["width"] == 100 and m["format"] == "JPEG"
         assert m["thumbnail"] == f"{p}.thumb.jpg"
 
+    @pytest.mark.integration
     def test_extract_exif_gps(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         sys.modules["knowledge.engine.extractors.image"]
         exif = _FakeExif({0x010F: "Make", 0x0110: "Model", 0x9003: "2026:01:01"}, {1: "N", 2: "10.0"})
@@ -365,6 +389,7 @@ class TestImageCobertura:
         assert m["gps"] and m["gps"]["GPSLatitudeRef"] == "N"
         assert result.asset.quality > 0.5  # type: ignore[union-attr]
 
+    @pytest.mark.integration
     def test_exif_vacio_y_sin_pillow(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr("PIL.Image", types.SimpleNamespace(open=lambda p: _FakeImg(exif=None)))
@@ -376,6 +401,7 @@ class TestImageCobertura:
         m = result2.asset.metadata if result2.asset else None
         assert m and m["_degraded"] is True and "_degraded_reason" in m
 
+    @pytest.mark.integration
     def test_dimension_excesiva(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "MAX_IMAGE_DIMENSION", 50)
@@ -384,6 +410,7 @@ class TestImageCobertura:
         result = ImageExtractor().extract(_source(str(p)))
         assert result.errors and "dimensions too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_pixels_excesivos(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "MAX_IMAGE_PIXELS", 200)
@@ -392,6 +419,7 @@ class TestImageCobertura:
         result = ImageExtractor().extract(_source(str(p)))
         assert result.errors and "Image too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_large_warning(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "MAX_IMAGE_PIXELS", 400)
@@ -400,6 +428,7 @@ class TestImageCobertura:
         result = ImageExtractor().extract(_source(str(p)))
         assert result.asset is not None
 
+    @pytest.mark.integration
     def test_ocr_exitoso(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "_HAS_TESSERACT", True)
@@ -412,6 +441,7 @@ class TestImageCobertura:
         assert m["ocr_text"] == "texto ocr"
         assert m["ocr_performed"] is True
 
+    @pytest.mark.integration
     def test_ocr_fallido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
         monkeypatch.setattr(mod, "_HAS_TESSERACT", True)
@@ -428,6 +458,7 @@ class TestImageCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["ocr_performed"] is False and "ocr_error" in m
 
+    @pytest.mark.integration
     def test_image_open_error_degradado(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(p: str) -> Any:
             raise ValueError("imagen corrupta")
@@ -438,6 +469,7 @@ class TestImageCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True
 
+    @pytest.mark.integration
     def test_file_too_large(self, tmp_path: Path) -> None:
         p = self._img_file(tmp_path)
         with p.open("wb") as f:
@@ -446,6 +478,7 @@ class TestImageCobertura:
         result = ImageExtractor().extract(_source(str(p)))
         assert result.errors and "too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.image"]
 
@@ -457,6 +490,7 @@ class TestImageCobertura:
         result = ImageExtractor().extract(_source(str(p)))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_no_existe(self) -> None:
         result = ImageExtractor().extract(_source("/no/existe/img.jpg"))
         assert result.errors and "not found" in result.errors[0]
@@ -466,6 +500,7 @@ class TestImageCobertura:
 
 
 class TestPdfCobertura:
+    @pytest.mark.integration
     def test_degradado_sin_fitz(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.pdf"]
         monkeypatch.setattr(mod, "_HAS_FITZ", False)
@@ -475,6 +510,7 @@ class TestPdfCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True and "PyMuPDF" in m["_degraded_reason"]
 
+    @pytest.mark.integration
     def test_too_large(self, tmp_path: Path) -> None:
         p = tmp_path / "d.pdf"
         with p.open("wb") as f:
@@ -484,6 +520,7 @@ class TestPdfCobertura:
         assert result.errors and "too large" in result.errors[0]
 
     @pytest.mark.skipif(not _HAS_FITZ, reason="fitz (PyMuPDF) no instalado")
+    @pytest.mark.integration
     def test_fitz_limite_paginas(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.pdf"]
         monkeypatch.setattr(mod, "MAX_PAGES", 1)
@@ -494,6 +531,7 @@ class TestPdfCobertura:
         assert result.errors
 
     @pytest.mark.skipif(not _HAS_FITZ, reason="fitz (PyMuPDF) no instalado")
+    @pytest.mark.integration
     def test_fitz_completo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(
             sys.modules,
@@ -523,6 +561,7 @@ class TestPdfCobertura:
         assert result.asset.quality > 0.5  # type: ignore[union-attr]
 
     @pytest.mark.skipif(not _HAS_FITZ, reason="fitz (PyMuPDF) no instalado")
+    @pytest.mark.integration
     def test_fitz_sin_texto_ocr(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setitem(sys.modules, "fitz", types.SimpleNamespace(open=lambda p: _FakePdf(pages=1, texts=[""])))
         p = tmp_path / "d.pdf"
@@ -532,6 +571,7 @@ class TestPdfCobertura:
         assert m["has_text"] is False and m["ocr_performed"] is False
 
     @pytest.mark.skipif(not _HAS_FITZ, reason="fitz (PyMuPDF) no instalado")
+    @pytest.mark.integration
     def test_fitz_ocr_con_tesseract(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.pdf"]
         monkeypatch.setattr(mod, "_HAS_TESSERACT", True)
@@ -543,6 +583,7 @@ class TestPdfCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["ocr_performed"] is True
 
+    @pytest.mark.integration
     def test_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.pdf"]
 
@@ -555,6 +596,7 @@ class TestPdfCobertura:
         result = PdfExtractor().extract(_source(str(p)))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_quality_pdf(self) -> None:
         from knowledge.engine.extractors.pdf import _compute_pdf_quality
 
@@ -564,6 +606,7 @@ class TestPdfCobertura:
         assert q == pytest.approx(1.0)
         assert _compute_pdf_quality({}) == pytest.approx(0.3)
 
+    @pytest.mark.integration
     def test_no_existe(self) -> None:
         result = PdfExtractor().extract(_source("/no/existe/d.pdf"))
         assert result.errors and "not found" in result.errors[0]
@@ -592,6 +635,7 @@ class _FakePdf:
 
 
 class TestOfficeCobertura:
+    @pytest.mark.integration
     def test_too_large(self, tmp_path: Path) -> None:
         p = tmp_path / "d.docx"
         with p.open("wb") as f:
@@ -600,6 +644,7 @@ class TestOfficeCobertura:
         result = OfficeExtractor().extract(_source(str(p)))
         assert result.errors and "too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_extension_no_soportada(self, tmp_path: Path) -> None:
         p = tmp_path / "d.odt"
         p.write_bytes(b"x" * 10)
@@ -607,6 +652,7 @@ class TestOfficeCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True and "Unsupported extension" in m["_degraded_reason"]
 
+    @pytest.mark.integration
     def test_xlsx_sin_openpyxl(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
         monkeypatch.setattr(mod, "_HAS_DOCX", False)
@@ -618,6 +664,7 @@ class TestOfficeCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True and "openpyxl" in m["_degraded_reason"]
 
+    @pytest.mark.integration
     def test_docx_fake(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
         monkeypatch.setattr(mod, "_HAS_DOCX", True)
@@ -634,6 +681,7 @@ class TestOfficeCobertura:
         assert m["word_count"] > 50 or m["word_count"] > 0
         assert m["office_title"] == "Mi Titulo"
 
+    @pytest.mark.integration
     def test_xlsx_fake(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
         monkeypatch.setattr(mod, "_HAS_DOCX", False)
@@ -648,6 +696,7 @@ class TestOfficeCobertura:
         assert m["rows_total"] == 12
         assert result.warnings and "approximate" in result.warnings[0]
 
+    @pytest.mark.integration
     def test_pptx_degradado(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
         monkeypatch.setattr(mod, "_HAS_DOCX", False)
@@ -659,6 +708,7 @@ class TestOfficeCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True and "python-pptx" in m["_degraded_reason"]
 
+    @pytest.mark.integration
     def test_pptx_fake(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
         monkeypatch.setattr(mod, "_HAS_DOCX", False)
@@ -673,6 +723,7 @@ class TestOfficeCobertura:
         assert m["shapes_total"] == 2
         assert m["text_preview"]
 
+    @pytest.mark.integration
     def test_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.office"]
 
@@ -767,16 +818,19 @@ class _FakePptx:
 
 
 class TestGitCobertura:
+    @pytest.mark.integration
     def test_sin_git(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.git"]
         monkeypatch.setattr(mod, "_HAS_GIT", False)
         result = GitExtractor().extract(_source("http://x/y"))
         assert result.errors and "git CLI" in result.errors[0]
 
+    @pytest.mark.integration
     def test_empty_location(self) -> None:
         result = GitExtractor().extract(AssetSource("filesystem", ""))
         assert result.errors and "Empty" in result.errors[0]
 
+    @pytest.mark.integration
     def test_repo_local(self, tmp_path: Path) -> None:
         repo = tmp_path / "repo"
         (repo / ".git").mkdir(parents=True)
@@ -786,22 +840,26 @@ class TestGitCobertura:
         assert m["readme_preview"] and "size" in m
         assert "cloned_from" not in m
 
+    @pytest.mark.integration
     def test_repo_directo_git(self, tmp_path: Path) -> None:
         repo = tmp_path / "repo"
         (repo / ".git").mkdir(parents=True)
         result = GitExtractor().extract(_source(str(repo / ".git")))
         assert result.asset is not None
 
+    @pytest.mark.integration
     def test_no_es_repo(self, tmp_path: Path) -> None:
         d = tmp_path / "norepo"
         d.mkdir()
         result = GitExtractor().extract(_source(str(d)))
         assert result.errors and "Not a git repository" in result.errors[0]
 
+    @pytest.mark.integration
     def test_location_no_existe(self) -> None:
         result = GitExtractor().extract(_source("/no/existe/ruta"))
         assert result.errors and "Location not found" in result.errors[0]
 
+    @pytest.mark.integration
     def test_clone_ok_y_temp(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import tempfile
 
@@ -817,6 +875,7 @@ class TestGitCobertura:
         assert m["cloned_from"] == "https://github.com/u/r"
         assert "clone_size" in m
 
+    @pytest.mark.integration
     def test_clone_falla(self, monkeypatch: pytest.MonkeyPatch) -> None:
         sys.modules["knowledge.engine.extractors.git"]
 
@@ -827,6 +886,7 @@ class TestGitCobertura:
         result = GitExtractor().extract(AssetSource("github", "https://github.com/u/r"))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_helpers_git(self) -> None:
         from knowledge.engine.extractors.git import (
             _compute_git_quality,
@@ -842,6 +902,7 @@ class TestGitCobertura:
         assert _compute_git_quality({"commit_count": 10, "origin_url": "u"}) > 0.3
         assert _compute_git_quality({}) == 0.3
 
+    @pytest.mark.integration
     def test_metadatos_extendidos(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         from knowledge.engine.extractors.git import GitExtractor as GE
 
@@ -872,12 +933,14 @@ class TestGitCobertura:
         assert m["tags"] == ["v1.0", "v0.9"]
         assert m["branches"] == ["main", "dev"]
 
+    @pytest.mark.integration
     def test_quality_git(self) -> None:
         from knowledge.engine.extractors.git import _compute_git_quality
 
         m = {"commit_count": 15, "tag_count": 2, "branch_count": 3, "origin_url": "u", "readme_preview": "x"}
         assert _compute_git_quality(m) == 1.0
 
+    @pytest.mark.integration
     def test_find_readme_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import pathlib
 
@@ -892,12 +955,14 @@ class TestGitCobertura:
         (repo / "README.md").write_text("x")
         assert _find_readme(str(repo)) is None
 
+    @pytest.mark.integration
     def test_repo_size_ignora_errores(self, tmp_path: Path) -> None:
         d = tmp_path / "dir"
         d.mkdir()
         (d / "f.txt").write_text("hola")
         assert GitExtractor._repo_size(str(d)) == 4
 
+    @pytest.mark.integration
     def test_clone_repo_real(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.git"]
 
@@ -921,6 +986,7 @@ class TestGitCobertura:
 
 
 class TestVideoCobertura:
+    @pytest.mark.integration
     def test_too_large(self, tmp_path: Path) -> None:
         p = tmp_path / "v.mp4"
         with p.open("wb") as f:
@@ -929,6 +995,7 @@ class TestVideoCobertura:
         result = VideoExtractor().extract(_source(str(p)))
         assert result.errors and "too large" in result.errors[0]
 
+    @pytest.mark.integration
     def test_degradado_sin_ffprobe(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.video"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", False)
@@ -940,6 +1007,7 @@ class TestVideoCobertura:
         result = VideoExtractor().extract(_source(str(p)))
         assert result.asset is not None and result.asset.metadata["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
     def test_error_general(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.video"]
 
@@ -952,6 +1020,7 @@ class TestVideoCobertura:
         result = VideoExtractor().extract(_source(str(p)))
         assert result.errors and "Extraction error" in result.errors[0]
 
+    @pytest.mark.integration
     def test_probe_format_y_streams(self) -> None:
         metadata: dict[str, Any] = {}
         VideoExtractor._probe_format(metadata, {"duration": "10.5", "bit_rate": "1000", "size": 5})
@@ -966,6 +1035,7 @@ class TestVideoCobertura:
         assert metadata["video_video_codec"] == "h264"
         assert metadata["video_audio_codec"] == "aac"
 
+    @pytest.mark.integration
     def test_ffprobe_fallido(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         class Res:
             returncode = 1
@@ -979,6 +1049,8 @@ class TestVideoCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded_ffprobe"] is True
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_ffprobe_timeout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import subprocess
 
@@ -991,6 +1063,7 @@ class TestVideoCobertura:
         result = VideoExtractor().extract(_source(str(p)))
         assert result.asset is not None and "_degraded_ffprobe" in result.asset.metadata
 
+    @pytest.mark.integration
     def test_thumbnails_generadas(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.video"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", True)
@@ -1017,6 +1090,8 @@ class TestVideoCobertura:
         assert m["thumbnails"] and len(m["thumbnails"]) == 3
         assert m["video_duration_sec"] == "10.0"
 
+    @pytest.mark.integration
+    @pytest.mark.slow
     def test_thumbnail_timeout(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         import subprocess
 
@@ -1042,11 +1117,13 @@ class TestVideoCobertura:
         result = VideoExtractor().extract(_source(str(p)))
         assert result.asset is not None and "thumbnails" not in result.asset.metadata
 
+    @pytest.mark.integration
     def test_sin_duration_sin_thumbnails(self) -> None:
         metadata: dict[str, Any] = {}
         VideoExtractor._extract_thumbnails("no-importa.mp4", metadata)
         assert "thumbnails" not in metadata
 
+    @pytest.mark.integration
     def test_scenes_detectadas(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.video"]
         monkeypatch.setattr(mod, "_HAS_OPENCV", True)
@@ -1086,6 +1163,7 @@ class TestVideoCobertura:
         assert metadata["video_total_frames"] == 3
         assert "video_scene_count" in metadata
 
+    @pytest.mark.integration
     def test_scenes_sin_frames(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class FakeCap:
             def __init__(self) -> None:
@@ -1112,6 +1190,7 @@ class TestVideoCobertura:
         assert metadata["video_total_frames"] == 3
         assert "video_scene_count" not in metadata
 
+    @pytest.mark.integration
     def test_scenes_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(path: str) -> Any:
             raise ValueError("sin opencv real")
@@ -1121,6 +1200,7 @@ class TestVideoCobertura:
         VideoExtractor._detect_scenes("v.mp4", metadata)
         assert metadata == {}
 
+    @pytest.mark.integration
     def test_transcripcion_ok_y_fallo(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.video"]
         monkeypatch.setattr(mod, "_HAS_FFPROBE", True)
@@ -1151,6 +1231,7 @@ class TestVideoCobertura:
         m2 = result2.asset.metadata if result2.asset else {}
         assert m2["transcription_performed"] is False and m2["transcription_error"]
 
+    @pytest.mark.integration
     def test_quality_video(self) -> None:
         from knowledge.engine.extractors.video import _compute_video_quality
 
@@ -1172,22 +1253,27 @@ class TestVideoCobertura:
 
 
 class TestWebExtractorCobertura:
+    @pytest.mark.integration
     def test_url_vacia(self) -> None:
         result = WebExtractor().extract(AssetSource("http", ""))
         assert result.errors and "Empty URL" in result.errors[0]
 
+    @pytest.mark.integration
     def test_scheme_bloqueado(self) -> None:
         result = WebExtractor().extract(AssetSource("http", "ftp://example.com/x"))
         assert result.errors and "Scheme" in result.errors[0]
 
+    @pytest.mark.integration
     def test_host_bloqueado(self) -> None:
         result = WebExtractor().extract(AssetSource("http", "http://localhost/x"))
         assert result.errors and "blocked" in result.errors[0]
 
+    @pytest.mark.integration
     def test_ip_privada(self) -> None:
         result = WebExtractor().extract(AssetSource("http", "http://10.0.0.5/x"))
         assert result.errors and "blocked" in result.errors[0]
 
+    @pytest.mark.integration
     def test_ip_publica_literal(self) -> None:
         from knowledge.engine.extractors.web import _check_ip_blocked
 
@@ -1195,10 +1281,12 @@ class TestWebExtractorCobertura:
         WebExtractor._validate_redirect_url("http://8.8.8.8/x")
         assert _check_ip_blocked(ipaddress.ip_address("8.8.8.8"), "8.8.8.8") is None
 
+    @pytest.mark.integration
     def test_metadata_cloud(self) -> None:
         result = WebExtractor().extract(AssetSource("http", "http://169.254.169.254/latest/meta-data"))
         assert result.errors and "metadata" in result.errors[0]
 
+    @pytest.mark.integration
     def test_dns_fallo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import socket
 
@@ -1209,6 +1297,7 @@ class TestWebExtractorCobertura:
         result = WebExtractor().extract(AssetSource("http", "http://dominio-que-no-existe-xyz.com/x"))
         assert result.errors and "DNS" in result.errors[0]
 
+    @pytest.mark.integration
     def test_dns_privada(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.extractors.web.socket.getaddrinfo",
@@ -1219,6 +1308,7 @@ class TestWebExtractorCobertura:
 
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
+    @pytest.mark.integration
     def test_dns_publica_y_redirect_fallida(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.extractors.web.socket.getaddrinfo",
@@ -1228,6 +1318,7 @@ class TestWebExtractorCobertura:
         assert result.errors  # httpx devuelve error de conexión
 
     @pytest.mark.skipif(sys.platform == "darwin", reason="Sin DNS en sandbox Mac; degraded path bloqueado por SSRF validation")
+    @pytest.mark.integration
     def test_degradado_sin_deps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.web"]
         monkeypatch.setattr(mod, "_HAS_HTTPX", False)
@@ -1236,17 +1327,21 @@ class TestWebExtractorCobertura:
         m = result.asset.metadata if result.asset else {}
         assert m["_degraded"] is True and m["content_sha256"]
 
+    @pytest.mark.integration
     def test_validate_redirect(self) -> None:
         WebExtractor._validate_redirect_url("https://publico.example/x")
 
+    @pytest.mark.integration
     def test_redirect_scheme_bloqueado(self) -> None:
         with pytest.raises(URLSchemeBlocked):
             WebExtractor._validate_redirect_url("file:///x")
 
+    @pytest.mark.integration
     def test_redirect_ip_privada(self) -> None:
         with pytest.raises(PrivateIPBlocked):
             WebExtractor._validate_redirect_url("http://10.0.0.1/x")
 
+    @pytest.mark.integration
     def test_redirect_dns_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.extractors.web.socket.getaddrinfo",
@@ -1254,6 +1349,7 @@ class TestWebExtractorCobertura:
         )
         WebExtractor._validate_redirect_url("http://host-publico.example/x")
 
+    @pytest.mark.integration
     def test_redirect_dns_falla(self, monkeypatch: pytest.MonkeyPatch) -> None:
         import socket
 
@@ -1263,6 +1359,7 @@ class TestWebExtractorCobertura:
         monkeypatch.setattr("knowledge.engine.extractors.web.socket.getaddrinfo", gaierror)
         WebExtractor._validate_redirect_url("http://no-existe-xyz.example/x")
 
+    @pytest.mark.integration
     def test_helpers_web(self) -> None:
         from knowledge.engine.extractors.web import _compute_web_quality, _is_ip_string, hashlib_content
 
@@ -1281,6 +1378,7 @@ class TestWebExtractorCobertura:
         assert _compute_web_quality({}) == 0.3
 
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
+    @pytest.mark.integration
     def test_parse_html(self) -> None:
         html = b"<html><head><title>Mi Pagina</title><meta name='description' content='Desc'></head><body><img src='/i.png'><a href='https://out.example/l'>link</a><a href='/interno'>int</a></body></html>"
         m = WebExtractor()._parse_html(
@@ -1292,6 +1390,7 @@ class TestWebExtractorCobertura:
         assert m["wraps"] == "source:https://orig.example/y"
 
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
+    @pytest.mark.integration
     def test_fetch_extract_completo(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.web"]
         monkeypatch.setattr(mod, "_HAS_HTTPX", True)
@@ -1344,6 +1443,7 @@ class TestWebExtractorCobertura:
         assert "FinalResp" if False else m["url"] == "https://final.example/x"
 
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
+    @pytest.mark.integration
     def test_fetch_body_cortado(self, monkeypatch: pytest.MonkeyPatch) -> None:
         mod = sys.modules["knowledge.engine.extractors.web"]
         monkeypatch.setattr(mod, "MAX_BODY_SIZE", 10)
@@ -1384,6 +1484,7 @@ class TestWebExtractorCobertura:
         assert m["size"] == 10
 
     @pytest.mark.skipif(_HAS_NETWORK, reason="red disponible: tests asumen entorno sin red")
+    @pytest.mark.integration
     def test_fetch_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         class FakeClient:
             def __init__(self, *a: Any, **kw: Any) -> None:

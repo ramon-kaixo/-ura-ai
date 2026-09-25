@@ -1,6 +1,7 @@
 """Tests para scripts/pro/tuneladora/pipeline/sofia.py."""
 
 from __future__ import annotations
+import pytest
 
 import json
 from types import SimpleNamespace
@@ -18,32 +19,39 @@ def _cfg() -> Configuration:
 
 
 class TestShouldReview:
+    @pytest.mark.integration
     def test_diff_vacio_y_api_vacio(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("", "", False, 0) is False
 
+    @pytest.mark.integration
     def test_diff_pequeno_normal_no_revisa(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("+cambio", "", False, 1) is False
 
+    @pytest.mark.integration
     def test_diff_grande_revisa(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("x" * 10001, "", False, 1) is True
 
+    @pytest.mark.integration
     def test_muchos_archivos(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("", "api", False, 11) is True
 
+    @pytest.mark.integration
     def test_tests_modificados(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("+c", "", True, 0) is True
 
+    @pytest.mark.integration
     def test_solo_api_diff(self) -> None:
         s = Sofia(_cfg())
         assert s.should_review("", "cambio api", False, 0) is True
 
 
 class TestParseResponse:
+    @pytest.mark.integration
     def test_json_directo(self) -> None:
         s = Sofia(_cfg())
         raw = json.dumps(
@@ -58,6 +66,7 @@ class TestParseResponse:
         assert report.hallazgos[0].linea == 3
         assert report.resumen == "r"
 
+    @pytest.mark.integration
     def test_json_envuelto_en_texto(self) -> None:
         s = Sofia(_cfg())
         raw = 'Aquí va: {"hallazgos": [], "resumen": "ok"} fin'
@@ -65,14 +74,17 @@ class TestParseResponse:
         assert report is not None
         assert report.resumen == "ok"
 
+    @pytest.mark.integration
     def test_sin_json(self) -> None:
         s = Sofia(_cfg())
         assert s._parse_response("texto sin json") is None
 
+    @pytest.mark.integration
     def test_json_invalido_dentro(self) -> None:
         s = Sofia(_cfg())
         assert s._parse_response("{no es json}") is None
 
+    @pytest.mark.integration
     def test_hallazgo_sin_campos(self) -> None:
         s = Sofia(_cfg())
         raw = json.dumps({"hallazgos": [{"tipo": "info"}], "resumen": ""})
@@ -82,6 +94,7 @@ class TestParseResponse:
 
 
 class TestReview:
+    @pytest.mark.integration
     def test_no_revisa_sin_cambios(self) -> None:
         s = Sofia(_cfg())
         with mock.patch("requests.post") as m_post:
@@ -89,6 +102,7 @@ class TestReview:
         assert report.hallazgos == []
         m_post.assert_not_called()
 
+    @pytest.mark.integration
     def test_llm_exitoso(self) -> None:
         s = Sofia(_cfg())
         resp = SimpleNamespace(
@@ -112,6 +126,7 @@ class TestReview:
         payload = m_post.call_args[1]["json"]
         assert payload["options"]["temperature"] == 0
 
+    @pytest.mark.integration
     def test_llm_falla_silencioso(self) -> None:
         s = Sofia(_cfg())
         with mock.patch("requests.post", side_effect=RuntimeError("conn")):
@@ -119,6 +134,7 @@ class TestReview:
         assert report.hallazgos == []
         assert report.n_criticos == 0
 
+    @pytest.mark.integration
     def test_respuesta_no_json(self) -> None:
         s = Sofia(_cfg())
         resp = SimpleNamespace(
@@ -131,6 +147,7 @@ class TestReview:
         assert report.hallazgos == []
         assert report.duracion_ms >= 0
 
+    @pytest.mark.integration
     def test_prompt_incluye_datos(self) -> None:
         s = Sofia(_cfg())
         resp = SimpleNamespace(
@@ -147,10 +164,12 @@ class TestReview:
 
 
 class TestDataclasses:
+    @pytest.mark.integration
     def test_sofia_hallazgo_defaults(self) -> None:
         h = SofiaHallazgo(tipo="info", archivo="a", linea=0, mensaje="m")
         assert h.sugerencia == ""
 
+    @pytest.mark.integration
     def test_sofia_report_defaults(self) -> None:
         r = SofiaReport()
         assert r.hallazgos == []

@@ -6,6 +6,7 @@ GX10: verifica resolucion local.
 from __future__ import annotations
 
 import pytest
+import pytest
 
 from tests.infra.conftest import run_cmd
 

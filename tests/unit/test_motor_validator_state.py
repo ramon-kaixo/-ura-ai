@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/circuit_breaker.py y _state de diagnostico/scanner."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -11,12 +12,14 @@ from motor.scanner._state import ScannerState, build_scanner_state
 
 
 class TestCircuitBreakerCompat:
+    @pytest.mark.unit
     def test_call_open_lanza(self) -> None:
         cb = CircuitBreaker("test-cb")
         with mock.patch.object(type(cb), "is_available", new_callable=mock.PropertyMock, return_value=False):
             with pytest.raises(CircuitBreakerOpenError):
                 cb.call(lambda: 1)
 
+    @pytest.mark.unit
     def test_call_disponible_delega(self) -> None:
         cb = CircuitBreaker("test-cb")
         with mock.patch.object(type(cb), "is_available", new_callable=mock.PropertyMock, return_value=True):
@@ -26,6 +29,7 @@ class TestCircuitBreakerCompat:
         assert r == "ok"
         assert called == [1, 1]  # super().call invoca fn (success + verify)
 
+    @pytest.mark.unit
     def test_exports(self) -> None:
         from motor.core.llm.circuit_breaker import CircuitState
 
@@ -33,11 +37,13 @@ class TestCircuitBreakerCompat:
 
 
 class TestDiagnosticoState:
+    @pytest.mark.unit
     def test_frozen(self) -> None:
         st = DiagnosticoState(executor=object(), config=object())
         with pytest.raises(Exception):
             st.executor = object()  # type: ignore[misc]
 
+    @pytest.mark.unit
     def test_build(self, monkeypatch) -> None:
         config = object()
         executor = mock.Mock()
@@ -46,6 +52,7 @@ class TestDiagnosticoState:
         assert st.config is config
         assert st.executor is executor
 
+    @pytest.mark.unit
     def test_build_sin_config(self, monkeypatch) -> None:
         config = object()
         monkeypatch.setattr("motor.core.config.UraConfig", mock.Mock(load=lambda: config))
@@ -54,11 +61,13 @@ class TestDiagnosticoState:
 
 
 class TestScannerState:
+    @pytest.mark.unit
     def test_frozen(self) -> None:
         st = ScannerState(executor=object(), config=object())
         with pytest.raises(Exception):
             st.executor = object()  # type: ignore[misc]
 
+    @pytest.mark.unit
     def test_build(self, monkeypatch) -> None:
         config = object()
         executor = mock.Mock()
@@ -67,6 +76,7 @@ class TestScannerState:
         assert st.config is config
         assert st.executor is executor
 
+    @pytest.mark.unit
     def test_build_sin_config(self, monkeypatch) -> None:
         config = object()
         monkeypatch.setattr("motor.core.config.UraConfig", mock.Mock(load=lambda: config))

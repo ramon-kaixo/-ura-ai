@@ -1,6 +1,7 @@
 """Tests de cobertura de knowledge/engine/asset_store.py (SQLiteAssetStore)."""
 
 from __future__ import annotations
+import pytest
 
 import sqlite3
 
@@ -72,6 +73,7 @@ def _asset(asset_id: str = "a1", title: str = "Titulo Prueba", asset_type: Asset
 
 
 class TestSave:
+    @pytest.mark.unit
     def test_guarda_y_actualiza(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         assert store.save_asset(_asset()) is True
@@ -82,6 +84,7 @@ class TestSave:
         assert store.save_asset(up) is True
         assert store.get_asset("a1").metadata["title"] == "Nuevo"
 
+    @pytest.mark.unit
     def test_error_db_cerrada(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.get_asset("x")  # abre/cierra bien
@@ -94,6 +97,7 @@ class TestSave:
 
 
 class TestGet:
+    @pytest.mark.unit
     def test_ok(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.save_asset(_asset())
@@ -109,12 +113,15 @@ class TestGet:
         assert got.relationships[0].metadata == {"k": 1}
         assert got.quality == 0.9
 
+    @pytest.mark.unit
     def test_no_existe(self, tmp_path) -> None:
         assert SQLiteAssetStore(_db(tmp_path)).get_asset("ghost") is None
 
+    @pytest.mark.unit
     def test_error(self, tmp_path) -> None:
         assert SQLiteAssetStore(tmp_path / "no-es-db").get_asset("a1") is None
 
+    @pytest.mark.unit
     def test_row_sin_metadata_ni_source(self, tmp_path) -> None:
         path = _db(tmp_path)
         conn = sqlite3.connect(path)
@@ -132,21 +139,25 @@ class TestGet:
 
 
 class TestExistsDelete:
+    @pytest.mark.unit
     def test_exists(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.save_asset(_asset())
         assert store.asset_exists("a1") is True
         assert store.asset_exists("zz") is False
 
+    @pytest.mark.unit
     def test_exists_error(self, tmp_path) -> None:
         assert SQLiteAssetStore(tmp_path / "no-es-db").asset_exists("a1") is False
 
+    @pytest.mark.unit
     def test_delete(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.save_asset(_asset())
         assert store.delete_asset("a1") is True
         assert store.asset_exists("a1") is False
 
+    @pytest.mark.unit
     def test_delete_error(self, tmp_path) -> None:
         assert SQLiteAssetStore(tmp_path / "no-es-db").delete_asset("a1") is False
 
@@ -160,36 +171,44 @@ class TestList:
         store.save_asset(_asset("a3", title="Imagen Prueba", asset_type=AssetType.IMAGE))
         return store
 
+    @pytest.mark.unit
     def test_todos(self, tmp_path) -> None:
         items = self._store(tmp_path).list_assets()
         assert len(items) == 3
 
+    @pytest.mark.unit
     def test_filtro_tipo(self, tmp_path) -> None:
         items = self._store(tmp_path).list_assets(asset_type=AssetType.VIDEO)
         assert [a.asset_id for a in items] == ["a2"]
 
+    @pytest.mark.unit
     def test_limit_offset(self, tmp_path) -> None:
         items = self._store(tmp_path).list_assets(limit=2, offset=0)
         assert len(items) == 2
         items2 = self._store(tmp_path).list_assets(limit=2, offset=2)
         assert len(items2) == 1
 
+    @pytest.mark.unit
     def test_error(self, tmp_path) -> None:
         assert SQLiteAssetStore(tmp_path / "no-es-db").list_assets() == []
 
+    @pytest.mark.unit
     def test_count(self, tmp_path) -> None:
         store = self._store(tmp_path)
         assert store.count() == 3
         assert store.count(asset_type=AssetType.IMAGE) == 1
 
+    @pytest.mark.unit
     def test_count_error(self, tmp_path) -> None:
         assert SQLiteAssetStore(tmp_path / "no-es-db").count() == 0
 
 
 class TestSearch:
+    @pytest.mark.unit
     def test_query_vacia(self, tmp_path) -> None:
         assert SQLiteAssetStore(_db(tmp_path)).search_assets("   ") == []
 
+    @pytest.mark.unit
     def test_fts5_ok(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.save_asset(_asset("a1", title="motor de busqueda"))
@@ -197,6 +216,7 @@ class TestSearch:
         items = store.search_assets("motor")
         assert [a.asset_id for a in items] == ["a1"]
 
+    @pytest.mark.unit
     def test_fts5_con_tipo(self, tmp_path) -> None:
         store = SQLiteAssetStore(_db(tmp_path))
         store.save_asset(_asset("a1", title="motor video", asset_type=AssetType.VIDEO))
@@ -204,6 +224,7 @@ class TestSearch:
         items = store.search_assets("motor", asset_type=AssetType.PDF)
         assert [a.asset_id for a in items] == ["a2"]
 
+    @pytest.mark.unit
     def test_fallback_like_sin_fts(self, tmp_path) -> None:
         path = _db(tmp_path)
         store = SQLiteAssetStore(path)
@@ -216,6 +237,7 @@ class TestSearch:
         items = store.search_assets("motor")
         assert [a.asset_id for a in items] == ["a1"]
 
+    @pytest.mark.unit
     def test_fallback_like_con_tipo(self, tmp_path) -> None:
         path = _db(tmp_path)
         store = SQLiteAssetStore(path)
@@ -230,8 +252,10 @@ class TestSearch:
 
 
 class TestSanitize:
+    @pytest.mark.unit
     def test_terminos_escapados(self) -> None:
         assert _sanitize_fts5('hello world "x"') == '"hello" "world" """x"""'
 
+    @pytest.mark.unit
     def test_vacio(self) -> None:
         assert _sanitize_fts5("   ") == ""

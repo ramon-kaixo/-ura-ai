@@ -34,26 +34,32 @@ def client():
     Path(db_path).unlink(missing_ok=True)
 
 
+@pytest.mark.integration
 def test_health(client):
     assert client.get("/health").status_code == 200
 
 
+@pytest.mark.integration
 def test_status_auth(client):
     assert client.get("/status", headers={"Authorization": "Bearer " + KEY}).status_code == 200
 
 
+@pytest.mark.integration
 def test_rules_auth(client):
     assert client.get("/rules", headers={"Authorization": "Bearer " + KEY}).status_code == 200
 
 
+@pytest.mark.integration
 def test_doc_404_auth(client):
     assert client.get("/documents/000000000000", headers={"Authorization": "Bearer " + KEY}).status_code == 404
 
 
+@pytest.mark.integration
 def test_metrics(client):
     assert client.get("/metrics").status_code == 200
 
 
+@pytest.mark.integration
 def test_status_with_data(client):
     conn = open_db(state.db_path)
     conn.execute(
@@ -68,6 +74,7 @@ def test_status_with_data(client):
     assert r.json()["relations"] == 1
 
 
+@pytest.mark.integration
 def test_eval_rules_empty(client):
     r = client.post("/rules/eval", headers={"Authorization": "Bearer " + KEY})
     assert r.status_code == 200
@@ -76,6 +83,7 @@ def test_eval_rules_empty(client):
     assert data["findings"] == []
 
 
+@pytest.mark.integration
 def test_doc_found(client):
     conn = open_db(state.db_path)
     conn.execute(

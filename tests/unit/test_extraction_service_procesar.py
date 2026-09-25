@@ -1,5 +1,6 @@
 """Tests cobertura extraction_service — procesamiento (split)."""
 from __future__ import annotations
+import pytest
 
 from _extraction_helpers import (  # noqa: F401
     _DB,
@@ -37,16 +38,19 @@ from _extraction_helpers import (  # noqa: F401
 
 
 class TestRunExtractor:
+    @pytest.mark.unit
     def test_errors_return_none(self) -> None:
         ext = FakeExtractor(ExtractionResult(errors=["err1"]))
         service = _service()
         assert service._run_extractor(ext, AssetSource("filesystem", "/tmp/a.md")) is None
 
+    @pytest.mark.unit
     def test_no_asset(self) -> None:
         ext = FakeExtractor(ExtractionResult())
         service = _service()
         assert service._run_extractor(ext, AssetSource("filesystem", "/tmp/a.md")) is None
 
+    @pytest.mark.unit
     def test_saved_publishes(self) -> None:
         captured: list[Any] = []
         handler = captured.append
@@ -67,6 +71,7 @@ class TestRunExtractor:
         finally:
             bus.unsubscribe(MetadataExtracted, handler)
 
+    @pytest.mark.unit
     def test_not_saved_no_publish(self) -> None:
         store = FakeStore()
         store.result = False
@@ -81,6 +86,7 @@ class TestRunExtractor:
 
 
 class TestPublishExtracted:
+    @pytest.mark.unit
     def test_publish_ok(self) -> None:
         captured: list[Any] = []
         handler = captured.append
@@ -96,6 +102,7 @@ class TestPublishExtracted:
         finally:
             bus.unsubscribe(MetadataExtracted, handler)
 
+    @pytest.mark.unit
     def test_publish_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "get_bus", lambda: FakeBusRaising())
         asset = KnowledgeAsset(asset_id="A1", asset_type=AssetType.VIDEO)
@@ -105,17 +112,20 @@ class TestPublishExtracted:
 
 
 class TestExtract:
+    @pytest.mark.unit
     def test_no_extractors(self) -> None:
         service = _service()
         out = service.extract(AssetSource("filesystem", "/tmp/a.xyz"))
         assert out == {"success": False, "error": "No extractor for application/octet-stream", "asset": None}
 
+    @pytest.mark.unit
     def test_all_fail(self) -> None:
         ext = FakeExtractor(ExtractionResult(errors=["e"]))
         service = _service([ext])
         out = service.extract(AssetSource("filesystem", "/tmp/a.md"))
         assert out == {"success": False, "results": [], "asset": None}
 
+    @pytest.mark.unit
     def test_one_succeeds(self) -> None:
         asset = KnowledgeAsset(asset_id="A1", asset_type=AssetType.MARKDOWN)
         ext = FakeExtractor(ExtractionResult(asset=asset, duration_ms=1.0))
@@ -125,6 +135,7 @@ class TestExtract:
         assert out["results"][0]["asset_id"] == "A1"
         assert out["asset"] == "A1"
 
+    @pytest.mark.unit
     def test_partial_success(self) -> None:
         bad = FakeExtractor(ExtractionResult(errors=["boom"]))
         asset = KnowledgeAsset(asset_id="A2", asset_type=AssetType.MARKDOWN)
@@ -135,6 +146,7 @@ class TestExtract:
         assert len(out["results"]) == 1
         assert out["asset"] == "A2"
 
+    @pytest.mark.unit
     def test_extract_path(self) -> None:
         asset = KnowledgeAsset(asset_id="A1", asset_type=AssetType.MARKDOWN)
         ext = FakeExtractor(ExtractionResult(asset=asset))
@@ -148,6 +160,7 @@ class TestExtract:
 
 
 class TestClaimNextJob:
+    @pytest.mark.unit
     def test_returns_row(self) -> None:
         conn = FakeConn({"UPDATE op_jobs": [FakeRow({"id": 9})]})
         row = _claim_next_job(conn)
@@ -155,6 +168,7 @@ class TestClaimNextJob:
         assert row["id"] == 9
         assert any("RETURNING id, payload" in sql for sql, _ in conn.executed)
 
+    @pytest.mark.unit
     def test_returns_none(self) -> None:
         conn = FakeConn({"UPDATE op_jobs": [None]})
         assert _claim_next_job(conn) is None
@@ -162,6 +176,7 @@ class TestClaimNextJob:
 
 
 class TestClaimNextJobFallback:
+    @pytest.mark.unit
     def test_returns_row_and_updates(self) -> None:
         conn = FakeConn({"SELECT id, payload": [FakeRow({"id": 5, "payload": "p"})]})
         row = _claim_next_job_fallback(conn)
@@ -169,6 +184,7 @@ class TestClaimNextJobFallback:
         assert row["id"] == 5
         assert any("UPDATE op_jobs SET status = 'running'" in sql for sql, _ in conn.executed)
 
+    @pytest.mark.unit
     def test_returns_none(self) -> None:
         conn = FakeConn({"SELECT id, payload": [None]})
         assert _claim_next_job_fallback(conn) is None
@@ -177,6 +193,7 @@ class TestClaimNextJobFallback:
 
 
 class TestEsperarProceso:
+    @pytest.mark.unit
     def test_done_publishes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         captured: list[Any] = []
         handler = captured.append
@@ -201,6 +218,7 @@ class TestEsperarProceso:
         finally:
             bus.unsubscribe(MetadataExtracted, handler)
 
+    @pytest.mark.unit
     def test_failed_result(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "_read_job_result", lambda db, jid: {"status": "failed"})
         proc = FakeProc()
@@ -209,6 +227,7 @@ class TestEsperarProceso:
         assert running == {}
         assert proc.joins == 1
 
+    @pytest.mark.unit
     def test_no_result(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "_read_job_result", lambda db, jid: None)
         proc = FakeProc()
@@ -216,6 +235,8 @@ class TestEsperarProceso:
         assert _esperar_proceso(_DB, 1, "ext1", proc, running, threading.Lock()) is None
         assert running == {}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_kill(self, monkeypatch: pytest.MonkeyPatch) -> None:
         marked: list[Any] = []
         monkeypatch.setattr(es, "_mark_job_failed", lambda db, jid, err: marked.append((jid, err)))
@@ -227,6 +248,8 @@ class TestEsperarProceso:
         assert marked == [(1, "timeout after 300s")]
         assert running == {}
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_timeout_terminate_sufficient(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(es, "_mark_job_failed", lambda db, jid, err: None)
         proc = FakeProc(alive_after_join=True, alive_after_terminate=False)
@@ -236,6 +259,7 @@ class TestEsperarProceso:
         assert proc.killed == 0
         assert running == {}
 
+    @pytest.mark.unit
     def test_publish_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             es,
@@ -253,6 +277,7 @@ class TestEsperarProceso:
 
 
 class TestProcessItem:
+    @pytest.mark.unit
     def test_no_extractors(self, monkeypatch: pytest.MonkeyPatch) -> None:
         marked: list[Any] = []
         monkeypatch.setattr(es, "_mark_job_failed", lambda db, jid, err: marked.append((jid, err)))
@@ -260,6 +285,8 @@ class TestProcessItem:
         _process_item(_DB, FakeRegistry(), {}, threading.Lock(), row)
         assert marked == [(3, "No extractor for text/markdown")]
 
+    @pytest.mark.slow
+    @pytest.mark.unit
     def test_semaphore_timeout(self, monkeypatch: pytest.MonkeyPatch) -> None:
         marked: list[Any] = []
         monkeypatch.setattr(es, "_mark_job_failed", lambda db, jid, err: marked.append((jid, err)))
@@ -271,6 +298,7 @@ class TestProcessItem:
         assert marked == [(3, "Semaphore timeout for fake_extractor")]
         assert sem.acquires == 1
 
+    @pytest.mark.unit
     def test_happy_path(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _EXTRACTION_SEMAPHORES.clear()
         waited: list[Any] = []
@@ -299,6 +327,7 @@ class TestProcessItem:
         assert proc.closed
         assert _get_semaphore("fake_extractor")._value == 1
 
+    @pytest.mark.unit
     def test_process_creation_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _EXTRACTION_SEMAPHORES.clear()
         sem = FakeSem()

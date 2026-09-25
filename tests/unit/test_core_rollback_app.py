@@ -1,5 +1,6 @@
 """Tests para core/seguridad/rollback_manager.py y core/mochila/app.py."""
 from __future__ import annotations
+import pytest
 
 from pathlib import Path
 from unittest import mock
@@ -9,6 +10,7 @@ from core.seguridad.rollback_manager import RollbackManager
 
 
 class TestRollbackManager:
+    @pytest.mark.unit
     def test_ejecutar_git_ok(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         res = mock.Mock()
@@ -19,6 +21,7 @@ class TestRollbackManager:
         assert out == "salida"
         run.assert_called_once()
 
+    @pytest.mark.unit
     def test_ejecutar_git_error(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         err = mock.Mock()
@@ -28,10 +31,12 @@ class TestRollbackManager:
         assert ok is False
         assert "fallo" in out
 
+    @pytest.mark.unit
     def test_pre_write_archivo_no_existe(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         assert mgr.pre_write(str(tmp_path / "nuevo.py")) is True
 
+    @pytest.mark.unit
     def test_pre_write_stash(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         archivo = tmp_path / "a.py"
@@ -42,6 +47,7 @@ class TestRollbackManager:
         assert args[0] == "stash"
         assert args[1] == "push"
 
+    @pytest.mark.unit
     def test_safe_write(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         target = str(tmp_path / "dest.py")
@@ -50,6 +56,7 @@ class TestRollbackManager:
         assert Path(tmp).read_text() == "contenido"
         assert not Path(target).exists()
 
+    @pytest.mark.unit
     def test_rollback_sin_archivo(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         target = str(tmp_path / "a.py")
@@ -57,6 +64,7 @@ class TestRollbackManager:
             mgr.rollback(target)
         git.assert_not_called()
 
+    @pytest.mark.unit
     def test_rollback_elimina_temp_y_checkout(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         target = tmp_path / "a.py"
@@ -67,10 +75,12 @@ class TestRollbackManager:
         assert not (tmp_path / "a.py.ura_tmp").exists()
         git.assert_called_once_with(["checkout", "HEAD", "--", "a.py"])
 
+    @pytest.mark.unit
     def test_commit_if_valid_sin_temp(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         assert mgr.commit_if_valid(str(tmp_path / "a.py"), "task1") is False
 
+    @pytest.mark.unit
     def test_commit_if_valid_ok(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         target = tmp_path / "a.py"
@@ -85,6 +95,7 @@ class TestRollbackManager:
         assert git.call_count == 2
         assert git.call_args_list[1].args[0][0] == "commit"
 
+    @pytest.mark.unit
     def test_commit_if_valid_add_falla(self, tmp_path) -> None:
         mgr = RollbackManager(repo_path=str(tmp_path))
         target = tmp_path / "a.py"
@@ -95,6 +106,7 @@ class TestRollbackManager:
 
 
 class TestCreateApp:
+    @pytest.mark.unit
     def test_create_app_estructura(self) -> None:
         from fastapi import APIRouter
         with mock.patch("core.mochila.app.build_state"):
@@ -104,6 +116,7 @@ class TestCreateApp:
         assert app.title == "Mochila Middleware"
         router.assert_called_once()
 
+    @pytest.mark.unit
     def test_create_app_lifespan(self) -> None:
         import asyncio
 
@@ -125,6 +138,7 @@ class TestCreateApp:
         asyncio.run(app2.router.lifespan_context(app2).__aenter__())
         state.scheduler.start_loop.assert_awaited_once()
 
+    @pytest.mark.unit
     def test_create_app_lifespan_exit_cierra_providers(self) -> None:
         from fastapi import APIRouter
         from fastapi.testclient import TestClient

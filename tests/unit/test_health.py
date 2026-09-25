@@ -14,6 +14,7 @@ class TestAssistantHealth:
         monkeypatch.setattr(hmod, "_registry", HealthRegistry())
         self._mod = hmod
 
+    @pytest.mark.unit
     def test_init_registers_all_components(self) -> None:
         self._mod.init_assistant_health()
         snapshot = self._mod.get_assistant_health().snapshot()
@@ -21,47 +22,55 @@ class TestAssistantHealth:
         for c in ("llm", "memory", "rag", "conversation"):
             assert c in components
 
+    @pytest.mark.unit
     def test_init_sets_all_healthy(self) -> None:
         self._mod.init_assistant_health()
         snapshot = self._mod.get_assistant_health().snapshot()
         for info in snapshot.get("components", {}).values():
             assert info.get("status") == "healthy"
 
+    @pytest.mark.unit
     def test_set_healthy(self) -> None:
         self._mod.init_assistant_health()
         self._mod.get_assistant_health().set_healthy("llm", "test ok")
         snapshot = self._mod.get_assistant_health().snapshot()
         assert snapshot["components"]["llm"]["status"] == "healthy"
 
+    @pytest.mark.unit
     def test_set_degraded(self) -> None:
         self._mod.init_assistant_health()
         self._mod.get_assistant_health().set_degraded("memory", "slow response")
         snapshot = self._mod.get_assistant_health().snapshot()
         assert snapshot["components"]["memory"]["status"] == "degraded"
 
+    @pytest.mark.unit
     def test_set_unhealthy(self) -> None:
         self._mod.init_assistant_health()
         self._mod.get_assistant_health().set_unhealthy("rag", "connection failed")
         snapshot = self._mod.get_assistant_health().snapshot()
         assert snapshot["components"]["rag"]["status"] == "unhealthy"
 
+    @pytest.mark.unit
     def test_check_health_alert_empty_when_healthy(self) -> None:
         self._mod.init_assistant_health()
         alerts = self._mod.check_health_alert()
         assert alerts == []
 
+    @pytest.mark.unit
     def test_check_health_alert_detects_degraded(self) -> None:
         self._mod.init_assistant_health()
         self._mod.get_assistant_health().set_degraded("memory", "slow")
         alerts = self._mod.check_health_alert()
         assert any("memory" in a for a in alerts)
 
+    @pytest.mark.unit
     def test_check_health_alert_detects_unhealthy(self) -> None:
         self._mod.init_assistant_health()
         self._mod.get_assistant_health().set_unhealthy("llm", "down")
         alerts = self._mod.check_health_alert()
         assert any("llm" in a for a in alerts)
 
+    @pytest.mark.unit
     def test_get_assistant_health_returns_singleton(self) -> None:
         h1 = self._mod.get_assistant_health()
         h2 = self._mod.get_assistant_health()

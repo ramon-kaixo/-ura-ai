@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import json
 from pathlib import Path
 
@@ -16,17 +17,20 @@ def snap(tmp_path: Path) -> SnapshotManager:
 
 
 class TestSnapshotManagerInit:
+    @pytest.mark.integration
     def test_ok_flag_on_normal_path(self, tmp_path: Path):
         sm = SnapshotManager(tmp_path)
         assert sm.ok is True
         assert (tmp_path / "snapshots").exists()
 
+    @pytest.mark.integration
     def test_ok_flag_on_bad_path(self):
         sm = SnapshotManager(Path("/nonexistent/deep/dir"))
         assert sm.ok is False
 
 
 class TestSnapshotManagerTake:
+    @pytest.mark.integration
     def test_take_single_file(self, snap: SnapshotManager, tmp_path: Path):
         src = tmp_path / "test.py"
         src.write_text("x = 1")
@@ -35,6 +39,7 @@ class TestSnapshotManagerTake:
         assert result.exists()
         assert (result / "meta.json").exists()
 
+    @pytest.mark.integration
     def test_take_no_files(self, snap: SnapshotManager):
         result = snap.take("empty", [])
         assert result is not None
@@ -42,11 +47,13 @@ class TestSnapshotManagerTake:
         meta = json.loads(meta_file.read_text())
         assert meta["count"] == 0
 
+    @pytest.mark.integration
     def test_take_nonexistent_file(self, snap: SnapshotManager, tmp_path: Path):
         result = snap.take("missing", [tmp_path / "ghost.py"])
         meta = json.loads((result / "meta.json").read_text())
         assert meta["count"] == 0
 
+    @pytest.mark.integration
     def test_take_multiple_files(self, snap: SnapshotManager, tmp_path: Path):
         a = tmp_path / "a.py"
         b = tmp_path / "b.py"
@@ -56,6 +63,7 @@ class TestSnapshotManagerTake:
         meta = json.loads((result / "meta.json").read_text())
         assert meta["count"] == 2
 
+    @pytest.mark.integration
     def test_take_empty_label(self, snap: SnapshotManager, tmp_path: Path):
         src = tmp_path / "f.py"
         src.write_text("code")
@@ -65,6 +73,7 @@ class TestSnapshotManagerTake:
 
 
 class TestSnapshotManagerRestore:
+    @pytest.mark.integration
     def test_restore_meta_written(self, snap: SnapshotManager, tmp_path: Path):
         work = tmp_path / "sub"
         work.mkdir()
@@ -76,6 +85,7 @@ class TestSnapshotManagerRestore:
         assert meta["count"] == 1
         assert meta["label"] == "restore_test"
 
+    @pytest.mark.integration
     def test_restore_file(self, snap: SnapshotManager, tmp_path: Path):
         work = tmp_path / "sub"
         work.mkdir()
@@ -87,10 +97,12 @@ class TestSnapshotManagerRestore:
         assert ok is True
         assert src.read_text() == "original"
 
+    @pytest.mark.integration
     def test_restore_nonexistent(self, snap: SnapshotManager):
         ok = snap.restore(Path("/nonexistent_snapshot"))
         assert ok is False
 
+    @pytest.mark.integration
     def test_restore_missing_meta(self, snap: SnapshotManager, tmp_path: Path):
         empty_dir = tmp_path / "empty_snap"
         empty_dir.mkdir()
@@ -99,9 +111,11 @@ class TestSnapshotManagerRestore:
 
 
 class TestSnapshotManagerLatest:
+    @pytest.mark.integration
     def test_latest_empty(self, snap: SnapshotManager):
         assert snap.latest() is None
 
+    @pytest.mark.integration
     def test_latest_order(self, snap: SnapshotManager, tmp_path: Path):
         src = tmp_path / "f.py"
         src.write_text("code")
@@ -113,9 +127,11 @@ class TestSnapshotManagerLatest:
 
 
 class TestSnapshotManagerPrune:
+    @pytest.mark.integration
     def test_prune_empty(self, snap: SnapshotManager):
         assert snap.prune(keep=5) == 0
 
+    @pytest.mark.integration
     def test_prune_keeps_n(self, snap: SnapshotManager, tmp_path: Path):
         src = tmp_path / "f.py"
         src.write_text("code")

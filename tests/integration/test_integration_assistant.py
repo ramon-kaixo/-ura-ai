@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import httpx
 import pytest
 
@@ -15,12 +16,14 @@ pytestmark = pytest.mark.skipif(
 
 
 class TestAssistantAPI:
+    @pytest.mark.integration
     def test_health(self):
         resp = httpx.get(f"{BASE_URL}/health", timeout=5)
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "ok"
 
+    @pytest.mark.integration
     def test_chat_greeting(self):
         resp = httpx.post(
             f"{BASE_URL}/api/v1/chat",
@@ -33,6 +36,7 @@ class TestAssistantAPI:
         assert "reply" in data
         assert len(data["reply"]) > 0
 
+    @pytest.mark.integration
     def test_chat_with_user_id(self):
         resp = httpx.post(
             f"{BASE_URL}/api/v1/chat",
@@ -43,6 +47,7 @@ class TestAssistantAPI:
         data = resp.json()
         assert "reply" in data
 
+    @pytest.mark.integration
     def test_chat_with_mode(self):
         resp = httpx.post(
             f"{BASE_URL}/api/v1/chat",
@@ -53,6 +58,7 @@ class TestAssistantAPI:
         data = resp.json()
         assert "reply" in data
 
+    @pytest.mark.integration
     def test_streaming(self):
         resp = httpx.post(
             f"{BASE_URL}/api/v1/chat",
@@ -62,12 +68,14 @@ class TestAssistantAPI:
         assert resp.status_code == 200
         assert "text/event-stream" in resp.headers.get("content-type", "")
 
+    @pytest.mark.integration
     def test_list_conversations(self):
         resp = httpx.get(f"{BASE_URL}/api/v1/chat/conversations", timeout=5)
         assert resp.status_code == 200
         data = resp.json()
         assert isinstance(data, list)
 
+    @pytest.mark.integration
     def test_invalid_mode(self):
         resp = httpx.post(
             f"{BASE_URL}/api/v1/chat",
@@ -76,6 +84,7 @@ class TestAssistantAPI:
         )
         assert resp.status_code == 400
 
+    @pytest.mark.integration
     def test_auth_required_when_configured(self):
         # Si no hay API key configurada, esto debe funcionar sin auth
         resp = httpx.post(

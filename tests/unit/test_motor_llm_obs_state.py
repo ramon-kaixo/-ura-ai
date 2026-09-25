@@ -1,6 +1,7 @@
 """Tests para motor/core/llm/observability.py, detector.py y _state.py."""
 from __future__ import annotations
 
+import pytest
 from unittest import mock
 
 import pytest
@@ -11,6 +12,7 @@ from motor.core.llm.observability import LLMMetrics, metrics
 
 
 class TestLLMMetrics:
+    @pytest.mark.unit
     def test_record_success(self) -> None:
         m = LLMMetrics()
         m.record("ollama", "generate", 10.0, success=True, tokens=100)
@@ -20,16 +22,19 @@ class TestLLMMetrics:
         assert stats[key]["tokens_medios_por_call"] == 100.0
         assert stats[key]["errores"] == {}
 
+    @pytest.mark.unit
     def test_record_error_con_detalle(self) -> None:
         m = LLMMetrics()
         m.record("ollama", "generate", 5.0, success=False, error="timeout")
         stats = m.get_stats("ollama", "generate")
         assert stats["ollama.generate"]["errores"] == {"timeout": 1}
 
+    @pytest.mark.unit
     def test_sin_datos(self) -> None:
         m = LLMMetrics()
         assert m.get_stats() == {"error": "no data"}
 
+    @pytest.mark.unit
     def test_filtro_provider(self) -> None:
         m = LLMMetrics()
         m.record("a", "generate", 1.0, success=True)
@@ -38,6 +43,7 @@ class TestLLMMetrics:
         assert "a.generate" in stats
         assert "b.generate" not in stats
 
+    @pytest.mark.unit
     def test_filtro_operation(self) -> None:
         m = LLMMetrics()
         m.record("a", "generate", 1.0, success=True)
@@ -46,6 +52,7 @@ class TestLLMMetrics:
         assert "a.embed" in stats
         assert "a.generate" not in stats
 
+    @pytest.mark.unit
     def test_summary(self) -> None:
         m = LLMMetrics()
         m.record("a", "generate", 1.0, success=True)
@@ -55,6 +62,7 @@ class TestLLMMetrics:
         assert s["a"] == {"total": 2, "ok": 1, "fail": 1}
         assert s["b"] == {"total": 1, "ok": 1, "fail": 0}
 
+    @pytest.mark.unit
     def test_max_records_limita(self) -> None:
         from motor.core.llm.observability import MAX_RECORDS
 
@@ -64,17 +72,20 @@ class TestLLMMetrics:
         stats = m.get_stats("a", "g")
         assert stats["a.g"]["llamadas_totales"] <= MAX_RECORDS
 
+    @pytest.mark.unit
     def test_reset(self) -> None:
         m = LLMMetrics()
         m.record("a", "g", 1.0, success=True)
         m.reset()
         assert m.get_stats() == {"error": "no data"}
 
+    @pytest.mark.unit
     def test_singleton(self) -> None:
         assert isinstance(metrics, LLMMetrics)
 
 
 class TestHotspotRecord:
+    @pytest.mark.unit
     def test_to_dict(self) -> None:
         r = HotspotRecord("provider", "op", 100.0, 10.0, peak_memory_bytes=2048, allocations_count=3)
         d = r.to_dict()
@@ -85,18 +96,21 @@ class TestHotspotRecord:
         assert d["peak_memory_kb"] == 2.0
         assert d["allocations"] == 3
 
+    @pytest.mark.unit
     def test_repr(self) -> None:
         r = HotspotRecord("p", "o", 10.0, 1.0)
         assert "p" in repr(r)
 
 
 class TestHotspotDetector:
+    @pytest.mark.unit
     def test_threshold_property(self) -> None:
         d = HotspotDetector(threshold_ms=500.0)
         assert d.threshold_ms == 500.0
         d.threshold_ms = 200.0
         assert d.threshold_ms == 200.0
 
+    @pytest.mark.unit
     def test_evaluate_deteccion(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         record = d.evaluate("ollama", "generate", 500.0, cpu_time_ms=50.0)
@@ -104,11 +118,13 @@ class TestHotspotDetector:
         assert record.provider == "ollama"
         assert record.wall_time_ms == 500.0
 
+    @pytest.mark.unit
     def test_evaluate_normal(self) -> None:
         d = HotspotDetector(threshold_ms=1000.0)
         record = d.evaluate("ollama", "generate", 50.0)
         assert record is None
 
+    @pytest.mark.unit
     def test_get_hotspots(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         d.evaluate("a", "g", 500.0)
@@ -117,6 +133,7 @@ class TestHotspotDetector:
         assert len(hotspots) == 1
         assert hotspots[0]["provider"] == "a"
 
+    @pytest.mark.unit
     def test_evaluate_from_profile(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         profile = mock.Mock()
@@ -125,6 +142,7 @@ class TestHotspotDetector:
         record = d.evaluate_from_profile(profile)
         assert record is not None
 
+    @pytest.mark.unit
     def test_get_stats_y_reset(self) -> None:
         d = HotspotDetector(threshold_ms=100.0)
         d.evaluate("a", "g", 500.0)
@@ -135,17 +153,20 @@ class TestHotspotDetector:
 
 
 class TestLLMState:
+    @pytest.mark.unit
     def test_frozen(self) -> None:
         st = LLMState(registry=object(), default_provider=object(), generate=lambda: None, embed=lambda: None, embed_async=lambda: None, health=lambda: None)
         with pytest.raises(Exception):
             st.registry = object()  # type: ignore[misc]
 
+    @pytest.mark.unit
     def test_optional_providers_disponibles(self) -> None:
         provs = _get_optional_providers()
         [n for _, n in provs]
         # ollama no esta en opcionales; los demas segun instalados
         assert isinstance(provs, list)
 
+    @pytest.mark.unit
     def test_build_llm_state_default(self, monkeypatch) -> None:
         config = mock.Mock()
         config.llm_provider = "ollama"

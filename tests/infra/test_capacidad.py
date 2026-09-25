@@ -6,6 +6,7 @@ Anywhere: verifica espacio en disco y memoria basica.
 
 from __future__ import annotations
 
+import pytest
 import shutil
 
 import pytest

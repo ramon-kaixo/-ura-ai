@@ -11,6 +11,7 @@ Cubre B2-01 a B2-10:
 
 from __future__ import annotations
 
+import pytest
 import json
 import time
 from pathlib import Path
@@ -273,6 +274,7 @@ def test_incremental_recovery(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_recovery_10k(tmp_path: str) -> None:
     snap = Path(tmp_path) / "snap_10k.json"
     journal = Path(tmp_path) / "journal_10k.jsonl"
@@ -408,6 +410,7 @@ def test_schema_compatibility_v1(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.e2e
 def test_e2e_full_flow(tmp_path: str) -> None:
     """Flujo completo: Fusion → Memory → Snapshot → Recovery → ContextBuilder."""
     from motor.core.fusion.context_builder import ContextBuilder
@@ -543,6 +546,7 @@ def test_recover_idempotent(tmp_path: str) -> None:
 # ═══════════════════════════════════════════════════
 
 
+@pytest.mark.slow
 def test_benchmark_recovery_budget(tmp_path: str) -> None:
     """Recovery completo (snapshot + journal) no debe exceder el presupuesto."""
     snap = Path(tmp_path) / "snap_budget.json"

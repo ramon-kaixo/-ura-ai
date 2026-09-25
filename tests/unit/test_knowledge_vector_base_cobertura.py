@@ -1,6 +1,7 @@
 """Tests de cobertura para knowledge/engine/vector_base.py."""
 
 from __future__ import annotations
+import pytest
 
 from knowledge.engine.vector_base import Embedder, VectorItem, VectorResult, VectorStore
 
@@ -63,6 +64,7 @@ class FakeStore:
         return True
 
 
+@pytest.mark.unit
 def test_vector_item() -> None:
     item = VectorItem(asset_id="a1", vector=[0.1, 0.2], text_preview="preview")
     assert item.asset_id == "a1"
@@ -70,17 +72,20 @@ def test_vector_item() -> None:
     assert item.text_preview == "preview"
 
 
+@pytest.mark.unit
 def test_vector_result_defaults() -> None:
     r = VectorResult(asset_id="a1", score=0.9)
     assert r.metadata == {}
     assert r.score == 0.9
 
 
+@pytest.mark.unit
 def test_vector_result_con_metadata() -> None:
     r = VectorResult(asset_id="a1", score=0.5, metadata={"k": 1})
     assert r.metadata == {"k": 1}
 
 
+@pytest.mark.unit
 def test_embedder_contrato() -> None:
     emb: Embedder = FakeEmbedder()
     assert emb.embed(["a", "b"]) == [[0.1] * 3, [0.1] * 3]
@@ -91,6 +96,7 @@ def test_embedder_contrato() -> None:
     assert emb.check_available() is True
 
 
+@pytest.mark.unit
 def test_vector_store_contrato() -> None:
     store: VectorStore = FakeStore()
     assert store.count() == 0

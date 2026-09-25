@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import pytest
 import sqlite3
 from pathlib import Path
 
@@ -64,6 +65,7 @@ def db(tmp_path: Path) -> Path:
     return path
 
 
+@pytest.mark.unit
 def test_get_document_cacheador(db) -> None:
     reader = KnowledgeReader(db)
     doc = reader.get_document("0123456789aa")
@@ -74,11 +76,13 @@ def test_get_document_cacheador(db) -> None:
     assert reader.get_document("0123456789aa") is not None
 
 
+@pytest.mark.unit
 def test_get_document_no_existe(db) -> None:
     reader = KnowledgeReader(db)
     assert reader.get_document("000000000000") is None
 
 
+@pytest.mark.unit
 def test_cache_document_evicta(db) -> None:
     reader = KnowledgeReader(db)
     for i in range(120):
@@ -86,6 +90,7 @@ def test_cache_document_evicta(db) -> None:
     assert len(reader._doc_cache) <= 100
 
 
+@pytest.mark.unit
 def test_get_document_cache_move_to_end(db) -> None:
     reader = KnowledgeReader(db)
     reader.get_document("0123456789aa")
@@ -93,6 +98,7 @@ def test_get_document_cache_move_to_end(db) -> None:
     assert next(reversed(reader._doc_cache)) == "0123456789aa"
 
 
+@pytest.mark.unit
 def test_clear_all_caches(db) -> None:
     reader = KnowledgeReader(db)
     reader.get_document("0123456789aa")
@@ -101,6 +107,7 @@ def test_clear_all_caches(db) -> None:
     assert len(reader._doc_cache) == 0
 
 
+@pytest.mark.unit
 def test_row_to_document(db) -> None:
     conn = sqlite3.connect(db)
     conn.row_factory = sqlite3.Row
@@ -111,6 +118,7 @@ def test_row_to_document(db) -> None:
     assert doc.quality == 0.9
 
 
+@pytest.mark.unit
 def test_search_lexical(db) -> None:
     reader = KnowledgeReader(db)
     results = reader.search("Alpha", mode="lexical")
@@ -120,29 +128,34 @@ def test_search_lexical(db) -> None:
     assert "Alpha" in results[0].snippet or results[0].snippet
 
 
+@pytest.mark.unit
 def test_search_filtro_tipo(db) -> None:
     reader = KnowledgeReader(db)
     results = reader.search("Contenido", filters={"type": "spec"})
     assert all(r.doc_type == "spec" for r in results)
 
 
+@pytest.mark.unit
 def test_search_filtro_path(db) -> None:
     reader = KnowledgeReader(db)
     results = reader.search("Contenido", filters={"path_prefix": "docs/0123456789"})
     assert len(results) >= 1
 
 
+@pytest.mark.unit
 def test_search_sin_resultados(db) -> None:
     reader = KnowledgeReader(db)
     assert reader.search("zzzznada", mode="lexical") == []
 
 
+@pytest.mark.unit
 def test_search_modo_invalido(db) -> None:
     reader = KnowledgeReader(db)
     with pytest.raises(ValueError):
         reader.search("x", mode="magico")
 
 
+@pytest.mark.unit
 def test_search_hybrid_fallback_lexical(db, monkeypatch) -> None:
     monkeypatch.setattr("knowledge.engine.reader.search_semantic", lambda *a, **k: [])
     reader = KnowledgeReader(db)
@@ -150,6 +163,7 @@ def test_search_hybrid_fallback_lexical(db, monkeypatch) -> None:
     assert len(results) >= 1
 
 
+@pytest.mark.unit
 def test_search_hybrid_rrf(db, monkeypatch) -> None:
     monkeypatch.setattr(
         "knowledge.engine.reader.search_semantic",
@@ -165,6 +179,7 @@ def test_search_hybrid_rrf(db, monkeypatch) -> None:
     assert results[0].doc_id in ("0123456789aa", "0123456789bb")
 
 
+@pytest.mark.unit
 def test_search_hybrid_excluye_pending_delete(db, monkeypatch) -> None:
     monkeypatch.setattr(
         "knowledge.engine.reader.search_semantic",
@@ -176,29 +191,34 @@ def test_search_hybrid_excluye_pending_delete(db, monkeypatch) -> None:
     assert "0123456789aa" not in [r.doc_id for r in results]
 
 
+@pytest.mark.unit
 def test_related_todos(db) -> None:
     reader = KnowledgeReader(db)
     rels = reader.related("0123456789aa", depth=3)
     assert len(rels) == 2  # aa→bb y bb→cc
 
 
+@pytest.mark.unit
 def test_related_filtro_relation(db) -> None:
     reader = KnowledgeReader(db)
     rels = reader.related("0123456789aa", relation="ref", depth=3)
     assert len(rels) == 2
 
 
+@pytest.mark.unit
 def test_related_sin_resultados(db) -> None:
     reader = KnowledgeReader(db)
     assert reader.related("000000000000", depth=2) == []
 
 
+@pytest.mark.unit
 def test_graph_sin_root(db) -> None:
     reader = KnowledgeReader(db)
     nodes = reader.graph()
     assert len(nodes) == 4
 
 
+@pytest.mark.unit
 def test_graph_con_root(db) -> None:
     reader = KnowledgeReader(db)
     nodes = reader.graph(root="0123456789aa", depth=2)
@@ -207,11 +227,13 @@ def test_graph_con_root(db) -> None:
     assert {n.doc_id for n in nodes2} == {"0123456789aa", "0123456789bb", "0123456789cc"}
 
 
+@pytest.mark.unit
 def test_graph_root_no_existe(db) -> None:
     reader = KnowledgeReader(db)
     assert reader.graph(root="000000000000", depth=2) == []
 
 
+@pytest.mark.unit
 def test_get_conn_pool(db, monkeypatch) -> None:
     import knowledge.engine.reader as reader_mod
 
@@ -223,6 +245,7 @@ def test_get_conn_pool(db, monkeypatch) -> None:
     assert c1 is not None
 
 
+@pytest.mark.unit
 def test_release_conn_pool_inexistente(db) -> None:
     conn = _get_conn(db)
     clear_all_connection_pools()
@@ -230,12 +253,14 @@ def test_release_conn_pool_inexistente(db) -> None:
     assert True
 
 
+@pytest.mark.unit
 def test_clear_pools(db) -> None:
     _get_conn(db)
     clear_all_connection_pools()
     assert True
 
 
+@pytest.mark.unit
 def test_make_snippet() -> None:
     assert _make_snippet("", "q") == ""
     assert _make_snippet("cuerpo", "") == "cuerpo"
@@ -247,6 +272,7 @@ def test_make_snippet() -> None:
     assert _make_snippet("x" * 500 + "a", "a").startswith("…")
 
 
+@pytest.mark.unit
 def test_related_ciclo_no_infinito(db) -> None:
     conn = sqlite3.connect(db)
     conn.execute(

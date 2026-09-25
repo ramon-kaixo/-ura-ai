@@ -1,6 +1,7 @@
 """Tests for the tuneladora CLI entry point (scripts/pro/tuneladora/tuneladora_pipeline.py)."""
 
 from __future__ import annotations
+import pytest
 
 from unittest import mock
 
@@ -8,6 +9,7 @@ from scripts.pro.tuneladora.tuneladora_pipeline import cmd_pending, cmd_stats, m
 
 
 class TestCmdPending:
+    @pytest.mark.integration
     def test_no_pending(self, capsys):
         with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.PendingQueue") as mq:
             mq.return_value.list_pending.return_value = []
@@ -16,6 +18,7 @@ class TestCmdPending:
             captured = capsys.readouterr()
             assert "No pending fixes" in captured.out
 
+    @pytest.mark.integration
     def test_with_pending(self, capsys):
         with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.PendingQueue") as mq:
             mq.return_value.list_pending.return_value = [
@@ -28,6 +31,7 @@ class TestCmdPending:
 
 
 class TestCmdStats:
+    @pytest.mark.integration
     def test_output_format(self, capsys):
         with mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.PendingQueue") as mq:
             mq.return_value.stats.return_value = {"pending_fixes": 3, "total_runs": 10, "ok_runs": 8, "fail_runs": 2}
@@ -40,6 +44,7 @@ class TestCmdStats:
 
 
 class TestMainEntry:
+    @pytest.mark.integration
     def test_pending_flag(self):
         with (
             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_pending") as m,
@@ -49,6 +54,7 @@ class TestMainEntry:
             main()
             m.assert_called_once()
 
+    @pytest.mark.integration
     def test_stats_flag(self):
         with (
             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_stats") as m,
@@ -58,6 +64,7 @@ class TestMainEntry:
             main()
             m.assert_called_once()
 
+    @pytest.mark.integration
     def test_rollback_flag(self):
         with (
             mock.patch("scripts.pro.tuneladora.tuneladora_pipeline.cmd_rollback") as m,

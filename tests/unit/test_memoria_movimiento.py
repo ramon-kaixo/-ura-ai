@@ -16,6 +16,7 @@ class RelojFalso:
         self.t += s
 
 
+@pytest.mark.unit
 def test_vuelve() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
@@ -26,6 +27,7 @@ def test_vuelve() -> None:
     assert m.circulo_sano() is True
 
 
+@pytest.mark.unit
 def test_no_vuelve() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
@@ -36,6 +38,7 @@ def test_no_vuelve() -> None:
     assert "indexer" in m.nodos_atascados()
 
 
+@pytest.mark.unit
 def test_tres_cubos() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()
@@ -52,6 +55,7 @@ def test_tres_cubos() -> None:
     assert rotos[0].id_cubo == "b"
 
 
+@pytest.mark.unit
 def test_olvida() -> None:
     m = MemoriaMovimiento("enricher", tiempo_max_s=30)
     r = RelojFalso()

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import pytest
 from motor.intelligence.agents.consensus import (
     AgentWeightRegistry,
     ConsensusResult,
@@ -17,62 +18,75 @@ def _r(success: bool, output: dict, agent_id: str = "") -> AgentResult:
 
 
 class TestNormalizedConfidence:
+    @pytest.mark.integration
     def test_default_one(self):
         r = _r(True, {"ok": True})
         assert normalized_confidence(r) == 1.0
 
+    @pytest.mark.integration
     def test_from_output(self):
         r = _r(True, {"confidence": 0.7})
         assert normalized_confidence(r) == 0.7
 
+    @pytest.mark.integration
     def test_clamps_low(self):
         r = _r(True, {"confidence": -0.5})
         assert normalized_confidence(r) == 0.0
 
+    @pytest.mark.integration
     def test_clamps_high(self):
         r = _r(True, {"confidence": 1.5})
         assert normalized_confidence(r) == 1.0
 
+    @pytest.mark.integration
     def test_non_numeric(self):
         r = _r(True, {"confidence": "high"})
         assert normalized_confidence(r) == 1.0
 
+    @pytest.mark.integration
     def test_empty_output(self):
         r = AgentResult(task_id="t1", agent_id="a1", success=True, output={})
         assert normalized_confidence(r) == 1.0
 
 
 class TestAgentWeightRegistry:
+    @pytest.mark.integration
     def test_default_weight(self):
         reg = AgentWeightRegistry()
         assert reg.get_weight("a1") == 1.0
 
+    @pytest.mark.integration
     def test_set_weight(self):
         reg = AgentWeightRegistry()
         reg.set_weight("a1", 2.5)
         assert reg.get_weight("a1") == 2.5
 
+    @pytest.mark.integration
     def test_negative_weight_clamped(self):
         reg = AgentWeightRegistry()
         reg.set_weight("a1", -1.0)
         assert reg.get_weight("a1") == 0.0
 
+    @pytest.mark.integration
     def test_reset(self):
         reg = AgentWeightRegistry()
         reg.set_weight("a1", 3.0)
         reg.reset()
         assert reg.get_weight("a1") == 1.0
 
+    @pytest.mark.integration
     def test_reset_agent(self):
         reg = AgentWeightRegistry()
         reg.set_weight("a1", 3.0)
         assert reg.reset_agent("a1") is True
         assert reg.get_weight("a1") == 1.0
 
+    @pytest.mark.integration
     def test_reset_nonexistent(self):
         reg = AgentWeightRegistry()
         assert reg.reset_agent("nobody") is False
 
+    @pytest.mark.integration
     def test_all_weights(self):
         reg = AgentWeightRegistry()
         reg.set_weight("a1", 2.0)
@@ -81,6 +95,7 @@ class TestAgentWeightRegistry:
         assert w["a1"] == 2.0
         assert w["a2"] == 3.0
 
+    @pytest.mark.integration
     def test_thread_safety(self):
         import concurrent.futures
 
@@ -92,6 +107,7 @@ class TestAgentWeightRegistry:
 
 
 class TestWeightedConsensus:
+    @pytest.mark.integration
     def test_equal_weights(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -105,6 +121,7 @@ class TestWeightedConsensus:
         assert r.success
         assert r.outcome["answer"] == "cat"
 
+    @pytest.mark.integration
     def test_different_weights(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -118,6 +135,7 @@ class TestWeightedConsensus:
         assert r.success
         assert r.outcome["answer"] == "cat"
 
+    @pytest.mark.integration
     def test_high_confidence(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -131,6 +149,7 @@ class TestWeightedConsensus:
         assert r.success
         assert r.outcome["answer"] == "cat"
 
+    @pytest.mark.integration
     def test_low_confidence(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -144,6 +163,7 @@ class TestWeightedConsensus:
         assert r.success
         assert r.outcome["answer"] == "dog"
 
+    @pytest.mark.integration
     def test_confidence_absent_defaults_one(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -154,6 +174,7 @@ class TestWeightedConsensus:
         r = wc.aggregate(results)
         assert r.success
 
+    @pytest.mark.integration
     def test_weighted_tie(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -167,6 +188,7 @@ class TestWeightedConsensus:
         assert not r.success
         assert r.outcome.get("_tie") is True
 
+    @pytest.mark.integration
     def test_zero_weight(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -180,6 +202,7 @@ class TestWeightedConsensus:
         assert r.success
         assert r.outcome["answer"] == "dog"
 
+    @pytest.mark.integration
     def test_dynamic_weight_update(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -195,6 +218,7 @@ class TestWeightedConsensus:
         r2 = wc.aggregate(results)
         assert r2.outcome["answer"] == "dog"
 
+    @pytest.mark.integration
     def test_multiple_agents(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -205,12 +229,14 @@ class TestWeightedConsensus:
         r = wc.aggregate(results)
         assert r.success  # 4 agents voted for 0, 3 for 1, 3 for 2
 
+    @pytest.mark.integration
     def test_empty(self):
         wc = WeightedConsensus()
         r = wc.aggregate([])
         assert not r.success
         assert r.total_votes == 0
 
+    @pytest.mark.integration
     def test_weight_details_in_result(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -226,6 +252,7 @@ class TestWeightedConsensus:
 
 
 class TestWeightedCompatibility:
+    @pytest.mark.integration
     def test_via_voting_engine(self):
         engine = VotingEngine()
         reg = AgentWeightRegistry()
@@ -241,6 +268,7 @@ class TestWeightedCompatibility:
         assert r.success
         assert r.weighted
 
+    @pytest.mark.integration
     def test_majority_still_works(self):
         engine = VotingEngine()
         engine.strategy = MajorityVoting()
@@ -252,6 +280,7 @@ class TestWeightedCompatibility:
         assert not r.success  # tie
         assert not r.weighted
 
+    @pytest.mark.integration
     def test_unanimous_still_works(self):
         engine = VotingEngine()
         engine.strategy = UnanimousVoting()
@@ -263,6 +292,7 @@ class TestWeightedCompatibility:
         assert r.success
         assert not r.weighted
 
+    @pytest.mark.integration
     def test_registry_from_engine(self):
         reg = AgentWeightRegistry()
         wc = WeightedConsensus(reg)
@@ -270,6 +300,7 @@ class TestWeightedCompatibility:
 
 
 class TestConsensusResultExtended:
+    @pytest.mark.integration
     def test_weighted_flag(self):
         r = ConsensusResult(
             success=True,
@@ -293,6 +324,7 @@ class _helper:
 
 
 class TestMajorityVotingLegacy:
+    @pytest.mark.integration
     def test_unanimous_wins(self):
         r = MajorityVoting().aggregate(
             [
@@ -302,6 +334,7 @@ class TestMajorityVotingLegacy:
         )
         assert r.success
 
+    @pytest.mark.integration
     def test_majority_wins(self):
         r = MajorityVoting().aggregate(
             [
@@ -312,6 +345,7 @@ class TestMajorityVotingLegacy:
         )
         assert r.success
 
+    @pytest.mark.integration
     def test_tie_detected(self):
         r = MajorityVoting().aggregate(
             [
@@ -322,16 +356,19 @@ class TestMajorityVotingLegacy:
         assert not r.success
         assert r.outcome.get("_tie") is True
 
+    @pytest.mark.integration
     def test_empty(self):
         r = MajorityVoting().aggregate([])
         assert not r.success
 
+    @pytest.mark.integration
     def test_single(self):
         r = MajorityVoting().aggregate([_helper.result(True, {"a": 1})])
         assert r.success
 
 
 class TestUnanimousVotingLegacy:
+    @pytest.mark.integration
     def test_all_agree(self):
         r = UnanimousVoting().aggregate(
             [
@@ -341,6 +378,7 @@ class TestUnanimousVotingLegacy:
         )
         assert r.success
 
+    @pytest.mark.integration
     def test_disagrees(self):
         r = UnanimousVoting().aggregate(
             [
@@ -350,26 +388,31 @@ class TestUnanimousVotingLegacy:
         )
         assert not r.success
 
+    @pytest.mark.integration
     def test_single(self):
         r = UnanimousVoting().aggregate([_helper.result(True, {"a": 1})])
         assert r.success
 
 
 class TestVotingEngineLegacy:
+    @pytest.mark.integration
     def test_default_majority(self):
         assert VotingEngine().strategy.name() == "majority"
 
+    @pytest.mark.integration
     def test_swap_strategy(self):
         e = VotingEngine()
         e.strategy = UnanimousVoting()
         assert e.strategy.name() == "unanimous"
 
+    @pytest.mark.integration
     def test_register_and_vote(self):
         e = VotingEngine()
         e.register_strategy(MajorityVoting())
         r = e.vote_with([_helper.result(True, {"a": 1}), _helper.result(True, {"a": 1})], "majority")
         assert r.success
 
+    @pytest.mark.integration
     def test_unknown_raises(self):
         import pytest
 

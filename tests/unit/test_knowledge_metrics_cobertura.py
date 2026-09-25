@@ -6,6 +6,7 @@ y _reset_for_testing con mocks simples (FakeConn/FakeRow).
 
 from __future__ import annotations
 
+import pytest
 from pathlib import Path
 from typing import Any
 
@@ -66,11 +67,13 @@ def _reset_contadores() -> None:
 
 
 class TestRecordCompile:
+    @pytest.mark.unit
     def test_default(self) -> None:
         record_compile()
         text = export_metrics().decode()
         assert 'ke_compile_requests_total{source="orchestrator"} 1.0' in text
 
+    @pytest.mark.unit
     def test_custom_source(self) -> None:
         record_compile(source="scheduler")
         text = export_metrics().decode()
@@ -78,12 +81,14 @@ class TestRecordCompile:
 
 
 class TestRecordSearch:
+    @pytest.mark.unit
     def test_con_duracion(self) -> None:
         record_search(mode="hybrid", duration=0.3)
         text = export_metrics().decode()
         assert 'ke_search_requests_total{mode="hybrid"} 1.0' in text
         assert "ke_search_duration_seconds_bucket" in text
 
+    @pytest.mark.unit
     def test_sin_duracion(self) -> None:
         record_search(mode="lexical", duration=0.0)
         text = export_metrics().decode()
@@ -92,11 +97,13 @@ class TestRecordSearch:
 
 
 class TestRecordQdrantSync:
+    @pytest.mark.unit
     def test_default(self) -> None:
         record_qdrant_sync()
         text = export_metrics().decode()
         assert 'ke_qdrant_sync_ops_total{operation="upsert",status="done"} 1.0' in text
 
+    @pytest.mark.unit
     def test_custom(self) -> None:
         record_qdrant_sync(operation="delete", status="failed")
         text = export_metrics().decode()
@@ -104,6 +111,7 @@ class TestRecordQdrantSync:
 
 
 class TestRecordFusion:
+    @pytest.mark.unit
     def test_con_duracion(self) -> None:
         record_fusion(claims=2, facts=3, duration=1.5, status="ok")
         text = export_metrics().decode()
@@ -111,6 +119,7 @@ class TestRecordFusion:
         assert "ke_fusion_facts_total 3.0" in text
         assert "ke_fusion_duration_seconds_bucket" in text
 
+    @pytest.mark.unit
     def test_sin_duracion(self) -> None:
         record_fusion(claims=0, facts=0, duration=0.0, status="failed")
         text = export_metrics().decode()
@@ -120,11 +129,13 @@ class TestRecordFusion:
 
 
 class TestRecordArchive:
+    @pytest.mark.unit
     def test_default(self) -> None:
         record_archive()
         text = export_metrics().decode()
         assert 'ke_archive_ops_total{kind="source",status="completed"} 1.0' in text
 
+    @pytest.mark.unit
     def test_custom(self) -> None:
         record_archive(kind="compiler", status="failed")
         text = export_metrics().decode()
@@ -132,6 +143,7 @@ class TestRecordArchive:
 
 
 class TestRecordError:
+    @pytest.mark.unit
     def test_codigo(self) -> None:
         record_error("E-42")
         text = export_metrics().decode()
@@ -139,12 +151,15 @@ class TestRecordError:
 
 
 class TestSetDbGauges:
+    @pytest.mark.unit
     def test_db_path_none(self) -> None:
         _set_db_gauges(None)
 
+    @pytest.mark.unit
     def test_db_no_existe(self) -> None:
         _set_db_gauges(Path("/tmp/no-existe-ura-metrics.db"))
 
+    @pytest.mark.unit
     def test_gauges_ok(self, monkeypatch: pytest.MonkeyPatch) -> None:
         results = {
             "SELECT COUNT(*) as c FROM kg_nodes": FakeRow(42),
@@ -174,6 +189,7 @@ class TestSetDbGauges:
         assert "ke_archive_queue_length 4.0" in text
         assert len(conn.executed) == 8
 
+    @pytest.mark.unit
     def test_gauges_sin_filas(self, monkeypatch: pytest.MonkeyPatch) -> None:
         conn = FakeConn({})
         monkeypatch.setattr("knowledge.engine.metrics.open_db", lambda p: conn)
@@ -187,6 +203,7 @@ class TestSetDbGauges:
         assert "ke_compile_queue_length 0.0" in text
         assert "ke_archive_queue_length 0.0" in text
 
+    @pytest.mark.unit
     def test_error_bd(self, monkeypatch: pytest.MonkeyPatch) -> None:
         def boom(_path: Path) -> Any:
             raise RuntimeError("disk full")
@@ -196,11 +213,13 @@ class TestSetDbGauges:
 
 
 class TestExportMetrics:
+    @pytest.mark.unit
     def test_sin_db(self) -> None:
         data = export_metrics()
         assert isinstance(data, bytes)
         assert b"ke_search_requests_total" in data
 
+    @pytest.mark.unit
     def test_con_db(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(
             "knowledge.engine.metrics.open_db",
@@ -211,6 +230,7 @@ class TestExportMetrics:
 
 
 class TestResetForTesting:
+    @pytest.mark.unit
     def test_reset_y_registro(self) -> None:
         _reset_for_testing()
         text = export_metrics().decode()
@@ -220,6 +240,7 @@ class TestResetForTesting:
         record_compile(source="post-reset")
         assert 'ke_compile_requests_total{source="post-reset"} 1.0' in export_metrics().decode()
 
+    @pytest.mark.unit
     def test_reset_idempotente(self) -> None:
         _reset_for_testing()
         _reset_for_testing()
