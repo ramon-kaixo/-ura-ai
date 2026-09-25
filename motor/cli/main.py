@@ -1,15 +1,29 @@
-import argparse
+#!/usr/bin/env python3
+"""CLI principal del Motor URA."""
+
 import logging
 import sys
 from collections.abc import Callable
 from typing import Any
 
-logging.getLogger("httpx").setLevel(logging.WARNING)
-logging.getLogger("httpcore").setLevel(logging.WARNING)
-
-from motor.cli.cmd_diag import cmd_alerta, cmd_check, cmd_detect, cmd_health_check, cmd_history, cmd_learn, cmd_verify
+from motor.cli.cmd_diag import (
+    cmd_alerta,
+    cmd_check,
+    cmd_detect,
+    cmd_health_check,
+    cmd_history,
+    cmd_learn,
+    cmd_verify,
+)
 from motor.cli.cmd_pipeline import cmd_calibrate, cmd_diagnose, cmd_pipeline, cmd_scan
-from motor.cli.cmd_status import cmd_cross, cmd_graph, cmd_perf, cmd_status, cmd_summarise, cmd_trend
+from motor.cli.cmd_status import (
+    cmd_cross,
+    cmd_graph,
+    cmd_perf,
+    cmd_status,
+    cmd_summarise,
+    cmd_trend,
+)
 from motor.cli.cmd_ura import cmd_alerts as ura_cmd_alerts
 from motor.cli.cmd_ura import (
     cmd_ask,
@@ -29,7 +43,11 @@ from motor.cli.cmd_ura import (
 from motor.cli.cmd_utils import cmd_bench, cmd_notify, cmd_qdrant_backup
 from motor.core.config import UraConfig
 
-COMMANDS = {
+# Type aliases for CLI commands
+CliCmd = Callable[[UraConfig, Any], None]
+UraCmd = Callable[[UraConfig, list[str]], int]
+
+COMMANDS: dict[str, CliCmd] = {
     "pipeline": cmd_pipeline,
     "scan": cmd_scan,
     "diagnose": cmd_diagnose,
@@ -52,7 +70,7 @@ COMMANDS = {
     "bench": cmd_bench,
 }
 
-URA_COMMANDS: dict[str, Callable[..., Any]] = {
+URA_COMMANDS: dict[str, UraCmd] = {
     "finalize": cmd_finalize,
     "test": cmd_test,
     "snapshot": cmd_snapshot,
@@ -73,74 +91,55 @@ URA_COMMANDS: dict[str, Callable[..., Any]] = {
 }
 
 
-def _setup_logging(level: str) -> None:
-    logging.getLogger("httpx").setLevel(logging.WARNING)
-    logging.getLogger("httpcore").setLevel(logging.WARNING)
-    h = logging.StreamHandler(sys.stderr)
-    h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
-    logging.getLogger().addHandler(h)
-    logging.getLogger().setLevel(getattr(logging, level.upper(), logging.INFO))
+def _build_parser() -> Any:
+    import argparse
 
-
-def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="ura", description="URA CLI — Conocimiento y Sistema")
-    parser.add_argument("--config", default="", help="Ruta a config JSON")
-    parser.add_argument("--log-level", default="INFO", help="Nivel de log")
+    parser = argparse.ArgumentParser(
+        prog="ura",
+        description="URA Motor CLI — Pipeline, diagnóstico, estado y comandos URA",
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="Ruta a config.yaml (default: motor/core/config.yaml)",
+    )
+    parser.add_argument(
+        "--log-level",
+        type=str,
+        default="INFO",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR"],
+        help="Nivel de logging",
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
-    sp = sub.add_parser("pipeline", help="Ejecutar pipeline completo")
-    sp.add_argument("--dry-run", action="store_true", help="No ejecutar escaneo real")
-    sub.add_parser("scan", help="Solo escanear")
-    sub.add_parser("diagnose", help="Solo diagnosticar (requiere scan previo)")
-    sub.add_parser("status", help="Estado unificado (Knowledge Engine)")
-    sp_check = sub.add_parser("check", help="Preflight check / purge")
-    sp_check.add_argument("--purge", action="store_true", help="Purgar huerfanos")
-    sub.add_parser("verify", help="Verificación post-cambio")
-    sub.add_parser("history", help="Historial de incidentes desde Qdrant")
-    sub.add_parser("trend", help="Tendencia de salud a lo largo del tiempo")
-    sub.add_parser("graph", help="Gráfico ASCII de tendencia de salud")
-    sub.add_parser("perf", help="Rendimiento del pipeline (duración por etapa)")
-    sub.add_parser("cross", help="Estado consolidado local + SSH remoto")
-    sub.add_parser("alerta", help="Alertas recientes desde journald")
-    sub.add_parser("detect", help="Detectar anomalías vs tendencia histórica")
-    sub.add_parser("health-check", help="Verificar todos los componentes del monitor")
-    sub.add_parser("qdrant-backup", help="Exportar Qdrant a JSON de respaldo")
-    sub.add_parser("summarise", help="Resumen one-line del sistema (MOTD)")
-    sub.add_parser("learn", help="Analizar tendencias y extraer conocimiento")
-    sub.add_parser("notify", help="Enviar notificación si hay alertas activas")
-    sub.add_parser("bench", help="Benchmark de rendimiento del pipeline")
-    cal = sub.add_parser("calibrate", help="Generar baseline desde estado actual")
-    cal.add_argument("--force", action="store_true", help="Sobreescribir baseline existente")
+    for name in COMMANDS:
+        sub.add_parser(name, help=f"{name} — comando del motor")
 
-    for name in (
-        "finalize",
-        "test",
-        "snapshot",
-        "maintenance",
-        "clean",
-        "rotate",
-        "health",
-        "alerts",
-        "logs",
-        "snc",
-        "heartbeat",
-        "doctor",
-        "metrics",
-        "dashboard",
-        "index",
-        "ask",
-        "memory",
-    ):
-        s = sub.add_parser(name)
+    for name in URA_COMMANDS:
+        s = sub.add_parser(name, help=f"{name} — comando URA")
         s.add_argument("raw", nargs="*", help="Raw arguments (passthrough)")
 
     return parser
 
 
+def _setup_logging(level: str) -> None:
+    """Configura logging compatible con tests existentes."""
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+    h = logging.StreamHandler(sys.stderr)
+    h.setFormatter(logging.Formatter("%(name)s %(levelname)s %(message)s"))
+
+    root = logging.getLogger()
+    root.addHandler(h)
+    root.setLevel(getattr(logging, level.upper(), logging.INFO))
+
+
 def main() -> None:
     args = _build_parser().parse_args()
     _setup_logging(args.log_level)
-    config = UraConfig.load(args.config)
+    config = UraConfig.load()
     config.log_level = args.log_level
 
     if args.command in COMMANDS:

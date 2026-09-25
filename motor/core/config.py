@@ -91,6 +91,7 @@ def _load_config_dict() -> dict[str, object] | None:
     """Carga CONFIG desde config_manager."""
     try:
         from motor.core.config_manager import CONFIG
+
         return CONFIG
     except Exception:
         return None

@@ -136,3 +136,8 @@ audit_reports/
 diagnostics/
 .nervioso/
 docs/udo/pendientes/
+
+# === Artefactos runtime generados (auditoría 2026-09-25) ===
+deploy/diagnostico.json
+deploy/trends.ndjson
+*.backup_*
