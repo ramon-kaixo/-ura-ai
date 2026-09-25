@@ -14,9 +14,9 @@ import sys
 
 def get_test_count():
     """Obtener numero total de test en el proyecto"""
-    result = subprocess.run([
-        "python3", "-m", "pytest", "--collect-only", "-q"
-    ], capture_output=True, text=True, check=False)
+    result = subprocess.run(
+        ["python3", "-m", "pytest", "--collect-only", "-q"], capture_output=True, text=True, check=False
+    )
 
     for line in result.stdout.split("\n"):
         if "tests collected" in line:
@@ -33,7 +33,7 @@ def main():
         "integration": "integration",
         "contract": "contract",
         "slow": "slow",
-        "all": ""
+        "all": "",
     }
 
     if marker == "all":

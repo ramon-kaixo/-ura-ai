@@ -135,14 +135,17 @@ Gates: ruff + mypy + tests + security (pip-audit + audit_secrets)
 ```python
 # Antes (v5.x)
 from motor.core.config import UraConfig
+
 config = UraConfig.load("/etc/ura/config.json")
 
 # Ahora (v6.0)
 from motor.core.config import UraConfig
+
 config = UraConfig.load()  # Sin parámetros
 
 # Secrets
 from motor.core.secrets import get_secret
+
 api_key = get_secret("MI_API_KEY")
 ```
 
