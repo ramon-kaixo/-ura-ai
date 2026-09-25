@@ -142,7 +142,7 @@
       }
     }
   },
-  "model": "ollama/qwen3-coder:30b-mejorado",
+  "model": "ollama/qwen3-coder:30b-mejorado-100k",
   "default_agent": "build",
   "customTools": {
     "memory:read": {
