@@ -785,18 +785,18 @@ Reglas del bloque:
 
 ## Identificación de instancia
 
-Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda. La línea es solo la etiqueta, sin formato.
+Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda.
 
 Etiquetas por instancia (según variable $OPENCODE_CLIENT):
 
-- `desktop` → [OpenCode Desktop Mac]
-- `web-mac` → [OpenCode Web Mac]
-- `web-asus` → [OpenCode Web ASUS]
-- `terminal-mac` → [OpenCode Terminal Mac]
-- Si $OPENCODE_CLIENT está vacío o no coincide con ninguna → [OpenCode DESCONOCIDO]
+- `desktop-mac` → [1-Desktop-Mac]
+- `web-mac` → [2-Web-Mac]
+- `desktop-asus` → [3-Desktop-ASUS]
+- `web-asus` → [4-Web-ASUS]
+- Si $OPENCODE_CLIENT está vacío → [0-Desconocido]
 
 Determinar tu etiqueta:
 1. Ejecuta: echo "$OPENCODE_CLIENT"
 2. Usa la etiqueta correspondiente.
 
-Nunca inventes. Si no estás seguro, [OpenCode DESCONOCIDO].
+Nunca inventes. Si no estás seguro, [0-Desconocido].
