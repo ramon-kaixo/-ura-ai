@@ -23,6 +23,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from motor.core.secrets import get_secret
+
 log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -269,7 +271,7 @@ class Tier3Proxy:
             )
 
         # Tier 2: Groq
-        groq_key = os.environ.get("GROQ_API_KEY", "")
+        groq_key = get_secret("GROQ_API_KEY", "")
         if groq_key:
             self._providers.append(
                 ProviderConfig(

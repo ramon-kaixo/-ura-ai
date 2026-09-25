@@ -17,7 +17,7 @@ Formato esperado del plan (markdown):
     2. Tarea 4: descripción
 
     O también:
-    ## Tarea: Nombre
+## Tarea: Nombre
     Prioridad: alta
     Nodo: gx10
     Descripción: ...
@@ -41,6 +41,8 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from urllib.error import URLError
+
+from motor.core.secrets import get_secret
 
 
 @dataclass
@@ -221,7 +223,7 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Show tasks without creating them")
     parser.add_argument("--json", action="store_true", help="Output results as JSON")
     parser.add_argument("--distribute", action="store_true", help="Distribute tasks to remote nodes via sync endpoint")
-    parser.add_argument("--api-key", default=os.environ.get("URA_API_KEY", ""), help="API key for authentication")
+    parser.add_argument("--api-key", default=get_secret("URA_API_KEY", ""), help="API key for authentication")
     args = parser.parse_args()
 
     # Read plan

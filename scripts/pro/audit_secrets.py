@@ -63,7 +63,7 @@ CREDENTIAL_URL_PATTERN = re.compile(r"://[^:/\s]{3,}:[^@\s]{3,}@")
 
 # Autorreferencia del detector: los archivos de auditoría contienen los propios
 # patrones (regex con literales tipo sk-...) y generan falsos positivos.
-AUDIT_SELF_FILES = frozenset({"audit_secrets.py", "audit_git_secrets.py", "test_audit_secrets.py"})
+AUDIT_SELF_FILES = frozenset({"audit_secrets.py", "audit_git_secrets.py", "test_audit_secrets.py", "test_anonymizer_smoke.py"})
 
 
 class Finding:

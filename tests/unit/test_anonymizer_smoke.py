@@ -28,7 +28,7 @@ def test_sanitize_text_vacio():
 def test_sanitize_text_patrones():
     """Cobertura de ramas: cada patrón regex es ejercitado."""
     casos = [
-        ("sk-123456789012345678901234567890123456789012345678", "[OPENAI_API_KEY_REDACTADA]"),
+        ("sk-abcdefghijklmnopqrstuvwxyz1234567890123456789012", "[OPENAI_API_KEY_REDACTADA]"),
         ("-----BEGIN RSA PRIVATE KEY-----\nAAA\n-----END RSA PRIVATE KEY-----", "[SSH_PRIVATE_KEY_REDACTADA]"),
         ('password="supersecreto"', 'password: "[CREDENTIAL_REDACTADA]"'),
         ("192.168.1.1", "[IP_REDACTADA]"),

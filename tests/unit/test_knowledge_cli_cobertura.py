@@ -363,12 +363,9 @@ def test_cmd_api(monkeypatch, capsys, tmp_path) -> None:
     monkeypatch.setitem(sys.modules, "uvicorn", fake_uv)
     
     # Custom get_secret mock that respects env var priority
-    original_get_secret = None
     def mock_get_secret(name: str):
-        if name == "URA_API_KEY":
-            env_val = os.environ.get("URA_API_KEY")
-            if env_val:
-                return env_val
+        if name == "URA_API_KEY" and "URA_API_KEY" in os.environ:
+            return os.environ["URA_API_KEY"]
         return "S3CRET"
     
     monkeypatch.setattr("motor.core.secrets.get_secret", mock_get_secret)
