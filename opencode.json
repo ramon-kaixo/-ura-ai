@@ -130,12 +130,20 @@
             "context": 2048,
             "output": 0
           }
+        },
+        "qwen3-coder:30b-mejorado-100k": {
+          "tools": true,
+          "reasoning": false,
+          "limit": {
+            "context": 100000,
+            "output": 8192
+          }
         }
       }
     }
   },
   "model": "ollama/qwen3-coder:30b-mejorado",
-  "default_agent": "general",
+  "default_agent": "build",
   "customTools": {
     "memory:read": {
       "description": "Leer el contenido completo del archivo de memoria del proyecto",
