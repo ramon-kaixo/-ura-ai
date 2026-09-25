@@ -1,7 +1,11 @@
-import json
+"""Configuración centralizada del motor URA.
+
+Fuente única de verdad: config_manager.CONFIG (system_config.json).
+Legacy config (/etc/ura/config.json, URA_CONFIG) ELIMINADO v6.0.
+"""
+
 import logging
 import os
-import warnings
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -9,39 +13,19 @@ log = logging.getLogger("ura.config")
 
 VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
 
-RUTA_CONFIG_DEFECTO = "/etc/ura/config.json"
-RUTA_DEPLOY_DEFECTO = "/home/ramon/URA/ura_ia_1972/deploy"
-HOST_ASUS_DEFECTO = "100.72.103.12"
-PUERTO_ASUS_DEFECTO = 4198
-INTERFAZ_TAILSCALE_DEFECTO = "tailscale0"
-
-
-def _apply_legacy_config(c: "UraConfig", path: str = "") -> None:
-    """Aplica configuración desde JSON legacy (path arg, URA_CONFIG, /etc/ura/config.json).
-    Es la fuente de menor prioridad — CONFIG y env vars sobrescriben después.
-    """
-    sources = [p for p in [path, os.environ.get("URA_CONFIG", ""), RUTA_CONFIG_DEFECTO] if p]
-    if path or os.environ.get("URA_CONFIG"):
-        warnings.warn(
-            "UraConfig.load(path=...) y URA_CONFIG están DEPRECATED. Use system_config.json vía config_manager.",
-            FutureWarning,
-            stacklevel=3,
-        )
-    for p in sources:
-        if p and Path(p).exists():
-            try:
-                d = json.loads(Path(p).read_text())
-                for k, v in d.items():
-                    if hasattr(c, k):
-                        setattr(c, k, v)
-                log.info("config legacy cargada desde %s", p)
-            except (json.JSONDecodeError, OSError) as e:
-                log.warning("error al cargar config %s: %s", p, e)
-            break
+# Defaults eliminados - se usan los de system_config.json
+DEFAULT_OLLAMA_HOST = "localhost"
+DEFAULT_OLLAMA_PORT = 11434
+DEFAULT_OLLAMA_MODEL = "llama3:latest"
+DEFAULT_OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
+DEFAULT_OLLAMA_TIMEOUT = 120
+DEFAULT_OLLAMA_TEMPERATURE = 0.3
+DEFAULT_OLLAMA_MAX_TOKENS = 1024
+DEFAULT_LLM_PROVIDER = "ollama"
 
 
 def _apply_config_overrides(c: "UraConfig") -> None:
-    """Sobrescribe campos compartidos desde CONFIG (system_config.json)."""
+    """Aplica configuración desde CONFIG (system_config.json). Fuente principal."""
     _cfg = _load_config_dict()
     if not _cfg:
         return
@@ -104,10 +88,9 @@ def _apply_env_overrides(c: "UraConfig") -> None:
 
 
 def _load_config_dict() -> dict[str, object] | None:
-    """Intenta cargar CONFIG desde config_manager. Retorna None si no está disponible."""
+    """Carga CONFIG desde config_manager."""
     try:
         from motor.core.config_manager import CONFIG
-
         return CONFIG
     except Exception:
         return None
@@ -121,37 +104,32 @@ RUTAS_CONFIG_OPENCODE = [
 ]
 
 
-DEFAULT_OLLAMA_HOST = "localhost"
-DEFAULT_OLLAMA_PORT = 11434
-DEFAULT_OLLAMA_MODEL = "llama3:latest"
-DEFAULT_OLLAMA_EMBEDDING_MODEL = "nomic-embed-text"
-DEFAULT_OLLAMA_TIMEOUT = 120
-DEFAULT_OLLAMA_TEMPERATURE = 0.3
-DEFAULT_OLLAMA_MAX_TOKENS = 1024
-DEFAULT_LLM_PROVIDER = "ollama"
-
-
 @dataclass
 class UraConfig:
-    """Configuración centralizada del motor URA."""
+    """Configuración centralizada del motor URA.
+
+    Fuente única de verdad: motor.core.config_manager.CONFIG (system_config.json).
+    Env vars (URA_*) tienen máxima prioridad.
+    Legacy config (/etc/ura/config.json, URA_CONFIG) ELIMINADO v6.0.
+    """
 
     qdrant_host: str = "localhost"
     qdrant_port: int = 6333
-    deploy_dir: str = RUTA_DEPLOY_DEFECTO
+    deploy_dir: str = "/opt/motor/deploy"
     data_dir: str = ""
     log_level: str = "INFO"
-    ollama_host: str = DEFAULT_OLLAMA_HOST
-    ollama_port: int = DEFAULT_OLLAMA_PORT
-    ollama_model: str = DEFAULT_OLLAMA_MODEL
-    ollama_embedding_model: str = DEFAULT_OLLAMA_EMBEDDING_MODEL
-    ollama_timeout: int = DEFAULT_OLLAMA_TIMEOUT
-    ollama_temperature: float = DEFAULT_OLLAMA_TEMPERATURE
-    ollama_max_tokens: int = DEFAULT_OLLAMA_MAX_TOKENS
-    llm_provider: str = DEFAULT_LLM_PROVIDER
+    ollama_host: str = "localhost"
+    ollama_port: int = 11434
+    ollama_model: str = "llama3:latest"
+    ollama_embedding_model: str = "nomic-embed-text"
+    ollama_timeout: int = 120
+    ollama_temperature: float = 0.3
+    ollama_max_tokens: int = 1024
+    llm_provider: str = "ollama"
     is_vm: bool = True
-    asus_host: str = HOST_ASUS_DEFECTO
-    asus_port: int = PUERTO_ASUS_DEFECTO
-    tailscale_iface: str = INTERFAZ_TAILSCALE_DEFECTO
+    asus_host: str = "100.72.103.12"
+    asus_port: int = 4198
+    tailscale_iface: str = "tailscale0"
     timer_interval_min: int = 5
     failure_knowledge_path: str = ""
     baseline_path: str = ""
@@ -174,18 +152,12 @@ class UraConfig:
             self.log_level = self.log_level.upper()
 
     @classmethod
-    def load(cls, path: str = "") -> "UraConfig":
-        """Carga configuración desde CONFIG, env vars o valores por defecto.
+    def load(cls) -> "UraConfig":
+        """Carga configuración desde CONFIG (system_config.json) + env vars.
 
-        Los campos compartidos con CONFIG (data_dir, log_level) se obtienen
-        de system_config.json vía config_manager. El resto mantiene su lógica
-        actual (env vars + defaults de la dataclass).
-
-        El parámetro 'path' y la env var URA_CONFIG se mantienen por
-        compatibilidad pero emiten deprecation warning.
+        Legacy config (/etc/ura/config.json, URA_CONFIG) ELIMINADO v6.0.
         """
         c = cls()
-        _apply_legacy_config(c, path)
         _apply_config_overrides(c)
         _apply_env_overrides(c)
         return c

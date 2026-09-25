@@ -1,21 +1,20 @@
 """Tests de cobertura P3 para motor/core/config.py — funciones _apply_*.
 
-Cubre _apply_legacy_config (path/URA_CONFIG, JSON inválido, atributos),
-_apply_config_overrides (CONFIG completo, None, dict vacío) y
+Cubre _apply_config_overrides (CONFIG completo, None, dict vacío) y
 _apply_env_overrides (todas las env vars, log_level inválido) que no tenían
 tests directos (179 mutantes survived en el reporte 2026-08-16).
+Legacy config (_apply_legacy_config) ELIMINADO v6.0.
 """
 
 from __future__ import annotations
 
 import json
 import os
-import warnings
 from unittest import mock
 
 import pytest
 
-from motor.core.config import UraConfig, _apply_config_overrides, _apply_env_overrides, _apply_legacy_config
+from motor.core.config import UraConfig, _apply_config_overrides, _apply_env_overrides
 
 
 def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -23,71 +22,6 @@ def _clean_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for k in list(os.environ):
         if k.startswith("URA_"):
             monkeypatch.delenv(k, raising=False)
-
-
-def _fake_cfg(data: dict) -> mock.Mock:
-    """Mock de CONFIG desde config_manager."""
-    return mock.patch("motor.core.config_manager.CONFIG", data)
-
-
-class TestApplyLegacyConfig:
-    def test_sin_fuentes(self) -> None:
-        c = UraConfig()
-        _apply_legacy_config(c)
-        assert c.data_dir  # defaults intactos
-
-    def test_path_valida(self, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-        _clean_env(monkeypatch)
-        p = tmp_path / "legacy.json"
-        p.write_text(json.dumps({"qdrant_host": "10.0.0.1", "ollama_port": 9999}))
-        c = UraConfig()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            _apply_legacy_config(c, str(p))
-        assert c.qdrant_host == "10.0.0.1"
-        assert c.ollama_port == 9999
-
-    def test_path_no_existe(self, tmp_path) -> None:
-        c = UraConfig()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            _apply_legacy_config(c, str(tmp_path / "nope.json"))
-        assert c.qdrant_host == "localhost"
-
-    def test_json_invalido(self, tmp_path) -> None:
-        p = tmp_path / "bad.json"
-        p.write_text("{no es json")
-        c = UraConfig()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            _apply_legacy_config(c, str(p))
-        assert c.qdrant_host == "localhost"
-
-    def test_env_ura_config(self, tmp_path, monkeypatch: pytest.MonkeyPatch) -> None:
-        _clean_env(monkeypatch)
-        p = tmp_path / "env.json"
-        p.write_text(json.dumps({"timer_interval_min": 7}))
-        monkeypatch.setenv("URA_CONFIG", str(p))
-        c = UraConfig()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            _apply_legacy_config(c)
-        assert c.timer_interval_min == 7
-
-    def test_atributo_no_existe_ignorado(self, tmp_path) -> None:
-        p = tmp_path / "extra.json"
-        p.write_text(json.dumps({"no_existe": 1, "qdrant_host": "x"}))
-        c = UraConfig()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", FutureWarning)
-            _apply_legacy_config(c, str(p))
-        assert c.qdrant_host == "x"
-
-    def test_warning_deprecation(self, tmp_path) -> None:
-        p = tmp_path / "w.json"
-        p.write_text("{}")
-        with pytest.warns(FutureWarning):
-            _apply_legacy_config(UraConfig(), str(p))
 
 
 class TestApplyConfigOverrides:

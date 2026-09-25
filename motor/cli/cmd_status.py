@@ -61,8 +61,6 @@ def cmd_cross(config: UraConfig, args: Any | None = None) -> None:
                     host,
                     "sudo",
                     "ura",
-                    "--config",
-                    "/etc/ura/config.json",
                     "status",
                 ],
                 timeout=15,

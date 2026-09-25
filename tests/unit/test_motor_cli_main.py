@@ -92,7 +92,7 @@ def test_main_flag_config(monkeypatch: pytest.MonkeyPatch) -> None:
             mock.patch("motor.cli.main.sys.exit"):
         mock_cls.load.return_value = fake_cfg
         main.main()
-    mock_cls.load.assert_called_once_with("/tmp/c.json")
+    mock_cls.load.assert_called_once_with()
     assert fake_cfg.log_level == "INFO"
 
 
