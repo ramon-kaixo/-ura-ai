@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import sqlite3
 import types
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -558,8 +558,15 @@ class TestContextRetriever:
     def test_score_valores_exactos(self) -> None:
         """Verifica normalización y suma ponderada exacta de _score."""
         st = EpisodeStore()
-        e1 = _episode(session="s", payload="a", ts="2026-08-10T00:00:00+00:00", importance=1.0, confidence=1.0)
-        e2 = _episode(session="s", payload="b", ts="2026-01-01T00:00:00+00:00", importance=0.5, confidence=0.5)
+        ahora = datetime.now(UTC)
+        e1 = _episode(session="s", payload="a", ts=ahora.isoformat(), importance=1.0, confidence=1.0)
+        e2 = _episode(
+            session="s",
+            payload="b",
+            ts=(ahora - timedelta(days=180)).isoformat(),
+            importance=0.5,
+            confidence=0.5,
+        )
         st.store(e1)
         st.store(e2)
         r = ContextRetriever(st, weights={"semantic": 0.0, "recency": 0.5, "importance": 0.3, "confidence": 0.2})
@@ -616,8 +623,9 @@ class TestCompression:
 
     def test_age_based(self) -> None:
         st = EpisodeStore()
-        st.store(_episode(ts="2026-06-01T00:00:00+00:00", payload="viejo"))
-        st.store(_episode(ts="2026-08-01T00:00:00+00:00", payload="nuevo"))
+        ahora = datetime.now(UTC)
+        st.store(_episode(ts=(ahora - timedelta(days=60)).isoformat(), payload="viejo"))
+        st.store(_episode(ts=(ahora - timedelta(days=5)).isoformat(), payload="nuevo"))
         p = AgeBasedCompression(max_age_days=30, delete_after_compress=True)
         assert p.should_run(st) is True
         cands = p.select_candidates(st)
@@ -676,7 +684,7 @@ class TestCompression:
 
     def test_compressor_sin_candidatos(self) -> None:
         st = EpisodeStore()
-        st.store(_episode(payload="x", ts="2026-08-10T00:00:00+00:00"))
+        st.store(_episode(payload="x", ts=datetime.now(UTC).isoformat()))
         c = MemoryCompressor(st, AgeBasedCompression(max_age_days=30))
         res = c.compress()
         assert res.summaries_created == 0 and res.elapsed_ms >= 0
@@ -794,7 +802,7 @@ class TestForgetPolicies:
         p = ImportanceForgetPolicy(min_importance=0.5, min_age_days=30)
         assert p.name() == "importance"
         assert p.should_forget(_episode(importance=0.9), None) == (False, "importance_0.9_above_0.5")  # type: ignore[arg-type]
-        joven = _episode(importance=0.1, ts="2026-08-10T00:00:00+00:00")
+        joven = _episode(importance=0.1, ts=datetime.now(UTC).isoformat())
         assert p.should_forget(joven, None)[0] is False  # type: ignore[arg-type]
         viejo = _episode(importance=0.1, ts=OLD)
         assert p.should_forget(viejo, None) == (True, "importance_0.1_below_0.5")  # type: ignore[arg-type]
