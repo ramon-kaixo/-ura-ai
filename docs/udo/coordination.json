@@ -2,11 +2,10 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [],
-    "en_progreso": [
-      "TASK-20260925-004"
-    ],
+    "en_progreso": [],
     "en_revision": [],
     "aprobadas": [
+      "TASK-20260925-004",
       "TASK-20260925-003",
       "TASK-20260925-002",
       "TASK-20260925-001",
@@ -697,7 +696,7 @@
       ]
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-25T04:20:37Z",
+  "ultima_ejecucion_despertador": "2026-09-25T04:40:37Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
