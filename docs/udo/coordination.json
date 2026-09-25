@@ -1,7 +1,9 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": [],
+    "pendientes": [
+      "TASK-20260925-008"
+    ],
     "en_progreso": [],
     "en_revision": [],
     "aprobadas": [
@@ -887,9 +889,32 @@
       ],
       "nota": "[dispatch: asignada a WEB por dispatcher.py]",
       "veredicto": "APROBADO"
+    },
+    "TASK-20260925-008": {
+      "descripcion": "Planificación Fase v6.1 - Features y mejoras post-v6.0",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "planned",
+      "prioridad": "alta",
+      "creada": "2026-09-25T07:47:29Z",
+      "actualizada": "2026-09-25T07:47:29Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": "docs/architecture/, docs/udo/, pyproject.toml, .github/workflows/",
+      "contexto_base": "a02cb70c",
+      "dependencias": [
+        "TASK-20260925-007"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-09-25T07:47:29Z",
+          "accion": "PLANNED",
+          "detalle": "Creada tras aprobación SPRINT 0"
+        }
+      ]
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-25T07:46:18Z",
+  "ultima_ejecucion_despertador": "2026-09-25T07:47:29Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
