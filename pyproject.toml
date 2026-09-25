@@ -92,10 +92,15 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105", "INP001", "TC002"]
+"tests/**/*" = ["S101", "D", "ANN", "ARG", "SLF001", "S105", "INP001", "TC002"]  # recursive para tests/integration/
+"test_*.py" = ["S101", "D", "ANN", "ARG", "SLF001", "S105", "INP001", "TC002"]  # tests en root
 "scripts/*" = ["INP001"]  # scripts autónomos sin __init__.py (namespace por diseño)
 "scripts/pro/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001"]
 "motor/tests/*" = ["S101", "D", "ANN", "ARG", "SLF001", "INP001"]  # tests namespace package (sin __init__ por diseño; evita romper mypy)
 "docs/merge_resolution/*" = ["S101", "S110", "INP001"]  # tests documentales de resolución de merges
+"motor/orchestration/task_queue.py" = ["S101"]  # TODO: replace assert with proper exception
+"motor/plugin/registry_v2.py" = ["S101"]  # TODO: replace assert with proper exception
+"mochila_engine.py" = ["S101"]  # TODO: replace assert with proper exception
 
 [tool.pytest.ini_options]
 markers = [

@@ -689,3 +689,14 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 - [x] A5. Proceso — Gate de integridad UDO en todo cierre
 - [~] A6. Deuda (TASK Futura) — Cobertura de módulos tocados por C2
 - [x] A7. Verificación — Confirmar estado de los 30 noqa PLR0917
+
+
+## Regla de Ejecución Autónoma y Evidencia
+Ejecuta directamente todas las tareas y comprobaciones en el terminal usando `bash`. Prohibido pedir comandos manuales al usuario o dar listas para ejecutar.
+
+
+Por cada acción debes reportar:
+1. Timestamp y directorio (`date`, `pwd`).
+2. Comando exacto y código de salida (`echo $?`).
+3. Salida real (`stdout` y `stderr`).
+4. Registro acumulativo en el archivo local `execution_audit.log`.
