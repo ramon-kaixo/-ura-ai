@@ -55,7 +55,7 @@ repos:
 
       - id: audit-cierre-udo
         name: Audit cierres UDO sin gate (informativo)
-        entry: python3 scripts/pro/audit_cierre_udo.py || true
+        entry: bash -c 'python3 scripts/pro/audit_cierre_udo.py || true'
         language: system
         pass_filenames: false
         always_run: true

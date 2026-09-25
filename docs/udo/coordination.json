@@ -1,7 +1,9 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": [],
+    "pendientes": [
+      "TASK-20260925-001"
+    ],
     "en_progreso": [
       "TASK-20260925-008"
     ],
@@ -11,7 +13,6 @@
       "TASK-20260925-004",
       "TASK-20260925-003",
       "TASK-20260925-002",
-      "TASK-20260925-001",
       "TASK-20260817-014",
       "TASK-20260817-015",
       "TASK-20260817-017",
@@ -702,7 +703,7 @@
       "descripcion": "Definición y planificación Fase v6.0",
       "ejecutor": "WEB",
       "revisor": "TERM",
-      "estado": "aprobada",
+      "estado": "planned",
       "prioridad": "alta",
       "creada": "2026-09-25T00:00:00Z",
       "actualizada": "2026-09-25T06:47:41Z",
