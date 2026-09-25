@@ -1,0 +1,30 @@
+{
+  "ollama": {
+    "status": "ok",
+    "latency_ms": 181.2
+  },
+  "openai": {
+    "status": "error",
+    "latency_ms": 394.2
+  },
+  "anthropic": {
+    "status": "error",
+    "latency_ms": 16.8
+  },
+  "gemini": {
+    "status": "ok",
+    "latency_ms": 300.6
+  },
+  "openrouter": {
+    "status": "ok",
+    "latency_ms": 363.3
+  },
+  "lmstudio": {
+    "status": "error",
+    "latency_ms": 20.9
+  },
+  "vllm": {
+    "status": "error",
+    "latency_ms": 20.3
+  }
+}

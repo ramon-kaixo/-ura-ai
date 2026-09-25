@@ -1,0 +1,94 @@
+{
+  "meta": {
+    "pipeline": "Web Intelligence F24",
+    "iterations": 3,
+    "warmup": 2,
+    "documents_input": 7,
+    "max_summary_sentences": 8,
+    "query": "python programming"
+  },
+  "latency_ms": {
+    "extract": {
+      "mean": 0.47,
+      "stddev": 0.01,
+      "p50": 0.46,
+      "p95": 0.48,
+      "p99": 0.48,
+      "min": 0.46,
+      "max": 0.48
+    },
+    "clean": {
+      "mean": 0.04,
+      "stddev": 0.0,
+      "p50": 0.04,
+      "p95": 0.04,
+      "p99": 0.04,
+      "min": 0.04,
+      "max": 0.04
+    },
+    "dedup": {
+      "mean": 0.08,
+      "stddev": 0.0,
+      "p50": 0.08,
+      "p95": 0.08,
+      "p99": 0.08,
+      "min": 0.08,
+      "max": 0.08
+    },
+    "rank": {
+      "mean": 0.05,
+      "stddev": 0.0,
+      "p50": 0.05,
+      "p95": 0.05,
+      "p99": 0.05,
+      "min": 0.05,
+      "max": 0.05
+    },
+    "summarize": {
+      "mean": 0.53,
+      "stddev": 0.01,
+      "p50": 0.53,
+      "p95": 0.55,
+      "p99": 0.55,
+      "min": 0.52,
+      "max": 0.55
+    },
+    "cite": {
+      "mean": 0.1,
+      "stddev": 0.0,
+      "p50": 0.1,
+      "p95": 0.1,
+      "p99": 0.1,
+      "min": 0.1,
+      "max": 0.1
+    }
+  },
+  "total_latency_ms": {
+    "mean": 1.27,
+    "stddev": 0.03,
+    "p50": 1.27,
+    "p95": 1.31,
+    "p99": 1.31,
+    "min": 1.25,
+    "max": 1.31
+  },
+  "throughput": {
+    "docs_per_second": 5495.2,
+    "total_time_seconds": 0.001
+  },
+  "documents": {
+    "total_input": 7,
+    "valid_after_clean": 7,
+    "valid_after_dedup": 5,
+    "removed_total": 2,
+    "duplication_pct": 28.6
+  },
+  "summary": {
+    "sentences": 8,
+    "compression_ratio": 0.5977
+  },
+  "citations": {
+    "total": 8,
+    "unique_evidence": 8
+  }
+}

@@ -1,0 +1,157 @@
+{
+  "experiment": "rag-ci",
+  "status": "pass",
+  "passed": true,
+  "metrics_summary": {
+    "experiment": "rag-ci",
+    "k": 10,
+    "total_configs": 3,
+    "total_queries": 10,
+    "elapsed_seconds": 0.0,
+    "rankings": {
+      "recall@10": [
+        {
+          "config": "bm25",
+          "value": 1.0
+        },
+        {
+          "config": "semantic",
+          "value": 1.0
+        },
+        {
+          "config": "hybrid",
+          "value": 1.0
+        }
+      ],
+      "precision@10": [
+        {
+          "config": "bm25",
+          "value": 0.27
+        },
+        {
+          "config": "semantic",
+          "value": 0.27
+        },
+        {
+          "config": "hybrid",
+          "value": 0.27
+        }
+      ],
+      "mrr": [
+        {
+          "config": "bm25",
+          "value": 0.545
+        },
+        {
+          "config": "semantic",
+          "value": 0.5367
+        },
+        {
+          "config": "hybrid",
+          "value": 0.5367
+        }
+      ],
+      "ndcg@10": [
+        {
+          "config": "hybrid",
+          "value": 0.6095
+        },
+        {
+          "config": "bm25",
+          "value": 0.6087
+        },
+        {
+          "config": "semantic",
+          "value": 0.6068
+        }
+      ],
+      "map": [
+        {
+          "config": "hybrid",
+          "value": 0.4634
+        },
+        {
+          "config": "bm25",
+          "value": 0.4606
+        },
+        {
+          "config": "semantic",
+          "value": 0.46
+        }
+      ]
+    },
+    "general_ranking": [
+      {
+        "rank": 1,
+        "config": "bm25",
+        "score": 0.5769
+      },
+      {
+        "rank": 2,
+        "config": "hybrid",
+        "score": 0.5759
+      },
+      {
+        "rank": 3,
+        "config": "semantic",
+        "score": 0.5747
+      }
+    ],
+    "winner": "bm25",
+    "winner_score": 0.5769
+  },
+  "regression_report": null,
+  "experiment_results": [
+    {
+      "config": "bm25",
+      "params": {},
+      "metrics": {
+        "recall@10": 1.0,
+        "precision@10": 0.27,
+        "mrr": 0.545,
+        "ndcg@10": 0.6086781258685748,
+        "map": 0.460595238095238
+      },
+      "latency_stats": {
+        "mean_ms": 0.0,
+        "min_ms": 0.0,
+        "max_ms": 0.0
+      }
+    },
+    {
+      "config": "semantic",
+      "params": {},
+      "metrics": {
+        "recall@10": 1.0,
+        "precision@10": 0.27,
+        "mrr": 0.5366666666666666,
+        "ndcg@10": 0.606833383453485,
+        "map": 0.45999999999999996
+      },
+      "latency_stats": {
+        "mean_ms": 0.0,
+        "min_ms": 0.0,
+        "max_ms": 0.0
+      }
+    },
+    {
+      "config": "hybrid",
+      "params": {},
+      "metrics": {
+        "recall@10": 1.0,
+        "precision@10": 0.27,
+        "mrr": 0.5366666666666666,
+        "ndcg@10": 0.6095093571485455,
+        "map": 0.4633730158730159
+      },
+      "latency_stats": {
+        "mean_ms": 0.0,
+        "min_ms": 0.0,
+        "max_ms": 0.0
+      }
+    }
+  ],
+  "elapsed_seconds": 0.0,
+  "errors": [],
+  "timestamp": 1784224959.4503136
+}

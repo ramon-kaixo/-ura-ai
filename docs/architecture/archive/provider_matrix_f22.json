@@ -1,0 +1,86 @@
+[
+  {
+    "name": "ollama",
+    "class": "OllamaProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "vision": true,
+    "max_context": 32768,
+    "max_output": 4096
+  },
+  {
+    "name": "openai",
+    "class": "OpenAIProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "vision": true,
+    "max_context": 128000,
+    "max_output": 16384
+  },
+  {
+    "name": "anthropic",
+    "class": "AnthropicProvider",
+    "chat": true,
+    "embeddings": false,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "vision": true,
+    "max_context": 200000,
+    "max_output": 8192
+  },
+  {
+    "name": "gemini",
+    "class": "GeminiProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "vision": true,
+    "max_context": 1048576,
+    "max_output": 8192
+  },
+  {
+    "name": "openrouter",
+    "class": "OpenRouterProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": true,
+    "json_mode": true,
+    "vision": true,
+    "max_context": 128000,
+    "max_output": 8192
+  },
+  {
+    "name": "lmstudio",
+    "class": "LMStudioProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": false,
+    "json_mode": true,
+    "vision": false,
+    "max_context": 8192,
+    "max_output": 2048
+  },
+  {
+    "name": "vllm",
+    "class": "VLLMProvider",
+    "chat": true,
+    "embeddings": true,
+    "streaming": true,
+    "tools": false,
+    "json_mode": true,
+    "vision": false,
+    "max_context": 32768,
+    "max_output": 4096
+  }
+]

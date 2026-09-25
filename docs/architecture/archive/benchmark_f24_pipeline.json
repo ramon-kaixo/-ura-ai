@@ -1,0 +1,19 @@
+{
+  "pipeline_stages": [
+    "extract",
+    "clean",
+    "dedup",
+    "rank",
+    "summarize",
+    "cite"
+  ],
+  "iterations": 3,
+  "total_documents": 7,
+  "valid_documents": 5,
+  "duplicates_removed": 2,
+  "citations": 8,
+  "evidence": 8,
+  "compression_ratio": 0.5977,
+  "throughput_docs_per_second": 5495.2,
+  "total_time_ms_mean": 1.27
+}

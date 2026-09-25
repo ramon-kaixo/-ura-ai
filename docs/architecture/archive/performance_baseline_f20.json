@@ -1,0 +1,28 @@
+{
+  "ollama.generate": {
+    "cpu_time_p50": 77.07924799999999,
+    "cpu_time_p95": 589.118288,
+    "cpu_time_p99": 589.118288,
+    "peak_memory_kb_p50": 5402.8623046875,
+    "peak_memory_kb_p95": 5406.8955078125,
+    "peak_memory_kb_p99": 5406.8955078125,
+    "sample_count": 10,
+    "throughput": 1.4227810124278092e-05,
+    "wall_time_p50": 1673.0844599660486,
+    "wall_time_p95": 4476.8767529167235,
+    "wall_time_p99": 4476.8767529167235
+  },
+  "ollama.embed": {
+    "cpu_time_p50": 84.30091199999978,
+    "cpu_time_p95": 102.5129119999999,
+    "cpu_time_p99": 102.5129119999999,
+    "peak_memory_kb_p50": 5562.134765625,
+    "peak_memory_kb_p95": 5565.685546875,
+    "peak_memory_kb_p99": 5565.685546875,
+    "sample_count": 10,
+    "throughput": 1.4227406879152069e-05,
+    "wall_time_p50": 331.42740500625223,
+    "wall_time_p95": 2425.5333320470527,
+    "wall_time_p99": 2425.5333320470527
+  }
+}

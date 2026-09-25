@@ -1,0 +1,377 @@
+{
+  "corpus": "ejemplo",
+  "k": 10,
+  "total_queries": 10,
+  "elapsed_ms": 0.5,
+  "resultados": {
+    "corpus": "default",
+    "configs": {
+      "bm25": {
+        "corpus": "default",
+        "config": "bm25",
+        "metrics": {
+          "recall@10": 1.0,
+          "precision@10": 0.27,
+          "mrr": 0.545,
+          "ndcg@10": 0.6086781258685748,
+          "map": 0.460595238095238
+        },
+        "per_query": [
+          {
+            "query_id": "q1",
+            "query_text": "sistemas de recuperacion de informacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.9502344167898356,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q2",
+            "query_text": "modelos de lenguaje grandes",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5308031558224253,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q3",
+            "query_text": "bases de datos vectoriales",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.5,
+            "ndcg": 0.6625262388615201,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q4",
+            "query_text": "embeddings y representacion semantica",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.6636974751943697,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q5",
+            "query_text": "procesamiento de lenguaje natural",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5565572721647433,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q6",
+            "query_text": "busqueda por similitud",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6781035935540111,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q7",
+            "query_text": "indexacion invertida",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 0.6934264036172708,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q8",
+            "query_text": "algoritmos de ranking",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.2,
+            "ndcg": 0.41030163071708026,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q9",
+            "query_text": "sistemas de recomendacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.25,
+            "ndcg": 0.4398586397835468,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q10",
+            "query_text": "analisis de texto",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5012724321809455,
+            "latency_ms": 0.0
+          }
+        ],
+        "timestamp": 1784224945.4558463,
+        "latency_stats": {
+          "mean_ms": 0.0,
+          "min_ms": 0.0,
+          "max_ms": 0.0
+        }
+      },
+      "semantic": {
+        "corpus": "default",
+        "config": "semantic",
+        "metrics": {
+          "recall@10": 1.0,
+          "precision@10": 0.27,
+          "mrr": 0.5366666666666666,
+          "ndcg@10": 0.606833383453485,
+          "map": 0.45999999999999996
+        },
+        "per_query": [
+          {
+            "query_id": "q1",
+            "query_text": "sistemas de recuperacion de informacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.7836037084784354,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q2",
+            "query_text": "modelos de lenguaje grandes",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.75,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q3",
+            "query_text": "bases de datos vectoriales",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5019025202859518,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q4",
+            "query_text": "embeddings y representacion semantica",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.9072278740982787,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q5",
+            "query_text": "procesamiento de lenguaje natural",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.25,
+            "ndcg": 0.4681639834987409,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q6",
+            "query_text": "busqueda por similitud",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.49356847033973983,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q7",
+            "query_text": "indexacion invertida",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 0.6666666666666666,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q8",
+            "query_text": "algoritmos de ranking",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.5,
+            "ndcg": 0.6415537323287483,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q9",
+            "query_text": "sistemas de recomendacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.2,
+            "ndcg": 0.41899583995761125,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q10",
+            "query_text": "analisis de texto",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.25,
+            "ndcg": 0.4366510388806775,
+            "latency_ms": 0.0
+          }
+        ],
+        "timestamp": 1784224945.4560013,
+        "latency_stats": {
+          "mean_ms": 0.0,
+          "min_ms": 0.0,
+          "max_ms": 0.0
+        }
+      },
+      "hybrid": {
+        "corpus": "default",
+        "config": "hybrid",
+        "metrics": {
+          "recall@10": 1.0,
+          "precision@10": 0.27,
+          "mrr": 0.5366666666666666,
+          "ndcg@10": 0.6095093571485455,
+          "map": 0.4633730158730159
+        },
+        "per_query": [
+          {
+            "query_id": "q1",
+            "query_text": "sistemas de recuperacion de informacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.9238850086262381,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q2",
+            "query_text": "modelos de lenguaje grandes",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.5654648767857288,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q3",
+            "query_text": "bases de datos vectoriales",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.5,
+            "ndcg": 0.6625262388615201,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q4",
+            "query_text": "embeddings y representacion semantica",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 1.0,
+            "ndcg": 0.7466041555227104,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q5",
+            "query_text": "procesamiento de lenguaje natural",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.25,
+            "ndcg": 0.47365059183640257,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q6",
+            "query_text": "busqueda por similitud",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 0.5,
+            "ndcg": 0.6781035935540111,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q7",
+            "query_text": "indexacion invertida",
+            "recall": 1.0,
+            "precision": 0.2,
+            "mrr": 1.0,
+            "ndcg": 0.6934264036172708,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q8",
+            "query_text": "algoritmos de ranking",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.3333333333333333,
+            "ndcg": 0.4864166220908419,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q9",
+            "query_text": "sistemas de recomendacion",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.2,
+            "ndcg": 0.41350923161994946,
+            "latency_ms": 0.0
+          },
+          {
+            "query_id": "q10",
+            "query_text": "analisis de texto",
+            "recall": 1.0,
+            "precision": 0.3,
+            "mrr": 0.25,
+            "ndcg": 0.45150684897078125,
+            "latency_ms": 0.0
+          }
+        ],
+        "timestamp": 1784224945.4561424,
+        "latency_stats": {
+          "mean_ms": 0.0,
+          "min_ms": 0.0,
+          "max_ms": 0.0
+        }
+      }
+    },
+    "best_by_metric": {
+      "recall@10": {
+        "config": "bm25",
+        "value": 1.0
+      },
+      "precision@10": {
+        "config": "bm25",
+        "value": 0.27
+      },
+      "mrr": {
+        "config": "bm25",
+        "value": 0.545
+      },
+      "ndcg@10": {
+        "config": "hybrid",
+        "value": 0.6095093571485455
+      },
+      "map": {
+        "config": "hybrid",
+        "value": 0.4633730158730159
+      }
+    }
+  },
+  "ranking": [
+    {
+      "rank": 1,
+      "config": "bm25",
+      "score": 0.5769
+    },
+    {
+      "rank": 2,
+      "config": "hybrid",
+      "score": 0.5759
+    },
+    {
+      "rank": 3,
+      "config": "semantic",
+      "score": 0.5747
+    }
+  ]
+}
