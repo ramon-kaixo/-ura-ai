@@ -141,3 +141,7 @@ docs/udo/pendientes/
 deploy/diagnostico.json
 deploy/trends.ndjson
 *.backup_*
+deploy/estado_alemania.json
+
+# === Build artifacts ===
+build/lib/
