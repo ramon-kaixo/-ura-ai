@@ -2,11 +2,12 @@ name: Mutation & Quality
 
 # Workflow de verificación profunda de calidad:
 #   - pytest con cobertura sobre motor/
-#   - mypy (gate de tipos, nivel básico verificado)
-#   - mutation testing (pytest-gremlins) con umbral dinámico 90→95→100
+#   - mypy (gate de tipos, nivel basico verificado)
+#   - mutation testing (pytest-gremlins) con umbral dinamico 90->95->100
 #     (mutmut retirado 2026-08-21: TASK-20260821-002; gate mutmut legacy en
 #      scripts/run_mutation_tests.sh se conserva como referencia)
-#   - semgrep (SAST rápido)
+#   - semgrep (SAST rapido)
+#   - flaky test detection (pytest-rerunfailures)
 #
 # Ejecuta en: push a main, PRs, y programado (nightly).
 # El job `mutation` solo corre en push a main y schedule (no en PRs).
@@ -37,11 +38,7 @@ jobs:
           pip install pytest-gremlins sounddevice librosa ffmpeg-python
           pip install torch --index-url https://download.pytorch.org/whl/cpu
           pip install openai-whisper
-      - name: Cobertura unitaria (motor, informativa — no bloqueante)
-        # NOTA: corre SOLO tests/unit/ (subset). El porcentaje global
-        # subestima la cobertura real del núcleo: cada módulo se mide con
-        # sus tests dedicados (--source relativo al módulo, política AGENTS.md).
-        # Este job es informativo; el gate real de cobertura es cobertura-nuevos.
+      - name: Cobertura unitaria (motor, informativa - no bloqueante)
         run: pytest tests/unit/ -q --tb=short --cov=motor --cov-report=term-missing || true
 
   integracion:
@@ -70,16 +67,48 @@ jobs:
           python-version: "3.12"
       - name: Instalar dependencias
         run: pip install -e ".[dev]" "mypy>=2.3"
-      - name: Gate de tipos (mypy.ini strict — falla si hay errores)
+      - name: Gate de tipos (mypy.ini strict - falla si hay errores)
         run: mypy --no-incremental --exclude motor/tests motor/ knowledge/engine/rules.py knowledge/engine/graphrag.py
+
+  flaky-detection:
+    name: Flaky Test Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: "pyproject.toml"
+      
+      - name: Instalar dependencias
+        run: pip install -e ".[dev]"
+      
+      - name: Detectar tests flaky (ejecutar 3 veces)
+        run: |
+          python3 -m pytest tests/unit/ \
+            --reruns=3 \
+            --reruns-delay=1 \
+            --tb=short \
+            -q \
+            --tb=no \
+            -o addopts="" \
+            2>&1 | tee flaky_results.txt
+      
+      - name: Analizar tests flaky
+        run: python3 scripts/pro/flaky_detector.py
+      
+      - name: Subir reporte de tests flaky
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-report
+          path: flaky_report.json
 
   mutation:
     runs-on: ubuntu-latest
     needs: [coverage, mypy]
-    # Solo en push a main y schedule (nightly), NO en PRs: el gate de
-    # mutación tarda (timeout 3600s) y no forma parte de los status checks
-    # obligatorios de la protección de main (lint/test). Correrlo en cada PR
-    # solo añade espera y a veces queda en None sin bloquear nada.
     if: github.event_name == 'push' || github.event_name == 'schedule'
     steps:
       - uses: actions/checkout@v4
@@ -90,11 +119,11 @@ jobs:
         run: |
           pip install -e ".[dev]"
           pip install pytest-gremlins pytest-rerunfailures pytest-timeout pytest-instafail
-      - name: Mutation testing (pytest-gremlins, umbral dinámico)
+      - name: Mutation testing (pytest-gremlins, umbral dinamico)
         env:
           PYTEST_GREMLINS_MAP_TIMEOUT: "3600"
         run: scripts/run_mutation_tests_gremlins.sh
-      - name: Subir reporte de mutación
+      - name: Subir reporte de mutacion
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -112,7 +141,7 @@ jobs:
           python-version: "3.12"
       - name: Instalar semgrep
         run: pip install semgrep
-      - name: Semgrep (reglas locales .semgrep.yml; fail solo en críticas)
+      - name: Semgrep (reglas locales .semgrep.yml; fail solo en criticas)
         run: |
           semgrep --config .semgrep.yml --error --severity ERROR . || \
-            (echo "semgrep: hallazgos críticos (revisar)" && exit 1)
+            (echo "semgrep: hallazgos criticos (revisar)" && exit 1)
