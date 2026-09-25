@@ -45,6 +45,70 @@ trabajo, proponerla en el momento (clasificar: OBLIGATORIO/NECESARIO/MEJORA) en 
 guardarla en silencio. El modo fondo read-only y las reglas UDO de reserva/--force se
 mantienen intactas.
 
+## Protocolo de Fases (Checkpoint + Microdatos + Olvido)
+
+Para gestionar el ciclo de vida de las fases de trabajo, se usan 3 scripts en `scripts/pro/`:
+
+### 1. Checkpoint — Punto de retorno
+Cuando el agente se detiene en cualquier punto del progreso (por ejemplo, al 20%, 40%, 60%):
+```bash
+scripts/pro/phase-checkpoint.sh TASK-ID <PROGRESO> "situación actual" "problema pendiente principal"
+```
+Donde `<PROGRESO>` es un entero entre 1 y 99 (porcentaje en el que se paró).
+Ejemplo:
+```bash
+scripts/pro/phase-checkpoint.sh TASK-20260925-001 40 "mitad del trabajo" "falta X"
+```
+Esto:
+- Escribe `.opencode/checkpoints/phase-<N>-<PROGRESO>.json` con progreso, situación, problema, timestamp
+- Añade nota al expediente UDO: `CHECKPOINT <PROGRESO>%: situación | problema: problema_pendiente`
+
+### 2. Cierre de fase — Microdato automático
+Al cerrar la fase (justo antes/después de `ura-udo update --estado DONE`):
+```bash
+scripts/pro/phase-close.sh TASK-ID
+```
+Esto:
+- Lee expediente UDO + `git diff` → extrae objetivo, evidencia, decisión
+- Escribe línea JSONL en `.opencode/microdata/phase-<N>.jsonl` (append)
+- Contiene: objetivo, evidencia (commits+diff), decisión, problemas conocidos
+
+### 3. Olvido selectivo — Limpieza dirigida
+Tras cerrar fase (tras `phase-close.sh`):
+```bash
+scripts/pro/prune-phase.sh TASK-ID
+```
+Esto:
+- Archiva logs/temporales de la fase en `.opencode/archive/phase-<N>/`
+- Limpia `memory.md` (elimina líneas de la fase, añade nota de archivado)
+- No borra: microdato (`.opencode/microdata/`), checkpoint (`.opencode/checkpoints/`), expediente UDO
+
+### Flujo completo recomendado:
+```bash
+# En cualquier punto (ej. 40%)
+scripts/pro/phase-checkpoint.sh TASK-20260925-001 40 "situación" "problema"
+
+# Al 100% (cierre)
+scripts/pro/phase-close.sh TASK-20260925-001
+scripts/pro/prune-phase.sh TASK-20260925-001
+ura-udo update TASK-20260925-001 --estado DONE --nota "Cierre fase: resumen ejecutivo"
+```
+
+### Retroceso (recuperar fase antigua):
+```bash
+# Buscar en historial
+opencode run "recall busca TASK-20260925-001"
+# Ver checkpoint <PROGRESO>%
+cat .opencode/checkpoints/phase-<N>-<PROGRESO>.json
+# Ver microdato
+cat .opencode/microdata/phase-<N>.jsonl
+```
+
+### ⚠️ Limitaciones conocidas
+- **Microdatos NO cargan automáticamente**: usar `cat` o `recall` para leerlos
+- **Olvido selectivo real requiere plugin V2**: scripts solo archivan logs; la compactación nativa expulsa por tokens, no por fase
+- **AGENTS.md puede perderse en compactación**: el protocolo también está en `instructions[]` global
+
 ## Project Context
 URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
 
@@ -56,6 +120,10 @@ URA is a multi-agent desktop assistant with specialized agents, a consciousness 
 - Templates: `docs/engineering/PLAN_TEMPLATE.md` (11 preguntas del plan) y `docs/engineering/PLAN_REVIEW_TEMPLATE.md` (ANÁLISIS DEL PLAN + veredicto + 9 preguntas de OpenCode).
 - Fuente única: repo git (`docs/engineering/`); copia global instalada en `~/.config/opencode/AGENTS.md` (origen: `deploy/engineering/AGENTS.md.global`); verificar con `scripts/pro/ura-engineering-check`.
 - Referencias: Plan 0 maestro `docs/architecture/PLAN_0.md`, revisado `docs/architecture/PLAN_0_REVISADO.md`, auditoría `docs/architecture/PLAN_0_AUDITORIA.md`, directiva de clasificación `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`.
+- **Lazy loading**:
+  - Para planes: `docs/planes/backlog-pendientes.md` (leer cuando necesites planificar)
+  - Para metas: `docs/meta/META-GLOBAL.md` (leer cuando necesites contexto del proyecto)
+  - Para errores: `docs/errores/README.md` (leer cuando encuentres un fallo)
 - Lo específico de URA (mecanismo UDO, reglas de fase, arquitectura, seguridad) sigue en las secciones de este AGENTS.md.
 
 ## Flujo Ejecutor-Revisor v1.0 (TASK-20260816-005)
@@ -700,3 +768,17 @@ Por cada acción debes reportar:
 2. Comando exacto y código de salida (`echo $?`).
 3. Salida real (`stdout` y `stderr`).
 4. Registro acumulativo en el archivo local `execution_audit.log`.
+
+### Reglas del bloque (recuperado de sesion 24-sep)
+
+HECHO:
+1) <qué se hizo>
+   Evidencia: pegar el comando ejecutado entre comillas invertidas, y DEBAJO la salida literal (copiada, no resumida).
+
+Reglas del bloque:
+- Un item por acción, con evidencia literal. Sin evidencia, no va.
+- La TAREA ACTUAL se cita literal, sin parafrasear.
+- "HECHO" = afirmado por el agente. La validación la hace Ramón.
+- Las SUGERENCIAS se presentan todas juntas, priorizadas, no una a una.
+- Abre y cierra el bloque en línea propia. Nada después del cierre.
+- PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
