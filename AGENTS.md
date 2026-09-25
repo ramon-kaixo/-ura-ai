@@ -782,3 +782,18 @@ Reglas del bloque:
 - Las SUGERENCIAS se presentan todas juntas, priorizadas, no una a una.
 - Abre y cierra el bloque en línea propia. Nada después del cierre.
 - PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
+
+## Identificación de instancia
+
+Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda según tu contexto. La línea es solo la etiqueta, sin formato, sin negritas.
+
+Cómo determinar tu etiqueta:
+
+1. Ejecuta: echo "HOST=$(hostname) CLIENT=$OPENCODE_CLIENT"
+2. Según el resultado:
+   - Si HOST contiene "Mini-de-RAMON" y CLIENT contiene "desktop" → `[OpenCode Desktop Mac]`
+   - Si HOST contiene "Mini-de-RAMON" y hay proceso "opencode web --port 8091" → `[OpenCode Web Mac]`
+   - Si HOST contiene "gx10-64c3" → `[OpenCode Web ASUS]`
+   - Si HOST contiene "Mini-de-RAMON" y fuiste lanzado por launchd com.ura.opencode-term → `[OpenCode Terminal Mac]`
+
+Si tienes dudas, usa la etiqueta más específica que puedas verificar con un comando. Nunca inventes.
