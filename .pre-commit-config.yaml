@@ -99,7 +99,7 @@ repos:
         name: No hardcoded secrets
         entry: python3 scripts/pro/check_secrets.py
         language: system
-        files: \.py$
+        files: \.(py|sh|bash)$
         pass_filenames: true
 
       - id: check-merge-conflict
