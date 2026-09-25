@@ -785,15 +785,18 @@ Reglas del bloque:
 
 ## Identificación de instancia
 
-Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda según tu contexto. La línea es solo la etiqueta, sin formato, sin negritas.
+Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda. La línea es solo la etiqueta, sin formato.
 
-Cómo determinar tu etiqueta:
+Etiquetas por instancia (según variable $OPENCODE_CLIENT):
 
-1. Ejecuta: echo "HOST=$(hostname) CLIENT=$OPENCODE_CLIENT"
-2. Según el resultado:
-   - Si HOST contiene "Mini-de-RAMON" y CLIENT contiene "desktop" → `[OpenCode Desktop Mac]`
-   - Si HOST contiene "Mini-de-RAMON" y hay proceso "opencode web --port 8091" → `[OpenCode Web Mac]`
-   - Si HOST contiene "gx10-64c3" → `[OpenCode Web ASUS]`
-   - Si HOST contiene "Mini-de-RAMON" y fuiste lanzado por launchd com.ura.opencode-term → `[OpenCode Terminal Mac]`
+- `desktop` → [OpenCode Desktop Mac]
+- `web-mac` → [OpenCode Web Mac]
+- `web-asus` → [OpenCode Web ASUS]
+- `terminal-mac` → [OpenCode Terminal Mac]
+- Si $OPENCODE_CLIENT está vacío o no coincide con ninguna → [OpenCode DESCONOCIDO]
 
-Si tienes dudas, usa la etiqueta más específica que puedas verificar con un comando. Nunca inventes.
+Determinar tu etiqueta:
+1. Ejecuta: echo "$OPENCODE_CLIENT"
+2. Usa la etiqueta correspondiente.
+
+Nunca inventes. Si no estás seguro, [OpenCode DESCONOCIDO].
