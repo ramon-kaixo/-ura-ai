@@ -3,10 +3,9 @@
   "colas": {
     "pendientes": [],
     "en_progreso": [],
-    "en_revision": [
-      "TASK-20260925-007"
-    ],
+    "en_revision": [],
     "aprobadas": [
+      "TASK-20260925-007",
       "TASK-20260925-004",
       "TASK-20260925-003",
       "TASK-20260925-002",
@@ -855,10 +854,10 @@
       "descripcion": "SPRINT 0 - Pipeline CI Completa",
       "ejecutor": "WEB",
       "revisor": "TERM",
-      "estado": "en_revision",
+      "estado": "aprobada",
       "prioridad": "alta",
       "creada": "2026-09-25T07:45:00Z",
-      "actualizada": "2026-09-25T07:22:32Z",
+      "actualizada": "2026-09-25T07:46:18Z",
       "agente_web": "WEB (ejecutor)",
       "agente_terminal": "TERM (revisor)",
       "reserva": ".github/workflows/, pyproject.toml, scripts/pro/ura-udo, docs/udo/coordination.json",
@@ -879,12 +878,18 @@
           "fecha": "2026-09-25T07:22:32Z",
           "accion": "REVIEW",
           "detalle": "SPRINT 0 completado - Pipeline CI validada completamente"
+        },
+        {
+          "fecha": "2026-09-25T07:46:18Z",
+          "accion": "APROBADO",
+          "detalle": "TERM review: SPRINT 0 Pipeline CI validada completamente - All gates PASS"
         }
       ],
-      "nota": "[dispatch: asignada a WEB por dispatcher.py]"
+      "nota": "[dispatch: asignada a WEB por dispatcher.py]",
+      "veredicto": "APROBADO"
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-25T07:22:32Z",
+  "ultima_ejecucion_despertador": "2026-09-25T07:46:18Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
