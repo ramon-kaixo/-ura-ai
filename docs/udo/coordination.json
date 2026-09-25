@@ -1,10 +1,16 @@
 {
   "modo": "secuencial",
   "colas": {
-    "pendientes": [],
-    "en_progreso": [],
+    "pendientes": [
+      "TASK-20260925-003",
+      "TASK-20260925-004"
+    ],
+    "en_progreso": [
+      "TASK-20260925-002"
+    ],
     "en_revision": [],
     "aprobadas": [
+      "TASK-20260925-001",
       "TASK-20260817-014",
       "TASK-20260817-015",
       "TASK-20260817-017",
@@ -692,7 +698,7 @@
       ]
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-25T01:05:30Z",
+  "ultima_ejecucion_despertador": "2026-09-25T02:50:33Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",
