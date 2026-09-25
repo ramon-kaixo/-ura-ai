@@ -2,7 +2,9 @@
   "modo": "secuencial",
   "colas": {
     "pendientes": [],
-    "en_progreso": [],
+    "en_progreso": [
+      "TASK-20260925-007"
+    ],
     "en_revision": [],
     "aprobadas": [
       "TASK-20260925-004",
@@ -68,8 +70,8 @@
       "task_20260828_003": "DONE - evidenciado"
     },
     "WEB": {
-      "estado": "libre",
-      "rol_actual": null,
+      "estado": "ocupado",
+      "rol_actual": "WEB",
       "ultima_validacion": "2026-08-31T03:35:03.756659Z",
       "validacion_tests": "26/26 passing x 3 corridas",
       "task_20260828_003": "DONE - evidenciado"
@@ -694,9 +696,185 @@
       "commits": [
         "1a286a1e"
       ]
+    },
+    "TASK-20260925-001": {
+      "descripcion": "Definición y planificación Fase v6.0",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "creada": "2026-09-25T00:00:00Z",
+      "actualizada": "2026-09-25T06:47:41Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": "docs/architecture/, docs/udo/, AGENTS.md",
+      "contexto_base": "de8229c1",
+      "dependencias": [],
+      "historial": [
+        {
+          "fecha": "2026-09-25T00:00:00Z",
+          "accion": "PLANNED",
+          "detalle": "Creada"
+        },
+        {
+          "fecha": "2026-09-25T00:30:00Z",
+          "accion": "IN_PROGRESS",
+          "detalle": "Iniciada por WEB"
+        },
+        {
+          "fecha": "2026-09-25T01:00:00Z",
+          "accion": "REVIEW",
+          "detalle": "TERM revisión"
+        },
+        {
+          "fecha": "2026-09-25T02:00:00Z",
+          "accion": "APROBADO",
+          "detalle": "TERM veredicto APROBADO"
+        }
+      ],
+      "veredicto": "APROBADO"
+    },
+    "TASK-20260925-002": {
+      "descripcion": "Sprint 1 Estabilización v6.0 - Fix test flaky + ruff errors",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "creada": "2026-09-25T02:00:00Z",
+      "actualizada": "2026-09-25T06:47:41Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": "tests/contracts/, pyproject.toml, docs/architecture/, .github/workflows/",
+      "contexto_base": "de8229c1",
+      "dependencias": [
+        "TASK-20260925-001"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-09-25T02:00:00Z",
+          "accion": "PLANNED",
+          "detalle": "Creada"
+        },
+        {
+          "fecha": "2026-09-25T03:00:00Z",
+          "accion": "IN_PROGRESS",
+          "detalle": "Iniciada por WEB"
+        },
+        {
+          "fecha": "2026-09-25T04:00:00Z",
+          "accion": "REVIEW",
+          "detalle": "TERM revisión"
+        },
+        {
+          "fecha": "2026-09-25T05:00:00Z",
+          "accion": "APROBADO",
+          "detalle": "TERM veredicto APROBADO"
+        }
+      ],
+      "veredicto": "APROBADO"
+    },
+    "TASK-20260925-003": {
+      "descripcion": "Sprint 2 Consolidación v6.0 - Config, Secretos, CI/CD",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "creada": "2026-09-25T02:00:00Z",
+      "actualizada": "2026-09-25T06:47:41Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": "docs/architecture/, motor/core/config.py, motor/core/secrets.py, .github/workflows/",
+      "contexto_base": "4e941f08",
+      "dependencias": [
+        "TASK-20260925-002"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-09-25T02:00:00Z",
+          "accion": "PLANNED",
+          "detalle": "Creada"
+        },
+        {
+          "fecha": "2026-09-25T05:00:00Z",
+          "accion": "IN_PROGRESS",
+          "detalle": "Iniciada por WEB"
+        },
+        {
+          "fecha": "2026-09-25T07:00:00Z",
+          "accion": "REVIEW",
+          "detalle": "TERM revisión"
+        },
+        {
+          "fecha": "2026-09-25T08:00:00Z",
+          "accion": "APROBADO",
+          "detalle": "TERM veredicto APROBADO"
+        }
+      ],
+      "veredicto": "APROBADO"
+    },
+    "TASK-20260925-004": {
+      "descripcion": "Sprint 3 Release v6.0.0 - Changelog, Tag, Smoke Tests",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "aprobada",
+      "prioridad": "alta",
+      "creada": "2026-09-25T02:00:00Z",
+      "actualizada": "2026-09-25T06:47:41Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": "CHANGELOG.md, docs/, .github/workflows/, pyproject.toml",
+      "contexto_base": "6f8ebcb7",
+      "dependencias": [
+        "TASK-20260925-003"
+      ],
+      "historial": [
+        {
+          "fecha": "2026-09-25T02:00:00Z",
+          "accion": "PLANNED",
+          "detalle": "Creada"
+        },
+        {
+          "fecha": "2026-09-25T08:00:00Z",
+          "accion": "IN_PROGRESS",
+          "detalle": "Iniciada por WEB"
+        },
+        {
+          "fecha": "2026-09-25T09:00:00Z",
+          "accion": "REVIEW",
+          "detalle": "TERM revisión"
+        },
+        {
+          "fecha": "2026-09-25T10:00:00Z",
+          "accion": "APROBADO",
+          "detalle": "TERM veredicto APROBADO"
+        }
+      ],
+      "veredicto": "APROBADO"
+    },
+    "TASK-20260925-007": {
+      "descripcion": "SPRINT 0 - Pipeline CI Completa",
+      "ejecutor": "WEB",
+      "revisor": "TERM",
+      "estado": "en_progreso",
+      "prioridad": "alta",
+      "creada": "2026-09-25T07:45:00Z",
+      "actualizada": "2026-09-25T06:47:41Z",
+      "agente_web": "WEB (ejecutor)",
+      "agente_terminal": "TERM (revisor)",
+      "reserva": ".github/workflows/, pyproject.toml, scripts/pro/ura-udo, docs/udo/coordination.json",
+      "contexto_base": "78a46782",
+      "dependencias": [],
+      "historial": [
+        {
+          "fecha": "2026-09-25T07:45:00Z",
+          "accion": "PLANNED",
+          "detalle": "Creada"
+        }
+      ],
+      "nota": "[dispatch: asignada a WEB por dispatcher.py]"
     }
   },
-  "ultima_ejecucion_despertador": "2026-09-25T05:20:39Z",
+  "ultima_ejecucion_despertador": "2026-09-25T06:47:49Z",
   "historial_analisis": [
     {
       "fecha": "2026-08-18T06:45:00",

@@ -22,13 +22,14 @@ import sys
 from pathlib import Path
 
 DEFAULT_PATH = Path(__file__).resolve().parent.parent.parent / "docs" / "udo" / "coordination.json"
+RUNTIME_PATH = Path(__file__).resolve().parent.parent.parent / "docs" / "udo" / "coordination.runtime.json"
 
 COLAS_VALIDAS = {"pendientes", "en_progreso", "en_revision", "aprobadas", "bloqueadas"}
 CAMPOS_OBLIGATORIOS = {"descripcion", "ejecutor", "revisor", "estado", "prioridad"}
 
 
 def cargar(ruta: Path) -> dict:
-    """Carga coordination.json; lanza ValueError si no es JSON válido."""
+    """Carga coordination.json y coordination.runtime.json; lanza ValueError si no es JSON válido."""
     with ruta.open(encoding="utf-8") as f:
         return json.load(f)
 
@@ -85,6 +86,7 @@ def verificar(datos: dict) -> list[str]:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Guardián de integridad del protocolo de coordinación")
     parser.add_argument("--file", type=Path, default=DEFAULT_PATH, help="ruta a coordination.json")
+    parser.add_argument("--runtime-file", type=Path, default=RUNTIME_PATH, help="ruta a coordination.runtime.json")
     args = parser.parse_args(argv)
 
     try:
