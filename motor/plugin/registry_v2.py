@@ -257,7 +257,8 @@ class PluginRegistryV2:
             if cls is not None and isinstance(cls, type) and issubclass(cls, PluginBase) and cls is not PluginBase:
                 try:
                     instance = cls()
-                    assert isinstance(instance, PluginBase)
+                    if not isinstance(instance, PluginBase):
+                        raise TypeError(f"Plugin {cls.__name__} must inherit from PluginBase")
                     return instance
                 except Exception as exc:
                     log.warning("[registry_v2] Error instanciando %s.%s: %s", manifest.name, manifest.entry_point, exc)

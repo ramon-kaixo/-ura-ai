@@ -216,7 +216,8 @@ class _FC:
         return self._c
 
     async def __aexit__(self, t: object, v: object, b: object) -> bool:
-        assert self._c is not None
+        if self._c is None:
+            raise RuntimeError("Context manager exited without entering")
         if t:
             self._c.fin(False, str(v))
             self._m._rc(self._c)

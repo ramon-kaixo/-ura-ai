@@ -146,27 +146,31 @@ class _PersistentConnection:
     def execute(self, sql: str, params: tuple[object, ...] = ()) -> sqlite3.Cursor:
         with self._lock:
             conn = self._conn
-            assert conn is not None
+            if conn is None:
+                raise RuntimeError("Database connection lost")
             try:
                 return conn.execute(sql, params)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
                 conn = self._conn
-                assert conn is not None
+                if conn is None:
+                    raise RuntimeError("Database connection lost after reconnect") from None
                 return conn.execute(sql, params)
 
     def executescript(self, script: str) -> None:
         with self._lock:
             conn = self._conn
-            assert conn is not None
+            if conn is None:
+                raise RuntimeError("Database connection lost")
             try:
                 conn.executescript(script)
             except (sqlite3.OperationalError, sqlite3.DatabaseError) as e:
                 log.warning("[DB] Reconnecting: %s", e)
                 self._connect()
                 conn = self._conn
-                assert conn is not None
+                if conn is None:
+                    raise RuntimeError("Database connection lost after reconnect") from None
                 conn.executescript(script)
 
     def commit(self) -> None:
