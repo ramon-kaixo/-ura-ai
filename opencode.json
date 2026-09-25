@@ -199,6 +199,5 @@
       "enabled": true
     }
   },
-  "small_model": "opencode/nemotron-3.5-lightning-free",
-  "theme": "instance-1-desktop-mac"
+  "small_model": "opencode/nemotron-3.5-lightning-free"
 }

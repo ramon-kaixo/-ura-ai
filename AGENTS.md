@@ -787,16 +787,16 @@ Reglas del bloque:
 
 Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda.
 
-Etiquetas por instancia (según variable $OPENCODE_CLIENT):
+Cómo determinar tu etiqueta:
+1. Ejecuta: echo "CLIENT=$OPENCODE_CLIENT HOST=$(hostname)"
+2. Según el resultado:
 
-- `desktop-mac` → [1-Desktop-Mac]
-- `web-mac` → [2-Web-Mac]
-- `desktop-asus` → [3-Desktop-ASUS]
-- `web-asus` → [4-Web-ASUS]
-- Si $OPENCODE_CLIENT está vacío → [0-Desconocido]
+| OPENCODE_CLIENT | hostname contiene | Etiqueta |
+|---|---|---|
+| desktop | Mini-de-RAMON | [1-Desktop-Mac] |
+| web-mac | Mini-de-RAMON | [2-Web-Mac] |
+| desktop | gx10-64c3 | [3-Desktop-ASUS] |
+| web-asus | gx10-64c3 | [4-Web-ASUS] |
+| (otro) | — | [0-Desconocido] |
 
-Determinar tu etiqueta:
-1. Ejecuta: echo "$OPENCODE_CLIENT"
-2. Usa la etiqueta correspondiente.
-
-Nunca inventes. Si no estás seguro, [0-Desconocido].
+Nunca inventes. Si tienes dudas, [0-Desconocido].
