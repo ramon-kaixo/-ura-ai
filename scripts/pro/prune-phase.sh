@@ -46,7 +46,7 @@ if [[ -z "${TASK_ID:-}" && -z "${ALL_OLDER_THAN:-}" ]]; then
 	exit 1
 fi
 
-URA_ROOT="/Users/ramonesnaola/URA"
+URA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MICRODATA_DIR="${URA_ROOT}/.opencode/microdata"
 ARCHIVE_DIR="${URA_ROOT}/.opencode/archive"
 MEMORY_FILE="${URA_ROOT}/.opencode/memory.md"

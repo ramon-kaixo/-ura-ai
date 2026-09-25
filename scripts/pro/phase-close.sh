@@ -50,7 +50,7 @@ if [[ ! "$TASK_ID" =~ ^TASK-[0-9]{8}-[0-9]{3}$ ]]; then
 	exit 1
 fi
 
-URA_ROOT="/Users/ramonesnaola/URA"
+URA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TASK_FILE="${URA_ROOT}/docs/udo/tasks/${TASK_ID}.md"
 MICRODATA_DIR="${URA_ROOT}/.opencode/microdata"
 

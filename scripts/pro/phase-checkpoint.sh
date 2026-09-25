@@ -43,7 +43,7 @@ if [[ ! "$TASK_ID" =~ ^TASK-[0-9]{8}-[0-9]{3}$ ]]; then
 fi
 
 # Rutas base
-URA_ROOT="/Users/ramonesnaola/URA"
+URA_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TASK_FILE="${URA_ROOT}/docs/udo/tasks/${TASK_ID}.md"
 COORD_FILE="${URA_ROOT}/docs/udo/coordination.json"
 CHECKPOINT_DIR="${URA_ROOT}/.opencode/checkpoints"
