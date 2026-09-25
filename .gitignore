@@ -145,3 +145,4 @@ deploy/estado_alemania.json
 
 # === Build artifacts ===
 build/lib/
+*.bak-*
