@@ -9,7 +9,7 @@
 ### Servicios systemd (REALES - Sistema)
 | Servicio | Puerto | Estado | Tipo | Notas |
 |---|---|---|---|---|
-| `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 paralelas, keep-alive 1m |
+| `ollama` | 11434 | ✅ activo | systemd | Sistema base, 2 slots (NUM_PARALLEL=2), keep-alive 5m |
 | `opencode` | 8081 | ⏸️ parado | systemd | OpenCode Web Server — unit corregida desplegada (`EnvironmentFile=/etc/ura/secrets.env`, vars ya presentes). Parado: el proceso paralelo mantiene su opencode manual en 8081 (PID en `pts/1`, se re-lanza solo). Arrancar con `systemctl start opencode.service` cuando el manual cierre |
 | `ura-openclaw` | 18789 | ⏸️ **disabled + inactive** (2026-08-08) | systemd | RETIRADO del repo (`c6d60c8c`). Unit borrada + daemon-reload ✅. Pendiente solo: `sudo rm /usr/local/bin/opencode` (wrapper del servicio ya inexistente) — incluido en `scripts/pro/cerrar_pendientes_sistema.sh` |
 | `ura-api` | 9090 | ✅ activo | systemd | URA GX10 API — Remote endpoint with post-crash audit gate. (Actualizado 2026-08-18: puerto real 9090, verificado /health 200; la doc anterior decía 8000) |
@@ -57,6 +57,11 @@
   - `MemoryHigh=64G` (límite de RAM para modelos grandes)
 - **Ubicación**: Sistema base Ubuntu (no en Docker)
 - **Acceso GPU**: Memoria unificada 128 GB
+
+### Ollama 2 slots (2026-09-26)
+- **Config efectiva**: `OLLAMA_NUM_PARALLEL=2`, `OLLAMA_CONTEXT_LENGTH=100000`, `OLLAMA_KEEP_ALIVE=5m`, `OLLAMA_MAX_LOADED_MODELS=1`.
+- **Medido**: `qwen3-coder:30b-mejorado-100k` con `-c 200000 -np 2` (2 slots de 100k) → `size_vram = 38.817.727.774 bytes ≈ 36,2 GiB`.
+- **RAM tras carga**: ~55 GiB usados / 66 GiB disponibles (de 121 GiB). **OOM: 0** desde el cambio (historial: NUM_PARALLEL=4 → OOM recurrente; =1 → estable; =2 → estable, 36,2 GiB).
 - **Problema resuelto**: Model Router optimizado (cache 5min, Connection: close)
 
 ### Model Router Enhanced v2.0
