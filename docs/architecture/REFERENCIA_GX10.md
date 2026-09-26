@@ -203,3 +203,19 @@ Cualquier operación git (commit/stash/rebase) sobre estos ficheros sucios falla
 "unable to unlink" — ver `docs/udo/BUGS.md` BUG-001 para el ritual:
 config/{system_config,reglas_builtin,settings,dispositivos,infra_config,schema}.json ·
 deploy/{lildax_config.json,sync_to_asus.sh,estado_alemania.json} · core/debate/committee_config.json
+
+## Rotación de OPENCODE_SERVER_PASSWORD
+
+Fecha última rotación: 2026-09-26
+
+### Procedimiento
+1. Generar nuevo password: `python3 -c "import secrets; print(secrets.token_urlsafe(18))"`
+2. Editar `/etc/ura/secrets.env`: cambiar `OPENCODE_SERVER_PASSWORD="..."`.
+3. `sudo systemctl daemon-reload && sudo systemctl restart opencode`
+4. Verificar: `curl -s -o /dev/null -w "%{http_code}" -u ramon:NUEVO http://localhost:8081/` → 200
+5. Buscar scripts con el password viejo hardcodeado y actualizarlos:
+   `grep -rn 'PASSWORD_VIEJO' /etc/ /usr/local/bin/ /home/ramon/URA/`
+6. Borrar backups con el password viejo.
+
+### Cliente
+El navegador del Mac usa este password para acceder a http://100.72.103.12:8081.
