@@ -6,14 +6,15 @@
 
 - **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
 - **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
-- Para sincronizar de Mac → ASUS: usar `scp` o `rsync` a `ramon@gx10` (alias ssh → LAN 10.164.1.99; `gx10-ts` para Tailscale 100.72.103.12)
+- Para sincronizar Mac ↔ ASUS: usar **`git push` / `git pull`** (mismo repo GitHub `ramon-kaixo/-ura-ai`, rama `main`). **NO usar `scp`/`rsync`** (provoca drift de ramas).
 - Para trabajar directamente en ASUS: usar `ssh gx10 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
 
 ### Flujo de Trabajo Obligatorio
-1. **Desarrollar** en Mac (edithores, tests locales)
-2. **Sincronizar** a ASUS cuando el código esté listo
-3. **Ejecutar** y verificar en ASUS (el servidor real)
-4. **NUNCA** dejar código sin sincronizar a ASUS por más de una sesión
+1. **Desarrollar** en Mac (editores, tests locales)
+2. **Commitear + `git push origin main`** desde Mac cuando el código esté listo
+3. **Sincronizar** en ASUS: `git pull` (o `git fetch && git reset --hard origin/main`)
+4. **Ejecutar** y verificar en ASUS (el servidor real)
+5. **NUNCA** dejar código sin commitear/pushear por más de una sesión
 
 ## REGLA DE REPORTE FINAL OBLIGATORIO (proactividad, petición RAMON 2026-08-15)
 
