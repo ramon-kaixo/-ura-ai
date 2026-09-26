@@ -38,7 +38,6 @@
 - `POST /compile` / `POST /compile/sync` — compilar
 
 ### Motor (motor/assistant/api/routes.py)
-- `GET /v1/models` — modelos LLM disponibles
 - `GET /metrics/cost` — coste
 - `GET /metrics/rate/{provider}` — rate por proveedor
 

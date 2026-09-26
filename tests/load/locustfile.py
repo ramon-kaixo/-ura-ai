@@ -14,11 +14,6 @@ class URAUser(HttpUser):
         """GET /health — health check (documentado)."""
         self.client.get("/health")
 
-    @task(2)
-    def models(self):
-        """GET /v1/models — modelos LLM (documentado)."""
-        self.client.get("/v1/models")
-
     @task(1)
     def metrics(self):
         """GET /metrics — métricas Prometheus (documentado)."""
