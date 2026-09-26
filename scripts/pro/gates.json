@@ -3,6 +3,12 @@
   "description": "Registro declarativo de gates de verificación. Añadir un gate = añadir una entrada aquí, sin tocar el orquestador.",
   "gates": [
     {
+      "id": "modelos-agentes",
+      "desc": "Valida que cada `model:` de .opencode/agents exista en `opencode models`",
+      "cmd": "python3 scripts/pro/audit_agent_models.py",
+      "needs_task": false
+    },
+    {
       "id": "secretos",
       "desc": "Auditoría de secretos hardcodeados",
       "cmd": "python3 scripts/pro/audit_secrets.py",
