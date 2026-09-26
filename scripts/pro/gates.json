@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "description": "Registro declarativo de gates de verificación. Añadir un gate = añadir una entrada aquí, sin tocar el orquestador.",
+  "gates": [
+    {
+      "id": "secretos",
+      "desc": "Auditoría de secretos hardcodeados",
+      "cmd": "python3 scripts/pro/audit_secrets.py",
+      "needs_task": false
+    },
+    {
+      "id": "cobertura",
+      "desc": "Cobertura del diff (>=85%) vs main",
+      "cmd": "python3 scripts/pro/verificador_cobertura.py --ci --base main",
+      "needs_task": false
+    },
+    {
+      "id": "revision",
+      "desc": "Gates base: verify_protocol + ruff + mypy + pytest + cobertura",
+      "cmd": "bash scripts/pro/revision_gates.sh",
+      "needs_task": false
+    },
+    {
+      "id": "udo",
+      "desc": "Gate de integridad UDO (pin SHA)",
+      "cmd": "scripts/pro/ura-udo verify {TASK}",
+      "needs_task": true
+    }
+  ]
+}

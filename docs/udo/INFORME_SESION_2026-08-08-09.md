@@ -271,7 +271,7 @@ Hitos clave del viaje:
 | `opencode.service` | Reiniciado (00:54) para cargar la metodología v1.1 (config no hot-reload) |
 | `/etc/systemd/system/ura-openclaw.service` | Borrada + daemon-reload (retirada completa OpenClaw) |
 | `/usr/local/bin/opencode` (wrapper muerto) | Eliminado; aliases rotos del .bashrc eliminados; opencode real = `~/.opencode/bin/opencode` v1.17.7 |
-| `/etc/ura/secrets.env` | Línea duplicada `321000` eliminada; `OPENCODE_WEB_PASS` nuevo (48 chars) |
+| `/etc/ura/secrets.env` | Línea duplicada `[REDACTADO]` eliminada; `OPENCODE_WEB_PASS` nuevo (48 chars) |
 | `.agent_lock` | Eliminado (código muerto) |
 
 ---

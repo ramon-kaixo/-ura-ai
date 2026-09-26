@@ -225,3 +225,29 @@ Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegad
 | 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
 | 1.9 | 2026-08-12 | §18 Automatización de procesos: deploy-mac.sh, ura-udo-cerrar, ura-fondo-health.sh (TASK-20260812-010) + sync ASUS→Mac (§17.4) |
 | 1.9 | 2026-08-12 | §19 Identidad y tiempo (TASK-20260812-016): [WEB]/[TERM] + hora local real (no UTC BD) + última interacción; §20 Inventario del sistema (inventario_ura.py → docs/architecture/INVENTARIO_URA.md); planificador método árbol (tronco→ramas→hojas) |
+
+---
+
+## Protocolo de Verificación (v1.0)
+
+Flujo de verificación técnica de URA. Gates declarativos en `scripts/pro/gates.json`.
+
+### Fases
+1. **Pre-Code** — `docs/engineering/PLAN_TEMPLATE.md` (11 preguntas obligatorias).
+2. **Explore** — subagente nativo `explore` (solo lectura).
+3. **Plan** — `PLAN_TEMPLATE.md`.
+4. **Review** — subagente `revisor` → veredicto GO / GO CON CAMBIOS / NO-GO.
+5. **Approve** — humano.
+6. **Code** — agente `build` (TDD: RED → GREEN → REFACTOR).
+7. **Verify** — `make verify-task TASK=<id>` o `bash scripts/pro/verificar_todo.sh <id>`.
+8. **Commit** — `git commit` + `scripts/pro/ura-udo verify <id>` (pin SHA).
+
+### Gates (declarativo)
+Añadir un gate = añadir una entrada en `scripts/pro/gates.json` (sin tocar el orquestador):
+- `secretos` → `python3 scripts/pro/audit_secrets.py`
+- `cobertura` → `python3 scripts/pro/verificador_cobertura.py --ci --base main`
+- `revision` → `bash scripts/pro/revision_gates.sh`
+- `udo` → `scripts/pro/ura-udo verify {TASK}` (requiere TASK-ID)
+
+### Estado / observabilidad
+`make status` → agentes locales (OK/ROTO) + unidades fallidas + servicios ASUS.
