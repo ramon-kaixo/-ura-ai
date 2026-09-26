@@ -15,7 +15,7 @@ Metodología universal para agentes de programación (OpenCode Web, OpenCode Ter
 | Archivo | Contenido |
 |---------|-----------|
 | [ENGINEERING_PROCESS.md](ENGINEERING_PROCESS.md) | El ciclo completo: obligaciones, clasificación, ejecución, revisión, roles, cierre (v1.0) |
-| [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md) | Cómo preparar un plan (las 11 preguntas obligatorias) |
+| [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md) | Cómo preparar un plan (las 13 preguntas obligatorias) |
 | [PLAN_REVIEW_TEMPLATE.md](PLAN_REVIEW_TEMPLATE.md) | Cómo debe analizarlo el agente (ANÁLISIS DEL PLAN + veredicto + 9 preguntas) |
 
 ## Fuentes (referenciadas, no duplicadas)

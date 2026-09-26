@@ -38,7 +38,6 @@
     "edit": "allow",
     "glob": "allow",
     "grep": "allow",
-    "list": "allow",
     "bash": "allow",
     "task": "allow",
     "external_directory": "allow",
@@ -194,9 +193,10 @@
     "codewiki": {
       "type": "local",
       "command": [
-        "/Users/ramonesnaola/.npm-global/bin/codewiki-mcp"
+        "/Users/ramonesnaola/.npm-global/bin/codewiki-mcp",
+        "--http"
       ],
-      "enabled": true
+      "enabled": false
     }
   },
   "small_model": "opencode/nemotron-3.5-lightning-free"

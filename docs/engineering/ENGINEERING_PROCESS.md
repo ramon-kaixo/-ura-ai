@@ -233,7 +233,7 @@ Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegad
 Flujo de verificación técnica de URA. Gates declarativos en `scripts/pro/gates.json`.
 
 ### Fases
-1. **Pre-Code** — `docs/engineering/PLAN_TEMPLATE.md` (11 preguntas obligatorias).
+1. **Pre-Code** — `docs/engineering/PLAN_TEMPLATE.md` (13 preguntas obligatorias: incluye riesgos y rollback).
 2. **Explore** — subagente nativo `explore` (solo lectura).
 3. **Plan** — `PLAN_TEMPLATE.md`.
 4. **Review** — subagente `revisor` → veredicto GO / GO CON CAMBIOS / NO-GO.

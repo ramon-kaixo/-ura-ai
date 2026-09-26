@@ -1,7 +1,7 @@
 ---
 description: "Verificador URA — ejecuta los gates (gates.json) en solo lectura y reporta evidencia literal. No edita código."
 mode: subagent
-model: opencode/deepseek-v4-pro
+model: ollama/qwen3.6:27b
 permission:
   edit: deny
   bash:

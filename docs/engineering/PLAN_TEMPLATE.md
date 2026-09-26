@@ -2,7 +2,7 @@
 
 # PLAN_TEMPLATE — Cómo preparar un plan
 
-Todo plan nuevo responde obligatoriamente a estas 11 preguntas. La sección de cabecera identifica el plan; el resto son secciones con título fijo. Un plan sin estas secciones está incompleto.
+Todo plan nuevo responde obligatoriamente a estas 13 preguntas. La sección de cabecera identifica el plan; el resto son secciones con título fijo. Un plan sin estas secciones está incompleto.
 
 ## Cabecera
 
@@ -55,6 +55,14 @@ Cómo se demuestra que funciona: tests, checks, pruebas manuales, comprobaciones
 ## 11. ¿CÓMO SE SABRÁ QUE ESTÁ TERMINADO? (Criterios de cierre)
 
 Checklist verificable de cierre (parecido al §48 del Plan 0: evidencia, no "los archivos existen").
+
+## 12. ¿QUÉ RIESGOS EXISTE? (Riesgos y mitigación)
+
+Qué puede salir mal y cómo se mitiga. Por cada riesgo: probabilidad (alta/media/baja), impacto (alto/medio/bajo), y mitigación concreta. Incluir riesgos de: regresión, dependencias rotas, datos, seguridad, rendimiento, disponibilidad (modelos/servicios), y deriva de configuración entre máquinas.
+
+## 13. ¿CÓMO SE REVIERTE? (Rollback / reversión)
+
+Pasos exactos para deshacer el cambio si algo sale mal: qué backup se restauró, qué commit se revierte (`git revert`), qué servicio se reinicia, y cómo verificar que se volvió al estado anterior. Todo cambio no reversible en caliente debe quedar descrito aquí.
 
 ---
 
