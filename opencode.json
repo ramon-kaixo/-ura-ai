@@ -194,7 +194,7 @@
     "codewiki": {
       "type": "local",
       "command": [
-        "/home/ramon/.npm-global/bin/codewiki-mcp"
+        "/Users/ramonesnaola/.npm-global/bin/codewiki-mcp"
       ],
       "enabled": true
     }

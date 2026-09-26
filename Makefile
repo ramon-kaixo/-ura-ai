@@ -246,3 +246,20 @@ clean:
 	find . -type f -name ".coverage" -delete 2>/dev/null || true
 	rm -rf .pytest_cache/ .mypy_cache/ htmlcov/ 2>/dev/null || true
 	@echo "✅ Limpieza OK"
+
+
+# === VERIFICACIÓN (gates declarativos) ===
+verify-task:
+	@echo "▶ Gates de verificación (gates.json)..."
+	bash scripts/pro/verificar_todo.sh $(TASK)
+	@echo "✅ verify-task OK"
+
+
+# === ESTADO / OBSERVABILIDAD ===
+status:
+	@echo "▶ Estado URA — agentes locales:"
+	@for f in ~/.config/opencode/agents/*.md; do \
+		[ -e "$$f" ] && echo "  OK   $$(basename $$f)" || echo "  ROTO $$(basename $$f)"; \
+	done
+	@echo "▶ Estado URA — servicios ASUS:"
+	@ssh ramon@100.72.103.12 "systemctl --failed --no-pager | tail -3; for s in ollama opencode model-router ura-api ura-mochila; do printf '  %-14s %s\n' \"\$$s\" \"\$$(systemctl is-active \$$s 2>/dev/null)\"; done" 2>/dev/null || echo "  (ASUS no accesible)"
