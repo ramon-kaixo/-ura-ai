@@ -12,9 +12,9 @@
   "formatter": true,
   "lsp": true,
   "instructions": [
-    "Lee siempre el archivo .opencode/memory.md al inicio de cada sesión.",
+    "Lee siempre el archivo .opencode/memory.md al inicio de cada sesi\u00f3n.",
     "Actualiza .opencode/memory.md al completar hitos clave, cambios de arquitectura, decisiones importantes o al finalizar una tarea significativa.",
-    "Mantén el archivo actualizado con el estado actual del proyecto, decisiones de arquitectura, problemas conocidos y próximos pasos."
+    "Mant\u00e9n el archivo actualizado con el estado actual del proyecto, decisiones de arquitectura, problemas conocidos y pr\u00f3ximos pasos."
   ],
   "context_files": [
     ".opencode/memory.md"
@@ -153,11 +153,11 @@
       "command": "cat > .opencode/memory.md"
     },
     "memory:append": {
-      "description": "Añade contenido al final del archivo de memoria",
+      "description": "A\u00f1ade contenido al final del archivo de memoria",
       "command": "cat >> .opencode/memory.md"
     },
     "memory:search": {
-      "description": "Buscar término en el archivo de memoria",
+      "description": "Buscar t\u00e9rmino en el archivo de memoria",
       "command": "grep -i",
       "args": [
         "$1",
@@ -165,23 +165,23 @@
       ]
     },
     "memory:compact": {
-      "description": "Fuerza compactación manual de la sesión actual",
+      "description": "Fuerza compactaci\u00f3n manual de la sesi\u00f3n actual",
       "command": "opencode run -- /compact"
     },
     "memory:export": {
-      "description": "Exporta la sesión actual a JSON para backup",
+      "description": "Exporta la sesi\u00f3n actual a JSON para backup",
       "command": "opencode export"
     },
     "memory:import": {
-      "description": "Importa sesión desde archivo JSON",
+      "description": "Importa sesi\u00f3n desde archivo JSON",
       "command": "opencode import"
     },
     "memory:stats": {
-      "description": "Muestra estadísticas de uso de tokens últimos 7 días",
+      "description": "Muestra estad\u00edsticas de uso de tokens \u00faltimos 7 d\u00edas",
       "command": "opencode stats --days 7"
     },
     "memory:list": {
-      "description": "Lista todas las sesiones con sus tamaños",
+      "description": "Lista todas las sesiones con sus tama\u00f1os",
       "command": "opencode session list"
     },
     "memory:cleanup": {

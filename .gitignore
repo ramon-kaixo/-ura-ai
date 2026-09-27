@@ -146,3 +146,9 @@ deploy/estado_alemania.json
 # === Build artifacts ===
 build/lib/
 *.bak-*
+
+# === OpenCode runtime artifacts (auditoría 2026-09-27) ===
+.opencode/checkpoints/
+.opencode/microdata/
+.opencode/agents/.stfolder/
+.stfolder/
