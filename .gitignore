@@ -152,3 +152,4 @@ build/lib/
 .opencode/microdata/
 .opencode/agents/.stfolder/
 .stfolder/
+docs/udo/coverage-reports/
