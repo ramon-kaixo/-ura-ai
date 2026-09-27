@@ -1,5 +1,22 @@
 # URA — AI Agent Instructions
 
+## Identificación de instancia
+
+Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda.
+
+Cómo determinar tu etiqueta:
+1. Ejecuta: echo "CLIENT=$OPENCODE_CLIENT HOST=$(hostname)"
+2. Según el resultado:
+
+| OPENCODE_CLIENT | hostname contiene | Etiqueta |
+|---|---|---|
+| desktop | Mini-de-RAMON | [1-Desktop-Mac] |
+| web-mac | Mini-de-RAMON | [2-Web-Mac] |
+| desktop | gx10-64c3 | [3-Desktop-ASUS] |
+| web-asus | gx10-64c3 | [4-Web-ASUS] |
+| (otro) | — | [0-Desconocido] |
+
+Nunca inventes. Si tienes dudas, [0-Desconocido].
 ## REGLA PRINCIPAL: SIEMPRE TRABAJAR EN ASUS (MEJORA CONTINUA)
 
 **IMPORTANTE**: El código fuente principal está en ASUS (GX10) en `/home/ramon/URA/ura_ia_1972/`.
@@ -784,20 +801,6 @@ Reglas del bloque:
 - Abre y cierra el bloque en línea propia. Nada después del cierre.
 - PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
 
-## Identificación de instancia
 
-Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda.
+> Esta sección fue movida al principio del documento para que no se pierda en compactaciones de contexto.
 
-Cómo determinar tu etiqueta:
-1. Ejecuta: echo "CLIENT=$OPENCODE_CLIENT HOST=$(hostname)"
-2. Según el resultado:
-
-| OPENCODE_CLIENT | hostname contiene | Etiqueta |
-|---|---|---|
-| desktop | Mini-de-RAMON | [1-Desktop-Mac] |
-| web-mac | Mini-de-RAMON | [2-Web-Mac] |
-| desktop | gx10-64c3 | [3-Desktop-ASUS] |
-| web-asus | gx10-64c3 | [4-Web-ASUS] |
-| (otro) | — | [0-Desconocido] |
-
-Nunca inventes. Si tienes dudas, [0-Desconocido].
