@@ -16,8 +16,9 @@ from tests.infra.conftest import REPO_ROOT, run_cmd
 # Modelos que ya NO existen en GX10 (eliminados o reemplazados)
 MODELOS_MUERTOS = ["qwen2.5-coder:14b", "qwen2.5-coder:32b", "qwen2.5:3b", "llama3.2:3b", "gemma:2b"]
 
-# IPs que ya no son válidas (Ethernet sin carrier desde 2026-08-24)
-IPS_MUERTAS = ["10.164.1.99", "192.168.1.135"]
+# IPs que ya no son válidas (WiFi obsoleta 192.168.1.135 desde 2026-09-08)
+# 10.164.1.99 es la Ethernet ACTIVA en GX10 (verificada 2026-09-08)
+IPS_MUERTAS = ["192.168.1.135"]
 
 
 @pytest.mark.anywhere
@@ -38,13 +39,9 @@ class TestNoModelosDesfasados:
         lines = [l for l in out.strip().splitlines() if l.strip()]
         # Permitir solo en configuración (default=, fallback=, etc.)
         hardcoded = [
-            l for l in lines
-            if not re.search(r"(default|fallback|env|argparse|.MODELO|_MODEL)", l, re.IGNORECASE)
+            l for l in lines if not re.search(r"(default|fallback|env|argparse|.MODELO|_MODEL)", l, re.IGNORECASE)
         ]
-        assert not hardcoded, (
-            f"Modelo muerto '{modelo}' hardcodeado en código funcional:\n"
-            + "\n".join(hardcoded[:5])
-        )
+        assert not hardcoded, f"Modelo muerto '{modelo}' hardcodeado en código funcional:\n" + "\n".join(hardcoded[:5])
 
 
 @pytest.mark.anywhere
@@ -64,10 +61,7 @@ class TestNoIPsMuertas:
         lines = [l for l in out.strip().splitlines() if l.strip()]
         # Permitir solo en comentarios o docs
         active = [l for l in lines if not l.strip().startswith("#")]
-        assert not active, (
-            f"IP muerta '{ip}' encontrada en scripts/pro/:\n"
-            + "\n".join(active[:5])
-        )
+        assert not active, f"IP muerta '{ip}' encontrada en scripts/pro/:\n" + "\n".join(active[:5])
 
 
 @pytest.mark.anywhere
@@ -83,9 +77,7 @@ class TestNoBackupsConPassword:
         if rc != 0:
             return
         files = [f for f in out.strip().splitlines() if f.strip()]
-        assert not files, (
-            f"Archivos .backup tracked por git: {files[:5]}"
-        )
+        assert not files, f"Archivos .backup tracked por git: {files[:5]}"
 
 
 @pytest.mark.anywhere
@@ -96,7 +88,4 @@ class TestBuildDirNotTracked:
         """build/ no debe estar en el índice de git."""
         rc, out, _ = run_cmd("git ls-files build/ 2>/dev/null", timeout=10)
         files = [f for f in out.strip().splitlines() if f.strip()]
-        assert not files, (
-            f"build/ está tracked por git ({len(files)} archivos). "
-            f"Agregar a .gitignore y rm -r build/"
-        )
+        assert not files, f"build/ está tracked por git ({len(files)} archivos). Agregar a .gitignore y rm -r build/"

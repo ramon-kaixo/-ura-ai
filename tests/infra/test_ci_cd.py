@@ -97,7 +97,8 @@ class TestWorkflows:
 
         with open(ROOT / ".github/workflows/release.yml") as f:  # noqa: PTH123
             data = yaml.safe_load(f)
-        steps = data["jobs"]["release"]["steps"]
+        # El paso de build está en el job "build", no en "release"
+        steps = data["jobs"]["build"]["steps"]
         step_names = [s.get("name", "") for s in steps]
         assert any("Build" in s for s in step_names)
 
