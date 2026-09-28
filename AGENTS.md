@@ -17,6 +17,34 @@ Cómo determinar tu etiqueta:
 | (otro) | — | [0-Desconocido] |
 
 Nunca inventes. Si tienes dudas, [0-Desconocido].
+
+## Regla de Ejecución Autónoma y Evidencia
+Ejecuta directamente todas las tareas y comprobaciones en el terminal usando `bash`. Prohibido pedir comandos manuales al usuario o dar listas para ejecutar.
+
+
+Por cada acción debes reportar:
+1. Timestamp y directorio (`date`, `pwd`).
+2. Comando exacto y código de salida (`echo $?`).
+3. Salida real (`stdout` y `stderr`).
+4. Registro acumulativo en el archivo local `execution_audit.log`.
+
+### Reglas del bloque (recuperado de sesion 24-sep)
+
+HECHO:
+1) <qué se hizo>
+   Evidencia: pegar el comando ejecutado entre comillas invertidas, y DEBAJO la salida literal (copiada, no resumida).
+
+Reglas del bloque:
+- Un item por acción, con evidencia literal. Sin evidencia, no va.
+- La TAREA ACTUAL se cita literal, sin parafrasear.
+- "HECHO" = afirmado por el agente. La validación la hace Ramón.
+- Las SUGERENCIAS se presentan todas juntas, priorizadas, no una a una.
+- Abre y cierra el bloque en línea propia. Nada después del cierre.
+- PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
+
+
+> Este bloque fue movido al principio del documento para que no se pierda en compactaciones de contexto.
+
 ## REGLA PRINCIPAL: SIEMPRE TRABAJAR EN ASUS (MEJORA CONTINUA)
 
 **IMPORTANTE**: El código fuente principal está en ASUS (GX10) en `/home/ramon/URA/ura_ia_1972/`.
@@ -777,30 +805,5 @@ Reglas de auto-asignación vía `docs/udo/coordination.json`:
 - [x] A7. Verificación — Confirmar estado de los 30 noqa PLR0917
 
 
-## Regla de Ejecución Autónoma y Evidencia
-Ejecuta directamente todas las tareas y comprobaciones en el terminal usando `bash`. Prohibido pedir comandos manuales al usuario o dar listas para ejecutar.
-
-
-Por cada acción debes reportar:
-1. Timestamp y directorio (`date`, `pwd`).
-2. Comando exacto y código de salida (`echo $?`).
-3. Salida real (`stdout` y `stderr`).
-4. Registro acumulativo en el archivo local `execution_audit.log`.
-
-### Reglas del bloque (recuperado de sesion 24-sep)
-
-HECHO:
-1) <qué se hizo>
-   Evidencia: pegar el comando ejecutado entre comillas invertidas, y DEBAJO la salida literal (copiada, no resumida).
-
-Reglas del bloque:
-- Un item por acción, con evidencia literal. Sin evidencia, no va.
-- La TAREA ACTUAL se cita literal, sin parafrasear.
-- "HECHO" = afirmado por el agente. La validación la hace Ramón.
-- Las SUGERENCIAS se presentan todas juntas, priorizadas, no una a una.
-- Abre y cierra el bloque en línea propia. Nada después del cierre.
-- PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
-
-
-> Esta sección fue movida al principio del documento para que no se pierda en compactaciones de contexto.
+> Este bloque fue movido al principio para que no se pierda en compactaciones de contexto.
 
