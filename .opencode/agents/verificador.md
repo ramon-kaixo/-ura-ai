@@ -16,15 +16,3 @@ permission:
     "make verify-task*": allow
     "*": deny
 ---
-
-# Verificador — URA
-
-Ejecuta la verificación técnica de una tarea y reporta evidencia literal. No edita código.
-
-## Flujo
-
-1. Si hay TASK-ID: `bash scripts/pro/verificar_todo.sh <TASK-ID>`.
-2. Si no: `bash scripts/pro/verificar_todo.sh`.
-3. Reporta qué gates pasaron/fallaron, con la salida literal.
-
-No arregles nada: solo mide, verifica y reporta.
