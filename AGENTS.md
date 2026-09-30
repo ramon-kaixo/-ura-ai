@@ -74,3 +74,12 @@ Disponibles en `.opencode/agents/`:
 ## Problemas conocidos
 - Subagentes NO tienen system prompt propio (limitación de OpenCode 1.18.21+). Sus `.md` sirven solo para description/mode/model/permission.
 - AGENTS.md se inyecta al agente principal en cada turno. Mantenerlo corto (<150 líneas).
+
+## Verificación antes de cerrar tarea
+
+Antes de decir "hecho", "listo" o "done":
+1. Invoca @verificador. Pega la salida literal.
+2. Invoca @tester. Pega la salida literal.
+3. Solo entonces, cerrar.
+
+Si no puedes invocarlos, di por qué. No declares "hecho" sin verificación.
