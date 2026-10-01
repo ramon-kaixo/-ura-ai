@@ -57,3 +57,18 @@ tar xzf /home/ramon/URA/.opencode-backups/kit-<timestamp>.tar.gz -C /destino
 
 El directorio `/home/ramon/URA/.opencode/` (padre del proyecto) existía anteriormente como configuración global compartida. Fue movido a `/home/ramon/URA/.opencode-backups/agents-old-<timestamp>/` durante la limpieza. Contenía 7 symlinks a los agents del proyecto, que ahora viven solo en `.opencode/agents/` del proyecto.
 
+
+## Nota sobre commands (sync/status/test)
+
+Los commands `sync.md`, `status.md` y `test.md` fueron escritos originalmente para ejecutarse
+desde la Mac. Ahora OpenCode corre en la ASUS, así que:
+
+- Las IPs dentro de ellos (`100.72.103.12`) apuntan a la ASUS, no a la Mac.
+- Los paths (`/Users/ramonesnaola/...`) son de Mac.
+
+Si algún día se ejecutan desde la ASUS, hay que reescribirlos. Por ahora se dejan como están
+porque no se usan desde aquí.
+
+IPs reales:
+- ASUS: 100.72.103.12
+- Mac: 100.123.81.101
