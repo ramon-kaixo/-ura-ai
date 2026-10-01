@@ -4,5 +4,27 @@
   "instructions": [
     "AGENTS.md",
     ".opencode/memory.md"
-  ]
+  ],
+  "context_files": [
+    ".opencode/memory.md"
+  ],
+  "references": {
+    "docs": {
+      "path": "docs",
+      "description": "URA project documentation"
+    },
+    "arch": {
+      "path": "docs/architecture",
+      "description": "Architecture docs"
+    },
+    "udo": {
+      "path": "docs/udo",
+      "description": "UDO task system docs"
+    }
+  },
+  "skills": {
+    "paths": [
+      ".opencode/skills"
+    ]
+  }
 }
