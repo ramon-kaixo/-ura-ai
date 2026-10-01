@@ -55,7 +55,7 @@ Si el usuario solo escribe `/orchestrate` sin archivo, pídele que especifique l
   Prioridad: alta
   Nodo: gx10
 
-### B2: Test Y
+### B2: Bloque 2
 1. Tarea 2: descripción
    Prioridad: media
 ```

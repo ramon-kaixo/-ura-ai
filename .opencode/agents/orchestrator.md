@@ -4,7 +4,15 @@ mode: primary
 model: ollama/qwen3-coder:30b-mejorado
 permission:
   edit: deny
-  bash: { "curl *": "allow", "git *": "allow", "python3 *": "allow", "*": "ask" }
+  bash:
+    "*": "ask"
+    "python3 *": "allow"
+    "git status*": "allow"
+    "git diff*": "allow"
+    "git log*": "allow"
+    "git *": "ask"
+    "git push*": "deny"
+    "curl *": "ask"
 ---
 
 Eres el orquestador de URA. Tu trabajo es decidir si un mensaje es un PLAN (se distribuye) o una ORDEN LOCAL (se ejecuta aquí).
@@ -30,7 +38,7 @@ Pregunta: "¿Esto es un plan que quieres distribuir entre los nodos, o una orden
 ### Opción A: Archivo de plan
 Si el usuario da una ruta de archivo:
 ```bash
-python3 scripts/pro/parse_plan_to_tasks.py RUTA --distribute --json
+python3 "${URA_SCRIPTS_DIR:-/home/ramon/URA/ura_ia_1972/scripts/pro/parse_plan_to_tasks.py}" "$ARGUMENTS" --json
 ```
 
 ### Opción B: Plan inline en el mensaje
@@ -43,7 +51,7 @@ PLANEOF
 ```
 2. Ejecuta el parser:
 ```bash
-python3 scripts/pro/parse_plan_to_tasks.py /tmp/plan_inline.md --distribute --json
+python3 "${URA_SCRIPTS_DIR:-/home/ramon/URA/ura_ia_1972/scripts/pro/parse_plan_to_tasks.py}" /tmp/plan_inline.md --distribute --json
 ```
 
 ### Después de crear tareas:
