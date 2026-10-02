@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================
 # backup_to_mac.sh — Backup GX10 → Mac
-# Ejecutado por systemd timer: 03:00 daily
+# Ejecutado por cron en GX10: 0 3 * * *
 # ============================================================
 set -euo pipefail
 
@@ -14,19 +14,11 @@ BACKUP_DIR="${URA_ROOT:-/Users/ramonesnaola/URA}/backups_gx10"
 SOURCE_DIR="${ASUS_PATH:-/home/ramon/URA/ura_ia_1972}"
 LOG_FILE="${ASUS_PATH:-/home/ramon/URA}/logs/backup_to_mac.log"
 TIMESTAMP=$(date '+%Y%m%d_%H%M%S')
-BWLIMIT=${URA_BWLIMIT:-50000}  # 50 MB/s default (LAN)
-LOCK_FILE="/tmp/ura_backup_to_mac.lock"
+BWLIMIT=${URA_BWLIMIT:-10000}  # 10 MB/s default
 
 mkdir -p "$(dirname "$LOG_FILE")"
 
 log() { echo "[$(date)] $*" >> "$LOG_FILE"; echo "$*"; }
-
-# Lock para evitar ejecuciones concurrentes
-exec 9>"$LOCK_FILE"
-if ! flock -n 9; then
-    log "ERROR: Otro backup en curso (lock $LOCK_FILE). Saliendo."
-    exit 1
-fi
 
 log "=== Backup ${TIMESTAMP} ==="
 

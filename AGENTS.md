@@ -1,85 +1,809 @@
 # URA — AI Agent Instructions
 
+## Identificación de instancia
+
+Al terminar CADA respuesta, después del bloque <<<RESUMEN>>>, emitir SIEMPRE una línea en su propia línea con la etiqueta que corresponda.
+
+Cómo determinar tu etiqueta:
+1. Ejecuta: echo "CLIENT=$OPENCODE_CLIENT HOST=$(hostname)"
+2. Según el resultado:
+
+| OPENCODE_CLIENT | hostname contiene | Etiqueta |
+|---|---|---|
+| desktop | Mini-de-RAMON | [1-Desktop-Mac] |
+| web-mac | Mini-de-RAMON | [2-Web-Mac] |
+| desktop | gx10-64c3 | [3-Desktop-ASUS] |
+| web-asus | gx10-64c3 | [4-Web-ASUS] |
+| (otro) | — | [0-Desconocido] |
+
+Nunca inventes. Si tienes dudas, [0-Desconocido].
+
+## Regla de Ejecución Autónoma y Evidencia
+Ejecuta directamente todas las tareas y comprobaciones en el terminal usando `bash`. Prohibido pedir comandos manuales al usuario o dar listas para ejecutar.
+
+
+Por cada acción debes reportar:
+1. Timestamp y directorio (`date`, `pwd`).
+2. Comando exacto y código de salida (`echo $?`).
+3. Salida real (`stdout` y `stderr`).
+4. Registro acumulativo en el archivo local `execution_audit.log`.
+
+### Reglas del bloque (recuperado de sesion 24-sep)
+
+HECHO:
+1) <qué se hizo>
+   Evidencia: pegar el comando ejecutado entre comillas invertidas, y DEBAJO la salida literal (copiada, no resumida).
+
+Reglas del bloque:
+- Un item por acción, con evidencia literal. Sin evidencia, no va.
+- La TAREA ACTUAL se cita literal, sin parafrasear.
+- "HECHO" = afirmado por el agente. La validación la hace Ramón.
+- Las SUGERENCIAS se presentan todas juntas, priorizadas, no una a una.
+- Abre y cierra el bloque en línea propia. Nada después del cierre.
+- PROHIBIDO escribir "la salida muestra..." o "el comando devolvió...". Se pega la salida tal cual. Si la salida es larga, se pegan las líneas relevantes con el comando completo encima.
+
+
+> Este bloque fue movido al principio del documento para que no se pierda en compactaciones de contexto.
+
+## REGLA PRINCIPAL: SIEMPRE TRABAJAR EN ASUS (MEJORA CONTINUA)
+
+**IMPORTANTE**: El código fuente principal está en ASUS (GX10) en `/home/ramon/URA/ura_ia_1972/`.
+
+- **Mac** (`/Users/ramonesnaola/URA/ura_ia_1972/`) es solo para desarrollo ligero y sincronización
+- **ASUS** (`/home/ramon/URA/ura_ia_1972/`) es el servidor de mejora continua donde debe ejecutarse todo
+- Para sincronizar Mac ↔ ASUS: usar **`git push` / `git pull`** (mismo repo GitHub `ramon-kaixo/-ura-ai`, rama `main`). **NO usar `scp`/`rsync`** (provoca drift de ramas).
+- Para trabajar directamente en ASUS: usar `ssh gx10 "cd /home/ramon/URA/ura_ia_1972 && <comando>"`
+
+### Flujo de Trabajo Obligatorio
+1. **Desarrollar** en Mac (editores, tests locales)
+2. **Commitear + `git push origin main`** desde Mac cuando el código esté listo
+3. **Sincronizar** en ASUS: `git pull` (o `git fetch && git reset --hard origin/main`)
+4. **Ejecutar** y verificar en ASUS (el servidor real)
+5. **NUNCA** dejar código sin commitear/pushear por más de una sesión
+
+## REGLA DE REPORTE FINAL OBLIGATORIO (proactividad, petición RAMON 2026-08-15)
+
+**Regla de cierre con acciones humanas (petición RAMON 2026-08-25)**: mientras quede
+cualquier paso que requiera acción del humano (sudo, ritual chattr, decisión), el trabajo
+NO se considera terminado. Flujo obligatorio: (1) enviar al humano los comandos exactos,
+indicando MÁQUINA y en un solo bloque pegable; (2) esperar su confirmación ("te lo remito");
+(3) verificar remotamente la evidencia; (4) solo entonces emitir el informe final de 3 bloques.
+Nunca dar por cerrada una fase con pasos humanos pendientes.
+
+Al terminar **cualquier** trabajo (tarea, plan, revisión, corrección, sesión), el agente
+cierra siempre con un reporte final en 3 bloques, aunque el usuario no lo pida:
+
+1. **QUÉ SE HIZO** — acciones + evidencia verificable (SHAs de commits, rutas, salidas de
+   comandos: pytest/ruff/smoke). Separar HECHO (verificado) de DECLARADO (sin verificar).
+2. **QUÉ QUEDA / PENDIENTE** — todo lo que no se hizo o quedó bloqueado, con la causa y el
+   responsable (p.ej. "pendiente del WEB: ...", "pendiente humano: ...").
+3. **SUGERENCIAS** — propuestas concretas de siguiente paso o mejora (trabajo nuevo,
+   correcciones, decisiones que necesita el humano), priorizadas por impacto. No esperar a
+   que el usuario pregunte "¿y ahora qué?".
+   **"Sugerencias" = "mejoras" (petición RAMON 2026-08-15)**: una sugerencia no es solo un
+   paso; incluye también mejoras del proceso, la herramienta o la metodología. El agente NO
+   las va soltando una a una: analiza TODAS las detectadas y las presenta en CONJUNTO
+   (listado único, priorizado), para que el humano decida de una vez. Solo tras la decisión
+   se ejecutan (y cada una con su TASK UDO y análisis de impacto).
+
+Además, el agente debe ser **proactivo**: al detectar un problema o mejora durante cualquier
+trabajo, proponerla en el momento (clasificar: OBLIGATORIO/NECESARIO/MEJORA) en lugar de
+guardarla en silencio. El modo fondo read-only y las reglas UDO de reserva/--force se
+mantienen intactas.
+
+## Protocolo de Fases (Checkpoint + Microdatos + Olvido)
+
+Para gestionar el ciclo de vida de las fases de trabajo, se usan 3 scripts en `scripts/pro/`:
+
+### 1. Checkpoint — Punto de retorno
+Cuando el agente se detiene en cualquier punto del progreso (por ejemplo, al 20%, 40%, 60%):
+```bash
+scripts/pro/phase-checkpoint.sh TASK-ID <PROGRESO> "situación actual" "problema pendiente principal"
+```
+Donde `<PROGRESO>` es un entero entre 1 y 99 (porcentaje en el que se paró).
+Ejemplo:
+```bash
+scripts/pro/phase-checkpoint.sh TASK-20260925-001 40 "mitad del trabajo" "falta X"
+```
+Esto:
+- Escribe `.opencode/checkpoints/phase-<N>-<PROGRESO>.json` con progreso, situación, problema, timestamp
+- Añade nota al expediente UDO: `CHECKPOINT <PROGRESO>%: situación | problema: problema_pendiente`
+
+### 2. Cierre de fase — Microdato automático
+Al cerrar la fase (justo antes/después de `ura-udo update --estado DONE`):
+```bash
+scripts/pro/phase-close.sh TASK-ID
+```
+Esto:
+- Lee expediente UDO + `git diff` → extrae objetivo, evidencia, decisión
+- Escribe línea JSONL en `.opencode/microdata/phase-<N>.jsonl` (append)
+- Contiene: objetivo, evidencia (commits+diff), decisión, problemas conocidos
+
+### 3. Olvido selectivo — Limpieza dirigida
+Tras cerrar fase (tras `phase-close.sh`):
+```bash
+scripts/pro/prune-phase.sh TASK-ID
+```
+Esto:
+- Archiva logs/temporales de la fase en `.opencode/archive/phase-<N>/`
+- Limpia `memory.md` (elimina líneas de la fase, añade nota de archivado)
+- No borra: microdato (`.opencode/microdata/`), checkpoint (`.opencode/checkpoints/`), expediente UDO
+
+### Flujo completo recomendado:
+```bash
+# En cualquier punto (ej. 40%)
+scripts/pro/phase-checkpoint.sh TASK-20260925-001 40 "situación" "problema"
+
+# Al 100% (cierre)
+scripts/pro/phase-close.sh TASK-20260925-001
+scripts/pro/prune-phase.sh TASK-20260925-001
+ura-udo update TASK-20260925-001 --estado DONE --nota "Cierre fase: resumen ejecutivo"
+```
+
+### Retroceso (recuperar fase antigua):
+```bash
+# Buscar en historial
+opencode run "recall busca TASK-20260925-001"
+# Ver checkpoint <PROGRESO>%
+cat .opencode/checkpoints/phase-<N>-<PROGRESO>.json
+# Ver microdato
+cat .opencode/microdata/phase-<N>.jsonl
+```
+
+### ⚠️ Limitaciones conocidas
+- **Microdatos NO cargan automáticamente**: usar `cat` o `recall` para leerlos
+- **Olvido selectivo real requiere plugin V2**: scripts solo archivan logs; la compactación nativa expulsa por tokens, no por fase
+- **AGENTS.md puede perderse en compactación**: el protocolo también está en `instructions[]` global
+
 ## Project Context
-URA es un asistente de escritorio multi-agente con agentes especializados, coordinador de consciencia, sandbox de auto-mejora, y enjambre autónomo de buzos de investigación.
-Repo: `/home/ramon/URA/ura_ia_1972` (rama `main`).
-El código fuente principal está en ASUS (`gx10-64c3`). El Mac (`Mini-de-RAMON`) es para desarrollo ligero. Sincronización: `git push` / `git pull`. Nunca scp/rsync.
+URA is a multi-agent desktop assistant with specialized agents, a consciousness coordinator, a self-improving sandbox, and an autonomous swarm of research buzzers.
+
+## Metodología Universal de Ingeniería (Plan 0 — v1.0)
+**Aplicar la metodología universal de ingeniería y, además, estas restricciones específicas de URA.**
+
+- **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. El agente lo interpreta como propuesta pendiente de revisión técnica, no como orden ciega.
+- Metodología completa: `docs/engineering/ENGINEERING_PROCESS.md` (v1.0) — 10 obligaciones, clasificación de descubrimientos, mínimos, puntos críticos, NO HACER, veredicto GO/GO CON CAMBIOS/NO-GO, roles, trazabilidad.
+- Templates: `docs/engineering/PLAN_TEMPLATE.md` (11 preguntas del plan) y `docs/engineering/PLAN_REVIEW_TEMPLATE.md` (ANÁLISIS DEL PLAN + veredicto + 9 preguntas de OpenCode).
+- Fuente única: repo git (`docs/engineering/`); copia global instalada en `~/.config/opencode/AGENTS.md` (origen: `deploy/engineering/AGENTS.md.global`); verificar con `scripts/pro/ura-engineering-check`.
+- Referencias: Plan 0 maestro `docs/architecture/PLAN_0.md`, revisado `docs/architecture/PLAN_0_REVISADO.md`, auditoría `docs/architecture/PLAN_0_AUDITORIA.md`, directiva de clasificación `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`.
+- **Lazy loading**:
+  - Para planes: `docs/planes/backlog-pendientes.md` (leer cuando necesites planificar)
+  - Para metas: `docs/meta/META-GLOBAL.md` (leer cuando necesites contexto del proyecto)
+  - Para errores: `docs/errores/README.md` (leer cuando encuentres un fallo)
+- Lo específico de URA (mecanismo UDO, reglas de fase, arquitectura, seguridad) sigue en las secciones de este AGENTS.md.
+
+## Flujo Ejecutor-Revisor v1.0 (TASK-20260816-005)
+
+**Modelos**: ejecutor = OpenCode Terminal (Kimi), revisor = OpenCode Web (DeepSeek V4 Pro).
+
+**Protocolo**:
+1. El ejecutor crea rama `ia/TASK-XXXX` desde `main` y realiza cambios con commits `tipo(alcance): [TASK-XXXX][TERM] descripción`.
+2. Al terminar, ejecuta los gates y solicita revisión.
+3. El revisor ejecuta los gates y revisa el diff (o PR). Emite informe con errores, propuesta y veredicto: `APROBADO`, `CAMBIOS_SOLICITADOS` o `PENDIENTE`.
+4. Si hay `CAMBIOS_SOLICITADOS`, el ejecutor corrige y repite.
+5. Si `APROBADO`, el humano (o bot autorizado) fusiona a `main`.
+
+**Gates obligatorios** (ver `scripts/pro/revision_gates.sh`):
+- `ruff check .`
+- `mypy --no-incremental core motor shared`
+- `pytest -q --tb=short`
+- Escaneo de secretos
+
+**Trazabilidad**: TASK-ID en cada commit, roles `[TERM]` y `[WEB]`, historial de rondas en el expediente de tarea.
+
+**Excepción**: hotfix de seguridad puede ir directo a `main` con commit auditado `[TASK-XXXX][TERM] HOTFIX`, documentado en el expediente.
+
+**Protección de `main` (activada 2026-08-25)**: la rama `main` está protegida en GitHub. Todo cambio requiere:
+- PR desde rama de trabajo (no push directo)
+- 1 aprobación de revisor
+- Status checks verdes: `lint`, `test (3.11)`, `test (3.12)`, `test (3.13)`
+- Force-push a `main` bloqueado
+
+La rama de trabajo (ej. `ia/TASK-XXXX`) sigue siendo la zona activa del TERM; el push a ella NO está restringido.
 
 ## Build & Test Commands
+- Install: `pip install -r requirements.txt`
 - Lint: `ruff check . && ruff format .`
-- Tipos: `mypy --no-incremental core motor shared`
-- Tests: `python3 -m pytest tests/ -q`
-- Gates completos: `make validate`
+- Test: `pytest -q` (needs hypothesis, pytest-asyncio, pytest-timeout)
+- Full audit: `python3 /home/ramon/URA/ura_ia_1972/scripts/pro/pipeline_refactor.py --help`
+- Demo: `bash scripts/demo.sh`
+- Sandbox mejora: `docker exec sandbox-mejora-continua bash /workspace/tuneladora_mejora.sh`
+- Pre-commit semgrep: hook usa `.venv/bin/semgrep` vía `scripts/pro/run_semgrep_hook.sh` (caches a `${TMPDIR:-/tmp}`); en rootfs RO no hace falta SKIP: `XDG_CACHE_HOME=/tmp/opencode/xdg-cache python3 -m pre_commit run semgrep`
 
-## Architecture (high-level)
-- `core/` — Dominio (agentes, debate, guardianes, inferencia)
-- `motor/` — Motor framework (LLM, eventos, orquestación, memoria)
-- `knowledge/` — Motor de conocimiento (F25/F26: fusion, memoria histórica)
-- `scripts/pro/` — Pipeline operativo (~146 scripts)
-- `docs/architecture/` — ADRs, closeouts, auditoría
+## Architecture
+- `core/` — Domain logic (consciousness, values, forensic scribe, rollback) + `core/qdrant_client.py` (regenerable, proxy hacia motor/)
+- `motor/` — Motor framework + `motor/core/config.py` (UraConfig único, fuente de verdad)
+- `agents/` — Specialized agents (organized by domain in subdirectories for new additions)
+- `adapters/` — (no creado aún). External connectors: `core/mochila/providers/` (Ollama, Gemini, Groq, DeepSeek, OpenRouter), `core/notifier.py` (Telegram, Pushover), `knowledge/engine/notify.py` (Slack, Email)
+- `knowledge/` — Long-term memory, document fragments, knowledge base, vectorizar_docs
+- `knowledge/engine/` — Knowledge Engine (Fases 0-7). Almacenamiento, indexado, lineage, memoria, vectorial, FTS5
+- `scripts/pro/` — Scripts de pipeline, utilidades y automatización (~146 archivos)
+
+## Fases
+
+| Fase | Estado | Entrega |
+|------|--------|---------|
+| 0–6 | ✅ Cerradas | FTS5, edges, background queue, autorecuperación, reconcile |
+| **S5b** | ✅ **Cerrada** | Refactor deuda de complejidad: 13 funciones + 1 bugfix seguridad, longas 94→85, CC≥20 13→8. `docs/architecture/REFACTOR_S5b.md` |
+| **S5c** | ✅ **Cerrada** | Cierre total deuda de complejidad del núcleo: 18 refactors + 2 fixes, núcleo 0 longas >60, 0 CC≥20. `docs/architecture/REFACTOR_S5c.md` |
+| **7** | ✅ **Cerrada** (v3.0) | Optimizaciones Producción. Tag `v0.6.0-fase7`. 16 correcciones. PHASE7_CLOSEOUT.md |
+| **8** | ✅ **Cerrada** | Hardening, Cobertura y Documentación. 10 correcciones. `docs/architecture/FASE8_DESIGN.md` |
+| **Auditoría Post-Fase 8** | ✅ **Cerrada** | Saneamiento arquitectónico: unificación config, eliminación código muerto, actualización docs. Tag `v0.7.1-audit-fase8`. `docs/architecture/AUDIT_FASE8_CLOSEOUT.md` |
+| **15** | ✅ **Cerrada** | Migración HTTP (Ollama) — `core/debate/debate_engine.py`, `core/ura_multi_agent.py`. Tag `v0.15.0-fase15` |
+| **16** | ✅ **Cerrada** | Empaquetado y Deuda — eliminar dependencias rotas, tests actualizados. Tag `v0.16.0-fase16` |
+| **17** | ✅ **Cerrada** | Configuración Unificada — UraConfig como vista de CONFIG. 0 new ruff, 0 pytest regressions. Tag `v0.17.0-fase17`. Ver `docs/architecture/FASE17_PROPOSAL.md` |
+| **17.5** | ✅ **Cerrada** | Gestión de Secretos — `motor/core/secrets.py`, 15 consumidores migrados, auditoría automática. Tag `v0.17.5-f17.5`. Ver `docs/architecture/SECRETS.md` |
+
+### Backlog Deuda Técnica (Cerrado Post-F29)
+
+Todos los items T01-T09 fueron auditados/resueltos el 2026-07-19 (commits `c888dce`, `8ba50ca`).
+
+| ID | Ítem | Prioridad | Estado |
+|----|------|-----------|--------|
+| T01 | `core/synonyms.json` con `chattr +i` en disco | Mínima | ✅ Resuelto — `sudo chattr +i` ejecutado en GX10 |
+| T02 | `scripts/pro/sanear_codigo.py:50` syntax error | Baja | ✅ Resuelto (no había error real) |
+| T03 | 12 archivos .py con caracteres no-ASCII en nombre | Baja | ✅ Resuelto (0 archivos encontrados) |
+| T04 | 5 tests CLI fallan por dependencias del entorno | Baja | ✅ Resuelto (`test_unit.py` sys.exit envuelto en `__name__ == '__main__'`) |
+| T05 | FTS schema verifier falso positivo (tablas extrañas) | Media | ✅ Resuelto (`sqlite_stat*` ignorados en `storage_verifier.py:57-59`) |
+| T06 | ~2.356 lint errors pre-existentes (ruff all rules) | Baja | ✅ Resuelto — 0 errores (2356 → 0, commit `8ba50ca`) |
+| T07 | `adapters/` directorio nunca creado | Informativa | ℹ️ Informativo — creado como `motor/platform/adapters/` |
+| T08 | 14 bloques `except: pass` validados (degradación controlada) | Mínima | ✅ Resuelto (F28.1 añadió logging en `motor/platform/`) |
+| T09 | ~80+ bloques `except: pass` sin auditar | Media | ✅ Resuelto (26 en `knowledge/engine/` auditados — 100% degradación controlada, `# noqa` añadido) |
+
+### Regla Global de No Regresión
+
+Ninguna fase podrá degradar rendimiento, calidad o funcionalidad respecto al
+baseline de la fase anterior sin documentarlo y justificarlo en el Closeout.
+
+### Regla Transversal (Fases 10–13)
+
+No abrir una fase nueva sin haber cerrado la anterior mediante:
+
+| Paso | Requisito |
+|------|-----------|
+| Validación completa | Checklist de cierre (compilación, lint, tests, smoke) |
+| Actualización de documentación | AGENTS.md + propuesta de fase reflejan estado real |
+| Comparación con baseline | 0 regresiones funcionales vs commit/tag de inicio |
+| Tag de versión | `git tag -a vX.Y.Z-faseN` |
+| Acta de cierre | `docs/architecture/FASEN_CLOSEOUT.md` actual |
+
+### Fase 9 — Plan de Ejecución (Aprobado, v3.0)
+
+Ver `docs/architecture/FASE9_PROPOSAL.md` para especificación completa.
+
+**Orden de ejecución:** C → B → D → A → E (revisado: B antes que D, A al final)
+
+| Stream | Descripción | Esfuerzo | Estado |
+|--------|-------------|----------|--------|
+| C | Modo degradado explícito (DegradedMode, /api/v1/status) | 2-3h | ✅ COMPLETADO |
+| B | Modularidad: executor.py, plugin system via importlib, kill shell=True | 8-13h | ✅ COMPLETADO |
+| D | Refactor CLI: extraer ura.py a motor/cli/, console_scripts | 3-5h | ✅ COMPLETADO |
+| A | Calidad: unificar runners, reorganizar tests, Makefile | 2-3h | ✅ COMPLETADO |
+| E | Validación final: baseline, benchmarks, smoke tests, tag | 1-2h | ✅ COMPLETADO |
+
+**Regla:** `ura.py` se mantiene como wrapper durante Fase 9 (no se elimina).
+**Cobertura:** No se fuerza umbral mínimo hasta que la cobertura real haya mejorado.
+**Criterio:** Solo trabajo con impacto funcional o arquitectónico. Deuda técnica residual fuera.
+
+### Stream E — Checklist de Validación Final (Obligatorio)
+
+| # | Check | Criterio |
+|---|-------|----------|
+| E.1 | Compilación completa | `py_compile` 0 errores en todos los módulos tocados |
+| E.2 | Ruff sin errores nuevos | `ruff check` — 0 errores nuevos vs baseline |
+| E.3 | Pytest con nuevo recuento | `pytest -q` — mismo resultado que baseline (sin regresiones) |
+| E.4 | Smoke tests CLI | `ura.py help/status/doctor/finalize --help` funcionan |
+| E.5 | Smoke tests API | `ejecutor_api` endpoints /health, /api/v1/status responden |
+| E.6 | Descubrimiento de plugins | `PluginRegistry.scan()` encuentra plugins sin errores |
+| E.7 | Verificación de DegradedMode | `DegradedMode` inicializa, degrada, restaura correctamente |
+| E.8 | Comparación con baseline | diff de tests vs baseline commit (`0d5aed7`) |
+| E.9 | Working tree limpio | `git status` sin cambios sin commitear |
+| E.10 | Documentación sincronizada | AGENTS.md + FASE9_PROPOSAL.md reflejan estado real |
+
+### Pipeline Activo (scripts/pro/)
+**~146 archivos** entre scripts Python, shell, servicios, configs y utilidades.
+Organizados por función en las siguientes categorías:
+
+| Categoría | Scripts | Propósito |
+|-----------|---------|-----------|
+| **Tuneladora** | `tuneladora_mantenimiento.py`, `tuneladora_mejora.py` | Pipeline de mejora continua (v2, motor compartido). Pipeline de Refactorización solo se inicia desde Mejora Continua. |
+| **Diagnóstico/Mantenimiento** | `token_screen.py`, `scanner_autoajuste.py`, `chunk_optimizer.py`, `poda_mecanica.py`, `watermark_aggregator.py`, `inspectores.py`, `compactadora.py`, `compactador_espacios.py`, `auto_reglas.py`, `reglas_loader.py`, `f821_watch.py`, `analizar_fallo_conciencia.py`, `master_conciencia.py`, `sincronizar_vocabulario.py`, `patch_timestamps.py`, `fix_masivo.py`, `hardening_audit.py`, `systemd_orphan_scanner.py` | Auditoría, reparación y optimización automática del código |
+| **Refactor** | `refactor_large_functions.py`, `refactor_large_functions_v2.py`, `refactor_v2.py`, `refactor_4_motores.py`, `ajustar_contexto.py`, `sanear_codigo.py` | Refactorización con LLM + compactación |
+| **Consciencia/Memoria** | `conciencia.py`, `auto_conciencia.py`, `analisis_completo.py`, `ura_self_modify.py` | Sistema de memoria, auto-conciencia y meta-mejora |
+| **Model Router** | `auditor_router.py`, `router_rate_limiter.py`, `pareto_router.py`, `meta_mejora.py` | Gestión y auditoría del Model Router |
+| **OpenClaw** | ~~`openclaw_reviewer.py`, `openclaw_firmador.py`, `openclaw_netlock.sh`~~ — **RETIRADO 2026-08-08** (`c6d60c8c`) | ✅ Impacto cero; excepción: `monitor/` (SNC, brazo de emergencia) y `core/model_router/cli.py` (auth arranque) |
+| **OpenClaw Orquestador** (rol nuevo, 2026-08-13) | Supervisor/planificador read-only con Ramón: perfil aislado `openclaw --profile orquestador`, escribe SOLO en `docs/udo/plans/`, ejecuta SOLO allowlist read-only (git log/grep/cat/ura-udo context), sin gateway systemd, sin imports. NO es orden: veredicto humano (Plan 0). Detalle: `docs/udo/OPENCLAW-ORQUESTADOR.md` | ✅ Diseñado; pendiente inicio de Ramón (`configure` + exec-policy) |
+| **Ejecución/Servicios** | `ejecutor_api.py`, `pipeline_supremo.py`, `plugin_registry.py`, `PLUGIN_TEMPLATE.py`, `mcp_mochila.py`, `reglas_applier.py`, `reglas_generator.py` | APIs, pipeline y registro de plugins |
+| **Sandbox** | `sandbox_industrial.py`, `jaulas_recursos.sh`, `deploy_sandbox_gx10.sh` | Sandbox de pruebas y límites de recursos |
+| **Utilidades** | `utils.py`, `check_secrets.py`, `revisor.py`, `generate_arch_diagram.py`, `captura_virtual.py`, `compilador_opiniones.py`, `test_latencia_mac.py`, `ura_watch_asus.py`, `watch_inbox.py`, `knowledge_engine.py`, `chaos_test.py`, `metrics_server.py`, `reindex_vectors.py` | Utilidades varias y monitoreo |
+| **Benchmarks** | `tools/benchmarks/` (15 scripts, movidos de scripts/pro/ en F1.3) | Benchmarks aislados fuera del radar de calidad |
+| **GPU/Sistema** | `gpu_health.py`, `gpu_recovery.sh`, `lock_manager.py`, `ura-system-health.sh`, `health_check.sh`, `health_check_router.sh`, `monitoreo_urgente.sh`, `watchdog_buffer.sh` | Health checks GPU y del sistema |
+| **Red/Backup** | `ura_ojos.sh`, `ura-exit-node.sh`, `gx10_sync.sh`, `gx10_sync_final.sh`, `cross_trace.sh`, `sync_knowledge.sh`, `sync_ura.sh`, `notify_on_change.sh`, `backup_unified.sh`, `backup_gx10_configs.sh`, `safe_rollback.sh`, `shadow_git_rollback.sh` | Sincronización, backup y rollback |
+| **Hetzner** | `deploy_to_hetzner.sh`, `asus_connect_hetzner.sh`, `heartbeat_hetzner.sh`, `hetzner_watchdog.sh`, `rescue_hetzner.sh`, `install_tailscale_hetzner.sh`, `orquestar_auditoria_hetzner.sh`, `pull-from-hetzner.sh`, `redirect_mejora_gx10.sh`, `backup_hetzner_to_asus.sh`, `uitars_hetzner.py` | Gestión del nodo Hetzner |
+| **Auditoría** | `auditoria.sh`, `auditoria_pesada.sh`, `auditoria_qwen.sh`, `auditoria_comite.sh`, `phase1_diagnosis.sh`, `phase2_filter.sh`, `phase3_architecture.sh`, `phase4_rollback.sh`, `dr_test.sh`, `fpfn_report.sh`, `fn_scanner.sh`, `fp_scanner.sh`, `false_positive_baseline.sh`, `quality_metrics.sh`, `check_licenses.sh`, `audit_trail_check.sh` | Auditorías, quality metrics y disaster recovery |
+| **RPA/Cámaras** | `bypass_linksys_gui.py`, `rpa_linksys.py`, `rpa_linksys_v2.py`, `rpa_zte_f6640.py`, `deploy_camaras.sh`, `desplegar_dahua_supervisor.sh`, `instalar_servidor_camaras.sh`, `guardian_tmpfs.sh`, `ura-telemetry-pos.ps1` | Automatización RPA, cámaras Dahua y telemetría POS |
+| **Instalación/Deploy** | `instalar_gx10_circuit.sh`, `integracion_opencode.sh`, `conceder_permisos_accesibilidad.sh`, `mcp_config.sh`, `setup_logrotate_newsyslog.sh`, `patch_systemd_limits.sh`, `deploy_copilotos.sh`, `stage_hardening.sh`, `upgrade_pipeline.sh`, `detect_environment.sh`, `trampa_rm.sh` | Instalación, hardening y despliegue |
+| **Pipeline Voz/Visión** | `demo_pipeline_voz.py`, `demo_pipeline_mac.py`, `com.ura.voice.plist`, `seed_correcciones_voz.py`, `daemon_procesamiento_lento.sh`, `supervisor_ciclo.sh` | Pipelines de voz y procesamiento lento |
+| **Evolución/Ciclo** | `evolve.sh`, `ciclo_rapido.sh`, `filtro_cascada.sh`, `conflict_detector.sh`, `conectar_servidor_externo.sh`, `descubrir_puertos.sh`, `maquinas.sh`, `auto_export_context.sh` | Ciclos de evolución y detección de conflictos |
+| **Config/Templates** | `tailscale-acls.json`, `crontab_gpu_health.txt`, `docker-compose.gx10-sandbox.yml`, `gx10-api.service`, `ura-mkdocs.service`, `DEPLOY_MAC.md`, `rotate_secrets.sh` | Configuraciones y templates |
+| **ura-query** | `ura-query.py` | Consulta vectorial del grafo indexado |
+
+### Scripts Archivados/Fusionados
+- `ciclo_autonomo_gx10.py` → fusionado con `tuneladora_mantenimiento.py`
+- `meta_mejora_real.py` → fusionado con `meta_mejora.py`
+- `analisis_llm.py` + `meta_mejora_v2.py` + `reflexion_ura.py` → fusionado en `analisis_completo.py`
+- `refactor_watchdog.py` → fusionado con `tuneladora_mejora.py`
+- `auto_aplicar_mejoras.py` → fusionado en `ura_self_modify.py`
+- `reflexion_profunda.py` → fusionado en `analizar_fallo_conciencia.py`
+- `translate_to_english.py` → eliminado (código en inglés)
+- `ia-flujo.service` → eliminado (app/flujo_constante.py nunca existió)
+- 34 scripts huérfanos → `.nervioso/descarte/`
+
+## GX10 (ASUS GB10) — Estado Real (resumen)
+
+**Detalle operativo completo**: `docs/architecture/REFERENCIA_GX10.md` (servicios systemd, timers, modelos Ollama, red, directorios, sandboxes).
+
+- **Hardware**: NVIDIA GB10 Grace Blackwell, 20 núcleos ARM, GPU Blackwell FP4/FP8, 128 GB memoria unificada.
+- **Servicios críticos**: ollama (11434), ura-api (8000), ura-audit-api (8080), ura-mochila, ura-metrics (8888), ura-watcher, ura-detector (YOLOv8), ura-voice, ura-contraste (8002), model-router (11435). Detalles y estados en la referencia.
+- **Rootfs**: puede estar montado RO (ver REFERENCIA_GX10.md y `ura-engineering-check --env`).
+- **Red** (verificado 2026-09-08): GX10 Ethernet 10.164.1.99 **activa** (usar esta vía preferente) / WiFi 192.168.1.140 (antes 10.164.1.247, obsoleta) / Tailscale **activo** (100.72.103.12, ping directo ~1ms). Alias ssh en la Mac: `gx10`→LAN 10.164.1.99, `gx10-lan`, `gx10-ts`→Tailscale. En la Mac, Tailscale lo gestiona la app GUI (IPNExtension); el CLI brew (`tailscale`) es solo cliente. El servicio brew `homebrew.mxcl.tailscale` está desactivado (redundante, requiere root).
+- **Model Router**: `motor/` + Ollama; rutas razonamiento/codigo/vision/embeddings (detalle en referencia).
+
+## Core Modification Rule (ADR-007)
+The core (`core/`) is NOT frozen, but modifications require an ADR with:
+- **Justification of necessity**: must demonstrate the change cannot be achieved via Protocol, EventBus subscriber, or external adapter
+- **Migration + rollback plan**: every core change must be reversible
+- **Degradation**: system must work without the modification
+- **Mandatory second-party review**: no autonomous core modifications
+- **Semantic freezing**: observable behavior of existing functions may not change, even if signature stays the same
+- ✅ Allowed: Adding optional fields to `UraConfig`, new event topics, hooks/callbacks (backward-compatible, degradable)
+- ❌ Prohibited: Refactoring/renaming existing symbols, changing method signatures, changing observable behavior, deleting functionality, modifications achievable via Protocol/EventBus instead
+- See `docs/architecture/ADR-007-REGLA_NUCLEO.md` for the full policy
+
+## Naming Conventions
+- Files: kebab-case for new files (e.g., `ura-panel.py`, `buzo-academico.sh`)
+- Directories: kebab-case (e.g., `agents/cocina/`, `knowledge/fragmentos/`)
+- Dates: ISO 8601 (YYYY-MM-DD)
+- Artifacts: SLUG prefix (e.g., `audit-report-2026-05-17.md`)
 
 ## Security Rules
-- No `shell=True` en subprocess
-- No secretos hardcodeados (usar env vars o bóveda)
-- Network allowlist para sandbox
-- ADR-007: modificar `core/` requiere ADR + plan de rollback + revisión
+- No `shell=True` in subprocess calls
+- No hardcoded secrets (use Boveda or environment variables)
+- All autonomous changes go through sandbox + rollback
+- Network allowlist for sandbox containers
+- **EXCEPCIÓN**: `allowInsecureAuth=true` en opencode para acceso HTTP desde Mac (documentado en SECURITY_EXCEPTIONS.md)
+- **BACKUP**: Script `/opt/ura/scripts/backup_to_mac.sh` + cron job diario 03:00 (requiere configuración SSH manual)
 
 ## Code Style
-- Ruff ALL rules enabled
-- Type hints obligatorios
-- Docstrings estilo Google
-- Naming: kebab-case en archivos/dirs, ISO 8601 en fechas
+- Ruff with ALL rules enabled
+- Type hints required for all new functions
+- Agent classes should inherit from existing base patterns
+- Docstrings in Google style
 
-## Verification Requirements
-- Gates: ruff + mypy + pytest + secret-scan (via `scripts/pro/revision_gates.sh`)
-- Cobertura: ≥80% por módulo nuevo (meta 100×100)
-- Política de flaky tests: fugas de estado global se arreglan con snapshot/restore, no con timing
+## Reglas Arquitectónicas
 
-## Protocolo de respuesta
-Al terminar CADA respuesta, después del bloque `<<<RESUMEN>>>`, emitir en su propia línea la etiqueta de instancia:
-- `[1-Desktop-Mac]`, `[2-Web-Mac]`, `[3-Desktop-ASUS]`, `[4-Web-ASUS]`, `[0-Desconocido]`
-Determinar con: `echo "CLIENT=$OPENCODE_CLIENT HOST=$(hostname)"`
+### _state.py — Responsabilidad Única
+Los módulos `_state.py` deben limitarse a:
+1. Representar estado (dataclasses frozen)
+2. Construir estado (factories `build_*()`)
+3. Exponer dependencias
 
-Toda acción ejecutada debe reportarse con:
-COMANDO: <exacto>
-SALIDA: <literal, sin resumir>
-INTERPRETACIÓN: <qué significa>
+NO deben contener lógica de negocio ni convertirse en coordinadores del sistema.
 
-## Maletas disponibles (subagentes)
+### Convención de Fábricas
+| Prefijo | Uso | Ejemplo |
+|---------|-----|---------|
+| `build_*` | Crear objetos de infraestructura | `build_llm_state()`, `build_scanner_state()` |
+| `create_*` | Componer aplicaciones o servicios | `create_app()` (Mochila) |
+| `get_*` | Instancias existentes o lazy init | `_get_state()`, `get_secret()` |
 
-Los subagentes son **perfiles de permisos**. No tienen system prompt propio.
-Cuando el agente principal los invoca, debe pasarles las instrucciones en el mensaje.
-Disponibles en `.opencode/agents/`:
+### Política de Deprecación
+- Las capas de compatibilidad (`__getattr__`, wrappers, re-exports) deben marcarse con `DeprecationWarning` inmediatamente.
+- v3.x → marcar como deprecado.
+- v4.0 → eliminar.
+- Si no se planifica la retirada, las capas de compatibilidad se convierten en deuda permanente.
 
-- **@revisor** — Auditoría solo-lectura. Veredicto: GO / GO CON CAMBIOS / NO-GO.
-  Pásale: "Eres revisor. Auditas, no programas. Emites GO/GO CON CAMBIOS/NO-GO con evidencia literal."
-- **@revisor-fondo** — Modo fondo automático. Solo lectura estricta. Detecta hallazgos, registra plan, no toca código.
-  Pásale: "Modo fondo. Auditas sin modificar. Registras hallazgos con plan."
-- **@tester** — Verifica tests reales (RED→GREEN) y cobertura ≥80% por módulo.
-  Pásale: "Verificas tests. RED→GREEN. Cobertura ≥80% por módulo. Reportas PASS/FAIL."
-- **@verificador** — Ejecuta gates (ruff, mypy, pytest, secret-scan) y reporta evidencia literal.
-  Pásale: "Ejecutas gates. Reportas evidencia literal. No arreglas nada."
-- **@calidad-cobertura** — Solo lectura. Mide cobertura por módulo del diff. Mínimo 80%, meta 100×100.
-  Pásale: "Mides cobertura de los módulos del diff. ≥80% obligatorio. Reportas."
-- **@orchestrator** — Detecta planes, crea tareas UDO, distribuye entre nodos.
-  Pásale: "Analizas el mensaje. Si es plan, lo parseas y distribuyes. Si es orden local, la ejecutas."
-- **@build** (principal) — Ejecuta build, tests e integración. Edita y ejecuta bash. Es el default.
+### Métricas Baseline
+- Ver `docs/architecture/METRICAS_BASELINE.md` para la serie temporal.
+- Actualizar al cerrar cada fase que toque métricas.
+- Si una métrica empeora, documentar por qué y compensar en otra dimensión.
+
+### Política de Cobertura (petición RAMON, 2026-08-13)
+- **Todo código nuevo DEBE entregarse con cobertura de tests ≥80% POR MÓDULO** — no es una media global: cada archivo/módulo nuevo debe quedar al menos en 80% al declararse terminado.
+- **Meta del proyecto: 100×100** (100% de cobertura) — la horquilla inicial 80-90 era el mínimo de entrada; la dirección es subir progresivamente cada módulo hasta el 100%.
+- Los módulos ya existentes que superen el 90% no se degradan; la regla rige para el trabajo nuevo y para subir los módulos actualmente por debajo del 80%.
+- Medición: `pytest` + `coverage` con `--source` relativo al directorio del módulo (los nombres absolutos no miden). Para `scripts/pro` usar rcfile propio **sin** el `omit = scripts/*` del `.coveragerc` oficial (línea: `coverage run --rcfile=X`).
+- Excepción: scripts bash (sin marco de cobertura estándar) → verificación por smoke manual documentada.
+- Estado actual medido 2026-08-13: fusion 40%, scripts/pro 9% (7 módulos de la semana alto %), router/intelligence/extractors/web/compresor 0% (sin tests) — ver conversación y próximo cierre deuda.
+- **Hito 2026-08-28 (TASK-20260828-001)**: `motor/core/llm/router/` alcanzó **100×100** (344 stmts, 0 miss) con `tests/unit/test_motor_llm_router_capability_cobertura.py` (35 tests) + los tests existentes. `core/watchdog_funciones.py` también **100%** (116 stmts). Plantilla reutilizable: fakes `FakeProvider`/`FakeRegistry` (Structural typing) + cobertura dirigida por rama (`coverage run --source=<módulo>` + `report --include`).
+- **Hito mypy 2026-08-28 (TASK-20260828-002)**: serie de tipado de `core/` y `motor/orchestration/` completa — **0 errores mypy en archivos versionados** (~80 archivos, ~390 errores resueltos incl. `tier3_proxy.py`, `mochila_engine.py`). El gate `mypy --no-incremental core motor shared` reporta **0 errores en producción versionada** (solo `motor/tests/*` quedan fuera por política). Patrones: `dict[str, Any]`/`list[dict[str, Any]]`/`set[str]` type args, coacción de `json.loads`, `-> Any` para handlers FastAPI (evita response_model), `# type: ignore[attr-defined]` para imports de try/except, `Self`/`object` para `__enter__`/`__exit__`. Los `motor/tests/*` quedan fuera del gate (`core motor shared`).
+- **Lección mypy strict (ADR-099, 2026-08-28)**: NO usar `isinstance(x, str)` como parche de tipos en hot paths si altera la semántica. El commit `362dc8e4` (mypy strict) añadió `isinstance(args[0], str)` en `call_with_fallback` para complacer el checker y **rompió `router.embed`** (lista de textos → `""`). Regla: si mypy exige un tipo que el runtime no cumple, ampliar a `Any` y documentar con ADR, nunca filtrar por tipo que cambie comportamiento. Mismo patrón se aplica a `prompt: Any` en `strategy.py`.
+
+### Política de Tests Flaky (2026-08-28, lección TASK-20260828-001)
+- Un test que **pasa aislado pero falla en la suite completa** (con pytest_randomly) = **fuga de estado global**, NO un fallo de código. Corregir aislándolo: restaurar el estado global que muta (snapshot/restore, fixture autouse en `tests/conftest.py`), **no** añadir `sleep`/timing.
+- Causas raíz comunes ya resueltas: registro global de errorcodes (`_ALL_CODES`), singleton lazy `_WRITER` de `core/search_logger`, fakes de módulo en `sys.modules` (`_voice_fakes`), benchmarks con umbral de ms fijo (relajar a valor realista), `asyncio.sleep(0.01)` frágil (usar polling determinista `_esperar_cola`).
+- **Patrón de corrección**: identificar el estado global mutado → restaurarlo tras el test. Ver ejemplos: `tests/unit/test_knowledge_errors_cobertura.py`, `tests/conftest.py` (`reset_searchlog_writer`), `tests/unit/test_mochila_vram_scheduler.py` (`_esperar_cola`).
+- Los flaky de orden sin causa determinista (conjunto variable entre corridas en la suite de ~9700 tests) se documentan como deuda y se persiguen en TASK de tuneladora, no en sesiones de feature.
+- **Lección secretos (TASK-20260828-002)**: un test que falla solo en GX10 (no en Mac) puede ser por `get_secret` con fallback al archivo `RUTA_SECRETOS` (`/etc/ura/secrets.env`). Borrar el env var con `monkeypatch.delenv` NO basta — hay que aislar el archivo: `monkeypatch.setattr(_sec, "RUTA_SECRETOS", "/tmp/no-existe.env")` + `_sec._clear_cache()`. Ejemplo: `tests/integration/test_assistant_auth.py::test_auth_disabled_by_default`. Patrón pre-existente en `tests/unit/test_agents_gate_telemetry_cobertura.py`.
 
 ## Key Files
-- `AGENTS.md`, `README.md`, `pyproject.toml`
-- `motor/core/config.py` — UraConfig (fuente de verdad)
-- `scripts/pro/tuneladora_mantenimiento.py` — pipeline de mantenimiento
-- `docs/architecture/ADR-007-REGLA_NUCLEO.md`
+- `AGENTS.md` — This file (AI instructions)
+- `README.md` — Human-readable project overview
+- `pyproject.toml` — Python project configuration
+- `CLAUDE.md` — Symlink to AGENTS.md (Claude Code compatibility)
+- `/home/ramon/URA/ura_ia_1972/scripts/pro/tuneladora_mantenimiento.py` — Tuneladora de mantenimiento (v2, motor compartido)
+- `/home/ramon/URA/core/model_router.py` — Model Router Enhanced
+- `docs/architecture/FASE8_DESIGN.md` — Fase 8 design document (live)
+- `docs/architecture/PHASE7_CLOSEOUT.md` — Fase 7 closeout (v3.0)
+- `/opt/ura/config/go2rtc.yaml` — 30 streams de 15 cámaras Dahua
+- `SECURITY_EXCEPTIONS.md` — Documentación de excepciones de seguridad
+- `motor/core/config.py` — UraConfig único (fuente de verdad)
+- `core/qdrant_client.py` — Proxy hacia motor.core.qdrant_client (regenerable)
+- `scripts/pro/lock_manager.py` — Cerrojo GPU (flock/fcntl para colisión tuneladora/crontab)
+- `scripts/pro/gpu_health.py` — Detector power cap GB10 (15W/650MHz)
+- `scripts/pro/gpu_recovery.sh` — Recuperación automática de drivers NVIDIA (regex `^P(0|2|8|12)$`)
+- `scripts/pro/tailscale-acls.json` — Política de aislamiento perimetral Tailscale
+- `scripts/pro/ura-telemetry-pos.ps1` — Agente de telemetría para caja0 (Windows POS)
+- `scripts/pro/crontab_gpu_health.txt` — Crontab de auditoría GPU cada 30 min
+- `scripts/deploy/fix-path.conf` — Environment file para ura-contraste.service
+- `scripts/deploy/ura-contraste.service` — Unidad systemd oficial del proxy de contraste
+- `scripts/deploy/transition_contraste.sh` — Script de transición watchdog→systemd (auto-deploy)
+- `deploy/ura-router-health.service` — Health check del Model Router
+- `deploy/rotate-logs.service` — Rotación de logs vía logrotate
+- `deploy/rotate_logs.timer` — Timer semanal para rotate-logs.service
+- `scripts/watchdog_contraste.py` — Watchdog temporal (fallback si systemd no disponible)
+- `scripts/start_contraste.sh` — Arranque manual proxy_contraste + watchdog
+- `/home/ramon/docker/prometheus/alert.rules` — Regla NodoPerifericoDesconectado
+- `/etc/ura/fix-path.conf` — Environment file desplegado del servicio
 
-## Problemas conocidos
-- Subagentes NO tienen system prompt propio (limitación de OpenCode 1.18.21+). Sus `.md` sirven solo para description/mode/model/permission.
-- AGENTS.md se inyecta al agente principal en cada turno. Mantenerlo corto (<150 líneas).
+## Problemas Conocidos (2026-07-19)
+- **Backup a Mac**: Requiere configuración SSH manual (clave generada en GX10)
+- **Backups en mismo disco**: `/opt/ura/backups/` está en NVMe del GX10 (no redundancia)
+- **Model Router**: Arreglado para no crear zombies (cache 5min, Connection: close)
+- **RAM**: 57GB/121GB (~47%, modelo grande descargado)
+- **Rootfs montado RO**: ✅ **RESUELTO (2026-07-19)**. Causa: falta `rw` en fstab. Fijado: `rw,errors=remount-ro`. `systemctl daemon-reload` aplicado. Próximo reinicio arrancará RW automáticamente.
+- **Zombies**: 0 (limpiados durante reparación)
+- **F14-F01**: Flag `no new privileges` impide usar sudo y restart systemd services sin polkit interactivo.
+- **F14-F02**: ✅ **RESUELTO** — el runtime actual (`motor/intelligence/agents/runtime.py`) no expone `cancel(workflow_id)` público; usa checks internos de cancelación (verificado 2026-08-12).
+- **F14-F03**: ✅ **RESUELTO** — `EpisodeStore._init_db()` (`motor/intelligence/memory/episodic.py:111-138`) captura `DatabaseError` y recrea la BD automáticamente (verificado 2026-08-12).
+- **F14-F04**: Qdrant recovery time ~30.2s excede umbral de 30s en R01/R09 — borderline.
+- **F14-F05**: ⚠️ Fallback funciona y se loguea; docstring del degradado añadido (2026-08-12, `motor/intelligence/retrieval/hybrid.py:search`).
 
-## Verificación antes de cerrar tarea
+## Roadmap (Fases 10–29)
 
-Antes de decir "hecho", "listo" o "done":
-1. Invoca @verificador. Pega la salida literal.
-2. Invoca @tester. Pega la salida literal.
-3. Solo entonces, cerrar.
+| Fase | Objetivo | Resultado Clave | Estado |
+|------|----------|-----------------|--------|
+| **10** | Estabilización | CI verde, 0 tests fallidos, sin issues conocidos | ✅ Cerrada (v0.10.0) |
+| **11** | Plataforma | Motor extensible: plugins instalables, hooks, eventos, pipelines dinámicos, observabilidad técnica | ✅ Cerrada (v0.11.0) |
+| **12** | Inteligencia | KE 2.0, ranking híbrido, chunking semántico, memoria contextual, multiagente, consenso | ✅ Cerrada (v0.12.0) |
+| **13** | Producción | Docker, pip install, Prometheus/Grafana, releases, docs para terceros | ✅ Cerrada (v0.13.0) |
+| **14** | Robustez | Load & Stress, resiliencia, E2E, profiling, RC Audit | ✅ Cerrada (v0.14.8-b5) |
+| **28.1** | Stabilization | Cerrar F28: 0 bugs críticos, ADRs Approved, tag stable | ✅ Cerrada (v0.28.3-stable) |
+| **29** | Production Readiness | OBS + VAL + OPS + RES + COMPAT + GOV + RR1 | ✅ Cerrada (v0.29.0-fase29) |
 
-Si no puedes invocarlos, di por qué. No declares "hecho" sin verificación.
+### Detalle por Fase
+
+**Fase 10 — Estabilización** ✅ Cerrada (v0.10.0)
+- ✅ 19 tests fallidos → 0 (540 passed)
+- ✅ `sys.exit(78)` movido a main()
+- ✅ `guardian_logger.py` SyntaxError corregido
+- ✅ 27 subprocess → SubprocessExecutor migrados
+- ✅ 67 tests nuevos (DegradedMode, PluginRegistry, Executor)
+- ✅ Deuda lint: DTZ005 0, invalid-syntax 0, S603/S607 producción 0
+- ✅ Benchmarks: 0 degradaciones
+- **Salida:** CI verde, 0 tests fallidos, 0 regresiones
+- `docs/architecture/FASE10_CLOSEOUT.md`
+
+**Fase 11 — Plataforma (Capacidades del Motor)** ✅ Cerrada (v0.11.0)
+
+**Orden:** Contract-first (Bloque 0 → Bloque 1 → Bloque 2 → Bloque 3)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **0** | Contratos: ADRs (4) + PLUGIN_API.md | ✅ Completado |
+| **1** | Infraestructura: EventBus, plugin manifest, RegistryV2, hooks, tests | ✅ Completado |
+| **2** | Pipelines dinámicos: engine YAML, etapas base, CLI | ✅ Completado |
+| **3** | Observabilidad: /metrics, /health, /ready, métricas de plugins | ✅ Completado |
+
+**ADRs activos:**
+- `ADR-011-01`: Contrato de API de plugins (plugin.yaml, PluginBase mejorado)
+- `ADR-011-02`: EventBus tipado (tópicos, payloads, sync/async, patrones)
+- `ADR-011-03`: Hooks desacoplados vía EventBus (cadena, circuit breaker)
+- `ADR-011-04`: Versionado SemVer y matriz de compatibilidad
+
+**Documentación técnica:** `docs/plugins/PLUGIN_API.md`
+
+- **Regla:** Todo módulo nuevo como plugin (no script suelto)
+- **Salida:** Toda nueva funcionalidad extensible mediante plugins/eventos, sin modificar el núcleo
+- Ver `docs/architecture/FASE11_CLOSEOUT.md`
+
+**Fase 12 — Inteligencia** ✅ Cerrada (v0.12.0)
+
+**Orden:** KE Core → Context Memory → Multi-Agent Runtime
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **0** | Contrato: ADR-012-01 (métricas, corpus, baseline KE 1.x) | ✅ Completado |
+| **1** | KE Core: chunking semántico, retrieval híbrido, reranking | ✅ Completado (Hybrid: R@10=0.87, NoCtx=0.5%) |
+| **2** | Context Memory: episódica, semántica, compresión, olvido | 🔮 Planificado |
+| **3** | Multi-Agent: consenso, Planner, Researcher, Executor, Validator, Supervisor | 🔮 Planificado |
+
+**Contrato de calidad:**
+- `ADR-012-01` define métricas (Recall@k, Precision@k, MRR, nDCG, latencias)
+- Corpus de ≥200 consultas como requisito de entrada
+- Baseline KE 1.x medido antes de cualquier desarrollo
+- Toda mejora validada contra el corpus antes de aceptarse
+
+- **Salida:** KE 2.0 operativo con métricas objetivas de mejora documentadas
+- Ver `docs/architecture/FASE12_PROPOSAL.md`
+
+**Fase 13 — Producción** ✅ Cerrada (v0.13.0)
+
+- ✅ Consensus Engine (4 sub-bloques: Voting, Weighted, Reflection, Parallel)
+- ✅ Docker + docker-compose + install.sh + entrypoint.sh
+- ✅ Observabilidad (JSON logging, Prometheus exporter, dashboards, alerts)
+- ✅ CI/CD (GitHub Actions, pip package, release workflow)
+- ✅ Documentación (README, QUICKSTART, CLI, PLUGIN_DEV, ARCHITECTURE)
+- ✅ Deuda F12 (KE↔Memory, orchestrator, LLM extractor, feature flags)
+- **1100 tests, 0 failures. Sin dependencias circulares.**
+- Ver `docs/architecture/FASE13_CLOSEOUT.md`
+
+**Fase 14 — Robustez** ✅ Cerrada (v0.14.8-b5)
+
+**Objetivo:** Validación operativa para Release Candidate. No añadir nuevas funcionalidades.
+Solo medir, validar, documentar.
+
+**Orden:** Load & Stress → Resiliencia → E2E → Profiling → RC Audit
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **1** | Load & Stress Testing: runtime (10/100/1000 wf), retrieval, memory, consensus. CPU/RAM/latencias, throughput, punto de saturación. Datos CSV/JSON | ✅ COMPLETADO |
+| **2** | Resiliencia: matriz 10 escenarios con fallo/expected/observed/auto_recovery/data_loss/recovery_time. Sin corregir fallos durante la fase | ✅ COMPLETADO |
+| **3** | End-to-End: 8 casos con ≥70% componentes reales, sin mocks salvo externos inevitables. Cobertura funcional documentada | ✅ COMPLETADO |
+| **4** | Profiling: 5 escenarios (3h total), RSS/CPU/threads/MemoryStore/timeseries. Detectar leaks y crecimiento anómalo | ✅ COMPLETADO |
+| **5** | RC Audit: tabla 10 requisitos con PASS/FAIL/PARTIAL. Conclusión: RC Ready / RC Ready with Conditions / Not RC Ready | ✅ COMPLETADO |
+
+- **Regla:** No modificar el sistema para que pase los tests. No corregir fallos durante la fase. Documentar fallos como hallazgos.
+- **Esfuerzo estimado:** 33-50h
+- **Salida:** Evidencia objetiva de robustez para decidir si el proyecto alcanza clasificación Release Candidate
+- Ver `docs/architecture/FASE14_PROPOSAL.md`
+- **Resultado:** `RC Ready with Conditions` — 7/10 PASS, 0 FAIL, 3 PARTIAL.
+  5 condiciones no bloqueantes resueltas antes de versión estable. Esfuerzo estimado: 5.5-8.5h.
+- **Tags:** `v0.14.6-b3` (Bloque 3), `v0.14.7-b4` (Bloque 4), `v0.14.8-b5` (Bloque 5)
+- Ver `docs/architecture/RC_READINESS.md`
+
+**Fase 15 — Migración HTTP (Ollama)** ✅ Cerrada (F16-B1..B4 → F16-B4.2)
+- Migración de llamadas HTTP directas a Ollama hacia `generate()` + `health()` del motor
+- `core/debate/debate_engine.py`, `core/ura_multi_agent.py` migrados
+- 0 HTTP directo a Ollama en `core/`, `motor/`, `knowledge/`
+**Fase 16 — Empaquetado y Deuda** ✅ Cerrada (F16-B5..B7)
+- Eliminación de dependencias rotas (`import httpx`), tests actualizados
+- Tag `v0.16.0-fase16`
+
+**Fase 17 — Configuración Unificada** ✅ Cerrada (v0.17.0-fase17)
+- Unificación de UraConfig como vista tipada de CONFIG (Opción A de convergencia)
+- B1: Auditoría CONFIG_AUDIT.md (36 consumidores, 7 defectos)
+- B2: Deprecación de `config.local.json`
+- B3: Corrección de `get_ollama_urls()` y eliminación de duplicados
+- B5.1: Refactor de `UraConfig.load()` con helpers y prioridad legacy→CONFIG→env
+- B6-D04: Migración de `secretario_cache.py` a UraConfig
+- B6.5: `scripts/pro/audit_config.py` con 3 comprobaciones automáticas
+- 0 nuevos errores Ruff, 0 regresiones Pytest, audit 0 problemas
+- Ver `docs/architecture/FASE17_PROPOSAL.md`
+
+**Fase 17.5 — Gestión de Secretos** ✅ Cerrada (v0.17.5-f17.5)
+- `motor/core/secrets.py` con `get_secret`, `require_secret`, `has_secret`, `list_available`
+- Backends: env vars / `/etc/ura/secrets.env` / default (preparado para Secret Manager futuro)
+- 15 consumidores migrados en 4 grupos: motor/, knowledge/, core/, scripts/
+- `scripts/pro/audit_secrets.py` — detección automática de secretos hardcodeados
+- `docs/architecture/SECRETS.md` y `docs/architecture/SECRETS_AUDIT.md`
+- Ruff delta: -99 errores en archivos tocados (0 nuevos)
+- Ver `docs/architecture/SECRETS.md`
+
+**Fase 25 — Knowledge Fusion** ✅ Cerrada (v0.25.0-fase25)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **B1** | Contratos: ABCs (8), modelos (12), enums, config, registry | ✅ Completado (v0.25.0-b3) |
+| **B2** | PipelineStage implementations: 8 stages concretos + BaseStage | ✅ Completado (v0.25.0-b3) |
+| **B3** | Entity Resolution Avanzado: ContextualEntityResolver con desambiguación contextual, LRU cache, n-gramas, polisemia (Apple empresa/fruta, Tesla empresa/persona, Amazon empresa/río, Washington estado/capital/persona) | ✅ Completado (v0.25.0-b3) |
+| **B4** | Conflict Detection (pendiente) | 🔮 Planificado |
+| **B5** | Knowledge Merge (pendiente) | 🔮 Planificado |
+| **B6** | Source Scoring (pendiente) | 🔮 Planificado |
+
+Ver `docs/architecture/F25_ARCHITECTURE_AUDIT.md` para auditoría completa y métricas de calidad.
+
+**Fase 26 — Historical Memory** ✅ Cerrada (v0.26.0-rc1)
+
+- Arquitectura de memoria: Timeline (proyección temporal), Journal (WAL con fsync+checksum), Snapshot (punto de recuperación)
+- Health/Readiness/Liveness probes funcionales
+- Graceful Shutdown con timeout (flushea journal antes de salir)
+- Cifrado AES-256-CTR opcional en journal y snapshot vía PBKDF2 (cryptography)
+- Ver `motor/memory/` para implementación completa
+
+**Fase 27 — Autonomous Agents** ✅ Cerrada (v0.27.0-fase27)
+
+- Arquitectura de agentes: ABCs + modelos frozen (ADR-027-01/02)
+- CapabilityGate con 6 denial codes + mensajes descriptivos
+- ToolRunner con 20 constraints (TR-01..20), backpressure vía Semaphore
+- Scheduler: FIFO + aging (priority decay cada 30s) + GracefulShutdown
+- Planner: rule-based determinista (sin LLM en hot path)
+- AgentOrchestrator: 18 constraints, DI-based, CapabilityGate integrado
+- 109 tests, 0 regresiones
+- Ver `motor/agents/` para implementación
+
+**Fase 28 — Platform Protocols** ⚠️ Pending stabilization (F28.1)
+
+- ProtocolEnvelope con 5 headers: Version, Routing, Trace, Delivery, Security
+- JSON canonical serializer/deserializer + ProtocolValidator
+- VersionNegotiator por MessageKind + CompatibilityChecker
+- ProtocolRegistry + Transport ABC + LocalTransport
+- ErrorEnvelope con trace_id + causation_id
+- Observabilidad: TraceId/SpanId/parent_span_id, TraceExporter (bounded queue + background flush), HealthAggregator, MetricsCollector (p50/p95/p99), Sampler (5 estrategias), validate_span_tree, sanitize_tags
+- Structured JSON logging (motor/platform/logging.py)
+- RateLimiter (token bucket, thread-safe), payload sanitization (8 patrones bloqueados)
+- 63 tests tracing + 488 tests total en F25-F28+OBS, 0 regresiones
+- Ver `motor/platform/` y `docs/architecture/GOVERNANCE.md`
+- **⚠️ Bugs conocidos:** checksum nunca verificado, race condition en LocalTransport. Ver `docs/architecture/F28_B2_CODE_AUDIT.md`
+
+**Fase 28.1 — Stabilization** ✅ Cerrada (v0.28.3-stable)
+
+Ver `docs/architecture/ADR-028-11-F28.1-STABILIZATION.md` y `docs/architecture/F29_PROPOSAL.md`.
+
+**Fase 29 — Production Readiness** ✅ Cerrada (v0.29.0-fase29)
+
+| Bloque | Contenido | Estado |
+|--------|-----------|--------|
+| **B1** | Observabilidad: health probes, métricas, logging estructurado, tracing | ✅ Completado |
+| **B2** | Validación técnica: benchmarks públicos, throughput, latencia, memoria, estrés | ✅ Completado |
+| **B3** | Validación funcional: 5 dominios reales | ✅ Completado |
+| **B4** | Operación: graceful shutdown, health endpoints, backup/restore | ✅ Completado |
+| **B5** | Resiliencia: circuit breakers, backpressure, 7 chaos tests | ✅ Completado |
+| **B6** | Compatibilidad y evolución: rolling upgrade, mixed-version | ✅ Completado |
+| **B7** | Gobernanza: ownership, runbooks, SLOs, release checklist | ✅ Completado |
+| **RR1** | Production Readiness Review + tag v0.29.0-fase29 | ✅ Completado |
+| **B8** | Post-F29: Experiencia (F2), Conocimiento (F4), Infra (F1), Herramientas (F3), CLI (F5), Calidad (F6) | ✅ Completado |
+| **B9** | Auditoría Final 2026-07-20: closeouts F25-F29, tests evaluation/preferences/auth, mypy fix, ruff fix, eval() reemplazado | ✅ Completado |
+
+**Estado del Repositorio (post-auditoría 2026-07-20):**
+
+| Categoría | Antes | Después |
+|-----------|-------|---------|
+| Ruff errors | 313 | 93 (62 EXE001 cosmético, 31 pre-existentes) |
+| Mypy (assistant) | No pasaba (core duplicado) | 0 errores |
+| Tests assistant | 97/97 | 107/107 (+10 tests evaluation + preferences) |
+| eval() en prod | CalculatorTool con eval() | _SafeCalculator (AST puro, sin builtins) |
+| Closeouts F25-F29 | 0/5 | 5/5 creados |
+| build/ duplicado | Causaba `duplicate module "core"` | Eliminado + .gitignore |
+| Working tree | Sucio (4 archivos) | Compromised |
+
+## Post-F29 — Estabilización (Julio 2026)
+
+| Fase | Estado | Logro clave |
+|------|--------|-------------|
+| **F1** | ✅ Cerrada | Conflicto editable install resuelto, HealthRegistry corregido, rootfs RO documentado como no-problema |
+| **F2** | ✅ Cerrada | Colección 0 errores (2593 tests), CI 20.8%→65.9%, clasificación por categorías |
+| **F3** | ✅ Cerrada | Telemetría fiable: falsos positivos eliminados, tuneladora+LLM+KE integrados |
+| **F4** | ✅ Cerrada | Auditoría tests excluidos: 14 re-incorporados (~586 tests), pipeline policy formalizada |
+| **PM v3.1** | ✅ Cerrada | Plan Maestro validación: `make validate`/`validate-full`, inventario 324 herramientas, shadowing M1 fix, cobertura core/ 38.8%→**51.1%**, mypy hook informativo. Ver `docs/audit/PLAN_MAESTRO_CLOSEOUT.md` |
+
+### UDO — Orquestación de tareas (F1+F2+F2.2 cerradas, F3 NO-GO — tag v0.30.0-f2, 2026-08-08)
+
+Capa mínima de coordinación entre agentes Web/TERM/Ramón y Git. Sin BD, sin panel, sin dispatcher.
+
+- **Expedientes**: `docs/udo/tasks/TASK-YYYYMMDD-NNN.md` (estado + historial en el mismo archivo)
+- **CLI**: `scripts/pro/ura-udo` — `create | show | update (--estado/--nota/--reserva/--agente_web/--agente_terminal/--instrucciones/--restricciones/--revisor/--force) | reserve (--add/--clear/--force) | check [rutas] | context TASK-ID | list [ESTADO] | status | verify TASK-ID`
+- **Reserva de archivos (F2, con enforcement)**: `reserve TASK --add "ruta1,ruta2"` declara qué archivos tocará la tarea; `reserve --add`/`update --reserva` **rechazan** rutas ya reservadas por otra tarea activa (IN_PROGRESS/REVIEW, match exacto o prefijo `dir/`); `check ruta...` detecta CONFLICTO. Excepción `--force` (autorización expresa, auditada en historial como `AUTORIZACIÓN EXPRESA (--force)`). Persistente en el expediente (Git). Liberación automática al cierre. `commit_base` automático al IN_PROGRESS (también en tareas F1 ya IN_PROGRESS).
+- **Contexto compartido (F2)**: `ura-udo context TASK-ID` / `ura-ask TASK-ID` recuperan el contexto de la tarea desde Git (expediente + commits + reservas) aunque el otro agente esté idle — la conversación NO es fuente de verdad. `ura-opencode` propaga el contexto en el prompt al Web. `ura-chat` es el chat LLM a Ollama (herramienta distinta).
+- **Modelo dual (Anexo A)**: Web = ejecutor por defecto, Terminal = revisor por defecto; roles **por tarea** (no permanentes) con `--agente_web "WEB (ejecutor)" --agente_terminal "TERM (revisor)"`. La reserva sigue activa en REVIEW (quien revisa no modifica la zona que revisa). Tarea independiente puede ejecutarla el otro agente si `check` no detecta solapamiento. Agente idle: CASO A ejecutar→revisar→corregir→cerrar; CASO B **DONE solo desde REVIEW** (nunca se finge revisión; `--force` solo como excepción explícita auditada); CASO C el revisor puede analizar o ejecutar tarea independiente pero no apropiarse de la tarea del ejecutor.
+- **Garantías de revisión (F2.2)**: al cerrar DONE sin `--force`, `ura-udo update` exige gate de integridad — `commits:` con SHA registrado (verify previo), diff `commit_base..HEAD` no vacío, **pinning** (los SHAs de `commits:` deben ser ancestros de HEAD; historia reescrita bloquea el cierre) y árbol limpio fuera del expediente. Si se cierra sin `--revisor` o el revisor == ejecutor, la herramienta marca **AUTO-REVISIÓN** automáticamente en el historial (la dice la herramienta, no el texto libre). Auditoría y decisión: `docs/udo/AUDITORIA-F3-2026-08-08.md`.
+- **Estados**: `PLANNED → IN_PROGRESS → REVIEW → DONE` (+BLOCKED/CONFLICT/CANCELLED), transiciones auditadas
+- **Reglas UDO v5 (§5.19)**: (1) Git es la fuente de verdad del código; (2) TASK-ID identifica el trabajo; (3) Web y Terminal respetan las reservas/locks; (4) NO modificar una zona bloqueada; (5) NO marcar DONE sin evidencia (gate); (6) **las discrepancias se registran** (`verify` las detecta, nunca se ocultan); (7) **no guardar conversaciones completas** (memoria = Git + expedientes + registros operativos, no diálogos); (8) no crear infraestructura nueva sin autorización.
+- **Commits**: formato `tipo(scope): [TASK-YYYYMMDD-NNN][WEB|TERM] desc`; `verify` registra el commit en `commits:` del expediente
+- **IDs únicos**: contador monotónico por fecha en `docs/udo/.seq`; escrituras con `flock`
+- **Memoria**: enlaza `docs/pro/sesiones/` y `docs/architecture/` — NO duplica
+- **Reversible**: `rm -rf docs/udo/ && rm scripts/pro/ura-udo` deja URA intacta
+- **Credenciales OpenCode web**: `OPENCODE_WEB_PASS` vía env o `/etc/ura/secrets.env` (añadir con sudo: `echo 'OPENCODE_WEB_PASS=…' >> /etc/ura/secrets.env`)
+- Detalles: `docs/udo/README.md`, closeout F2: `docs/udo/CLOSEOUT-F2-2026-08-08.md` (§13 cierre formal F1-F3), auditoría F3: `docs/udo/AUDITORIA-F3-2026-08-08.md`, directiva permanente: `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`
+
+### Policy: Exclusiones de CI
+En cada release, revisar `.github/tests-ci-exclude.txt`. Para cada exclusión:
+1. Verificar si la causa sigue existiendo
+2. Evaluar si el test puede volver a CI
+3. Si está obsoleto, eliminar o retirar el archivo de test
+
+Ninguna exclusión debe permanecer sin revisión indefinidamente.
+
+### CI/CD Pipeline Policy
+Ver `.github/CI_POLICY.md` para la matriz completa.
+
+| Pipeline | Trigger | Contenido |
+|----------|---------|-----------|
+| PR/Commit | push/PR | Lint + typecheck + unit tests rápidos (~2200) + security + architecture |
+| Merge a main | push a main | PR + slow tests |
+| Nightly | 00:00 UTC | Concurrencia, timing, tests frágiles |
+| Pre-release | tag v* | Todo + benchmarks + E2E |
+
+No se persigue el 100% de tests en CI (~94% es el techo práctico). Benchmarks, E2E con servicios reales y tests de hardware específico se ejecutan en pipelines programadas o previas a release.
+
+Ver `.opencode/plans/` para closeouts y propuestas de cada fase.
+
+## Protocolo de Contexto Vectorial (Knowledge Base)
+Antes de iniciar cualquier refactorización compleja, el agente debe consultar el grafo indexado para mitigar alucinaciones de dependencias:
+```bash
+$ python3 /home/ramon/URA/ura_ia_1972/scripts/pro/ura-query.py "descripción del cambio"
+```
+## Protocolo de coordinación automática (TASK-20260816-007)
+
+Al recibir un mensaje que empiece con `Coordina esta tarea según protocolo ejecutor-revisor:`:
+
+1. **Rol**: eres coordinador de esa tarea.
+2. **Revisa `docs/udo/coordination.json`**: tareas activas y colas (`pendientes`, `en_progreso`, `en_revision`, `aprobadas`, `bloqueadas`).
+3. **Modo**: si el mensaje incluye `Modo: secuencial` o `Modo: paralelo`, actualiza el campo `modo` de `coordination.json`.
+4. **Decide ejecutor y revisor** para cada tarea. En **modo secuencial**, TERM ejecuta y WEB revisa. En **modo paralelo**, ambos pueden ejecutar y revisar, alternando roles o según la especialidad.
+5. **Nunca asignes** una tarea a un agente que ya tiene otra en `en_progreso` si hay riesgo de conflicto. Si las tareas tocan archivos distintos, pueden ir en paralelo.
+6. **Anota cada tarea** en la cola correspondiente con `task_id`, `descripcion`, `ejecutor`, `revisor`, `estado`, `prioridad`.
+7. **Si eres ejecutor**: trabaja en rama `ia/TASK-XXXX`, ejecuta gates (`ruff check .`, `mypy --no-incremental core motor shared`, `pytest -q --tb=short`) y commitea con `[TASK-XXXX][ROL]`. Al terminar, mueve la tarea a `en_revision`.
+8. **Si eres revisor**: ejecuta gates, revisa el diff, emite informe con errores, propuesta y veredicto (`APROBADO` / `CAMBIOS_SOLICITADOS`). Actualiza la tarea a `aprobada` o `cambios_solicitados`.
+9. **Si el revisor solicita cambios**, el ejecutor corrige y la tarea vuelve a `en_revision`.
+10. **Nunca cierres una TASK sin aprobación del revisor.**
+11. Si eres solo coordinador (ni ejecutor ni revisor), deja la tarea en `pendientes` y notifica al rol correspondiente.
+
+## Autonomía de agentes (TASK-20260816-008)
+
+Reglas de auto-asignación vía `docs/udo/coordination.json`:
+
+1. **Al iniciar sesión**, actualiza tu estado en `coordination.json` (`agentes` → `estado: libre/ocupado`).
+2. **Si estás libre y hay tareas en `pendientes`**, asígnate la de mayor prioridad que no tenga conflicto de zonas con tareas en curso (usa `scripts/pro/dispatcher.py --dry-run` para ver la asignación propuesta, o asigna manualmente).
+3. **Cambia al rol necesario** (ejecutor o revisor) según la tarea asignada.
+4. **Autonomía acotada**: la auto-asignación de tareas NO exime del análisis de plan ni de los gates antes de tocar código. La regla "un plan NUNCA se ejecuta sin análisis previo" sigue vigente. No preguntes al humano para auto-asignarte una tarea pendiente; sí avísale en el reporte.
+
+## Operación diaria (TASK-20260816-008)
+
+1. **Al iniciar sesión**, actualiza tu estado en `docs/udo/coordination.json` (`agentes.{WEB|TERM}.estado`).
+2. **Si estás libre y hay tareas pendientes**, consulta `scripts/pro/dispatcher.py --dry-run` y asígnate la de mayor prioridad sin conflicto de zonas.
+3. **No preguntes al humano** si puedes resolver la asignación o el siguiente paso con `coordination.json` y las reglas del protocolo.
+4. **Antes de cerrar una tarea** (marcar como `aprobada`/`done`), ejecuta `python3 scripts/pro/verify_protocol.py`; si falla, corrige antes de cerrar.
+
+## Modo análisis de planes (TASK-20260816-010)
+
+1. Si recibes un mensaje que empieza con "Analiza este plan/proyecto según la metodología URA:", estás en **MODO ANÁLISIS**.
+2. **No ejecutes código**. Solo lee, analiza y emite un informe con:
+   - Puntos buenos
+   - Puntos malos
+   - Mejoras propuestas
+   - Veredicto: **GO / GO CON CAMBIOS / NO-GO**
+3. **Registra el análisis** en "docs/udo/coordination.json":
+   - Añade una entrada en el historial de la tarea/plan analizado.
+   - Guarda el veredicto en el campo "veredicto".
+4. El modo análisis no reemplaza el protocolo ejecutor-revisor; es una fase previa de validación de propuestas.
+
+## Despertador del auto-dispatcher (TASK-20260816-009)
+
+1. El despertador (scripts/pro/despertador.sh) es solo lector/dispatcher.
+2. No ejecuta codigo ni tareas por si mismo; solo invoca scripts/pro/dispatcher.py.
+3. No asigna si hay conflicto de ramas o archivos: dispatcher.py ya verifica zonas conflictivas y usa flock.
+4. Se lanza via systemd (deploy/ura-despertador.timer) o cron (scripts/pro/crontab_despertador.txt) cada 5 minutos.
+5. Registra la ultima ejecucion en docs/udo/coordination.json (ultima_ejecucion_despertador).
+
+## Operación en la Mac (lecciones post-C2, TASK-20260818-006 — 2026-08-18)
+
+1. **El detector del TERM regenera `docs/ARCHITECTURE.md` en cada checkout** en la Mac: el archivo aparece siempre como modificado y cualquier operación git (rebase/stash/checkout) puede fallar con "unstaged changes" fantasma. Antes de operar: `git status` para conocer el estado y usar `git rebase --autostash` si procede.
+2. **`scp` con múltiples fuentes** puede colocar el primer archivo en la RAÍZ del destino (no en su ruta relativa). Verificar rutas con `ls`/`git status` tras copiar.
+3. **Nunca `git stash pop` a ciegas** en el repo de la Mac: listar antes con `git stash list` y usar `git stash pop stash@{N}` explícito (hay stashes ajenos del TERM).
+4. La rama de tarea del TERM (ej. `ia/TASK-20260816-005`) es su zona de trabajo activa: no rebasearla/force-pushearla sin autorización expresa del coordinador; su auto-push commitea cada pocos minutos.
+5. **Mover/renombrar directorios DURANTE una sesión puede romper el cwd del shell persistent** (lección 2026-08-28, al mover `ura_ia_1972/` residual a `.nervioso/descarte/`): los comandos posteriores fallan con `NotFound: FileSystem.access`. Usar **`workdir` explícito** en cada invocación hasta reiniciar la sesión. Además, el hook `pre-commit` de la Mac embebe la ruta de config al instalar: si el layout del repo cambia, regenerar con `pre-commit install`.
+6. **Archivos del TERM en staged sin commitear**: si los archivos de la zona del TERM (`motor/orchestration/*`, `scripts/pro/parse_plan_to_tasks.py`, `motor/core/utils/__init__.py`, etc.) quedan staged durante varias sesiones, es **riesgo de pérdida**. Cuando un gate (p.ej. cierre UDO) exija árbol limpio y esos archivos lleven horas staged, **commitearlos con `--no-verify`** y mensaje `chore(term): preservar cambios staged del TERM` es la acción segura (el trabajo se preserva; el TERM puede continuar sobre su commit).
+
+## TAREAS DE AUDITORÍA (PLAN C2 - 20260818)
+- [x] A1. Documental — Lecciones operativas en docs/udo/hallazgos-fondo.md
+- [x] A2. Documental — Nota operativa del flujo Mac↔ASUS
+- [x] A3. Config — Agrupar auto-push del TERM (Delegado)
+- [x] A4. Coordinación — Rama dedicada para veredictos del TERM (Delegado)
+- [x] A5. Proceso — Gate de integridad UDO en todo cierre
+- [~] A6. Deuda (TASK Futura) — Cobertura de módulos tocados por C2
+- [x] A7. Verificación — Confirmar estado de los 30 noqa PLR0917
+
+
+> Este bloque fue movido al principio para que no se pierda en compactaciones de contexto.
+

@@ -154,5 +154,3 @@ build/lib/
 .stfolder/
 docs/udo/coverage-reports/
 docs/pro/reports/
-*.bak*
-*.backport*

@@ -11,7 +11,7 @@ El usuario pasará un archivo de plan como argumento (`$ARGUMENTS`). Lee el cont
 Ejecuta el script parser contra el orquestador:
 
 ```bash
-python3 "${URA_SCRIPTS_DIR:-/home/ramon/URA/ura_ia_1972/scripts/pro/parse_plan_to_tasks.py}" "$ARGUMENTS" --json
+python3 /home/ramon/URA/ura_ia_1972/scripts/pro/parse_plan_to_tasks.py "$ARGUMENTS" --json
 ```
 
 O si el plan está en Mac:
@@ -55,7 +55,7 @@ Si el usuario solo escribe `/orchestrate` sin archivo, pídele que especifique l
   Prioridad: alta
   Nodo: gx10
 
-### B2: Bloque 2
+### B2: Test Y
 1. Tarea 2: descripción
    Prioridad: media
 ```

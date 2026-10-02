@@ -1,0 +1,132 @@
+#!/usr/bin/env python3
+"""auto_reindex.py — Re-indexa documentos stale en Qdrant usando upsert atómico.
+
+Sin delete previo: el doc_id determinista SHA-256 permite upsert directo.
+Si la descarga falla, el conocimiento original se conserva intacto.
+
+Uso:
+  python3 -m scripts.pro.auto_reindex              # dry-run (default)
+  python3 -m scripts.pro.auto_reindex --execute    # reindexa realmente
+"""
+
+import asyncio
+import logging
+from datetime import UTC, datetime, timedelta
+
+import httpx
+
+from motor.core.config import UraConfig
+from motor.core.qdrant_client import QdrantClient
+
+log = logging.getLogger("ura.auto_reindex")
+
+COLLECTION = "memoria_web"
+CUTOFF_DAYS = 30
+BATCH_SIZE = 100
+
+QDRANT_BASE = "http://127.0.0.1:6333"
+
+
+async def _find_stale_docs_rest(cutoff_days: int = CUTOFF_DAYS) -> list:
+    """REST fallback for find_stale_docs using HTTP API."""
+    cutoff = (datetime.now(UTC) - timedelta(days=cutoff_days)).isoformat()
+    all_stale = []
+    offset: int | None = None
+
+    while True:
+        try:
+            params = {
+                "filter": {"must": [{"key": "metadata.updated_at", "range": {"lt": cutoff}}]},
+                "limit": BATCH_SIZE,
+                "with_payload": True,
+                "with_vector": False,
+            }
+            if offset is not None:
+                params["offset"] = offset
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                resp = await client.post(f"{QDRANT_BASE}/collections/{COLLECTION}/points/scroll", json=params)
+                resp.raise_for_status()
+                data = resp.json()
+        except Exception as e:
+            log.error("Error fetching stale docs: %s", e)
+            break
+
+        points = data.get("result", {}).get("points", [])
+        if not points:
+            break
+
+        for p in points:
+            all_stale.append(p)
+
+        offset = data.get("result", {}).get("next_page_offset")
+        if offset is None:
+            break
+
+    return all_stale
+
+
+async def _upsert_docs_rest(docs: list) -> int:
+    """Upsert docs via REST API."""
+    if not docs:
+        return 0
+    try:
+        points = []
+        for doc in docs:
+            points.append({"id": doc["id"], "vector": doc["vector"], "payload": doc["payload"]})
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.put(f"{QDRANT_BASE}/collections/{COLLECTION}/points", json={"points": points})
+            resp.raise_for_status()
+        return len(points)
+    except Exception as e:
+        log.error("Error upserting docs: %s", e)
+        return 0
+
+
+async def reindex(*, execute: bool = False, dry_run: bool = True) -> dict:
+    """Main reindex function."""
+    config = UraConfig.load()
+    qdrant = QdrantClient.instancia(config)
+
+    log.info("Buscando documentos stale (cutoff: %d días)...", CUTOFF_DAYS)
+    stale_docs = await _find_stale_docs_rest()
+
+    if not stale_docs:
+        log.info("No hay documentos stale para reindexar")
+        return {"processed": 0, "updated": 0}
+
+    log.info("Encontrados %d documentos stale", len(stale_docs))
+
+    if dry_run:
+        log.info("DRY-RUN: %d documentos serían reindexados", len(stale_docs))
+        return {"processed": len(stale_docs), "updated": 0}
+
+    log.info("Ejecutando reindexación (%d docs)...", len(stale_docs))
+    updated = 0
+    for i in range(0, len(stale_docs), BATCH_SIZE):
+        batch = stale_docs[i : i + BATCH_SIZE]
+        updated += await _upsert_docs_rest(batch)
+        log.info("  Procesados %d/%d", min(i + BATCH_SIZE, len(stale_docs)), len(stale_docs))
+
+    log.info("Reindexación completada: %d actualizados", updated)
+    return {"processed": len(stale_docs), "updated": updated}
+
+
+async def main() -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Re-indexa documentos stale en Qdrant")
+    parser.add_argument("--execute", action="store_true", help="Ejecutar reindexación real")
+    parser.add_argument("--dry-run", action="store_true", help="Dry-run (default)")
+    args = parser.parse_args()
+
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s", datefmt="%H:%M:%S")
+
+    execute = args.execute
+    dry_run = not execute if not args.dry_run else True
+
+    result = await reindex(execute=execute, dry_run=dry_run)
+    log.info("Resultado: %s", result)
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
