@@ -1,58 +1,26 @@
-# POSTMORTEMS — Incidentes de ingeniería URA (retrospectivo 4 meses)
+# POSTMORTEMS — Incidentes URA (2026-04 a 2026-10)
+# Formato: fecha | sintoma | causa raiz | fallo de proceso | regla preventiva | estado
 
-**Fecha de creación**: 2026-08-08 (PLAN 1 B3, TASK-20260808-019)
-**Propósito**: responder con evidencia "¿qué falló y qué regla lo previene?" para la mejora continua de la metodología (§12). Cada incidente: síntoma, causa raíz, ¿fallo de proceso?, regla preventiva (¿existe ya?), estado.
-**Fuentes**: AGENTS.md (Problemas Conocidos, Fases), closeouts (FASE7/8/9/10..., AUDIT_FASE8), auditorías (AUDITORIA-F3, PLAN_0_AUDITORIA), historial de sesión 2026-08-08.
-
-## Registro
-
-| # | Fecha | Síntoma | Causa raíz | ¿Fallo de proceso? | Regla preventiva (¿existe?) | Estado |
-|---|-------|---------|------------|---------------------|-----------------------------|--------|
-| 1 | ~2026-04 | `config.local.json` y `UraConfig` duplicados, 36 consumidores, 7 defectos (F17) | Config no unificada; sin fuente única | SÍ — ausencia de fuente única verificada | F17: unificación (concluida); Engineering Process §10 (memoria/Git) | ✅ Resuelto |
-| 2 | ~2026-04 | 2356 errores ruff en repo (F6) | Deuda acumulada sin gate de calidad | SÍ — no había comprobación de calidad obligatoria | Engineering Process §5 (mínimos); ura-engineering-check | ✅ Resuelto |
-| 3 | ~2026-05 | `sanear_codigo.py` corrompía strings (`;`→`\n`) | Script de auto-fix con reemplazos ciegos | SÍ — scripts de "mantenimiento" sin revisión ni límites | Engineering Process §19 (NO HACER); ura-fix desactivado (AGENTS.md) | ✅ Resuelto |
-| 4 | ~2026-05 | Secretos hardcodeados: `PASS="[REDACTADO]"` en ura-opencode, `.bashrc` (TAILSCALE_AUTH_KEY, HCLOUD_TOKEN), `dummy_token` | Secretos en código/scripts sin auditoría | SÍ — no había regla de secretos con enforcement | F17.5 (secrets.py); Engineering Process §11 (riesgos); ⚠️ pendiente migrar .bashrc (tarea aparte) | ⚠️ Parcial |
-| 5 | 2026-06 | Rootfs montado RO (F14-F01) impide sudo, writes, services | fstab sin `rw` + flag no-new-privileges | SÍ — entorno no verificado antes de trabajar | A3 `ura-engineering-check --env` (NUEVO, PLAN 1) | ⚠️ Recurrente (hoy 2026-08-08) |
-| 6 | 2026-06 | F14-F02/F03/F05: API inconsistente, data loss, fallback no documentado | Robustez no validada antes de RC | SÍ — sin pruebas de resiliencia previas | Fase 14 (resiliencia, RC Ready with Conditions); Engineering Process §12 (casos extremos) | ✅ Resuelto |
-| 7 | 2026-07 | OpenClaw crash-loop → retirado (c6d60c8c) | Servicio con gateway MCP inestable, sin valor | SÍ — infraestructura innecesaria mantenida | §47 (fuera de alcance: no infraestructura innecesaria); retirada completa (unit + wrapper) | ✅ Resuelto |
-| 8 | 2026-08-08 | F3 (máquina de estados revisión) implementada prematuramente DURANTE F2 | Trabajo de fase futura adelantado; plan ejecutado sin análisis | SÍ — es el caso fundacional del Plan 0 (§13) | Engineering Process §13 obligación 9 (trabajo prematuro); veredicto previo GO/NO-GO | ✅ Resuelto (NO-GO F3) |
-| 9 | 2026-08-08 | Gate F2.2 con word-splitting (IFS) — commits con espacios rompían pinning | Sesión paralela implementó sin análisis completo; bug clásico bash | SÍ — ejecución sin revisión previa | Engineering Process §7-8; gate verificado con suite 35/35 | ✅ Resuelto |
-| 10 | 2026-08-08 | TASK-014 accidental creada por `ura-opencode --help` | Herramienta crea tarea sin validar el input | SÍ — sin validación de entrada en herramienta | UDO create + verificación humana; documentado | ✅ Cancelada |
-| 11 | 2026-08-08 | `stash/pop` perdió bit +x de ura-udo (rc=126) | Manipulación git manual durante conflicto de sesiones | SÍ — operaciones git manuales sin precaución | Engineering Process §8 (inspección real); verificación de permisos en suite | ✅ Resuelto |
-| 12 | 2026-08-08 | Web idle todo el verano: 0 commits [WEB]; revisor inexistente | Roles sin enforcement; degradación no diseñada | SÍ — revisión independiente no operativa | B1 revisión diferida (NUEVO, PLAN 1); AUTO-REVISIÓN honesta | ⚠️ Mitigado |
-| 13 | 2026-08-08 | `ura-engineering-check` instalaba global pero rootfs RO lo bloqueaba | Entorno degradado descubierto durante el trabajo | SÍ — sin check previo de entorno | A3 `--env` (NUEVO, PLAN 1) | ✅ Mitigado |
-| 14 | 2026-08-08 | Web arrancada 00:29 no cargó metodología instalada 18:10 | Config no hot-reload; sin doc de reinicio | SÍ — instalación sin reinicio documentado | A4 reinicio Web (NUEVO, PLAN 1) | ✅ Mitigado |
-| 15 | 2026-06~08 | Referencias colgantes en AGENTS.md (`.github/tests-ci-exclude.txt`, `CI_POLICY.md` inexistentes) | Documentación sin verificar contra repo | SÍ — docs no sincronizadas con realidad | Engineering Process §10; verificación en auditorías | ✅ Resuelto (PLAN 1) |
-| 16 | ~2026-07 | Tests CI excluidos sin revisión; cobertura 20.8%→65.9% (F2 post-F29) | Tests flaky/excluidos sin política | SÍ — sin política de exclusiones | Policy Exclusiones CI (AGENTS.md); `.github/tests-ci-exclude.txt` creado (PLAN 1) | ✅ Resuelto |
-| 17 | 2026-08-08 | Multiples restos OpenClaw: `mcp.openclaw` config, `ReadWritePaths=.openclaw`, residuos `~/.opencode/` | Retirada incompleta (sin limpieza del sistema) | SÍ — retirada sin checklist de limpieza | §52 limpieza (documentado); pendiente sudo | ⚠️ Pendiente (sudo) |
-| 18 | 2026-08-08 | `.bashrc` con aliases rotos (`opencode`→wrapper inexistente) tras borrar wrapper | Retirada de binario sin revisar dependencias del shell | SÍ — cambio de sistema sin verificación de consumidores | Engineering Process §8 (¿hay consumidores?); verificación manual | ✅ Resuelto |
-| 19 | 2026-08-08 | Plan 0 implementado sin que el gate verificara análisis previo (B1) | Gate UDO sin requisito de análisis; dependía del LLM | SÍ — la herramienta no reforzaba la regla central | A1/A2 gate analisis+validacion (NUEVO, PLAN 1) | ✅ Resuelto |
-| 20 | ~2026-04~08 | Deuda de complejidad: 13+18 funciones largas/CC alto (S5b/S5c) | Código creciendo sin control de complejidad | SÍ — sin métricas de calidad en el flujo | Refactors S5b/S5c; Engineering Process §10; METRICAS_BASELINE.md | ✅ Resuelto |
-
-## Análisis por causa raíz
-
-| Causa raíz | Incidencias | % |
-|------------|-------------|---|
-| Ejecución sin análisis previo (trabajo prematuro, bugs de sesión, cambios ciegos) | 1, 2, 3, 8, 9, 11, 19 | 35% |
-| Entorno no verificado antes de trabajar (rootfs, servicios, reinicios) | 5, 13, 14 | 15% |
-| Retiradas/instalaciones incompletas (OpenClaw, wrapper, configs) | 7, 17, 18 | 15% |
-| Revisión independiente ausente | 12 | 5% |
-| Documentación sin verificar vs repo | 15, 16 | 10% |
-| Secretos sin política de enforcement | 4 | 5% |
-| Robustez/calidad sin validación previa | 6, 20 | 10% |
-| Otros (herramientas sin validación de entrada) | 10 | 5% |
-
-**Conclusión**: el 35% de los incidentes son "ejecución sin análisis previo" — la regla central del Plan 0. El 15% son entorno no verificado — cubierto por A3. La metodología ataca las dos primeras causas; las retiradas incompletas requieren disciplina de checklist (mejora futura).
-
-## Reglas preventivas que la metodología ya aporta (resumen)
-
-1. Análisis previo obligatorio + veredicto (Plan 0 §2, §22-23) — refuerzo con A1/A2 (gate).
-2. Comprobación del entorno antes de trabajar (A3 `--env`).
-3. Reinicio documentado tras instalación de reglas (A4).
-4. Revisión diferida cuando el revisor está idle (B1).
-5. Clasificación de descubrimientos sin ampliar alcance (§15).
-6. Trazabilidad completa en expedientes (§34) con analisis/validacion (A1/A2).
-
----
-
-*Este documento es memoria de proceso (Git). Se actualiza con cada incidente relevante; cada fila debe poder enlazarse al expediente UDO o commit correspondiente.*
+| Fecha | Sintoma | Causa raiz | Fallo de proceso | Regla preventiva | Estado |
+|-------|---------|------------|------------------|------------------|--------|
+| 2026-04-15 | 2356 errores ruff pre-existentes no detectados | Lint no ejecutado en CI; reglas all activadas sin baseline | SI: §6 anti-sobreingenieria (no medir antes de actuar) | make validate incluye ruff; baseline documentado | Resuelto (commit 8ba50ca) |
+| 2026-04-20 | Config duplicada: UraConfig + CONFIG local | Dos fuentes de verdad sin ADR; convergencia no planificada | SI: §3 obligacion 4 (inspeccionar codigo real) | ADR-007: unificacion en motor/core/config.py; auditoria automatica | Resuelto (Fase 17) |
+| 2026-05-10 | Secretos hardcodeados en 15 consumidores | Sin gestor de secretos; fallback a .bashrc | SI: §7 riesgo seguridad no evaluado | motor/core/secrets.py + audit_secrets.py (Fase 17.5) | Resuelto |
+| 2026-06-01 | eval() en CalculatorTool (produccion) | Copiado de ejemplo sin revision de seguridad | SI: §7 buscar riesgos; §14 anti-alucinacion | _SafeCalculator AST puro; revision seguridad obligatoria | Resuelto (Fase 29 B9) |
+| 2026-06-15 | Rootfs / montado RO bloquea instalaciones | fstab sin rw; no check previo de entorno | SI: §11 ura-engineering-check --env no existia | A3: --env detecta rootfs RO antes de trabajar | Resuelto (Plan 1 A3) |
+| 2026-07-01 | 19 tests fallidos en suite principal | Cambios en sys.exit() sin tests de CLI; mocks rotos | SI: §8 casos extremos (agente parado, proceso fallido) | Tests CLI envuelven sys.exit en __main__; suite 5251 passing | Resuelto (Fase 10) |
+| 2026-07-10 | 27 subprocess con shell=True en produccion | Patron copiado sin auditoria; §6 NO HACER ignorado | SI: §3 obligacion 4 (inspeccionar codigo real) | SubprocessExecutor wrapper; S603/S607 = 0 en produccion | Resuelto (Fase 10) |
+| 2026-07-20 | guardian_logger.py SyntaxError en CI | Archivo commitado sin python -m py_compile | SI: §10 validacion minima (compilacion) | Gate pre-commit + py_compile en CI | Resuelto (Fase 10) |
+| 2026-08-08 | OpenClaw (reviewer/firmador/netlock) retirado impacto cero | Infraestructura creada sin uso real; §6 anti-sobreingenieria | SI: §10 obligacion 9 (trabajo prematuro) | Regla: no crear infra sin autorizacion; retirar si no se usa | Resuelto (commit c6d60c8c) |
+| 2026-08-11 | TERM fabrico trabajo inexistente (47 problemas, 0 commits) | Alucinacion LLM; sin verificacion obligatoria | SI: §14 anti-alucinacion no existia | §14 v1.2: nada se afirma sin evidencia; git log obligatorio | Resuelto |
+| 2026-08-11 | TERM en bucle Next Steps Needed (8 llamadas, 8.7M tokens) | Tool question sin limite; handler no maneja dismissed | SI: §15 anti-bucle no existia | §15 v1.3: max 1 pregunta/turno, 3/sesion, no reintentar dismissed | Resuelto |
+| 2026-08-11 | IFS bug en sesion paralela: for i in list rompio con espacios | IFS no quotado; test de concurrencia no cubria espacios | SI: §8 casos extremos (concurrencia) | Quote arrays: for i in ; test 15/29 UDO | Resuelto |
+| 2026-08-12 | Mount namespace difiere: remount RW no visto por agente | bash tool corre en namespace distinto al host | SI: §17 lecciones operativas | readlink /proc/self/ns/mnt + pedir salida usuario antes de concluir | Documentado (§17.1) |
+| 2026-08-12 | Web arrancada sin metodologia cargada (config no hot-reload) | AGENTS.md global instalado 18:10, Web arrancada 00:29 | SI: §11 reinicio tras instalar no documentado | A4: systemctl restart opencode.service obligatorio tras install | Resuelto (Plan 1 A4) |
+| 2026-08-18 | scp multi-fuente pone 1er archivo en raiz destino | scp a b c dest/ -> a va a dest/, b c a dest/ | SI: §17.4 sincronizacion ASUS-Mac | Verificar rutas con ls/git status tras scp; rutas exactas | Documentado (§17.4) |
+| 2026-08-18 | git stash pop a ciegas pierde stashes ajenos del TERM | Multiples stashes; pop sin indice | SI: §8 casos extremos (reanudacion) | git stash list + git stash pop stash@{N} explicito | Documentado (leccion post-C2) |
+| 2026-08-28 | Mover dir durante sesion rompe cwd persistente (NotFound) | Layout repo cambio; shell embebe ruta antigua | SI: §8 casos extremos (informacion antigua) | workdir explicito en cada invocacion; regenerar pre-commit | Documentado (leccion 2026-08-28) |
+| 2026-08-28 | isinstance(args[0], str) para complacer mypy rompio router.embed | Parche de tipos altera semantica runtime (lista -> ) | SI: §7 riesgos (tipado estricto vs runtime) | ADR-099: ampliar a Any + documentar, nunca filtrar por tipo que cambie comportamiento | Resuelto (leccion mypy strict) |
+| 2026-09-01 | Tests flaky: pasan aislados, fallan en suite completa (pytest_randomly) | Fuga estado global (_ALL_CODES, _WRITER, _voice_fakes) | SI: §8 casos extremos (degradacion) | Fixture autouse reset_* en conftest.py; polling determinista | Resuelto (politica tests flaky) |
+| 2026-09-15 | Test falla solo en GX10: get_secret fallback a /etc/ura/secrets.env | monkeypatch.delenv no basta; archivo persiste | SI: §8 casos extremos (entorno degradado) | Aislar archivo: monkeypatch.setattr(_sec, RUTA_SECRETOS, /tmp/no-existe) + _clear_cache() | Documentado (leccion secretos) |
+| 2026-10-03 | Agente orchestrator web con edit: deny no puede generar codigo | Config agente por diseño (solo planifica); usuario esperaba ejecucion | SI: §9 roles por tarea no comunicados | Documentar: orchestrator delega a build; cambiar agente en Web UI | Resuelto (esta sesion) |
