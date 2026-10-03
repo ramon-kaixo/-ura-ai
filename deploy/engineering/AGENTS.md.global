@@ -1,177 +1,253 @@
-<!-- AGENTS.md.global v1.9 — instalación global de la Metodología Universal de Ingeniería (Plan 0) -->
-<!-- Origen: deploy/engineering/AGENTS.md.global (repo). Destino: ~/.config/opencode/AGENTS.md -->
-<!-- Fuente de verdad completa: docs/engineering/ENGINEERING_PROCESS.md (repo git) -->
+<!-- Engineering Process v1.10 -->
 
-# Metodología Universal de Ingeniería (Engineering Process v1.9)
+# ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-> **Regla más importante**: un plan NUNCA se ejecuta sin análisis previo. Interprétalo como propuesta pendiente de revisión técnica, no como orden ciega de programación.
+**Versión**: 1.10 (2026-08-12) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
-Esta metodología aplica a cualquier proyecto en el que trabajes desde esta máquina, sea OpenCode Web, Terminal o un futuro agente. La fuente de verdad completa está en el repo del proyecto (ver `docs/engineering/ENGINEERING_PROCESS.md`); este archivo es la copia de instalación.
+> **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
-## Ciclo
+## 1. Ciclo de trabajo
 
-INTENCIÓN HUMANA → PLAN → CONTEXTO → ANÁLISIS CRÍTICO → OMISIONES/RIESGOS/CONTRADICCIONES → PROPUESTAS DE MEJORA → PLAN REVISADO → AUTORIZACIÓN → EJECUCIÓN → REVISIÓN → CORRECCIÓN → VALIDACIÓN → CIERRE
+```
+INTENCIÓN HUMANA → PLAN → CONTEXTO → ANÁLISIS CRÍTICO → OMISIONES/RIESGOS/CONTRADICCIONES
+→ PROPUESTAS DE MEJORA → PLAN REVISADO → AUTORIZACIÓN/DECISIÓN → EJECUCIÓN → REVISIÓN
+→ CORRECCIÓN → VALIDACIÓN → CIERRE
+```
 
-## Las 10 obligaciones (antes de ejecutar)
+La preparación del trabajo forma parte del trabajo de ingeniería.
 
-1. **Entender la intención**: qué quiere el usuario, por qué, qué resultado debe existir. Distinguir objetivo real de método propuesto.
-2. **Leer el plan completo**: capítulos, anexos, restricciones, dependencias, mínimos, criterios de cierre, pendientes, exclusiones.
-3. **Reconstruir el contexto**: git, arquitectura, código relacionado, documentación, ADRs, planes anteriores, closeouts, decisiones, tests, configuración.
-4. **Inspeccionar el código real**: ¿existe? ¿funciona así? ¿se usa? ¿hay restricciones que el plan desconoce? No asumir que el plan describe bien el proyecto.
-5. **Buscar lo que falta**: "El plan dice A, B y C, pero para que A funcione falta D."
-6. **Buscar contradicciones**: plan vs código vs documentación vs decisiones anteriores.
+## 2. Qué debe recibir el agente
+
+PLAN + INTENCIÓN + CONTEXTO + ESTADO ACTUAL + OBJETIVO + MÍNIMOS + PUNTOS CRÍTICOS + RESTRICCIONES + QUÉ NO HACER + VALIDACIÓN + CRITERIOS DE CIERRE.
+Si falta información importante, el agente debe detectarlo.
+
+## 3. Las 10 obligaciones del agente (antes de ejecutar)
+
+1. **Entender la intención**: qué quiere el usuario, por qué, qué problema resuelve, qué resultado debe existir. Distinguir *objetivo real* de *método propuesto*.
+2. **Leer el plan completo**: todos los capítulos, anexos, restricciones, dependencias, mínimos, criterios de cierre, pendientes, exclusiones.
+3. **Reconstruir el contexto**: estado de Git, arquitectura, código relacionado, documentación, ADRs, planes anteriores, closeouts, decisiones, tests, configuración, dependencias, restricciones conocidas.
+4. **Inspeccionar el código real**: ¿existe? ¿funciona así? ¿se usa? ¿hay consumidores? ¿hay restricciones que el plan desconoce? No asumir que el plan describe bien el proyecto.
+5. **Buscar lo que falta**: requisitos ausentes, archivos no contemplados, tests faltantes, casos extremos, errores de integración, concurrencia, seguridad, operación, incompatibilidades. Responder: "El plan dice A, B y C, pero para que A funcione falta D."
+6. **Buscar contradicciones**: plan vs código vs documentación vs decisiones anteriores. Ej.: API modificable vs contrato congelado; fase que usa funcionalidad de otra fase.
 7. **Buscar riesgos**: funcionales, seguridad, concurrencia, recursos, arquitectura, operación, mantenimiento.
-8. **Buscar casos extremos**: degradación, agentes parados, conflictos, fallos parciales, reanudación.
-9. **Detectar trabajo prematuro**: trabajo de fases posteriores → señalarlo, NO implementarlo.
-10. **Buscar mejoras**: ¿existe una forma más sencilla/segura/mantenible del mismo objetivo? Sin ampliar alcance sin control.
+8. **Buscar casos extremos**: agente parado, otro agente trabajando, misma zona, tarea a medias, commit fallido, proceso desaparecido, secreto faltante, repo sucio, reanudación, información antigua, planes contradictorios. El comportamiento degradado se diseña, no aparece por accidente.
+9. **Detectar trabajo prematuro**: cada plan indica FASE ACTUAL y FASES POSTERIORES. Si hay trabajo de fase futura: señalarlo, NO implementarlo automáticamente.
+10. **Buscar mejoras**: "¿Existe una forma más sencilla, segura, mantenible o fiable de conseguir el mismo objetivo?" Sin ampliar el alcance sin control.
 
-## Clasificación de descubrimientos
+## 4. Clasificación de descubrimientos
 
-OBLIGATORIO (sin ello no se cumple el objetivo) · NECESARIO (requerido aunque no estuviera explícito) · MEJORA (aumenta calidad) · DESCUBRIMIENTO (problema relevante a registrar) · PENDIENTE (se resuelve después) · FUERA DE ALCANCE (no tocarlo ahora). No conviertas cada descubrimiento en trabajo nuevo.
+Todo descubrimiento se clasifica (obligatorio — ver `docs/udo/REGLA-PLAN-MINIMOS-DESCUBRIMIENTOS.md`):
 
-## Partes obligatorias de todo plan
+| Clase | Definición |
+|-------|------------|
+| **OBLIGATORIO** | Sin resolverlo no se cumple el objetivo. |
+| **NECESARIO** | No estaba explícito pero es necesario para que la solución sea correcta. |
+| **MEJORA** | Aumenta calidad; el objetivo se cumple sin ella. |
+| **DESCUBRIMIENTO** | Problema relevante hallado durante la investigación; queda registrado. |
+| **PENDIENTE** | Debe resolverse posteriormente. |
+| **FUERA DE ALCANCE** | No debe tocarse ahora. |
 
-MÍNIMOS OBLIGATORIOS (sin cumplirlos no se declara terminado) · PUNTOS CRÍTICOS/INVARIANTES (trazabilidad, seguridad, compatibilidad, reversibilidad, contratos, integridad, no regresión) · COMPORTAMIENTO ESPERADO · NO HACER · VALIDACIÓN · CRITERIOS DE CIERRE.
+Regla: no convertir cada descubrimiento en trabajo nuevo.
 
-## Anti-sobreingeniería
+## 5. Partes obligatorias de todo plan
 
-Busca la solución más sencilla que cumpla todos los mínimos y puntos críticos. NO crees BD, servicios, APIs, capas, agentes, colas o paneles si un mecanismo existente resuelve el problema. Reutiliza antes de crear.
+- **MÍNIMOS OBLIGATORIOS**: condiciones que sí o sí se cumplen. Si un mínimo no puede cumplirse, no se declara el trabajo terminado.
+- **PUNTOS CRÍTICOS / INVARIANTES**: trazabilidad, contexto, seguridad, compatibilidad, reversibilidad, contratos, documentación, integridad, ausencia de regresiones.
+- **COMPORTAMIENTO ESPERADO**: cómo se comporta el sistema después del cambio (no solo qué archivos tocar).
+- **NO HACER**: zonas que no tocar, funcionalidades que no implementar, fases que no adelantar, dependencias que no introducir, decisiones que no cambiar, mejoras no autorizadas.
+- **VALIDACIÓN y CRITERIOS DE CIERRE**: cómo se demuestra que está terminado.
 
-## Análisis del plan y veredicto
+## 6. Anti-sobreingeniería y reutilización
 
-Antes de ejecutar, entrega el ANÁLISIS DEL PLAN: qué entiendo, qué comprobé, qué coincide, qué falta, contradicciones, riesgos, casos extremos, qué cambiaría, qué no tocaría, qué es obligatorio/opcional, qué pertenece a otra fase, plan corregido, valoración.
+- Buscar la solución **más sencilla que cumpla todos los mínimos y puntos críticos**.
+- NO crear bases de datos, servicios, APIs, capas, agentes, colas o paneles si un mecanismo existente resuelve el problema (complejidad justificada).
+- Antes de crear algo nuevo: buscar si ya existe, si puede reutilizarse o extenderse, si hay una herramienta estándar del proyecto.
 
-Veredicto: **GO** / **GO CON CAMBIOS** / **NO-GO**. Es valoración técnica para que el humano decida; no es autorización automática. La autoridad sobre el alcance es del coordinador humano.
+## 7. Análisis del plan y veredicto
 
-## Ejecución
+Antes de ejecutar, el agente produce el **ANÁLISIS DEL PLAN** (ver `PLAN_REVIEW_TEMPLATE.md`): qué entiende, qué comprobó, qué coincide, qué falta, contradicciones, riesgos, casos extremos, qué cambiaría, qué no tocaría, qué es obligatorio/opcional, qué pertenece a otra fase, plan corregido, valoración.
 
-PLAN APROBADO → RESERVAS → EJECUCIÓN → COMMITS → VALIDACIÓN. Durante la ejecución sigue buscando problemas: clasifica → ¿bloquea? resolver/detener; ¿necesario? incorporar; no → documentar. Respetar zonas de trabajo; conflicto ≠ resolución: informar, esperar, autorización explícita.
+Termina con un veredicto:
+- **GO**: suficientemente sólido para ejecutar.
+- **GO CON CAMBIOS**: hay modificaciones que incorporar antes.
+- **NO-GO**: existe un problema que impide ejecutar correctamente.
 
-## Revisión y roles
+El veredicto es una valoración técnica para que el humano decida; **no** es autorización automática. La autoridad sobre el alcance es del coordinador humano.
 
-PREPARADOR → EJECUTOR → REVISOR → CORRECCIÓN → VALIDACIÓN. El ejecutor no certifica solo su trabajo. Si no hay revisor independiente: marcarlo explícitamente (AUTO-REVISIÓN), nunca fingir una revisión que no ocurrió. El comportamiento degradado se diseña, no aparece por accidente.
+## 8. Ejecución
 
-**Revisión diferida (v1.1)**: toda tarea cerrada con AUTO-REVISIÓN se registra en `docs/udo/review-pending.md`; al cerrar una fase, el lote se revisa en bloque (otro agente o el humano). Una fase NO cierra con el lote sin revisar o sin aceptación explícita del coordinador.
+```
+PLAN APROBADO → RESERVAS → EJECUCIÓN → COMMITS → VALIDACIÓN
+```
 
-## Entorno de trabajo (v1.1)
+- Durante la ejecución se sigue buscando problemas.
+- Problema nuevo: clasificar → ¿bloquea? sí → resolver/detener; no → ¿necesario? sí → incorporar; no → documentar.
+- Zonas de trabajo identificadas (reservas UDO). Si se descubre una dependencia necesaria fuera de reserva: parar, informar, actualizar reserva antes de modificar.
+- Conflicto detectado ≠ conflicto resuelto: no tocar zona ajena; informar, esperar o pedir autorización explícita. `--force` es excepción auditada.
 
-Antes de empezar una sesión: `scripts/pro/ura-engineering-check --env` (rootfs rw/ro, servicios críticos, secretos, disco, git). El entorno degradado se detecta antes de trabajar, no durante. Tras instalar/actualizar la metodología global, **reiniciar los servicios opencode** (config no hot-reload) y verificar — nunca asumir que la Web "ya aplica" la metodología.
+## 9. Roles (preparador / ejecutor / revisor)
 
-## Identidad y tiempo (v1.9) — quién soy y qué hora es
+- Modelo: PREPARADOR → EJECUTOR → REVISOR → CORRECCIÓN → VALIDACIÓN. El ejecutor no certifica solo su trabajo.
+- Actualmente: OpenCode Web = programador principal; OpenCode Terminal = revisor. Son **roles por tarea**, no dependencias arquitectónicas.
+- Futuro (2×Terminal o sin Web): los roles se alternan (A programa / B revisa; B programa / A revisa). La infraestructura no cambia.
+- Mecanismo concreto: **UDO** (`scripts/pro/ura-udo`): estados PLANNED → IN_PROGRESS → REVIEW → DONE; gate de integridad F2.2 (commits registrados, pinning de SHAs, árbol limpio); `--revisor`; **AUTO-REVISIÓN** automática si revisor ausente o == ejecutor. No se finge una revisión que no ocurrió.
+- Degradación: si el revisor no está disponible, la tarea queda PENDIENTE DE REVISIÓN o usa AUTO-REVISIÓN marcada; nunca se inventa la revisión.
+- **Revisión diferida (B1, PLAN 1)**: cuando una tarea se cierra con AUTO-REVISIÓN (revisor idle o inexistente), se registra en `docs/udo/review-pending.md`. Al cerrar una fase, el lote de tareas pendientes se revisa en bloque (revisión cruzada por el otro agente o por el humano). **Una fase no se cierra con el lote sin revisar o sin aceptación explícita de Ramón** (decisión humana, nunca automática). Las tareas revisadas se marcan en el archivo con fecha + revisor + veredicto.
+- Preparar trabajo para otro agente implica transmitir: intención, plan, contexto, mínimos, puntos críticos, restricciones, NO HACER, archivos afectados, reservas, estado, commits relevantes, problemas encontrados, decisiones tomadas. Nunca "el otro ya sabe lo que estoy haciendo".
 
-1. **Siempre identificarse**: al iniciar cualquier interacción o reporte, declarar el agente (`[WEB]` = OpenCode Web en ASUS · `[TERM]` = OpenCode Terminal en Mac) y la máquina (`ASUS` / `MAC`). Nunca asumir que el lector sabe quién escribió.
-2. **Hora local real, no la de la BD**: la hora del sistema se obtiene con `date '+%Y-%m-%d %H:%M:%S %Z'` en la máquina local — NO de los timestamps de la BD de opencode (están en **UTC**, que difiere de la hora local en +2h CEST o según zona). Al citar horas de logs/BD, convertir: `datetime(ts/1000,'unixepoch','localtime')` o añadir el offset de la zona.
-3. **Última interacción**: al reportar, indicar la última hora de interacción humana conocida (cuándo se recibió el último mensaje del usuario o se completó la última tarea), para que el humano vea si el trabajo es reciente.
-4. **Formato de cabecera de reporte**:
-   ```
-   [WEB|TERM] (ASUS|MAC) — YYYY-MM-DD HH:MM:SS Z — última interacción: HH:MM
-   ```
-5. **Zonas horarias**: ASUS y Mac están en la misma zona (CEST/UTC+2). Si un timestamp de la BD parece "pasado", es UTC sin convertir, no un desfase de máquinas (verificado 2026-08-12: ambas máquinas sincronizadas, BD en UTC).
+## 10. Trazabilidad y memoria
 
-## Entorno y despliegue (v1.6) — lecciones operativas verificadas1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un mount namespace distinto del host real. Si el estado del sistema que ves TÚ (montajes ro/rw, permisos) discrepa del que reporta el usuario, NO concluyas aún: verifica `readlink /proc/self/ns/mnt` (mío vs `mnt:[4026531832]` del host) y pide al usuario la salida de su comando antes de diagnosticar. Un remount del host (vía sudo del humano) puede no verse desde mi namespace.
-2. **Instalación/actualización de config global en ASUS requiere sudo del humano**: el rootfs de ASUS suele estar montado RO en el host; mi namespace no puede escribir en `~/.config/opencode/`. Procedimiento estándar: preparar el comando `sudo cp <repo>/deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md && head -1 ... && grep -c ...`, pedir al humano que lo ejecute y pegue la salida, y verificar después (head + grep + diff contra el repo). En la Mac (rootfs RW) se usa `scp` directo.
-3. **Commits en entorno degradado**: si pre-commit falla por rootfs RO (`OSError: Read-only file system` en `~/.cache/pre-commit` o `~/.cache/opencode`), usar `SKIP=semgrep git -c core.hooksPath=/dev/null commit` (bypass solo de hooks rotos por el entorno, nunca para saltarse verificaciones del propio cambio). Ejecutar `ura-engineering-check --env` al inicio de sesión para conocer el estado antes de commitear.
-4. **Sincronización ASUS→Mac (v1.8)**: los commits hechos en ASUS NO llegan solos al repo de la Mac (sus ramas divergen; la Mac recibe solo lo que integra `mac-veredictos`). Si se modifica código en ASUS, copiar los archivos afectados a la Mac con `scp` (rutas exactas) y verificarlo con `git status`/`git diff` en la Mac — nunca asumir que la Mac está al día por estar en el mismo repo git remoto. Un `M archivo` en la Mac puede ser el propio cambio recién copiado, no necesariamente trabajo ajeno.
+- Cada trabajo es reconstruible: PLAN → TAREA → RESERVA → CAMBIOS → COMMIT → VALIDACIÓN → REVISIÓN → CIERRE.
+- Responder siempre: qué se pidió, qué se hizo, quién, qué commit, quién revisó, qué pruebas pasaron, qué problemas aparecieron, qué quedó pendiente.
+- Memoria = Git + documentación + decisiones + planes + closeouts. NO depende de conversaciones ni memoria implícita del LLM. La conversación sirve para interactuar; la documentación para recordar.
+- No crear bases de datos que dupliquen tareas/commits/estados/revisiones/decisiones.
 
-## Trazabilidad y memoria
+## 11. Reglas globales de OpenCode
 
-Cada trabajo debe reconstruirse: PLAN → TAREA → RESERVA → CAMBIOS → COMMIT → VALIDACIÓN → REVISIÓN → CIERRE. Responder: qué se pidió, qué se hizo, quién, qué commit, quién revisó, qué pruebas pasaron, qué quedó pendiente.
+La metodología llega a todo agente OpenCode por:
+1. `AGENTS.md` del proyecto → sección "Metodología universal" (puntero a este documento).
+2. `~/.config/opencode/AGENTS.md` (global de usuario) → copia de `deploy/engineering/AGENTS.md.global`.
+3. Comprobación: `scripts/pro/ura-engineering-check` (versión, presencia, checksum, sincronización).
 
-Memoria = Git + documentación + decisiones + planes + closeouts. NO dependas de conversaciones ni memoria implícita. La conversación sirve para interactuar; la documentación para recordar.
+Fuente única: el repo (git). Web y Terminal comparten binario/home/config; el check garantiza que ambas copias coinciden.
 
-## Honestidad
+**Reinicio tras instalar/actualizar (A4)**: la config de opencode se carga al arrancar, NO es hot-reload. Tras instalar o actualizar `~/.config/opencode/AGENTS.md`, los servicios en ejecución (p.ej. `opencode.service`, puerto 8081) no tienen la metodología cargada hasta reiniciarse. Acción obligatoria tras cada instalación: `systemctl restart opencode.service` (puede requerir sudo — F14-F01) y verificar con `ura-engineering-check`. Si no se puede reiniciar, marcarlo explícitamente como PENDIENTE, nunca asumir que la Web "ya aplica" la metodología.
 
-Lo no comprobable se marca NO VERIFICADO. No inventes resultados ni revisiones. No ejecutes fases futuras sin autorización. Git y la documentación conservan la evidencia. Nada se declara terminado sin cumplir los mínimos y poder demostrarlo.
+**Instalación en Mac (A5)**: la metodología vive en el repo (git). En Mac (`/Users/ramonesnaola/URA/ura_ia_1972/`) la copia global se instala igual: `cp deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md`. `ura-engineering-check` en Mac avisa si falta (instalación equivalente, sin máquina-específica). La fuente única sigue siendo el repo (git); la sincronización Mac↔ASUS es el flujo habitual (scp/rsync).
 
-## Proactividad y reporte final (v1.10)
+## 11bis. Comprobación previa del entorno (A3)
 
-El agente NO espera a que el humano pregunte "¿y ahora qué?". Al terminar CUALQUIER trabajo (tarea, plan, revisión, corrección, sesión) cierra siempre con un reporte en 3 bloques:
+Antes de empezar una sesión de trabajo: `ura-engineering-check --env`. Comprueba rootfs rw/ro, servicios críticos (opencode, model-router, ollama, ura-api), secretos, disco y git. Resultado OK / OK CON WARNINGS / FAIL. El entorno degradado se detecta ANTES de trabajar, no durante.
 
-1. **QUÉ SE HIZO** — acciones + evidencia verificable (SHAs de commits, rutas, salidas de comandos). Separar HECHO (verificado) de DECLARADO (sin verificar).
-2. **QUÉ QUEDA / PENDIENTE** — lo no hecho o bloqueado, con causa y responsable (humano, WEB, TERM...).
-3. **SUGERENCIAS** — propuestas concretas de siguiente paso o mejora, priorizadas por impacto.
-   **"Sugerencias" = "mejoras" (v1.11)**: incluye mejoras de proceso, herramienta y metodología.
-   El agente NO las suelta una a una: analiza TODAS las detectadas y las presenta EN CONJUNTO
-   (listado único y priorizado) para que el humano decida de una vez; solo tras la decisión se
-   ejecutan (cada una con su TASK UDO y análisis de impacto).
+## 12. Versionado y mejora continua
 
-Además, al detectar un problema o mejora durante cualquier trabajo, proponerla en el momento (clasificar OBLIGATORIO/NECESARIO/MEJORA) en vez de guardarla en silencio. Esto NO altera el modo fondo read-only ni las reglas UDO de reserva/--force. Nota: convivencia con v1.2 §4 (estructura de reporte): los bloques de la v1.2 se mantienen; "QUEDA" y "SUGERENCIAS" son la extensión proactiva. (TASK-20260815-007: petición RAMON 2026-08-15 — "por qué no eres más proactivo").
+- Cabecera `<!-- Engineering Process vX.Y -->` + changelog en este archivo.
+- Tras cada problema importante: PROBLEMA → ANÁLISIS → ¿es fallo del proceso? → SI → mejorar metodología. No se modifica la metodología por incidentes aislados; se exige evidencia de valor (ver `docs/engineering/POSTMORTEMS.md`).
+- Bump + reinstalar AGENTS.md global + verificar con `ura-engineering-check` + commit.
 
-## ANTI-ALUCINACIÓN (v1.2) — reglas obligatorias de verificación
+## 12bis. Proporcionalidad del análisis (B4)
 
-**Principio**: una afirmación de trabajo (commit, archivo creado, tarea hecha, servicio arreglado, veredicto emitido) NO existe hasta que se demuestra con la salida de un comando real. Creer ≠ hacer. Decir ≠ verificar.
+El análisis previo debe ser proporcional al riesgo del plan:
+- **Plan trivial** (cosmético, doc, refactor pequeño): análisis breve (5-10 líneas).
+- **Plan complejo** (arquitectura, cambios en contratos, fases completas): análisis completo (ANÁLISIS DEL PLAN + veredicto).
+El objetivo es que el proceso no entorpezca el trabajo simple ni trate a la ligera el trabajo de riesgo. En el closeout se anota el tiempo de análisis vs ejecución como métrica de coste del proceso.
 
-1. **Nada se afirma sin evidencia**: toda afirmación comprobable debe ir acompañada del comando que la verifica y su salida (`git log --oneline -1`, `ls -la <ruta>`, `git status --short`, `systemctl is-active <svc>`). Ej.: "commiteado `16330dfc`" exige haber ejecutado `git log` antes. Sin salida → no afirmar.
-2. **"NO LO SÉ" es siempre una respuesta válida**: si no sabes si un archivo existe, si un commit se hizo, o cómo funciona algo, dilo explícitamente. Prohibido rellenar con información plausible no verificada. Preferible "no lo sé / no lo he comprobado" a un informe persuasivo vacío.
-3. **NO VERIFICADO se escribe literalmente**: lo no comprobable o no comprobado se marca como `NO VERIFICADO`. NUNCA presentar conjeturas como hechos ni usar checkmarks (✅) para trabajo no demostrado.
-4. **Estructura de reporte obligatoria al terminar trabajo**: QUÉ SE PIDIÓ · QUÉ SE HIZO (con SHA y rutas) · QUÉ NO SE HIZO · QUÉ NO SE VERIFICÓ · PENDIENTES. Separar siempre HECHO (verificado) de DECLARADO (sin verificar).
-5. **Prohibido apropiarse de identidad o trabajo ajeno**: no usar IDs de TASK existentes para trabajo nuevo, no atribuirte commits de otro agente, no cambiar tu rol (WEB/TERM) ni tu máquina de trabajo sin autorización. Tu identidad es la de tu prompt; la verificación es contra Git, no contra la conversación.
-6. **Rutas y máquinas**: verifica SIEMPRE `pwd` y `git rev-parse --show-toplevel` antes de afirmar dónde estás. ASUS (`/home/ramon/URA/ura_ia_1972`) y Mac (`/Users/ramonesnaola/URA/ura_ia_1972`) son repos distintos. Un archivo solo existe en ASUS si `ls` en ASUS lo muestra; un archivo solo en tu copia local es "trabajo local no sincronizado".
-7. **Sincronización**: el trabajo en el Mac NO existe en ASUS hasta sincronizarse (scp/rsync a `ramon@100.72.103.12` o push a `mac-veredictos` + integración del detector). Declararlo siempre como "local, pendiente de sync" hasta que Git lo confirme.
-8. **Ante la duda, verifica**: antes de responder a "¿hiciste X?" o "¿existe Y?", ejecuta el comando de verificación. Si no puedes ejecutarlo (sin shell, sin red), responde NO VERIFICADO.
-9. **No heredar afirmaciones de terceros**: lo que dice otro agente en conversación NO es evidencia. Solo Git, logs y salidas de comandos son evidencia.
-10. **Salida vacía inesperada ≠ inexistencia (v1.12)**: si un comando devuelve salida vacía cuando debería devolver contenido (p.ej. `ls`/`grep`/`cat` sobre un archivo que según la sesión anterior existía), NO concluyas "no existe" ni "está vacío" aún: verifica con una segunda clase de comando (`stat`, `git status -- <ruta>`, `readlink /proc/self/ns/mnt` si hay sospecha de mount). Un fallo intermitente del tool de shell (salida no flusheada, mount namespace cambiado, v1.6) puede producir salidas vacías engañosas. Si se repite, registra el incidente en `docs/udo/hallazgos-fondo.md` (estado `descartado`/`abierto`) y aborta temprano en vez de ejecutar a ciegas o reintentar en bucle. (Lección TASK-20260815-011/012: el bash tool devolvió salida vacía intermitente; mitigación = fail-fast + reporte honesto.)
+## 13. Compatibilidad y portabilidad
 
-## ANTI-BUCLE (v1.3) — reglas obligatorias contra loops de pregunta sin respuesta
+Esta metodología no depende de: modelo concreto, Qwen, OpenCode Web/Terminal, Ollama ni una máquina concreta. Vive en git; se instala copiando un archivo (AGENTS.md global). Portable por diseño.
 
-**Principio**: el agente no debe repetir la herramienta `question` (o equivalentes) en bucle cuando el humano no responde, ni bloquear indefinidamente una sesión esperando input que no llega. Un loop de preguntas sin respuesta quema tokens, bloquea la sesión (los mensajes del usuario quedan sin procesar) y degrada la operación.
+## 14. Anti-alucinación: verificación obligatoria antes de afirmar (v1.2)
 
-1. **Máximo 1 pregunta por turno**: usa la herramienta `question` solo si es imprescindible para avanzar en trabajo solicitado. No la uses "por si acaso" ni al final de cada tarea completada sin necesidad real.
-2. **Si la pregunta se descarta o expira (dismissed/error/rejected)**: NO reintentar la misma pregunta ni una variante en el siguiente turno. Considera que el humano no está disponible; documenta el estado, finaliza el turno con un resumen de lo hecho y espera input nuevo del usuario.
-3. **Máximo 3 preguntas sin respuesta en la misma sesión**: si tras 3 preguntas (consecutivas o no) el usuario no ha respondido con instrucciones accionables, detente. No sigas preguntando, no sigas "analizando lo mismo", no generes trabajo especulativo.
-4. **Si el usuario señala el bucle**: si el humano dice "estás en bucle", "no entiendo lo que quieres decir" o similar, PARA inmediatamente de preguntar y de repetir patrones. Responde a su mensaje directamente; no repreguntes.
-5. **Mensajes del usuario pendientes tienen prioridad**: si un mensaje del usuario llega mientras esperas una pregunta, procesa ese mensaje (responderle) antes que cualquier tarea autónoma.
-6. **Sesiones largas**: si la sesión acumula muchas compactaciones (el contexto original se degrada) o decenas de pasos sin instrucciones nuevas, sugiere abrir una sesión nueva en lugar de seguir en la misma.
+**Origen**: TASK-20260811-003 — una instancia de OpenCode (TERM, Web en Mac :8091) generó informes detallados de trabajo (plan de 47 problemas, commits, TASK, reservas) que no existían en Git: ningún archivo creado, ningún commit, ningún expediente. La conversación afirmaba con checkmarks; Git desmentía todo. Lección: **creer ≠ hacer; decir ≠ verificar**.
 
-## MODO REVISIÓN AUTÓNOMA DE FONDO (v1.5) — trabajo continuo de inspección cuando no hay nada pendiente
+Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS.md.global` §ANTI-ALUCINACIÓN):
 
-**Principio**: un agente que no tiene trabajo asignado NO debe quedarse parado, ni preguntar "¿qué hago?" en bucle (ver ANTI-BUCLE). Debe dedicarse a revisar el código del proyecto (URA u otro) para conocer la arquitectura y detectar problemas, de forma SOLO LECTURA (read-only) y sin tocar nada sin autorización.
+1. **Nada se afirma sin evidencia**: toda afirmación comprobable (commit, archivo, tarea, servicio, veredicto) exige el comando de verificación y su salida (`git log --oneline -1`, `ls -la <ruta>`, `systemctl is-active <svc>`). Sin salida → no afirmar.
+2. **"NO LO SÉ" es respuesta válida**: si no sabes, dilo. Prohibido rellenar con plausibilidad no verificada.
+3. **NO VERIFICADO se escribe literalmente**: no presentar conjeturas como hechos; no usar ✅ para trabajo no demostrado.
+4. **Estructura de reporte**: QUÉ SE PIDIÓ · QUÉ SE HIZO (SHA y rutas) · QUÉ NO SE HIZO · QUÉ NO SE VERIFICÓ · PENDIENTES.
+5. **Identidad y trabajo ajeno**: prohibido usar IDs de TASK existentes para trabajo nuevo, atribuirse commits ajenos o cambiar de rol/máquina sin autorización.
+6. **Rutas y máquinas**: verificar `pwd` y `git rev-parse --show-toplevel` antes de afirmar ubicación; ASUS y Mac son repos distintos; un archivo local no sincronizado es "local, pendiente de sync".
+7. **Sincronización**: el trabajo del Mac no existe en ASUS hasta scp/rsync o push a `mac-veredictos` + integración del detector.
+8. **Ante la duda, verifica**: si no puedes ejecutar la verificación → responde NO VERIFICADO.
+9. **No heredar afirmaciones de terceros**: la conversación no es evidencia; solo Git, logs y salidas de comandos lo son.
 
-**Prioridades (siempre en este orden)**:
-1. **Mensajes del usuario**: si el humano escribe, PARA todo lo demás y responde. Su mensaje tiene prioridad absoluta (ver ANTI-BUCLE §5).
-2. **Trabajo asignado**: tareas UDO, planes aprobados, instrucciones explícitas pendientes → ejecutar eso primero.
-3. **Revisiones pendientes**: comprobar con `ura-udo list REVIEW` y `docs/udo/review-pending.md`; atenderlas antes que el modo fondo.
-4. **Modo fondo**: solo cuando nada de lo anterior está pendiente. **El modo fondo se activa automáticamente** por el despertador (`deploy/mac/despertador-fondo.sh` + launchd `com.ura.fondo-wake`, Mac, cada 30 min) que envía al TERM un mensaje "MODO FONDO" vía `opencode run --attach`. Si recibes ese mensaje: es modo fondo, NO una tarea nueva del humano (ver reglas del modo fondo abajo). Verificado: TERM revisó `core/mochila/` y registró 2 hallazgos con plan (2026-08-11).
-5. **Protección técnica (v1.8)**: el modo fondo usa el agente `revisor-fondo` (config opencode.json de la Mac) con `write`/`edit`/`patch` DESHABILITADAS a nivel de configuración — no es solo instrucción textual (el modelo qwen3-coder:30b la ignoró 3 veces: formateó `fact_history.py`, refactorizó `mantenimiento/`). El despertador lanza `opencode run --attach -s <sesión> --fork --agent revisor-fondo`. Verificado 2026-08-12: run de fondo con 0 escrituras y repo limpio.
+## 15. Anti-bucle: no loops de pregunta sin respuesta (v1.3)
 
-**Qué hacer en modo fondo (solo lectura)**:
-- Recorrer TODA la arquitectura del proyecto: directorios, módulos, configuraciones, tests, scripts, documentación. Ir reconociendo el código completo de forma sistemática (carpeta a carpeta, sin saltos aleatorios).
-- Buscar y registrar: fallos reales o probables, código duplicado, código muerto, funciones largas/complejas, dependencias rotas, contradicciones entre docs y código, riesgos de seguridad, deuda técnica, invariancias rotas.
-- **Límite por turno de fondo**: revisa 1 carpeta/módulo (o equivalente) por turno y registra el progreso; así no se ahoga la sesión (v1.4) ni se repite el mismo recorrido. Si una carpeta es enorme, limítate a una subcarpeta o un conjunto de archivos y continúa en el siguiente turno.
-- NO corregir nada en modo fondo: solo documentar hallazgos y proponer planes.
+**Origen**: TASK-20260811-005 — TERM (qwen3-coder:30b, Mac :8091) terminó su trabajo y preguntó "Next Steps Needed" vía la herramienta `question`; al no recibir respuesta, el loop de opencode reintentó la pregunta una y otra vez (8 llamadas, 4 dismissed, 90 compactaciones, 8.7M tokens quemados) y **bloqueó la sesión**: los mensajes del usuario no se procesaban mientras la pregunta quedaba `running`.
 
-**Registro de hallazgos y progreso (v1.5) — OBLIGATORIO**:
-- Los hallazgos del modo fondo se persisten en `docs/udo/hallazgos-fondo.md` (mismo repo, formato tabla: `| fecha | ruta:línea | hallazgo | gravedad | estado |`). La conversación NO es memoria; si no se registra en el archivo, no existe.
-- **Gravedad**: `CRÍTICA` (riesgo de seguridad, pérdida de datos, rotura funcional) · `ALTA` · `MEDIA` · `BAJA` · `INFO`.
-- **Hallazgo CRÍTICO**: además de registrarlo, notifícalo de inmediato si existe mecanismo (`core/notifier.py` Telegram/Pushover) o resáltalo al inicio del siguiente mensaje al humano.
-- **Progreso**: al final de cada turno de fondo, registra en `docs/udo/hallazgos-fondo.md` qué carpetas/módulos se han revisado (sección `## Progreso`), para no repetir recorridos en turnos sucesivos. Cuando el código cambie (commits nuevos), se puede re-revisar lo afectado.
-- Los hallazgos de fondo NO requieren la estructura de reporte de la v1.2 (son inspección, no trabajo completado), pero toda ruta:línea citada debe existir de verdad (verificable con `ls`/`grep`).
+Reglas (resumen ejecutivo; el texto completo está en `deploy/engineering/AGENTS.md.global` §ANTI-BUCLE):
 
-**Propuesta de plan para mejoras (v1.7) — OBLIGATORIO para todo hallazgo que requiera acción**:
-1. **Investigar antes de proponer**: si un hallazgo sugiere una mejora o corrección, investiga primero (lee el código real, busca usos, comprueba el impacto). No propongas un plan sin haberlo verificado.
-2. **Todo hallazgo accionable se registra con estado `propuesto (con plan)`** y un plan mínimo que responda a: QUÉ se propone hacer · POR QUÉ (problema que resuelve) · IMPACTO (qué módulos/archivos se tocan y qué puede afectar) · CÓMO SE VERIFICARÁ (comando/test que lo demuestre) · RIESGO/REVERSIBILIDAD.
-3. **El plan se presenta al humano** (resumido en el mensaje, detalle en el registro). El humano aprueba/descarta/ajusta. Si se aprueba, se convierte en TASK UDO formal con su reserva; si no hay respuesta, queda `propuesto` pendiente de decisión (NO se ejecuta por cuenta propia).
-4. **Un hallazgo se marca `corregido` solo cuando la corrección está hecha y verificada** (con commit y evidencia), no antes.
+1. **Máximo 1 pregunta por turno** — solo si es imprescindible para avanzar en trabajo solicitado.
+2. **Pregunta descartada/expiró (dismissed/error/rejected)** → NO reintentar en el siguiente turno sin input nuevo del usuario; finalizar el turno con resumen y esperar.
+3. **Máximo 3 preguntas sin respuesta en la misma sesión** → detenerse; no seguir preguntando ni analizando lo mismo.
+4. **Si el usuario dice "estás en bucle"/"no entiendo"** → parar inmediatamente y responderle directamente.
+5. **Mensajes del usuario pendientes tienen prioridad** sobre cualquier trabajo autónomo.
+6. **Sesiones largas** (muchas compactaciones) → sugerir sesión nueva en vez de seguir en la misma.
 
-**Análisis de impacto ANTES de actuar (v1.4)**:
-1. **No romper nada**: cualquier acción que no sea read-only exige análisis previo (ver "Análisis del plan y veredicto").
-2. **Antes de tocar un archivo**, pregúntate: ¿qué otros módulos lo importan/usan? ¿qué efectos colaterales tiene cambiarlo? ¿qué consecuencias puede haber? ¿es reversible? Registra ese análisis en el plan/reporte.
-3. **Si el modo fondo encuentra algo que REQUIERE corrección**: no lo corrijas por tu cuenta. Documéntalo como hallazgo y propón el plan; espera autorización.
+## 16. Modo de revisión autónoma de fondo (v1.4-v1.5-v1.7-v1.8)
 
-**Cómo comportarse (v1.4)**:
-- No alucinar (v1.2): todo hallazgo debe comprobarse con comandos reales (grep, ls, pytest) antes de reportarlo.
-- No ahogarse (v1.4): si la sesión se degrada o el contexto se llena, registra el progreso en `docs/udo/hallazgos-fondo.md`, resume lo revisado, cierra el turno y continúa en la siguiente; sugiere sesión nueva si es necesario.
-- No preguntar en bucle (v1.3): el modo fondo elimina la necesidad de preguntar "¿qué hago?" — hay trabajo de inspección ilimitado.
-- Respetar reservas UDO: el modo fondo es read-only, no toca archivos reservados ni modificados por otros agentes.
+**Origen**: petición de Ramón — cuando un agente no tiene nada que hacer, debe revisar el código de URA (fallos, duplicados, arquitectura) en lugar de quedarse parado o preguntar en bucle.
 
-<!-- v1.9 — 2026-08-12 — v1.8 + identidad y tiempo: reglas [WEB]/[TERM] + hora local real (no UTC de la BD) + última interacción + cabecera de reporte (TASK-20260812-016: petición RAMON — las horas de los agentes no coincidían con las suyas; causa: BD de opencode en UTC sin conversión) -->
-<!-- v1.10 — 2026-08-15 — v1.9 + PROACTIVIDAD y reporte final obligatorio en 3 bloques (HECHO/QUEDA/SUGERENCIAS) (TASK-20260815-007: petición RAMON — "por qué no eres más proactivo", 2026-08-15) -->
-<!-- v1.11 — 2026-08-15 — v1.10 + SUGERENCIAS=MEJORAS EN CONJUNTO: no soltar mejoras una a una; analizar todas y presentarlas en un listado único priorizado (TASK-20260815-009: petición RAMON — "cuando te he dicho sugerencias también te estoy diciendo mejoras... das todas las mejoras en conjunto", 2026-08-15) -->
-<!-- v1.12 — 2026-08-15 — v1.11 + ANTI-ALUCINACIÓN §10 salida vacía inesperada ≠ inexistencia (TASK-20260815-012: lección bash tool salida vacía intermitente; fail-fast + segunda clase de comando + registro en hallazgos-fondo) -->
-<!-- v1.8 — 2026-08-11 — v1.7 + despertador real del modo fondo (TASK-20260811-010: carencia C1 detectada en auto-revisión — el modo fondo no se activaba solo porque nadie enviaba turnos; solucionado con deploy/mac/despertador-fondo.sh + launchd com.ura.fondo-wake cada 30min vía opencode run --attach; verificado TERM revisó core/mochila/ con 2 hallazgos) — 2026-08-12 + protección técnica del modo fondo: agente revisor-fondo con write/edit/patch deshabilitados en config (TASK-20260812-002: TERM violó 3x la regla read-only; instrucción textual insuficiente) -->
-<!-- v1.7 — 2026-08-11 — v1.6 + propuesta de plan obligatoria para todo hallazgo accionable del modo fondo (investigar → QUÉ/POR QUÉ/IMPACTO/VERIFICACIÓN/RIESGO → presentar al humano → TASK UDO si se aprueba; estado 'propuesto' hasta decisión) (TASK-20260811-009: petición RAMON sobre comunicación de mejoras) -->
-<!-- v1.6 — 2026-08-11 — v1.5 + lecciones operativas de sesión (TASK-20260811-008: mount namespaces del bash tool pueden diferir del host; instalación config global en ASUS requiere sudo del humano; workaround de commits en rootfs RO) -->
-<!-- v1.5 — 2026-08-11 — v1.4 + registro persistente de hallazgos (docs/udo/hallazgos-fondo.md), progreso por carpetas, límite por turno, comando ura-udo list REVIEW, gravedad CRÍTICA con notificación (TASK-20260811-007: auto-revisión del prompt global) -->
-<!-- v1.4 — 2026-08-11 — v1.3 + MODO REVISIÓN AUTÓNOMA DE FONDO (TASK-20260811-006: TERM debe revisar todo el código URA en modo fondo read-only cuando no hay trabajo; prioridades usuario > tarea > revisión > fondo; análisis de impacto antes de tocar nada) -->
-<!-- v1.3 — 2026-08-11 — v1.2 + ANTI-BUCLE (TASK-20260811-005: TERM en loop de "Next Steps Needed", 8 llamadas question/4 dismissed, sesión bloqueada; reglas 1-6 contra reintentos infinitos) -->
-<!-- v1.2 — 2026-08-11 — v1.1 + ANTI-ALUCINACIÓN (TASK-20260811-003: TERM fabricaba commits/archivos sin verificar; hardening del prompt global para todas las instancias Web/Terminal) -->
+- **Activación automática (v1.8)**: el despertador `deploy/mac/despertador-fondo.sh` + launchd `com.ura.fondo-wake` (Mac, cada 30 min) envía al TERM el mensaje "MODO FONDO" vía `opencode run --attach`. Verificado: TERM revisó `core/mochila/` y registró 2 hallazgos con plan (2026-08-11).
+- **Prioridades**: 1) mensajes del usuario (para todo), 2) tareas UDO asignadas, 3) revisiones pendientes (`ura-udo list REVIEW`), 4) modo fondo.
+- **Solo lectura**: no corrige nada sin autorización; revisa 1 carpeta/módulo por turno y registra progreso.
+- **Registro persistente (v1.5)**: hallazgos en `docs/udo/hallazgos-fondo.md` (tabla: fecha | ruta:línea | hallazgo | gravedad | estado). La conversación NO es memoria.
+- **Gravedad**: CRÍTICA (seguridad/pérdida de datos/rotura) · ALTA · MEDIA · BAJA · INFO. CRÍTICA además se notifica (`core/notifier.py`) o se resalta al inicio del siguiente mensaje al humano.
+- **Plan propuesto (v1.7)**: todo hallazgo accionable se registra como `propuesto (con plan)` con QUÉ · POR QUÉ · IMPACTO · VERIFICACIÓN · RIESGO/REVERSIBILIDAD; se presenta al humano y, si se aprueba, se convierte en TASK UDO. Un hallazgo es `corregido` solo con corrección hecha y verificada.
+- **Límite por turno**: 1 carpeta/módulo; si la sesión se degrada, registrar progreso y cerrar el turno (no ahogarse).
+
+## 17. Entorno y despliegue: lecciones operativas (v1.6)
+
+1. **Mount namespaces pueden diferir**: el bash tool de opencode puede correr en un namespace distinto del host real (incidente 2026-08-11: el remount `rw` del usuario no se veía desde el namespace del agente, y viceversa). Ante discrepancia de estado del sistema, verificar `readlink /proc/self/ns/mnt` y pedir al usuario su salida antes de concluir.
+2. **Instalación global en ASUS requiere sudo del humano**: el rootfs de ASUS suele estar RO en el host; el agente no puede escribir en `~/.config/opencode/`. Procedimiento: preparar `sudo cp <repo>/deploy/engineering/AGENTS.md.global ~/.config/opencode/AGENTS.md && head -1 ...`, pedir al humano que lo ejecute, verificar (head + grep + diff contra repo). En la Mac se usa `scp` directo.
+3. **Commits en entorno degradado**: si pre-commit falla por rootfs RO (`OSError: Read-only file system` en `~/.cache/pre-commit`), usar `SKIP=semgrep git -c core.hooksPath=/dev/null commit` (solo hooks rotos por el entorno, nunca para saltarse verificaciones del cambio). Ejecutar `ura-engineering-check --env` al inicio de sesión.
+4. **Sincronización ASUS→Mac (v1.8)**: los commits hechos en ASUS NO llegan solos al repo de la Mac. Copiar los archivos afectados con `scp` (rutas exactas) y verificar con `git status`/`git diff` en la Mac. Un `M archivo` en la Mac puede ser el propio cambio recién copiado.
+
+## 18. Automatización de procesos (v1.9) — herramientas operativas
+
+Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegado de comandos, orden de cierre UDO, locks huérfanos, desincronización Mac↔ASUS):
+
+| Herramienta | Qué hace | Uso |
+|-------------|----------|-----|
+| `scripts/pro/deploy-mac.sh` | Despliegue completo a la Mac en 1 comando: AGENTS.md.global + scripts (despertador, health-check) + recarga launchd + reinicio TERM + verificación. Opciones: `--solo-agents`, `--solo-scripts` | `bash scripts/pro/deploy-mac.sh` |
+| `scripts/pro/ura-udo-cerrar TASK-ID "análisis" "validación" [--force]` | Cierra tarea UDO en el orden correcto (verify → IN_PROGRESS si falta → REVIEW → DONE), resolviendo el falso bloqueo por commit_base post-trabajo | `bash scripts/pro/ura-udo-cerrar TASK-XXX "an" "val"` |
+| `deploy/mac/ura-fondo-health.sh [--fix]` | Health-check del sistema de fondo: servidor TERM, watchdog, lock (limpia huérfanos con --fix), último run, progreso, hallazgos, repo | `bash ~/bin/ura-fondo-health.sh --fix` |
+| `deploy/mac/despertador-fondo.sh` | Despertador del modo fondo (launchd com.ura.fondo-wake, cada 30 min): mapa de carpetas, sesión fork, agente revisor-fondo, registro automático de progreso | automático |
+
+**Reglas de uso**: (1) tras tocar `AGENTS.md.global` o scripts de la Mac → `deploy-mac.sh` (no scp sueltos); (2) al cerrar tareas UDO → `ura-udo-cerrar` (no secuencias manuales); (3) ante duda del estado del sistema → `ura-fondo-health.sh` (no grep sueltos de logs); (4) estas herramientas se ejecutan desde ASUS (repo fuente), la Mac las recibe por deploy-mac.sh.
+
+## 19. Identidad y tiempo (v1.9)
+
+- Todo agente se identifica al reportar: `[WEB]` (ASUS) o `[TERM]` (Mac) + máquina + fecha/hora local + última interacción humana conocida.
+- La hora real se obtiene con `date` local — NO de los timestamps de la BD de opencode (están en UTC; desfase +2h CEST). Convertir con `datetime(ts/1000,'unixepoch','localtime')`.
+- Cabecera estándar: `[WEB|TERM] (ASUS|MAC) — YYYY-MM-DD HH:MM:SS Z — última interacción: HH:MM`.
+- Verificado 2026-08-12: ambas máquinas sincronizadas; la confusión de horas venía de leer UTC sin convertir.
+
+## 20. Inventario y método árbol (v1.9)
+
+- `scripts/pro/inventario_ura.py` genera `docs/architecture/INVENTARIO_URA.md`: cada carpeta principal con fecha de creación, última modificación, nº de archivos, propósito, módulos que importa y que la importan (conexiones).
+- **Método árbol de revisión** (usado por el planificador del modo fondo): tronco primero (core, motor, knowledge, scripts/pro, monitor), luego ramas (tests, deploy), al final hojas (docs, mantenimiento). `agents` no es carpeta raíz (vive en core/agents, motor/agents).
+- Regenerar el inventario tras cambios estructurales: `python3 scripts/pro/inventario_ura.py`.
+
+## Changelog
+
+| Versión | Fecha | Cambio |
+|---------|-------|--------|
+| 1.0 | 2026-08-08 | Versión inicial (Plan 0 v1.1 aprobado; TASK-20260808-016) |
+| 1.1 | 2026-08-08 | PLAN 1 (TASK-019): A4 reinicio Web, A5 instalación Mac, A3 env check, B1 revisión diferida (ver §9), B4 proporcionalidad |
+| 1.2 | 2026-08-11 | §14 Anti-alucinación: verificación obligatoria antes de afirmar (TASK-20260811-003, TERM fabricaba trabajo inexistente) |
+| 1.3 | 2026-08-11 | §15 Anti-bucle (TASK-20260811-005, TERM en loop de preguntas "Next Steps Needed") |
+| 1.4 | 2026-08-11 | §16 Modo de revisión autónoma de fondo (TASK-20260811-006) |
+| 1.5 | 2026-08-11 | §16 Registro persistente de hallazgos (TASK-20260811-007) |
+| 1.6 | 2026-08-11 | §17 Entorno y despliegue: lecciones operativas (TASK-20260811-008) |
+| 1.7 | 2026-08-11 | §16 Plan propuesto obligatorio en hallazgos accionables (TASK-20260811-009) |
+| 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
+| 1.9 | 2026-08-12 | §18 Automatización de procesos: deploy-mac.sh, ura-udo-cerrar, ura-fondo-health.sh (TASK-20260812-010) + sync ASUS→Mac (§17.4) |
+| 1.9 | 2026-08-12 | §19 Identidad y tiempo (TASK-20260812-016): [WEB]/[TERM] + hora local real (no UTC BD) + última interacción; §20 Inventario del sistema (inventario_ura.py → docs/architecture/INVENTARIO_URA.md); planificador método árbol (tronco→ramas→hojas) |
+
+---
+
+## Protocolo de Verificación (v1.0)
+
+Flujo de verificación técnica de URA. Gates declarativos en `scripts/pro/gates.json`.
+
+### Fases
+1. **Pre-Code** — `docs/engineering/PLAN_TEMPLATE.md` (13 preguntas obligatorias: incluye riesgos y rollback).
+2. **Explore** — subagente nativo `explore` (solo lectura).
+3. **Plan** — `PLAN_TEMPLATE.md`.
+4. **Review** — subagente `revisor` → veredicto GO / GO CON CAMBIOS / NO-GO.
+5. **Approve** — humano.
+6. **Code** — agente `build` (TDD: RED → GREEN → REFACTOR).
+7. **Verify** — `make verify-task TASK=<id>` o `bash scripts/pro/verificar_todo.sh <id>`.
+8. **Commit** — `git commit` + `scripts/pro/ura-udo verify <id>` (pin SHA).
+
+### Gates (declarativo)
+Añadir un gate = añadir una entrada en `scripts/pro/gates.json` (sin tocar el orquestador):
+- `secretos` → `python3 scripts/pro/audit_secrets.py`
+- `cobertura` → `python3 scripts/pro/verificador_cobertura.py --ci --base main`
+- `revision` → `bash scripts/pro/revision_gates.sh`
+- `udo` → `scripts/pro/ura-udo verify {TASK}` (requiere TASK-ID)
+
+### Estado / observabilidad
+`make status` → agentes locales (OK/ROTO) + unidades fallidas + servicios ASUS.
