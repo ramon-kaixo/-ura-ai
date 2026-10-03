@@ -329,3 +329,44 @@ if [ "$FAIL" -gt 0 ]; then
 fi
 echo "SUITE UDO: TODOS LOS ESCENARIOS PASAN"
 exit 0
+
+# 30. PLAN 1 A1: Gate bloquea DONE sin analisis
+echo "-- 30. PLAN 1 A1: Gate bloquea DONE sin analisis"
+A1=
+UDO_ROOT="" UDO_REPO="" "" update "" --estado IN_PROGRESS >/dev/null
+echo a > "/a1.txt" && git -C "" add . && git -C "" commit -qm "[][WEB] trabajo"
+UDO_ROOT="" UDO_REPO="" "" verify "" >/dev/null 2>&1
+UDO_ROOT="" UDO_REPO="" "" update "" --estado REVIEW --validacion "v" --nota "sin analisis" >/dev/null
+git -C "" add . && git -C "" commit -qm "[][TERM] campos"
+out=zsh:1: command not found: ""; rc=127
+[ "" -ne 0 ] && echo "" | grep -q "DONE requiere analisis" && ok "A1: gate bloquea DONE sin analisis" || bad "A1: gate bloquea DONE sin analisis (rc=: )"
+
+# 31. PLAN 1 A2: Gate bloquea DONE sin validacion
+echo "-- 31. PLAN 1 A2: Gate bloquea DONE sin validacion"
+A2=
+UDO_ROOT="" UDO_REPO="" "" update "" --estado IN_PROGRESS >/dev/null
+echo a > "/a2.txt" && git -C "" add . && git -C "" commit -qm "[][WEB] trabajo"
+UDO_ROOT="" UDO_REPO="" "" verify "" >/dev/null 2>&1
+UDO_ROOT="" UDO_REPO="" "" update "" --estado REVIEW --analisis "a" --nota "sin validacion" >/dev/null
+git -C "" add . && git -C "" commit -qm "[][TERM] campos"
+out=zsh:1: command not found: ""; rc=127
+[ "" -ne 0 ] && echo "" | grep -q "DONE requiere validacion" && ok "A2: gate bloquea DONE sin validacion" || bad "A2: gate bloquea DONE sin validacion (rc=: )"
+
+# 32. PLAN 1 X2: verify muestra WARNING (no error) para tareas pre-parche (sin campo analisis:)
+echo "-- 32. PLAN 1 X2: verify WARNING para tareas pre-parche"
+X2=
+UDO_ROOT="" UDO_REPO="" "" update "" --estado IN_PROGRESS >/dev/null
+echo x > "/x2.txt" && git -C "" add . && git -C "" commit -qm "[][WEB] trabajo"
+UDO_ROOT="" UDO_REPO="" "" verify "" >/dev/null 2>&1
+UDO_ROOT="" UDO_REPO="" "" update "" --estado REVIEW >/dev/null
+python3 -c "
+import sys
+with open('/tasks/.md') as f:
+    lines = f.readlines()
+lines = [l for l in lines if not l.startswith('analisis:')]
+with open('/tasks/.md', 'w') as f:
+    f.writelines(lines)
+"
+git -C "" add . && git -C "" commit -qm "[][TERM] sin analisis campo"
+out=zsh:1: command not found: ""
+echo "" | grep -q "WARNING" && ok "X2: verify muestra WARNING para pre-parche" || bad "X2: verify WARNING para pre-parche (out=)"
