@@ -2,7 +2,7 @@
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
-**Versión**: 1.10 (2026-08-12) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
+**Versión**: 1.11 (2026-10-03) · **Estado**: activo · **Fuente de verdad**: este archivo (git)
 
 > **La regla más importante**: un plan nunca se ejecuta directamente sin análisis previo. Cuando un agente recibe un plan, lo interpreta como *propuesta de trabajo pendiente de revisión técnica*, no como orden ciega de programación.
 
