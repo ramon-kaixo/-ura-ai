@@ -1,4 +1,4 @@
-<!-- Engineering Process v1.10 -->
+<!-- Engineering Process v1.11 -->
 
 # ENGINEERING PROCESS — Metodología Universal de Ingeniería para Agentes
 
@@ -225,6 +225,7 @@ Para eliminar la fricción manual que causó fallos repetidos (2026-08-12: pegad
 | 1.8 | 2026-08-11 | §16 Despertador real del modo fondo: launchd com.ura.fondo-wake (TASK-20260811-010) + C2 sincronización de este documento |
 | 1.9 | 2026-08-12 | §18 Automatización de procesos: deploy-mac.sh, ura-udo-cerrar, ura-fondo-health.sh (TASK-20260812-010) + sync ASUS→Mac (§17.4) |
 | 1.9 | 2026-08-12 | §19 Identidad y tiempo (TASK-20260812-016): [WEB]/[TERM] + hora local real (no UTC BD) + última interacción; §20 Inventario del sistema (inventario_ura.py → docs/architecture/INVENTARIO_URA.md); planificador método árbol (tronco→ramas→hojas) |
+| 1.11 | 2026-10-03 | PLAN 1 completado (TASK-019): A1/A2 gate analisis+validacion obligatorios (tests 11e/11f/11g), A3 env check operativo, A4 reinicio Web documentado (§11), A5 instalación Mac documentada (§11), B1 revisión diferida (§9), B4 proporcionalidad (§12bis); suite UDO 53/53, ura-engineering-check OK+--env OK
 
 ---
 
